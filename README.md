@@ -118,6 +118,8 @@ Her platform için iki ayrı görünüm üretir:
   `different_product_page`, `missing_price` gibi).
 - `selected`: Üretim sonucunda seçilen teklif.
 - `offer_url`: Teklifin platformdaki bağlantısı.
+- `current_price_display` ve `original_price_display`: Kuruş değerlerinin
+  `57.249,00 TL` biçimindeki okunabilir karşılığı.
 
 Bu araç üretimden farklı bir scraper kullanmaz. Factory üzerinden aynı platform
 sınıflarını çalıştırır; yalnızca test amacıyla scraper'ın o çalışma sırasında

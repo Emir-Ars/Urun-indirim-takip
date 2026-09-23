@@ -9,6 +9,21 @@ from app.scraper.factory import create_scraper
 from app.settings import Settings
 
 
+def format_try(value: int | None) -> str | None:
+    if value is None:
+        return None
+    lira, kurus = divmod(value, 100)
+    grouped = f"{lira:,}".replace(",", ".")
+    return f"{grouped},{kurus:02d} TL"
+
+
+def with_price_display(values: dict) -> dict:
+    result = dict(values)
+    for field in ("current_price", "original_price"):
+        result[f"{field}_display"] = format_try(result.get(field))
+    return result
+
+
 def main() -> None:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
@@ -52,9 +67,11 @@ def main() -> None:
             platform_results.append(
                 {
                     "platform": platform.name,
-                    "production_result": observation.model_dump(mode="json"),
+                    "production_result": with_price_display(
+                        observation.model_dump(mode="json")
+                    ),
                     "offer_count": len(offers),
-                    "all_offers": offers,
+                    "all_offers": [with_price_display(offer) for offer in offers],
                 }
             )
         finally:
@@ -64,8 +81,11 @@ def main() -> None:
     winner = min(available, key=lambda item: item.current_price) if available else None
     result = {
         "checked_listings": len(observations),
+        "money_unit": "kurus",
         "platform_results": platform_results,
-        "best_offer": winner.model_dump(mode="json") if winner else None,
+        "best_offer": (
+            with_price_display(winner.model_dump(mode="json")) if winner else None
+        ),
     }
     print(json.dumps(result, ensure_ascii=False, indent=2, default=str))
 
