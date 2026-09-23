@@ -1,0 +1,1 @@
+"""Telefon fiyat takibi uygulaması."""

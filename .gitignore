@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+pytest-cache-files-*/
+.coverage
+.env
+*.log
+build/
+dist/
+data/*
+!data/.gitkeep
+artifacts/*
+!artifacts/.gitkeep
+.scratch/

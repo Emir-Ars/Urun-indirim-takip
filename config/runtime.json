@@ -1,0 +1,14 @@
+{
+  "timezone": "Europe/Istanbul",
+  "collection_times": ["06:00"],
+  "training_weekday": 6,
+  "training_time": "07:00",
+  "request_timeout_seconds": 20.0,
+  "request_interval_seconds": 3.0,
+  "request_attempts": 2,
+  "forecast_horizon_days": 7,
+  "discount_threshold": 0.05,
+  "history_days": 30,
+  "stale_after_hours": 30.0,
+  "api_rate_limit": "60/minute"
+}
