@@ -29,7 +29,9 @@ def listing():
     )
 
 
-def product_html(*, name="Apple iPhone 15 128 GB Mavi", product_id=762254881):
+def product_html(
+    *, name="Apple iPhone 15 128 GB Mavi", product_id=762254881, others=None
+):
     state = {
         "product": {
             "id": product_id,
@@ -49,6 +51,7 @@ def product_html(*, name="Apple iPhone 15 128 GB Mavi", product_id=762254881):
                     "name": "Trendyol",
                     "sellerScore": {"value": 9.3},
                 },
+                "otherMerchants": others or [],
             },
         }
     }
@@ -70,6 +73,57 @@ def test_parses_winner_offer(listing):
     assert observation.seller_rating == 9.3
     assert observation.seller_rating_scale == 10.0
     assert observation.stock_status == "Stokta Var"
+
+
+def test_checks_other_merchants_and_keeps_other_color_out(listing):
+    others = [
+        {
+            "name": "Aynı Ürün Satıcısı",
+            "sellerScore": {"value": 9.7},
+            "url": "/apple/iphone-15-128-gb-mavi-p-762254881?merchantId=2",
+            "variants": [
+                {
+                    "listingId": "same-product",
+                    "inStock": True,
+                    "sellable": True,
+                    "price": {
+                        "currency": "TRY",
+                        "sellingPrice": {"value": 56_999},
+                        "originalPrice": {"value": 58_999},
+                    },
+                }
+            ],
+        },
+        {
+            "name": "Başka Renk Satıcısı",
+            "sellerScore": {"value": 9.8},
+            "url": "/apple/iphone-15-128-gb-siyah-p-762254878?merchantId=3",
+            "variants": [
+                {
+                    "listingId": "other-color",
+                    "inStock": True,
+                    "sellable": True,
+                    "price": {
+                        "currency": "TRY",
+                        "sellingPrice": {"value": 50_000},
+                        "originalPrice": {"value": 50_000},
+                    },
+                }
+            ],
+        },
+    ]
+    scraper = Scraper(["www.trendyol.com"], Runtime())
+
+    observation = scraper.parse(product_html(others=others), listing)
+
+    assert observation.current_price == 5_699_900
+    assert observation.seller_name == "Aynı Ürün Satıcısı"
+    assert len(scraper._last_offers) == 3
+    other_color = next(
+        offer for offer in scraper._last_offers if offer["listing_id"] == "other-color"
+    )
+    assert other_color["eligible"] is False
+    assert other_color["rejection_reason"] == "different_product_page"
 
 
 @pytest.mark.parametrize(

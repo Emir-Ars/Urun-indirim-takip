@@ -153,6 +153,8 @@ def test_fetches_all_listings_and_selects_cheapest(listing):
         ("POST", API_URL),
     ]
     assert len(session.calls[2][2]["json"]["product"]["otherMerchants"]) == 2
+    assert len(scraper._last_offers) == 2
+    assert sum(offer["selected"] for offer in scraper._last_offers) == 1
 
 
 def test_filters_conditions_and_uses_discounted_price(listing):
@@ -174,6 +176,8 @@ def test_filters_conditions_and_uses_discounted_price(listing):
     assert observation.original_price == 5_000_000
     assert observation.seller_name == "Geçerli Satıcı"
     assert observation.seller_rating == 9.7
+    assert len(scraper._last_offers) == 3
+    assert sum(offer["eligible"] for offer in scraper._last_offers) == 1
 
 
 def test_empty_full_listing_response_is_out_of_stock(listing):

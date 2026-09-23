@@ -1,6 +1,7 @@
 """Katalogdaki canlı scraper sonuçlarını DB'ye yazmadan ekrana basar."""
 
 import json
+import sys
 from pathlib import Path
 
 from app.contracts import Catalog, ProductListing
@@ -9,6 +10,8 @@ from app.settings import Settings
 
 
 def main() -> None:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
     settings = Settings()
     runtime = settings.runtime()
     catalog = Catalog.model_validate_json(
@@ -17,6 +20,7 @@ def main() -> None:
     products = {product.product_id: product for product in catalog.products}
     platforms = {platform.key: platform for platform in catalog.platforms}
     observations = []
+    platform_results = []
 
     for item in catalog.listings:
         product = products[item.product_id]
@@ -37,7 +41,22 @@ def main() -> None:
         try:
             observation = scraper.fetch(listing)
             observations.append(observation)
-            print(observation.model_dump_json(indent=2))
+            offers = sorted(
+                getattr(scraper, "_last_offers", []),
+                key=lambda offer: (
+                    offer.get("current_price") is None,
+                    offer.get("current_price") or 0,
+                    offer.get("seller_name") or "",
+                ),
+            )
+            platform_results.append(
+                {
+                    "platform": platform.name,
+                    "production_result": observation.model_dump(mode="json"),
+                    "offer_count": len(offers),
+                    "all_offers": offers,
+                }
+            )
         finally:
             scraper.close()
 
@@ -45,6 +64,7 @@ def main() -> None:
     winner = min(available, key=lambda item: item.current_price) if available else None
     result = {
         "checked_listings": len(observations),
+        "platform_results": platform_results,
         "best_offer": winner.model_dump(mode="json") if winner else None,
     }
     print(json.dumps(result, ensure_ascii=False, indent=2, default=str))

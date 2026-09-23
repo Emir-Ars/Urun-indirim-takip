@@ -250,6 +250,7 @@ class Scraper(BaseScraper):
     def __init__(self, hosts, runtime, client=None):
         super().__init__(hosts, runtime, client)
         self._anonymous_user_id = None
+        self._last_offers = []
 
     def _user_id(self) -> str:
         if self._anonymous_user_id is None:
@@ -273,9 +274,48 @@ class Scraper(BaseScraper):
             },
         )
         full_listings = _response_listings(listings_response)
+        diagnostics = []
+        diagnostic_by_id = {}
+        for item in full_listings:
+            listing_id = item.get("listingId")
+            try:
+                current = money(_amount(item.get("price")))
+            except (TypeError, ValueError):
+                current = None
+            try:
+                raw_original = _amount(item.get("originalPrice"))
+                original = money(raw_original) if raw_original is not None else None
+            except (TypeError, ValueError):
+                original = None
+            if original is not None and current is not None and original <= current:
+                original = None
+            salable = item.get("isSalable")
+            diagnostic = {
+                "listing_id": str(listing_id) if listing_id else None,
+                "seller_name": item.get("merchantName"),
+                "seller_rating": _seller_rating(item),
+                "seller_rating_scale": (
+                    10.0 if _seller_rating(item) is not None else None
+                ),
+                "current_price": current,
+                "original_price": original,
+                "stock_status": "Stokta Var" if salable is True else "Tükendi",
+                "offer_url": listing.url,
+                "eligible": salable is True and current is not None,
+                "rejection_reason": None,
+                "selected": False,
+            }
+            if salable is not True:
+                diagnostic["rejection_reason"] = "out_of_stock"
+            elif current is None:
+                diagnostic["rejection_reason"] = "missing_price"
+            diagnostics.append(diagnostic)
+            if listing_id:
+                diagnostic_by_id[listing_id] = diagnostic
         if not full_listings or not any(
             item.get("isSalable") is True for item in full_listings
         ):
+            self._last_offers = diagnostics
             return self.observation(
                 listing,
                 current_price=None,
@@ -291,17 +331,25 @@ class Scraper(BaseScraper):
         for item in full_listings:
             if item.get("isSalable") is not True:
                 continue
+            diagnostic = diagnostic_by_id.get(item.get("listingId"))
             try:
                 source = _merchant_payload(item)
             except (FetchError, KeyError, TypeError):
+                if diagnostic is not None:
+                    diagnostic["eligible"] = False
+                    diagnostic["rejection_reason"] = "invalid_offer"
                 continue
             if not _is_allowed({"merchantName": item.get("merchantName", "")}, source):
+                if diagnostic is not None:
+                    diagnostic["eligible"] = False
+                    diagnostic["rejection_reason"] = "disallowed_condition"
                 continue
             listing_id = source["listingId"]
             listing_sources[listing_id] = item
             merchant_payloads.append(source)
 
         if not merchant_payloads:
+            self._last_offers = diagnostics
             raise FetchError(
                 "no_eligible_offer", "Hepsiburada'da uygun satılabilir teklif yok"
             )
@@ -320,6 +368,7 @@ class Scraper(BaseScraper):
         products = _response_products(response, sku)
         offers = products["otherMerchants"]
         if not offers:
+            self._last_offers = diagnostics
             return self.observation(
                 listing,
                 current_price=None,
@@ -345,6 +394,10 @@ class Scraper(BaseScraper):
             if source is None or full_listing is None:
                 continue
             if not _is_allowed(offer, source):
+                diagnostic = diagnostic_by_id.get(listing_id)
+                if diagnostic is not None:
+                    diagnostic["eligible"] = False
+                    diagnostic["rejection_reason"] = "disallowed_condition"
                 continue
             price_data = offer.get("priceData") or {}
             raw_price = price_data.get("discountedPrice")
@@ -357,6 +410,19 @@ class Scraper(BaseScraper):
             original = money(regular) if regular is not None else None
             if original is not None and original <= current:
                 original = None
+            diagnostic = diagnostic_by_id.get(listing_id)
+            if diagnostic is not None:
+                diagnostic.update(
+                    current_price=current,
+                    original_price=original,
+                    seller_name=str(offer["merchantName"]),
+                    seller_rating=_seller_rating(full_listing),
+                    seller_rating_scale=(
+                        10.0 if _seller_rating(full_listing) is not None else None
+                    ),
+                    eligible=True,
+                    rejection_reason=None,
+                )
             candidates.append(
                 {
                     "current": current,
@@ -367,6 +433,7 @@ class Scraper(BaseScraper):
                 }
             )
         if not candidates:
+            self._last_offers = diagnostics
             raise FetchError(
                 "no_eligible_offer", "Hepsiburada'da uygun satılabilir teklif yok"
             )
@@ -374,6 +441,10 @@ class Scraper(BaseScraper):
             candidates,
             key=lambda item: (item["current"], item["seller"], item["listing_id"]),
         )
+        winner_diagnostic = diagnostic_by_id.get(winner["listing_id"])
+        if winner_diagnostic is not None:
+            winner_diagnostic["selected"] = True
+        self._last_offers = diagnostics
         return self.observation(
             listing,
             current_price=winner["current"],

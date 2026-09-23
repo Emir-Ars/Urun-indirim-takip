@@ -1,5 +1,6 @@
 """Alan adı sınırı, tekrar ve Chrome taklidi içeren HTTP taşıması."""
 
+import json
 import time
 from urllib.parse import urljoin, urlsplit
 
@@ -105,13 +106,16 @@ class PageClient:
 
     def get(self, url: str, *, headers: dict | None = None) -> str:
         response = self._request("GET", url, headers=headers)
-        return response.text
+        try:
+            return self._body(response).decode("utf-8")
+        except UnicodeDecodeError as exc:
+            raise FetchError("parse", "Kaynak UTF-8 metin döndürmedi") from exc
 
     def get_json(self, url: str, *, headers: dict | None = None) -> dict:
         response = self._request("GET", url, headers=headers)
         try:
-            data = response.json()
-        except (TypeError, ValueError) as exc:
+            data = json.loads(self._body(response).decode("utf-8"))
+        except (UnicodeDecodeError, TypeError, ValueError) as exc:
             raise FetchError("parse", "Kaynak geçerli JSON döndürmedi") from exc
         if not isinstance(data, dict):
             raise FetchError("parse", "Kaynak JSON nesnesi döndürmedi")
@@ -122,8 +126,8 @@ class PageClient:
     ) -> dict:
         response = self._request("POST", url, json=payload, headers=headers)
         try:
-            data = response.json()
-        except (TypeError, ValueError) as exc:
+            data = json.loads(self._body(response).decode("utf-8"))
+        except (UnicodeDecodeError, TypeError, ValueError) as exc:
             raise FetchError("parse", "Kaynak geçerli JSON döndürmedi") from exc
         if not isinstance(data, dict):
             raise FetchError("parse", "Kaynak JSON nesnesi döndürmedi")
