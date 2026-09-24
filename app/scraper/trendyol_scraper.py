@@ -133,6 +133,22 @@ class Scraper(BaseScraper):
         candidates = [offer for offer in offers if offer["eligible"]]
         if not candidates:
             self._last_offers = offers
+            on_page = [
+                offer
+                for offer in offers
+                if _product_id(offer["offer_url"]) == _product_id(listing.url)
+                and offer["rejection_reason"] != "disallowed_condition"
+            ]
+            if on_page and all(offer["stock_status"] == "Tükendi" for offer in on_page):
+                return self.observation(
+                    listing,
+                    current_price=None,
+                    original_price=None,
+                    seller_name=None,
+                    seller_rating=None,
+                    seller_rating_scale=None,
+                    stock_status="Tükendi",
+                )
             raise FetchError(
                 "no_eligible_offer", "Trendyol'da uygun satılabilir teklif yok"
             )

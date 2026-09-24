@@ -30,16 +30,20 @@ def listing():
 
 
 def product_html(
-    *, name="Apple iPhone 15 128 GB Mavi", product_id=762254881, others=None
+    *,
+    name="Apple iPhone 15 128 GB Mavi",
+    product_id=762254881,
+    others=None,
+    in_stock=True,
 ):
     state = {
         "product": {
             "id": product_id,
             "name": name,
-            "inStock": True,
+            "inStock": in_stock,
             "merchantListing": {
                 "winnerVariant": {
-                    "inStock": True,
+                    "inStock": in_stock,
                     "isRunningOut": False,
                     "price": {
                         "currency": "TRY",
@@ -73,6 +77,27 @@ def test_parses_winner_offer(listing):
     assert observation.seller_rating == 9.3
     assert observation.seller_rating_scale == 10.0
     assert observation.stock_status == "Stokta Var"
+
+
+def test_explicitly_sold_out_page_returns_sold_out_observation(listing):
+    scraper = Scraper(["www.trendyol.com"], Runtime())
+
+    observation = scraper.parse(product_html(in_stock=False), listing)
+
+    assert observation.stock_status == "Tükendi"
+    assert observation.current_price is None
+    assert observation.seller_name is None
+    assert scraper._last_offers[0]["rejection_reason"] == "out_of_stock"
+
+
+def test_disallowed_condition_is_not_mistaken_for_sold_out(listing):
+    scraper = Scraper(["www.trendyol.com"], Runtime())
+    html = product_html(in_stock=False).replace('"Trendyol"', '"Yenilenmiş Trendyol"')
+
+    with pytest.raises(FetchError) as error:
+        scraper.parse(html, listing)
+
+    assert error.value.code == "no_eligible_offer"
 
 
 def test_checks_other_merchants_and_keeps_other_color_out(listing):
