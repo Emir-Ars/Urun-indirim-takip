@@ -47,12 +47,8 @@ def main() -> None:
         listing = ProductListing(
             **item.model_dump(),
             product_name=product.name,
-            brand=product.brand,
             model=product.model,
             storage_gb=product.storage_gb,
-            platform_name=platform.name,
-            hosts=platform.hosts,
-            coverage_version="manual-check",
         )
         scraper = create_scraper(platform.key, platform.hosts, runtime)
         try:

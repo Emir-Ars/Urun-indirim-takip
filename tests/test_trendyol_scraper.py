@@ -20,12 +20,8 @@ def listing():
         color="Mavi",
         active=True,
         product_name="Apple iPhone 15 128 GB",
-        brand="Apple",
         model="iPhone 15",
         storage_gb=128,
-        platform_name="Trendyol",
-        hosts=["www.trendyol.com"],
-        coverage_version="test",
     )
 
 
@@ -35,12 +31,14 @@ def product_html(
     product_id=762254881,
     others=None,
     in_stock=True,
+    slicing=None,
 ):
     state = {
         "product": {
             "id": product_id,
             "name": name,
             "inStock": in_stock,
+            "slicingAttributes": slicing or {},
             "merchantListing": {
                 "winnerVariant": {
                     "inStock": in_stock,
@@ -151,10 +149,53 @@ def test_checks_other_merchants_and_keeps_other_color_out(listing):
     assert other_color["rejection_reason"] == "different_product_page"
 
 
+def test_uses_unconditional_discounted_price(listing):
+    # Canlı ALDIMGİTTİ teklifi: sayfada ~~59.999~~ 59.599 ("Net 400 TL İndirim").
+    others = [
+        {
+            "name": "ALDIMGİTTİ",
+            "url": "/apple/iphone-15-128-gb-mavi-p-762254881?merchantId=4",
+            "variants": [
+                {
+                    "listingId": "discounted",
+                    "inStock": True,
+                    "sellable": True,
+                    "price": {
+                        "currency": "TRY",
+                        "sellingPrice": {"value": 59_999},
+                        "discountedPrice": {"value": 59_599},
+                        "originalPrice": {"value": 59_599},
+                    },
+                }
+            ],
+        }
+    ]
+    scraper = Scraper(["www.trendyol.com"], Runtime())
+    scraper.parse(product_html(others=others), listing)
+
+    offer = next(o for o in scraper._last_offers if o["listing_id"] == "discounted")
+    assert offer["current_price"] == 5_959_900
+    assert offer["original_price"] == 5_999_900
+
+
+def test_title_without_capacity_uses_slicing_capacity(listing):
+    scraper = Scraper(["www.trendyol.com"], Runtime())
+    html = product_html(
+        name="Apple iPhone 15 Mavi", slicing={"Internal Memory": "128 GB"}
+    )
+
+    observation = scraper.parse(html, listing)
+
+    assert observation.current_price == 5_724_900
+
+
 @pytest.mark.parametrize(
     ("name", "product_id"),
     [
         ("Apple iPhone 15 Pro 128 GB", 762254881),
+        ("Apple iPhone 15 Plus 128 GB", 762254881),
+        ("Apple iPhone 15 256 GB", 762254881),
+        ("Apple iPhone 15 Mavi", 762254881),
         ("Apple iPhone 15 128 GB", 999999999),
     ],
 )

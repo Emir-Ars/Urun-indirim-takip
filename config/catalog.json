@@ -419,7 +419,14 @@
       "url": "https://www.trendyol.com/apple/iphone-15-256-gb-akilli-telefon-siyah-p-865248542",
       "color": "Siyah",
       "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv0000d3aulb",
+      "product_id": 1,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-15-siyah-128gb-p-HBCV0000D3AULB",
+      "color": "Siyah",
+      "active": true
     }
-  ],
-  "history_sources": []
+  ]
 }

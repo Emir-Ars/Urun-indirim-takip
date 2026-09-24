@@ -8,9 +8,7 @@ from app.scraper.base import BaseScraper
 from app.scraper.http import FetchError
 
 
-def create_scraper(
-    platform: str, hosts: list[str], runtime, client=None
-) -> BaseScraper:
+def create_scraper(platform: str, hosts: list[str], runtime) -> BaseScraper:
     if not re.fullmatch(r"[a-z][a-z0-9_]*", platform):
         raise FetchError("plugin", "Geçersiz platform anahtarı")
     try:
@@ -22,6 +20,6 @@ def create_scraper(
             or inspect.isabstract(implementation)
         ):
             raise TypeError("Scraper, BaseScraper sözleşmesini uygulamalı")
-        return implementation(hosts, runtime, client=client)
+        return implementation(hosts, runtime)
     except Exception as exc:
         raise FetchError("plugin", f"{platform} adaptörü yüklenemedi: {exc}") from exc

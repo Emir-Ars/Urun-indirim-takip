@@ -9,11 +9,13 @@ from bs4 import BeautifulSoup
 from app.scraper.base import BaseScraper
 from app.scraper.http import FetchError
 from app.scraper.parsing import (
+    DISALLOWED_CONDITIONS,
     embedded_json,
     money,
     nested_dicts,
     normalize,
     product_jsonld,
+    storage_gb,
     verify_identity,
 )
 
@@ -31,11 +33,6 @@ PRODUCT_FIELDS = (
     "taxVatRate",
     "campaignIds",
     "otherMerchants",
-)
-DISALLOWED_CONDITIONS = (
-    re.compile(r"\byenilenmis\b"),
-    re.compile(r"\bikinci[\s_-]*el\b"),
-    re.compile(r"\bteshir\b"),
 )
 
 
@@ -96,14 +93,8 @@ def _payload_context(candidate: dict) -> dict | None:
     ]
     if not categories:
         return None
-    merchants = [
-        _merchant_payload(candidate, _tag_ids(candidate["mainProductTagList"]))
-    ]
-    for listing in candidate["listings"]:
-        if isinstance(listing, dict) and listing.get("isSalable") is not False:
-            merchants.append(
-                _merchant_payload(listing, _tag_ids(listing.get("tagList")))
-            )
+    # Satıcılar fiyat isteğinden önce satıcı listesi API'sinden eklenir; sayfadaki
+    # ana satıcının fiyatı stoksuz sayfalarda boş olduğundan burada okunmaz.
     return {
         "productTags": _tag_ids(candidate["mainProductTagList"]),
         "sku": candidate["sku"],
@@ -115,7 +106,7 @@ def _payload_context(candidate: dict) -> dict | None:
         "definitionId": str(candidate["definitionId"]),
         "taxVatRate": candidate["taxVatRate"],
         "campaignIds": candidate["campaignIds"],
-        "otherMerchants": merchants,
+        "otherMerchants": [],
     }
 
 
@@ -152,7 +143,7 @@ def _amount(value):
     return value
 
 
-def _merchant_payload(merchant: dict, tags: list[str] | None = None) -> dict:
+def _merchant_payload(merchant: dict) -> dict:
     price = _amount(merchant.get("price"))
     prices = merchant.get("prices") or []
     if price is None and prices and isinstance(prices[0], dict):
@@ -162,7 +153,7 @@ def _merchant_payload(merchant: dict, tags: list[str] | None = None) -> dict:
     if price is None:
         raise FetchError("parse", "Hepsiburada satıcı fiyatı eksik")
     return {
-        "productTags": tags if tags is not None else _merchant_tags(merchant),
+        "productTags": _merchant_tags(merchant),
         "campaignIds": merchant.get("campaignIds") or [],
         "finalPriceOnSale": price,
         "minimumPriceForNLastDays": _amount(merchant.get("minimumPrice")) or price,
@@ -172,24 +163,39 @@ def _merchant_payload(merchant: dict, tags: list[str] | None = None) -> dict:
     }
 
 
-def _verify_product(soup: BeautifulSoup, listing, sku: str) -> None:
+def product_names(soup: BeautifulSoup, sku: str) -> list[str]:
+    """Bu SKU'ya ait JSON-LD ürün adları ve sayfa başlığı; keşif de aynısını okur."""
     names = []
     for product in product_jsonld(soup):
         product_sku = str(product.get("sku", "")).upper()
-        if not product_sku or product_sku == sku:
-            if product.get("name"):
-                names.append(product["name"])
-    if not names:
-        heading = soup.find("h1")
-        if heading is not None:
-            names.append(heading.get_text(" ", strip=True))
-    for name in names:
-        try:
-            verify_identity(name, listing.model, listing.storage_gb)
-            return
-        except FetchError:
-            continue
-    raise FetchError("identity", "Hepsiburada ürün adı katalogla eşleşmiyor")
+        if (not product_sku or product_sku == sku) and product.get("name"):
+            names.append(str(product["name"]))
+    heading = soup.find("h1")
+    if heading is not None:
+        names.append(heading.get_text(" ", strip=True))
+    return names
+
+
+def variant_capacity(soup: BeautifulSoup, sku: str) -> int | None:
+    """Sayfadaki varyant listesinde bu SKU'nun yapısal kapasitesi."""
+    for root in embedded_json(soup):
+        for node in nested_dicts(root):
+            variants = node.get("allVariantCombinations")
+            if not isinstance(variants, list):
+                continue
+            for item in variants:
+                if isinstance(item, dict) and str(item.get("sku", "")).upper() == sku:
+                    return storage_gb(item.get("Kapasite") or "")
+    return None
+
+
+def _verify_product(soup: BeautifulSoup, listing, sku: str) -> None:
+    verify_identity(
+        product_names(soup, sku),
+        listing.model,
+        listing.storage_gb,
+        capacity=variant_capacity(soup, sku),
+    )
 
 
 def _offer_text(offer: dict, source: dict) -> str:
@@ -263,7 +269,6 @@ class Scraper(BaseScraper):
         sku = _sku_from_url(listing.url)
         soup = BeautifulSoup(self.pages.get(listing.url), "html.parser")
         _verify_product(soup, listing, sku)
-        product = _product_context(soup, sku)
 
         listings_response = self.pages.get_json(
             LISTINGS_URL.format(sku=sku),
@@ -326,6 +331,8 @@ class Scraper(BaseScraper):
                 stock_status="Tükendi",
             )
 
+        # Fiyat isteğinin ürün bağlamı yalnız satılabilir teklif varken gerekir.
+        product = _product_context(soup, sku)
         listing_sources = {}
         merchant_payloads = []
         for item in full_listings:
@@ -368,15 +375,12 @@ class Scraper(BaseScraper):
         products = _response_products(response, sku)
         offers = products["otherMerchants"]
         if not offers:
+            # Satıcı listesi satılabilir teklif gösterdi; fiyat yanıtının boş olması
+            # stok tükenmesini doğrulamaz, okuma hatasıdır.
             self._last_offers = diagnostics
-            return self.observation(
-                listing,
-                current_price=None,
-                original_price=None,
-                seller_name=None,
-                seller_rating=None,
-                seller_rating_scale=None,
-                stock_status="Tükendi",
+            raise FetchError(
+                "api_error",
+                "Hepsiburada satılabilir teklifler için fiyat yanıtı boş döndü",
             )
 
         payload_sources = {

@@ -1,132 +1,229 @@
-`# 📱 E-Ticaret Akıllı Telefon İndirim Tahmin Sistemi (MVP) - Nihai Mimari Planı`
+# Akıllı Telefon İndirim Takip ve Tahmin Sistemi — Proje Planı
 
-`**Doküman Tipi:** Ürün Gereksinim Dokümanı (PRD) & Teknik Mimari Raporu`
+Son güncelleme: 25 Eylül 2026.
 
-&nbsp;
+Bu belge **kararların ve aşama durumunun** ana kaynağıdır. Sistemin nasıl
+çalıştığı, komutlar ve dosyaların görevleri [README.md](README.md) içindedir.
+"Uygulandı", "planlandı" ve "karar bekliyor" ifadeleri birbirinin yerine
+kullanılmaz; gerçek durum kod ve testlerle doğrulanır.
 
-`## 🎯 1. Proje Kapsamı ve Kurallar (Guardrails)`
+## 1. Amaç
 
-`*   **Platformlar:** Sadece Trendyol ve Hepsiburada.`
+Trendyol ve Hepsiburada'daki akıllı telefon tekliflerini düzenli olarak toplayıp
+her telefon için takip edilen en ucuz fiyatı ve geçmişini sunmak; yeterli geçmiş
+biriktiğinde fiyatın yakında düşüp düşmeyeceğini tahmin etmek.
 
-`*   **Kategori & Hacim:** Sadece "Akıllı Telefonlar". Başlangıç için en popüler 20-30 model (Örn: iPhone 13, 14, 15, Samsung S24) eklenecektir.`
+Uzun vadeli akış:
 
-`*   **Varyant Yönetimi:** Farklı hafıza kapasiteleri (Örn: iPhone 15 128GB vs 256GB) sistemde **tamamen bağımsız, ayrı ürünler** olarak tanımlanacaktır. Doğrulanmış renk bağlantıları aynı kapasiteye bağlanacak; ilgili kapasitedeki takip edilen teklifler karşılaştırılacaktır.`
+**discovery.json → keşif → catalog.json → periyodik fiyat toplama → veritabanı →
+hazır özetler (FastAPI) → Streamlit arayüzü → yeterli geçmişle ML**
 
-`*   **Satıcı Karmaşası (Buybox) Çözümü:** Katalog satıcı başına ayrı bağlantı tutmaz. Scraper, kayıtlı ürün sayfasında erişebildiği satılabilir ve uygun satıcı tekliflerini karşılaştırıp en düşük fiyatlı teklifin bilgilerini döndürür.`
+Kullanıcı arayüzde arama yaptığında canlı scraping veya model eğitimi
+çalışmaz; arayüz önceden hazırlanmış sonuçları okur.
 
-``*   **Mimari Yaklaşım:** Modüler yapı (`scraper`, `database`, `ml_model`, `api`).``
+## 2. Aşama durumu
 
-&nbsp;
+| Aşama | Durum | Kanıt |
+|---|---|---|
+| 1. Fiyat okuma (Trendyol, Hepsiburada scraper) | ✅ Uygulandı | `a36b5b6`, `b0f466c`, `a716c9a` |
+| 2. Otomatik model/kapasite/renk keşfi | ✅ Uygulandı | `e00a435` |
+| 3. Trendyol doğrulanmış stoksuz sayfa | ✅ Uygulandı | `e6664a3` |
+| 4. Scraper/discovery kabul kontrolü (6 adım) | ✅ Tamamlandı; commit kullanıcı onayı bekliyor | Bölüm 5 |
+| 5. Veritabanı ve zamanlanmış toplama | ⏳ Sıradaki; **karar bekliyor** | Bölüm 7 |
+| 6. FastAPI ve Streamlit | 🔜 Planlandı, başlanmadı | Bölüm 8 |
+| 7. ML (indirim tahmini) | 🔜 Planlandı, başlanmadı | Bölüm 8 |
+| 8. Docker ve 7/24 işletim | 🔜 Planlandı, başlanmadı | Bölüm 8 |
 
-`## 💾 2. Veri Mimarisi & Çalışma Mantığı (Backend & Scraping)`
+Yereldeki `app/database`, `app/ml_model`, `app/api`, `app/services`,
+`app/worker.py`, `frontend/`, Docker dosyaları ve Akakçe/Cimri taslakları
+tamamlanmış iş değildir; kullanıcıyla değerlendirilmeden projeye bağlanmaz,
+silinmez ve Git'e gönderilmez.
 
-``*   **Veritabanı:** SQLite (`price_history` tablosu).``
+Güncel katalog: 6 ürün (iPhone 15 ve iPhone 16; 128/256/512 GB), 45 bağlantı
+(Trendyol 14, Hepsiburada 31). Etkin keşif hedefleri: `apple_iphone_15`,
+`apple_iphone_16`.
 
-`*   **Ana Tablo Şeması:**`
+## 3. Ürün kapsamı ve kimlik kuralları (uygulandı)
 
-&nbsp;&nbsp;&nbsp;&nbsp;``*   `id` (Primary Key)``
+- Platformlar Trendyol ve Hepsiburada; kategori yalnızca yeni akıllı telefon.
+  Başlangıç hedefi 20–30 modeldir; bu sayı bugünkü katalog değildir.
+- Kullanıcı `config/discovery.json` içinde yalnızca marka ve tam model yazar.
+  Yeni telefon için Python kodu değişmez, renk bağlantısı elle toplanmaz.
+- **Ürün** = marka + tam model + depolama kapasitesi. iPhone 15 128 GB ile
+  256 GB farklı `product_id` alır. Pro, Plus, Pro Max, Ultra, FE, mini, 16e ayrı
+  hedeflerdir. RAM farkı ürünü bölmez; bulunabilen RAM raporda tutulur.
+- **Bağlantı** = ürünün bir sitedeki bir sayfası (genelde bir renk). Aynı renk
+  ve kapasitenin farklı sayfaları ayrı bağlantı olarak izlenebilir. Katalog
+  satıcı başına adres tutmaz.
+- Aynı adı taşıyan farklı telefonlar (ör. Redmi Note 14 4G / 5G) hedefteki
+  isteğe bağlı `exclude_terms` ile ayrılır. Genel bir "5G ayrı model" kuralı
+  bilinçli olarak yoktur.
+- Yenilenmiş, ikinci el, teşhir ve aksesuar ürünler reddedilir.
+- Keşif ve scraper aynı kimlik kuralını kullanır (`app/scraper/parsing.py →
+  identify`): model, kapasite (yapısal veri + başlık; çelişki reddedilir; TB
+  desteklenir) ve dışlanan ifadeler birlikte doğrulanır.
+- Fiyat karşılaştırması aynı `product_id` içindeki takip edilen teklifler
+  arasındadır; farklı kapasiteler karşılaştırılmaz.
+- Garanti türü (Türkiye garantili / yurt dışı sürümü) **ayrılmıyor**;
+  karar bekliyor (Bölüm 7).
 
-&nbsp;&nbsp;&nbsp;&nbsp;``*   `platform` (Trendyol / Hepsiburada)``
+## 4. Mimari ve veri kararları (uygulandı)
 
-&nbsp;&nbsp;&nbsp;&nbsp;``*   `product_id` (Her telefon modeline ait benzersiz sayısal kimlik - Örn: iPhone 15 için 1, S24 için 2)``
+### Mimari
 
-&nbsp;&nbsp;&nbsp;&nbsp;``*   `product_name` (Örn: Apple iPhone 15 128GB)``
+- Modüler yapı: scraper, discovery ve (ileride) kalıcılık, servis, ML ve sunum
+  ayrı sorumluluklardır; dosya sınırı tek sorumluluğa göre belirlenir.
+- Scraper/discovery HTTP istekleri yalnızca `app/scraper/http.py` üzerinden,
+  `curl_cffi` ve `impersonate="chrome120"` ile yapılır. Playwright, Selenium,
+  standart `requests` veya doğrudan `httpx` kullanılmaz.
+- HTTP katmanı: izinli alan adları, zaman aşımı, sınırlı tekrar, 3 sn istek
+  aralığı, yönlendirme kontrolü, yanıt boyutu sınırı, istek bütçesi;
+  401/403/418/429 `blocked` sayılır, veri uydurulmaz.
+- Scraper sözleşmesi `fetch(listing) -> PriceObservation`; platforma özgü işler
+  `get_product_data` içindedir. Factory platform modülünü adından yükler; yeni
+  site mevcut scraper'a koşul eklenerek değil kendi modülüyle eklenir.
+- Discovery scraper'dan ayrıdır: keşif bağlantı bulur, scraper fiyat ve stok
+  okur. Scraper/discovery içinde SQL veya ML yapılmaz.
+- Tanılama izi (`trace`) ve bütün teklif listesi yalnız manuel kontrol
+  araçlarında görünür; üretim sözleşmesi sade kalır ve araçlar aynı üretim
+  kodunu kullanır.
 
-&nbsp;&nbsp;&nbsp;&nbsp;`` *   `product_url` ``
+### Fiyat ve stok
 
-&nbsp;&nbsp;&nbsp;&nbsp;``*   `current_price` (O anki en düşük satış fiyatı)``
+- Para TRY kuruş cinsinden tam sayıdır (5724900 = 57.249,00 TL); zamanlar UTC.
+  Veri Pydantic V2 strict ile doğrulanır.
+- **Güncel fiyat** = sayfada gösterilen koşulsuz indirimli fiyat. Trendyol'da
+  `discountedPrice` ile `sellingPrice`'ın küçüğü; Hepsiburada'da
+  `discountedPrice`, yoksa `price`. Adet/sepet/kupon koşullu indirimler dahil
+  değildir.
+- **Üstü çizili fiyat** = sayfada çizili görünen fiyat; güncel fiyattan büyük
+  değilse `null`. İndirim tahmininin referansı değildir.
+- Her sayfa için yalnızca seçilen (en ucuz uygun) teklif döner; fiyat, satıcı,
+  puan ve stok aynı tekliften alınır. Eşitlikte satıcı adına göre karar verilir.
+- **Tükendi** yalnızca açık stok sinyaliyle verilir (Trendyol: sayfadaki uygun
+  teklifler açıkça stok dışı; Hepsiburada: satıcı listesinde satılabilir teklif
+  yok). Ağ/ayrıştırma hatası, engellenme ve çelişkili yanıt Tükendi değildir.
+- **Kritik Stok** yalnızca açık kaynak sinyaliyle verilir; bu sinyal yalnız
+  Trendyol'da vardır.
 
-&nbsp;&nbsp;&nbsp;&nbsp;``*   `original_price` (Üstü çizili fiyat)``
+### Katalog
 
-&nbsp;&nbsp;&nbsp;&nbsp;``*   `seller_name` (Örn: Telefoncunuz, Hepsiburada)``
+- `config/discovery.json` kullanıcıya, `config/catalog.json` keşfe aittir.
+- Kimlikler değişmez, yeniden kullanılmaz; görülmeyen kayıtlar silinmez.
+  Tekrar çalıştırma çift kayıt üretmez.
+- Katalogla çelişen aday yazılmaz, `catalog_conflict` olarak raporlanır;
+  diğer geçerli adaylar eklenir.
+- Katalog kilit altında yeniden okunur ve atomik olarak yazılır; `--dry-run`
+  kataloğa yazmaz. Kısmi taramada doğrulanmış yeni kayıtlar eklenebilir.
+- `complete` yalnızca kullanılan kaynakların tarandığını ifade eder; bütün
+  pazaryerinin bulunduğunu kanıtlamaz.
 
-&nbsp;&nbsp;&nbsp;&nbsp;``*   `seller_rating` (Satıcı Puanı, Örn: 9.6)``
+## 5. Kabul kontrolü (24–25 Eylül 2026)
 
-&nbsp;&nbsp;&nbsp;&nbsp;``*   `stock_status` ("Stokta Var", "Kritik Stok", "Tükendi")``
+Veritabanından önce scraper ve discovery canlı veri ve kullanıcının tarayıcı
+karşılaştırmasıyla 6 adımda denetlendi. Testler 25'ten 47'ye çıktı; her
+düzeltme canlıda görülen gerçek bir örneğe dayanan regresyon testiyle korunur.
 
-&nbsp;&nbsp;&nbsp;&nbsp;`` *   `timestamp` ``
+| Adım | Sonuç |
+|---|---|
+| 1. Keşif kapsamı | `--trace` eklendi. Trendyol'daki eksik kapasiteler (iPhone 16 256/512, iPhone 15 512) kaynakta yok; kod hiçbir iPhone 15/16 kartını yanlış elemedi. Hepsiburada'daki eksik aile `-pm-` bağlantısı yüzünden kaçırılıyordu. |
+| 2. Kod hataları | Tek ortak kimlik kuralı; `-pm-` grup sayfaları; yenilenmiş kategorinin hariç tutulması ve `category_partial`; retlerde ürün adı; Hepsiburada stoksuz sayfa → Tükendi, çelişkili yanıt → `api_error`. |
+| 3. Başka marka | Galaxy S24 ve Redmi Note 14 geçici hedeflerle doğru sonuç verdi. Boş SKU'lu varyant kaydı çökmesi ve Xiaomi marka filtresi düzeltildi; `exclude_terms` eklendi. |
+| 4. Keşif → fiyat | Katalogdaki 44 sayfanın tamamı hatasız sınıflandı (16 Stokta Var, 5 Kritik Stok, 23 Tükendi). Satıcı listeleri ve fiyatlar tarayıcıyla eşleşti. Trendyol fiyat tanımı düzeltildi. |
+| 5. Tekrar ve hata | Kataloğun kopyasında iki gerçek keşif: ikincisinde sıfır ekleme, dosya aynı. Çakışma davranışı değiştirildi. Yeni `hepsiburada_hbcv0000d3aulb` bağlantısı gerçek kataloğa eklendi (44 → 45). |
+| 6. Durum kritiği | README ve bu plan yeniden yazıldı. Ölü kod taraması yapıldı: arama aşaması ve Hepsiburada adres doğrulaması sağlamlaştırıldı, kullanılmayan kod ve gelecek aşama kalıntıları (DB/ML/API tanımları, 9 çalışma ayarı, 9 bağımlılık) kaldırıldı. Temiz bir Python ortamında yalnızca 4 bağımlılıkla testler ve lint geçti. Veritabanına geçiş değerlendirmesi sıradaki iştir. |
 
-`*   **Periyodik Veri Toplama (Batch Processing):** Kullanıcı arama yaptığında **anlık scraping yapılmayacaktır**. Sonraki aşamada arka planda periyodik çalışan worker, doğrulanmış katalog bağlantılarını tarayıp verileri veritabanına kaydedecektir. Kullanıcı veriyi doğrudan SQLite üzerinden sunulan hazır sonuçlardan okuyacaktır.`
+Bu adımda alınan kararlar:
 
-`*   **Soğuk Başlangıç & Piyasa Korelasyonu:** ML modelini eğitebilmek için Akakçe/Cimri geçmiş grafik API'lerinden tersine mühendislikle veri çekilecektir. Amazon/N11 gibi diğer sitelerin varlığı, modelin genel piyasa reflekslerini öğrenmesi için avantaj olarak kullanılacaktır.`
+- Trendyol **model filtresi kullanılmayacak**: satıcı girişli olduğu için
+  güvenilir değil (iPhone 16e sayfaları "iPhone 16" etiketli) ve hiçbir marka
+  20 sayfa sınırına yaklaşmadı (Apple 3–4, Samsung 6, Xiaomi 4 sayfa).
+  Filtreler yalnızca daraltma içindir; kimliği bizim kontrolümüz belirler.
+- 4G/5G gibi ayrımlar hedef bazında `exclude_terms` ile yapılır.
+- Güncel fiyat, sayfadaki koşulsuz indirimli fiyattır.
+- Birleştirme çakışmasında yalnızca çakışan aday atlanır.
+- Galaxy S24 ve Redmi Note 14 gerçek `discovery.json`'a eklenmedi; yalnızca
+  denendi.
 
-&nbsp;
+## 6. Bilinen ve kabul edilen sınırlar
 
-`## 🧠 3. Makine Öğrenmesi (MLOps) & Veri Birleştirme Stratejisi`
+- Hepsiburada arama API'si bizi engelliyor; Hepsiburada taraması her zaman
+  "kısmi" raporlanır. Kapsam arama/model sayfasının ilk sayfası ve ürün
+  sayfalarındaki seçenek listesiyle sağlanır.
+- iPhone dışındaki markalarda Hepsiburada model filtresi sayfası bulunamadı;
+  genel arama sayfası kullanılıyor (denemelerde bütün kartlar ilk sayfaya sığdı).
+- Trendyol araması ve varyant listesi yalnızca satıştaki sayfaları gösterir;
+  stoktan çıkan sayfa yeniden keşfedilemez, önceden eklenmişse korunur.
+- Üç eski Trendyol bağlantısı (`trendyol_762254849`, `trendyol_762254854`,
+  `trendyol_865248542`) geçmişte elle verilmişti; otomatik keşfedilmiş sayılmaz.
+  Sitemap gibi ek kaynaklar araştırıldı, uygulanmadı.
+- Renk adları sitelerin etiketleridir; platformlar arasında birleştirilmez.
+- `exclude_terms` keşif anında uygulanır; sonradan eklenen terim eski katalog
+  kayıtlarını çıkarmaz.
+- Siteler değişebilir; bakım gerekebilir. "Bir daha bakmaya gerek yok" garantisi
+  verilmez.
 
-``*   **Model Mimarisi:** Her ürün için ayrı bir model dosyası (`.pkl`) **oluşturulmayacaktır**. Sistemde tüm telefonlar için ortak çalışacak **TEK BİR genelleştirilmiş model** (LightGBM sınıflandırma modeli) bulunacaktır.``&nbsp;
+## 7. Açık kararlar
 
-``*   **Farklı Ürünlerin Birleştirilmesi (Normalizasyon):** iPhone ile Xiaomi gibi farklı fiyat karakteristiğine sahip ürünlerin tek modelde eğitilebilmesi için mutlak fiyatlar (TL) değil, **Göreceli Fiyat Oranı** (`Guncel_Fiyat / Son_30_Gun_Ortalamasi`) kullanılacaktır. Böylece tüm ürünler aynı matematiksel oran düzleminde birleştirilecektir.``
+| Konu | Durum |
+|---|---|
+| Garanti türüne göre ayrım (ör. `trendyol_991304922` "International Version") | Karar bekliyor |
+| Veritabanı teknolojisi, veri modeli, çalışma ortamı | Karar bekliyor; SQLite önceki öneri, kesin değil |
+| Keşfin zamanlanması | Bu aşamada manuel; worker aşamasında değerlendirilecek |
+| Gelecek aşama tanımları (`PricePoint`, `ProductSummary`, `MarketRecord`, `coverage_version`, zamanlama/ML ayarları, FastAPI/LightGBM/Streamlit bağımlılıkları) | Kaldırıldı (25 Eylül 2026). İlgili aşamada yeni tasarıma göre yeniden eklenecek; yerel taslaklar o zamana kadar çalışmaz. |
 
-``*   **Ürün Kimliği (Context):** Modelin, her telefonun kendine özgü fiyat hareketini (örneğin iPhone'un daha yavaş, bazı modellerin ani değer kaybetmesini) kaçırmaması için eğitim matrisine `product_id` kategorik değişkeni eklenecektir.``
+Kullanıcının veritabanı için belirttiği tercihler (**karar değil**, değerlendirmede
+kullanılacak): her kontrolde yalnızca seçilen teklifin saklanması, günde 2
+fiyat toplama, keşfin bu aşamada manuel kalması; çalışma ortamı henüz belli değil.
 
-``*   **Feature Engineering (Öznitelik Çıkarımı):** `product_id`, `haftanin_gunu` (0-6 arası tam sayı), `ay` (1-12 arası tam sayı), `normalize_fiyat_orani`, `son_indirimden_gecen_gun_sayisi`.``
+## 8. Sonraki aşamalar (planlandı, başlanmadı)
 
-``*   **Çıktı & İş Mantığı:** "7 gün içinde indirime girme olasılığı" (% oran). Model indirim beklese dahi, `stock_status` verisi "Kritik Stok" ise indirim tahmini, FOMO (Fırsatı Kaçırma Korkusu) uyarısıyla çapraz analiz edilerek sunulacaktır.``
+### Veritabanı ve zamanlanmış toplama
 
-&nbsp;
+Başlamadan önce kullanıcıyla durum değerlendirmesi yapılır. Korunacak
+gereksinimler: tekrar kayıt engelleme, koşu ve bağlantı düzeyinde
+izlenebilirlik, fiyat gözlemi / Tükendi / toplama hatasının ayrı tutulması,
+katalog kapsamı değiştiğinde sahte fiyat düşüşü oluşmaması. SQLite seçilirse
+önceki öneri WAL, `busy_timeout=5000`, tek yazıcı ve salt okunur okuyuculardır.
 
-`## 🚀 4. Backend ve Frontend`
+### FastAPI ve Streamlit
 
-`*   **Backend:** FastAPI ve Pydantic V2 (Strict Mode ile hatalı veri girişlerinin engellenmesi - Örn: Fiyat alanına "Tükendi" metni gelirse verinin reddedilmesi).`
+- FastAPI hazır ürün, geçmiş ve özetleri sunar; istek anında scraping veya
+  tahmin çalışmaz. SlowAPI ile oran sınırlandırma.
+- Streamlit telefon seçimini katalogdan beslenen açılır menüyle sunar; en ucuz
+  teklif, platform, satıcı, puan ve son gözlem zamanı gösterilir.
+- Son 30 günün dibi, tarihi zirve ve volatilite takip edilen geçmişten
+  hesaplanır; 30 günlük veri yoksa rozet gösterilmez. Kritik stok uyarısı
+  tahminden ayrı bir iş kuralıdır.
 
-`*   **Frontend (Arayüz):** Streamlit.`
+### ML
 
-`*   **Arayüz / Dashboard Özellikleri:**`
+- Tek ortak LightGBM sınıflandırma modeli; ürün başına ayrı model yok.
+- Hedef: tahmin anındaki takip edilen minimum fiyat P(t) ise, sonraki 7 günde
+  gözlenen minimumlardan biri 0,95 × P(t) veya altındaysa 1.
+- Başlangıç özellikleri: `product_id`, haftanın günü, ay, güncel fiyat / önceki
+  30 günün ortalaması, son indirimden geçen gün.
+- Kapsamı değişen pencereler eğitimde kullanılmaz; en az 30 günlük geçmiş veya
+  doğrulanmış model yoksa olasılık gösterilmez. Zaman sıralı değerlendirme ve
+  sabit referanstan iyi Brier skoru olmadan model yayımlanmaz.
+- Akakçe/Cimri geçmişi araştırılacak; piyasa minimumu, takip edilen tekliflerin
+  minimumuymuş gibi etiketlenmez.
 
-&nbsp;&nbsp;&nbsp;&nbsp;`*   **Arama Çubuğu (Selectbox):** Kullanıcı yazım hatalarını ("iphon 15" vb.) önlemek için serbest metin kutusu yerine, DB'deki telefonların listelendiği zorunlu açılır menü kullanılacaktır.`
+### İşletim
 
-&nbsp;&nbsp;&nbsp;&nbsp;`*   **Fırsat Panosu:**`&nbsp;
+Docker Compose ile süreçler, veri ve model kalıcılığı; GitHub Actions ile CI
+(bugün Black, Flake8, testler çalışıyor).
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`*   O anki En Ucuz Platform, Satıcı Adı ve Satıcı Puanı.`
+## 9. Çalışma ve Git disiplini
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`*   🔥 *Son 30 Günün Dibi Rozeti* (Mevcut fiyat son 1 ayın en düşük seviyesindeyse).`
-
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`*   📉 *Tarihi Zirve Fiyatı* (Psikolojik çıpalama için).`
-
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`*   📊 *Fiyat Volatilitesi* (Fiyatın hareketlilik özeti).`
-
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`*   🚨 *Kritik Stok Uyarısı*.`
-
-&nbsp;
-
-`## 🛠️ 5. DevOps, Dağıtım ve Güvenlik`
-
-``*   **Konteynerleştirme:** Docker ve `docker-compose.yml` (Scraper/DB, FastAPI, Streamlit tek tuşla ayağa kalkacak). Bulut sunucuda 7/24 çalışacak altyapı.``
-
-`*   **Veri Kalıcılığı:** Docker Volumes ile SQLite DB'nin ve WAL dosyalarının silinmesi önlenecek.`
-
-`*   **Zamanlanmış Görevler:** Arka planda periyodik bot çalıştırma mimarisi.`
-
-``*   **Güvenlik & Stabilite:** SlowAPI ile IP tabanlı oran sınırlandırma (Rate Limiting). SQLite eşzamanlılık kilitlenmelerini önlemek için `busy_timeout=5000` ve Tek Yazıcı (Single-Writer) kuyruk modeli.``
-
-`*   **Sürekli Entegrasyon (CI):** GitHub Actions ile otomatik kod testi (Black, Flake8).`
-
-&nbsp;
-
-&nbsp;
-
-## Otomatik ürün ve varyant keşfi kararı
-
-İlk keşif sürümünde kullanıcı `config/discovery.json` içinde yalnızca marka ve tam
-model tanımlar. Sistem Trendyol ve Hepsiburada kaynaklarından doğrulanabilen
-kapasite ve renk bağlantılarını bulur. Pro, Plus, Pro Max ve 16e gibi adlar
-ayrı model hedefleridir. Her kapasite ayrı ürün kimliği, her renk/platform URL'si
-o ürüne bağlı ayrı bağlantıdır. RAM farkı ürün grubunu bölmez; saptanan RAM
-bilgisi raporda korunur.
-
-Doğrulanmış yeni bağlantılar kilitli, atomik katalog birleştirmesiyle eklenir;
-eski kimlikler ve kayıtlar korunur. Stok durumu keşifte çıkarılmaz. Erişim
-engeli veya sayfa sınırı halinde tarama kısmi raporlanır, doğrulanmış kayıtlar
-kalır. Garanti metni varsa ürün düzeyinde raporlanır; satıcı bazında garanti
-eşlemesi ve garantiye göre fiyat karşılaştırması sonraki aşamadır. Keşif ilk
-sürümde komutla çalışır; zamanlama, veritabanı, API ve ML ayrı aşamalardır.
-
-Keşif hedeflerinde ürün URL'si tutulmaz; kullanıcı yalnızca marka ve tam modeli
-tanımlar. Arama veya varyant kaynağında görünmeyen sayfaların otomatik bulunduğu
-iddia edilmez. Önceki keşiflerde kataloğa eklenmiş bağlantılar yeniden taramada
-görünmeseler bile korunur; silinmiş/HTTP 410 sayfalar yeni aday olarak eklenmez.
-Aynı renk ve kapasitedeki farklı ürün sayfaları farklı platform ürün
-kimlikleriyle izlenebilir. Keşif raporu gözlenen renkleri kapasite ve platform
-bazında ayrı gösterir; `complete` kullanılan kaynakların tarandığını belirtir,
-bütün pazarın eksiksiz kapsandığını kanıtlamaz.
+- Kullanıcı projeyi öğrenerek geliştiriyor: her değişiklikte amaç, akışa
+  bağlantı, doğrulama ve sınırlar anlatılır; adım adım ilerlenir; plan veya
+  açıklama isteği kod yazma isteğine dönüştürülmez.
+- Otomatik testler kuralları kayıtlı yanıtlarla, canlı kontrol araçları bugünkü
+  site uyumunu sınar; ikisi birbirine karıştırılmaz. "Testler geçti", "bütün
+  pazaryeri tarandı" anlamına gelmez.
+- Git'e yalnızca biten aşamanın dosyaları açıkça seçilerek eklenir; `git add .`
+  kullanılmaz. Taslaklar, `data/` ve `artifacts/` çıktıları ve gizli ayarlar
+  gönderilmez. Commit, aşama bitince kullanıcı izniyle yapılır.
+- Black/Flake8 yerelde değişen dosyalarda çalıştırılır; CI Git'teki dosyaları
+  denetler.

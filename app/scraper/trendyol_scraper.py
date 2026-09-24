@@ -7,13 +7,25 @@ from bs4 import BeautifulSoup
 
 from app.scraper.base import BaseScraper
 from app.scraper.http import FetchError
-from app.scraper.parsing import assigned_json, money, normalize, verify_identity
-
-DISALLOWED_CONDITIONS = (
-    re.compile(r"\byenilenmis\b"),
-    re.compile(r"\bikinci[\s_-]*el\b"),
-    re.compile(r"\bteshir\b"),
+from app.scraper.parsing import (
+    DISALLOWED_CONDITIONS,
+    assigned_json,
+    attribute,
+    money,
+    normalize,
+    storage_gb,
+    verify_identity,
 )
+
+
+def product_capacity(product: dict) -> int | None:
+    """Ürün JSON'undaki yapısal depolama kapasitesi; keşif de aynı kaynağı okur."""
+    value = attribute(
+        product.get("attributes") or [], "Dahili Hafıza", "Internal Memory"
+    )
+    if value is None:
+        value = (product.get("slicingAttributes") or {}).get("Internal Memory")
+    return storage_gb(value or "")
 
 
 def _product_id(url: str) -> str | None:
@@ -26,12 +38,18 @@ def _price(price: dict) -> tuple[int | None, int | None, str | None]:
         return None, None, "missing_price"
     if price.get("currency") != "TRY":
         return None, None, "invalid_currency"
-    current_data = price.get("sellingPrice") or price.get("discountedPrice") or {}
-    if current_data.get("value") is None:
+    selling = (price.get("sellingPrice") or {}).get("value")
+    discounted = (price.get("discountedPrice") or {}).get("value")
+    # Güncel fiyat sayfanın gösterdiği koşulsuz indirimli fiyattır (ör. "Net 400 TL
+    # İndirim"); adet/sepet koşullu indirimler bu alana girmez.
+    offered = [money(value) for value in (selling, discounted) if value is not None]
+    if not offered:
         return None, None, "missing_price"
-    current = money(current_data["value"])
+    current = min(offered)
+    # Sayfada üstü çizili görünen fiyat: originalPrice ile satış fiyatının büyüğü.
     old = (price.get("originalPrice") or {}).get("value")
-    original = money(old) if old is not None else None
+    listed = [money(value) for value in (old, selling) if value is not None]
+    original = max(listed) if listed else None
     if original is not None and original <= current:
         original = None
     return current, original, None
@@ -50,7 +68,6 @@ def _offer(
     variant: dict,
     listing,
     *,
-    selected=False,
     fallback_stock=None,
 ) -> dict:
     relative_url = merchant.get("url") or listing.url
@@ -90,7 +107,7 @@ def _offer(
         "offer_url": offer_url,
         "eligible": reason is None,
         "rejection_reason": reason,
-        "selected": selected,
+        "selected": False,
     }
 
 
@@ -108,7 +125,12 @@ class Scraper(BaseScraper):
         if state is None:
             raise FetchError("parse", "Trendyol ürün durum verisi bulunamadı")
         product = state["product"]
-        verify_identity(product["name"], listing.model, listing.storage_gb)
+        verify_identity(
+            [product["name"]],
+            listing.model,
+            listing.storage_gb,
+            capacity=product_capacity(product),
+        )
         if _product_id(listing.url) != str(product["id"]):
             raise FetchError("identity", "Trendyol ürün kimliği değişmiş")
 

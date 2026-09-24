@@ -19,10 +19,6 @@ def utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
 
-def iso(value: datetime) -> str:
-    return value.astimezone(timezone.utc).isoformat(timespec="microseconds")
-
-
 def public_url(value: str) -> str:
     url = urlsplit(value)
     if (
@@ -89,18 +85,10 @@ class Listing(Contract):
     active: bool = True
 
 
-class HistorySource(Contract):
-    source: Literal["akakce", "cimri"]
-    product_id: int = Field(gt=0)
-    url: URL
-    active: bool = True
-
-
 class Catalog(Contract):
     platforms: list[Platform]
     products: list[Product]
     listings: list[Listing]
-    history_sources: list[HistorySource] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def references(self):
@@ -114,7 +102,6 @@ class Catalog(Contract):
             ],
             [v.listing_id for v in self.listings],
             [(v.platform, v.url) for v in self.listings],
-            [(v.source, v.product_id, v.url) for v in self.history_sources],
         )
         if any(len(group) != len(set(group)) for group in groups):
             raise ValueError("Katalogda tekrarlanan kimlik veya varyant var")
@@ -125,25 +112,15 @@ class Catalog(Contract):
                 raise ValueError("Bağlantının ürün veya platform referansı bulunamadı")
             if urlsplit(listing.url).hostname not in platforms[listing.platform].hosts:
                 raise ValueError("Bağlantı, platformun izin verilen alan adında değil")
-        for source in self.history_sources:
-            if source.product_id not in products:
-                raise ValueError("Geçmiş kaynağının ürün referansı bulunamadı")
-            if urlsplit(source.url).hostname not in {
-                f"www.{source.source}.com",
-                f"{source.source}.com",
-            }:
-                raise ValueError("Geçmiş kaynağının alan adı yanlış")
         return self
 
 
 class ProductListing(Listing):
+    """Scraper'a verilen bağlantı: katalog kaydı + doğrulanacak model/kapasite."""
+
     product_name: str
-    brand: str
     model: str
     storage_gb: int
-    platform_name: str
-    hosts: list[str]
-    coverage_version: str
 
 
 class PriceObservation(Contract):
@@ -157,7 +134,7 @@ class PriceObservation(Contract):
     seller_name: str | None = None
     seller_rating: float | None = Field(default=None, ge=0)
     seller_rating_scale: float | None = Field(default=None, gt=0)
-    stock_status: Stock | None
+    stock_status: Stock
     timestamp: AwareDatetime
     currency: Literal["TRY"] = "TRY"
 
@@ -172,71 +149,15 @@ class PriceObservation(Contract):
         return self
 
 
-class PricePoint(Contract):
-    product_id: int
-    timestamp: AwareDatetime
-    price: Money
-    coverage_version: str
-    run_id: str
-
-
-class FeatureVector(Contract):
-    product_id: int
-    haftanin_gunu: int
-    ay: int
-    normalize_fiyat_orani: float
-    son_indirimden_gecen_gun_sayisi: float | None
-
-
-class PredictionResult(Contract):
-    probability: float | None = Field(default=None, ge=0, le=1)
-    reason: str | None = None
-    model_version: str | None = None
-    as_of: AwareDatetime | None = None
-
-
-class PlatformOffer(Contract):
-    platform_name: str
-    observation: PriceObservation
-
-
-class ProductSummary(Contract):
-    product_id: int
-    product_name: str
-    coverage_version: str
-    as_of: AwareDatetime | None = None
-    attempted_at: AwareDatetime | None = None
-    complete: bool = False
-    stale: bool = False
-    expected_listings: int = 0
-    observed_listings: int = 0
-    offers: list[PlatformOffer] = Field(default_factory=list)
-    best_offer: PlatformOffer | None = None
-    lowest_30_days: bool = False
-    historical_peak: Money | None = None
-    volatility: float | None = None
-    critical_stock: bool = False
-    prediction: PredictionResult
-    forecast_horizon_days: int = 7
-    discount_threshold: float = 0.05
-    money_unit: Literal["kurus"] = "kurus"
-
-
-class MarketRecord(Contract):
-    source: Literal["akakce", "cimri"]
-    product_id: int
-    source_url: URL
-    timestamp: AwareDatetime
-    price: Money
-    scope: Literal["market_minimum"] = "market_minimum"
-    eligible_for_target: Literal[False] = False
-
-
 class DiscoveryTarget(Contract):
     key: Key
     brand: str = Field(min_length=1)
     model: str = Field(min_length=1)
     active: bool = True
+    # Aynı adı taşıyan farklı telefonları ayırır; ör. "Redmi Note 14" için ["5G"].
+    exclude_terms: list[Annotated[str, Field(min_length=1)]] = Field(
+        default_factory=list
+    )
 
 
 class DiscoveryConfig(Contract):

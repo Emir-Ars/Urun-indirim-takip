@@ -5,34 +5,35 @@ from abc import ABC, abstractmethod
 from app.contracts import DiscoveryIssue
 from app.scraper.http import FetchError, PageClient
 
+# Tek bir bozuk kaynak yanıtı bütün keşfi durdurmaz; bu hatalar rapora yazılır.
+RECOVERABLE = (FetchError, ValueError, TypeError, KeyError, AttributeError)
+
+
+def error_code(exc: Exception) -> str:
+    """Rapor için hata kodu: FetchError kodu veya beklenmeyen hatanın türü."""
+    return getattr(exc, "code", None) or type(exc).__name__
+
 
 class BaseDiscovery(ABC):
     platform: str
     hosts: list[str]
 
-    def __init__(self, target, config, runtime, client=None):
+    def __init__(self, target, config, runtime):
         self.target = target
         self.config = config
-        self.pages = PageClient(
-            self.hosts, runtime, client=client, request_budget=config.max_requests
-        )
-        self.requests = 0
+        self.pages = PageClient(self.hosts, runtime, request_budget=config.max_requests)
         self.issues = []
+        self.trace = []
         self.search_pages = 0
         self.product_pages = 0
 
+    # İstek bütçesini PageClient uygular; yeniden denemeler ve yönlendirmeler
+    # dahil gerçek HTTP denemelerini sayar (self.pages.request_count).
     def get(self, url, *, headers=None):
-        self._count()
         return self.pages.get(url, headers=headers)
 
     def get_json(self, url, *, headers=None):
-        self._count()
         return self.pages.get_json(url, headers=headers)
-
-    def _count(self):
-        if self.requests >= self.config.max_requests:
-            raise FetchError("limit", "HTTP istek sınırı doldu")
-        self.requests += 1
 
     def issue(self, reason, detail=""):
         self.issues.append(
@@ -43,6 +44,10 @@ class BaseDiscovery(ABC):
                 detail=str(detail)[:300],
             )
         )
+
+    def note(self, kind, **fields):
+        """Sessiz kararların tanılama izi; rapora ve kataloğa yazılmaz."""
+        self.trace.append({"kind": kind, **fields})
 
     @abstractmethod
     def discover(self):

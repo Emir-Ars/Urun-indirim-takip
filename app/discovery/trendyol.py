@@ -6,16 +6,20 @@ from urllib.parse import parse_qsl, urlencode, urljoin, urlsplit, urlunsplit
 from bs4 import BeautifulSoup
 
 from app.contracts import DiscoveryCandidate, DiscoveryResult
-from app.discovery.base import BaseDiscovery
-from app.discovery.matching import (
-    attribute,
-    matches_model,
-    phone_category,
-    storage_gb,
-    title_storage,
-)
+from app.discovery.base import RECOVERABLE, BaseDiscovery, error_code
+from app.discovery.matching import phone_category
 from app.scraper.http import FetchError
-from app.scraper.parsing import assigned_json, normalize
+from app.scraper.parsing import (
+    EXCLUDED,
+    assigned_json,
+    attribute,
+    excluded_term,
+    identify,
+    matches_model,
+    normalize,
+    storage_gb,
+)
+from app.scraper.trendyol_scraper import product_capacity
 
 HOME = "https://www.trendyol.com/"
 SEARCH = "https://apigw.trendyol.com/discovery-sfint-search-service/api/search/products"
@@ -24,6 +28,27 @@ VARIANTS = (
     "api/slicing-attributes/product-group/{group}/slicing-attributes"
 )
 PRODUCT_ID = re.compile(r"-p-(\d+)(?:[/?]|$)")
+
+
+def _axes(response: dict) -> list[dict]:
+    """Varyant yanıtını tanılama için eksen → değer → ürün kimliği biçiminde özetler."""
+    return [
+        {
+            "type": axis.get("type"),
+            "values": [
+                {
+                    "name": value.get("name"),
+                    "ids": [
+                        str(item.get("id"))
+                        for item in value.get("products", [])
+                        if isinstance(item, dict)
+                    ],
+                }
+                for value in axis.get("values", [])
+            ],
+        }
+        for axis in response.get("result", [])
+    ]
 
 
 class Discovery(BaseDiscovery):
@@ -62,29 +87,73 @@ class Discovery(BaseDiscovery):
             try:
                 aggregations = self.get_json(aggregation_url, headers=headers)
                 for group in aggregations.get("aggregation", []):
-                    if group.get("filterKey") != "LeafCategory":
+                    values = group.get("values", [])
+                    if group.get("filterKey") == "WebBrand" and brand is None:
+                        # Bazı aramalarda canonicalFilters boş gelir; marka buradadır.
+                        brand = next(
+                            (
+                                str(item["id"])
+                                for item in values
+                                if normalize(str(item.get("text", "")))
+                                == normalize(self.target.brand)
+                            ),
+                            None,
+                        )
+                    if group.get("filterKey") != "LeafCategory" or category:
                         continue
-                    for item in group.get("values", []):
-                        if phone_category(item.get("text", "")):
-                            category = str(item["id"])
-                            break
-                    if category:
-                        break
-            except FetchError as exc:
-                self.issue("filter_unavailable", exc.code)
-        if not brand or not category:
-            self.issue(
-                "filter_unavailable", "Marka/telefon kategori filtresi bulunamadı"
-            )
+                    phones = [
+                        item for item in values if phone_category(item.get("text", ""))
+                    ]
+                    self.note(
+                        "leaf_categories",
+                        total=len(values),
+                        phone=[
+                            {key: item.get(key) for key in ("id", "text", "count")}
+                            for item in phones
+                        ],
+                    )
+                    if not phones:
+                        continue
+                    category = str(phones[0]["id"])
+                    if len(phones) > 1:
+                        # Arama tek kategoriyle filtrelenir; diğerleri taranmamıştır.
+                        self.issue(
+                            "category_partial",
+                            "Yalnız ilk telefon kategorisi tarandı: "
+                            + ", ".join(str(item.get("text")) for item in phones),
+                        )
+            except RECOVERABLE as exc:
+                self.issue("filter_unavailable", error_code(exc))
+        if not category:
+            # Kategori filtresi olmadan arama aksesuarlarla dolar; kısmi raporlanır.
+            self.issue("filter_unavailable", "Telefon kategori filtresi bulunamadı")
         else:
-            params.update(wb=brand, lc=category)
-            referer = (
-                HOME + "sr?" + urlencode(search_params | {"wb": brand, "lc": category})
-            )
+            # Marka yoksa yalnız kategori uygulanır; marka kartta ayrıca denetlenir.
+            filters = ({"wb": brand} if brand else {}) | {"lc": category}
+            params.update(filters)
+            referer = HOME + "sr?" + urlencode(search_params | filters)
             self.get(referer)
             headers["Referer"] = referer
             first = self.get_json(SEARCH + "?" + urlencode(params), headers=headers)
+        self.note(
+            "search_filter", brand=brand, category=category, total=first.get("total")
+        )
         return first, headers
+
+    def _card_reason(self, item) -> str | None:
+        """Arama kartının neden aday sayılmadığını döndürür; uygunsa None."""
+        name = item.get("name", "")
+        if EXCLUDED.search(normalize(name)):
+            return "excluded_word"
+        if not matches_model(name, self.target.model):
+            return "other_model"
+        if excluded_term([name], self.target.exclude_terms):
+            return "excluded_term"
+        if normalize(item.get("brand", "")) != normalize(self.target.brand):
+            return "brand"
+        if not phone_category((item.get("category") or {}).get("name", "")):
+            return "category"
+        return None
 
     def _search_candidates(self):
         page, headers = self._search()
@@ -108,14 +177,23 @@ class Discovery(BaseDiscovery):
                 self.issue("repeated_page", f"Sayfa {page.get('pageIndex')}")
                 return groups, cards, False
             seen_ids.update(new_ids)
+            if number == 0 and products and isinstance(products[0], dict):
+                self.note("search_card_fields", keys=sorted(products[0]))
             for item in products:
-                if not isinstance(item, dict) or not matches_model(
-                    item.get("name", ""), self.target.brand, self.target.model
-                ):
+                if not isinstance(item, dict):
                     continue
-                if normalize(item.get("brand", "")) != normalize(self.target.brand):
-                    continue
-                if not phone_category((item.get("category") or {}).get("name", "")):
+                reason = self._card_reason(item)
+                self.note(
+                    "search_card",
+                    page=self.search_pages,
+                    id=item.get("id"),
+                    name=item.get("name"),
+                    brand=item.get("brand"),
+                    category=(item.get("category") or {}).get("name"),
+                    group=item.get("groupId"),
+                    decision=reason or "accepted",
+                )
+                if reason:
                     continue
                 group = item.get("groupId")
                 if group and item.get("id"):
@@ -161,24 +239,27 @@ class Discovery(BaseDiscovery):
         category = (product.get("businessUnitData") or {}).get("name", "")
         if not category:
             category = (product.get("category") or {}).get("name", "")
-        if (
-            normalize(brand) != normalize(self.target.brand)
-            or not matches_model(name, brand, self.target.model)
-            or not phone_category(category)
-        ):
-            raise FetchError("identity", "Trendyol telefon/model doğrulanamadı")
-        attrs = product.get("attributes") or []
-        capacity = storage_gb(
-            attribute(attrs, "Dahili Hafıza", "Internal Memory") or ""
+        self.note(
+            "product_page",
+            id=expected_id,
+            name=name,
+            brand=brand,
+            category=category,
+            in_stock=product.get("inStock"),
         )
-        if capacity is None:
-            capacity = storage_gb(
-                (product.get("slicingAttributes") or {}).get("Internal Memory", "")
+        if normalize(brand) != normalize(self.target.brand) or not phone_category(
+            category
+        ):
+            raise FetchError(
+                "identity", f"Trendyol telefon/marka doğrulanamadı: {name[:160]}"
             )
-        if capacity is None:
-            capacity = title_storage(name, self.target.model)
-        if capacity is None:
-            raise FetchError("identity", "Depolama kapasitesi doğrulanamadı")
+        capacity = identify(
+            [name],
+            self.target.model,
+            product_capacity(product),
+            exclude=self.target.exclude_terms,
+        )
+        attrs = product.get("attributes") or []
         color = attribute(attrs, "Renk", "WebColor") or ""
         ram = storage_gb(
             attribute(attrs, "RAM Kapasitesi", "Ram (System Memory)") or ""
@@ -202,14 +283,11 @@ class Discovery(BaseDiscovery):
         found = {}
         complete = False
         choices = {}
+        cards = {}
         try:
             groups, cards, complete = self._search_candidates()
             choices.update(cards)
             for group, seed in groups.items():
-                if self.product_pages >= self.config.max_product_pages:
-                    self.issue("product_limit", "Ürün sayfası sınırı doldu")
-                    complete = False
-                    break
                 endpoint = (
                     VARIANTS.format(group=group)
                     + "?"
@@ -222,6 +300,7 @@ class Discovery(BaseDiscovery):
                         or response.get("statusCode") != 200
                     ):
                         raise FetchError("parse", "Trendyol seçenek yanıtı başarısız")
+                    self.note("variants", group=group, seed=seed, axes=_axes(response))
                     for axis in response.get("result", []):
                         for value in axis.get("values", []):
                             for item in value.get("products", []):
@@ -242,21 +321,24 @@ class Discovery(BaseDiscovery):
                     ):
                         self.issue("missing_variants", group)
                         complete = False
-                except FetchError as exc:
-                    self.issue("variant_fetch", f"{group}: {exc.code}")
+                except RECOVERABLE as exc:
+                    self.issue("variant_fetch", f"{group}: {error_code(exc)}")
                     complete = False
-        except FetchError as exc:
-            self.issue("search_fetch", exc.code)
+        except RECOVERABLE as exc:
+            self.issue("search_fetch", error_code(exc))
             complete = False
+        self.note(
+            "choices",
+            from_search=sorted(cards),
+            from_variants=sorted(set(choices) - set(cards)),
+        )
         for product_id, url in choices.items():
-            if product_id in found:
-                continue
             if self.product_pages >= self.config.max_product_pages:
                 self.issue("product_limit", "Ürün sayfası sınırı doldu")
                 break
             try:
                 found[product_id] = self._candidate(url, product_id)
-            except (FetchError, ValueError, KeyError, TypeError) as exc:
+            except RECOVERABLE as exc:
                 self.issue("candidate_rejected", f"{product_id}: {exc}")
         return DiscoveryResult(
             platform=self.platform,

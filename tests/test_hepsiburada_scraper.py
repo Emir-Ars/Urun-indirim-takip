@@ -49,16 +49,12 @@ def listing():
         color="Mavi",
         active=True,
         product_name="Apple iPhone 15 128 GB",
-        brand="Apple",
         model="iPhone 15",
         storage_gb=128,
-        platform_name="Hepsiburada",
-        hosts=["www.hepsiburada.com"],
-        coverage_version="test",
     )
 
 
-def page_html():
+def page_html(*, name="Apple iPhone 15 128 GB Mavi", variants=None):
     context = {
         "productTags": [],
         "sku": SKU,
@@ -75,13 +71,45 @@ def page_html():
     identity = {
         "@context": "https://schema.org",
         "@type": "Product",
-        "name": "Apple iPhone 15 128 GB Mavi",
+        "name": name,
         "sku": SKU,
     }
+    variant_state = {"allVariantCombinations": variants or []}
     return (
         "<html><body>"
         f'<script type="application/ld+json">{json.dumps(identity)}</script>'
         f'<script type="application/json">{json.dumps(context)}</script>'
+        f'<script type="application/json">{json.dumps(variant_state)}</script>'
+        "</body></html>"
+    )
+
+
+def redux_page_html():
+    """Canlı stoksuz sayfadaki gibi: ana satıcının fiyatı yok, stok dışı."""
+    context = {
+        "sku": SKU,
+        "productId": "HBC00004X9ZCG",
+        "brand": "Apple",
+        "definitionName": "Cep Telefonu",
+        "definitionId": 60,
+        "taxVatRate": 20,
+        "campaignIds": [],
+        "mainProductTagList": [],
+        "rootCategoryList": [{"categoryId": 60005202}],
+        "listings": [],
+        "merchantId": "Hepsiburada",
+        "merchantName": "Hepsiburada",
+        "listingId": "",
+        "prices": None,
+        "isInStock": False,
+    }
+    identity = {"@type": "Product", "name": "Apple  iPhone 15 128", "sku": SKU}
+    variants = {"allVariantCombinations": [{"sku": SKU, "Kapasite": "128 GB"}]}
+    return (
+        "<html><body>"
+        f'<script type="application/ld+json">{json.dumps(identity)}</script>'
+        f"<script>window.STATE = {json.dumps(context)};</script>"
+        f'<script type="application/json">{json.dumps(variants)}</script>'
         "</body></html>"
     )
 
@@ -120,9 +148,9 @@ def response_offer(listing_id, seller, price, *, discounted=None):
     }
 
 
-def scraper_with(listings, offers):
+def scraper_with(listings, offers, *, html=None):
     responses = [
-        FakeResponse(text=page_html()),
+        FakeResponse(text=html or page_html()),
         FakeResponse(data={"statusCode": 200, "data": {"listings": listings}}),
         FakeResponse(data=api_response(offers)),
     ]
@@ -155,6 +183,36 @@ def test_fetches_all_listings_and_selects_cheapest(listing):
     assert len(session.calls[2][2]["json"]["product"]["otherMerchants"]) == 2
     assert len(scraper._last_offers) == 2
     assert sum(offer["selected"] for offer in scraper._last_offers) == 1
+
+
+def test_title_without_capacity_uses_variant_capacity(listing):
+    # Canlı sayfadaki gibi: JSON-LD adı kapasite birimi içermiyor.
+    html = page_html(
+        name="Apple  iPhone 15 128",
+        variants=[{"sku": SKU, "Kapasite": "128 GB", "Renk": "Mavi"}],
+    )
+    listings = [full_listing("hb", "Hepsiburada", 56_999)]
+    offers = [response_offer("hb", "Hepsiburada", 56_999)]
+    scraper, _session = scraper_with(listings, offers, html=html)
+
+    observation = scraper.fetch(listing)
+
+    assert observation.current_price == 5_699_900
+    assert observation.stock_status == "Stokta Var"
+
+
+def test_conflicting_page_capacity_is_rejected(listing):
+    html = page_html(
+        name="Apple iPhone 15 256 GB Mavi",
+        variants=[{"sku": SKU, "Kapasite": "128 GB", "Renk": "Mavi"}],
+    )
+    scraper, session = scraper_with([], [], html=html)
+
+    with pytest.raises(FetchError) as error:
+        scraper.fetch(listing)
+
+    assert error.value.code == "identity"
+    assert len(session.calls) == 1
 
 
 def test_filters_conditions_and_uses_discounted_price(listing):
@@ -195,6 +253,38 @@ def test_empty_full_listing_response_is_out_of_stock(listing):
     assert observation.current_price is None
     assert observation.stock_status == "Tükendi"
     assert len(session.calls) == 2
+
+
+def test_sold_out_page_without_main_price_is_out_of_stock(listing):
+    scraper, session = scraper_with([], [], html=redux_page_html())
+
+    observation = scraper.fetch(listing)
+
+    assert observation.stock_status == "Tükendi"
+    assert observation.current_price is None
+    assert len(session.calls) == 2
+
+
+def test_other_seller_is_priced_when_main_merchant_is_sold_out(listing):
+    listings = [full_listing("other", "Diğer Satıcı", 58_500)]
+    offers = [response_offer("other", "Diğer Satıcı", 58_500)]
+    scraper, session = scraper_with(listings, offers, html=redux_page_html())
+
+    observation = scraper.fetch(listing)
+
+    assert observation.current_price == 5_850_000
+    assert observation.seller_name == "Diğer Satıcı"
+    assert len(session.calls[2][2]["json"]["product"]["otherMerchants"]) == 1
+
+
+def test_empty_price_response_for_salable_listing_is_not_sold_out(listing):
+    listings = [full_listing("hb", "Hepsiburada", 56_999)]
+    scraper, _session = scraper_with(listings, [])
+
+    with pytest.raises(FetchError) as error:
+        scraper.fetch(listing)
+
+    assert error.value.code == "api_error"
 
 
 def test_rejects_response_sku_mismatch(listing):
