@@ -230,3 +230,70 @@ class MarketRecord(Contract):
     price: Money
     scope: Literal["market_minimum"] = "market_minimum"
     eligible_for_target: Literal[False] = False
+
+
+class DiscoveryTarget(Contract):
+    key: Key
+    brand: str = Field(min_length=1)
+    model: str = Field(min_length=1)
+    active: bool = True
+
+
+class DiscoveryConfig(Contract):
+    targets: list[DiscoveryTarget]
+    max_search_pages: int = Field(default=20, ge=1, le=100)
+    max_product_pages: int = Field(default=100, ge=1, le=500)
+    max_requests: int = Field(default=200, ge=1, le=1000)
+
+    @model_validator(mode="after")
+    def unique_targets(self):
+        if len({target.key for target in self.targets}) != len(self.targets):
+            raise ValueError("Keşif hedefleri benzersiz olmalı")
+        return self
+
+
+class DiscoveryCandidate(Contract):
+    target_key: Key
+    platform: Key
+    platform_product_id: str = Field(min_length=1)
+    url: URL
+    brand: str = Field(min_length=1)
+    model: str = Field(min_length=1)
+    storage_gb: int = Field(gt=0)
+    color: str = ""
+    ram_gb: int | None = Field(default=None, gt=0)
+    warranty_text: str | None = None
+    warranty_source: str | None = None
+
+
+class DiscoveryIssue(Contract):
+    platform: Key
+    target_key: Key
+    reason: str
+    detail: str = ""
+
+
+class DiscoveryResult(Contract):
+    platform: Key
+    target_key: Key
+    candidates: list[DiscoveryCandidate] = Field(default_factory=list)
+    issues: list[DiscoveryIssue] = Field(default_factory=list)
+    complete: bool = False
+    search_pages: int = 0
+    product_pages: int = 0
+
+
+class DiscoveryReport(Contract):
+    complete: bool
+    dry_run: bool
+    results: list[DiscoveryResult]
+    added_products: list[str] = Field(default_factory=list)
+    added_listings: list[str] = Field(default_factory=list)
+    existing_listings: list[str] = Field(default_factory=list)
+    retained_unobserved_listings: list[str] = Field(default_factory=list)
+    pending: list[DiscoveryIssue] = Field(default_factory=list)
+    rejected: list[DiscoveryIssue] = Field(default_factory=list)
+    coverage_changes: dict[str, int] = Field(default_factory=dict)
+    observed_colors: dict[str, dict[str, dict[str, list[str]]]] = Field(
+        default_factory=dict
+    )

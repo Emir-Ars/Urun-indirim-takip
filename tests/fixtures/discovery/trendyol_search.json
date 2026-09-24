@@ -1,0 +1,11 @@
+{
+  "products": [
+    {"id": 11, "name": "iPhone 16 128 GB Siyah", "brand": "Apple", "category": {"name": "IOS Cep Telefonları"}, "groupId": 7},
+    {"id": 12, "name": "iPhone 16 Pro 128 GB", "brand": "Apple", "category": {"name": "IOS Cep Telefonları"}, "groupId": 8},
+    {"id": 13, "name": "iPhone 16 Uyumlu Kılıf", "brand": "Apple", "category": {"name": "Telefon Aksesuarları"}, "groupId": 9}
+  ],
+  "pageIndex": 1,
+  "total": 3,
+  "offsetParameters": "Product_3",
+  "_links": {"next": null}
+}

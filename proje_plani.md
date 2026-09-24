@@ -10,9 +10,9 @@
 
 `*   **Kategori & Hacim:** Sadece "Akıllı Telefonlar". Başlangıç için en popüler 20-30 model (Örn: iPhone 13, 14, 15, Samsung S24) eklenecektir.`
 
-`*   **Varyant Yönetimi:** Farklı hafıza kapasiteleri (Örn: iPhone 15 128GB vs 256GB) sistemde **tamamen bağımsız, ayrı ürünler** olarak tanımlanacaktır. Renk seçenekleri dikkate alınmayacak, ilgili kapasitedeki en ucuz renk baz alınacaktır.`
+`*   **Varyant Yönetimi:** Farklı hafıza kapasiteleri (Örn: iPhone 15 128GB vs 256GB) sistemde **tamamen bağımsız, ayrı ürünler** olarak tanımlanacaktır. Doğrulanmış renk bağlantıları aynı kapasiteye bağlanacak; ilgili kapasitedeki takip edilen teklifler karşılaştırılacaktır.`
 
-`*   **Satıcı Karmaşası (Buybox) Çözümü:** Üründeki tüm satıcılar taranmayacaktır. Sadece o ürün sayfasındaki **"En Düşük Fiyat"** (Buybox fiyatı) ve o satıcının bilgileri baz alınacaktır.`
+`*   **Satıcı Karmaşası (Buybox) Çözümü:** Katalog satıcı başına ayrı bağlantı tutmaz. Scraper, kayıtlı ürün sayfasında erişebildiği satılabilir ve uygun satıcı tekliflerini karşılaştırıp en düşük fiyatlı teklifin bilgilerini döndürür.`
 
 ``*   **Mimari Yaklaşım:** Modüler yapı (`scraper`, `database`, `ml_model`, `api`).``
 
@@ -46,7 +46,7 @@
 
 &nbsp;&nbsp;&nbsp;&nbsp;`` *   `timestamp` ``
 
-`*   **Periyodik Veri Toplama (Batch Processing):** Kullanıcı arama yaptığında **anlık scraping yapılmayacaktır**. Sistem anti-ban (IP ban) yemek ve yüksek hız (latency < 0.1s) sağlamak için, arka planda periyodik olarak (Örn: her sabah 03:00 / 06:00'da) çalışıp verileri veritabanına kaydedecektir. Kullanıcı sisteme girdiğinde veriyi doğrudan SQLite veritabanından okuyacaktır.`
+`*   **Periyodik Veri Toplama (Batch Processing):** Kullanıcı arama yaptığında **anlık scraping yapılmayacaktır**. Sonraki aşamada arka planda periyodik çalışan worker, doğrulanmış katalog bağlantılarını tarayıp verileri veritabanına kaydedecektir. Kullanıcı veriyi doğrudan SQLite üzerinden sunulan hazır sonuçlardan okuyacaktır.`
 
 `*   **Soğuk Başlangıç & Piyasa Korelasyonu:** ML modelini eğitebilmek için Akakçe/Cimri geçmiş grafik API'lerinden tersine mühendislikle veri çekilecektir. Amazon/N11 gibi diğer sitelerin varlığı, modelin genel piyasa reflekslerini öğrenmesi için avantaj olarak kullanılacaktır.`
 
@@ -105,3 +105,28 @@
 &nbsp;
 
 &nbsp;
+
+## Otomatik ürün ve varyant keşfi kararı
+
+İlk keşif sürümünde kullanıcı `config/discovery.json` içinde yalnızca marka ve tam
+model tanımlar. Sistem Trendyol ve Hepsiburada kaynaklarından doğrulanabilen
+kapasite ve renk bağlantılarını bulur. Pro, Plus, Pro Max ve 16e gibi adlar
+ayrı model hedefleridir. Her kapasite ayrı ürün kimliği, her renk/platform URL'si
+o ürüne bağlı ayrı bağlantıdır. RAM farkı ürün grubunu bölmez; saptanan RAM
+bilgisi raporda korunur.
+
+Doğrulanmış yeni bağlantılar kilitli, atomik katalog birleştirmesiyle eklenir;
+eski kimlikler ve kayıtlar korunur. Stok durumu keşifte çıkarılmaz. Erişim
+engeli veya sayfa sınırı halinde tarama kısmi raporlanır, doğrulanmış kayıtlar
+kalır. Garanti metni varsa ürün düzeyinde raporlanır; satıcı bazında garanti
+eşlemesi ve garantiye göre fiyat karşılaştırması sonraki aşamadır. Keşif ilk
+sürümde komutla çalışır; zamanlama, veritabanı, API ve ML ayrı aşamalardır.
+
+Keşif hedeflerinde ürün URL'si tutulmaz; kullanıcı yalnızca marka ve tam modeli
+tanımlar. Arama veya varyant kaynağında görünmeyen sayfaların otomatik bulunduğu
+iddia edilmez. Önceki keşiflerde kataloğa eklenmiş bağlantılar yeniden taramada
+görünmeseler bile korunur; silinmiş/HTTP 410 sayfalar yeni aday olarak eklenmez.
+Aynı renk ve kapasitedeki farklı ürün sayfaları farklı platform ürün
+kimlikleriyle izlenebilir. Keşif raporu gözlenen renkleri kapasite ve platform
+bazında ayrı gösterir; `complete` kullanılan kaynakların tarandığını belirtir,
+bütün pazarın eksiksiz kapsandığını kanıtlamaz.

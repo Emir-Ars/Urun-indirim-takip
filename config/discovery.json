@@ -1,0 +1,19 @@
+{
+    "targets": [
+        {
+            "key": "apple_iphone_15",
+            "brand": "Apple",
+            "model": "iPhone 15",
+            "active": true
+        },
+        {
+            "key": "apple_iphone_16",
+            "brand": "Apple",
+            "model": "iPhone 16",
+            "active": true
+        }
+    ],
+    "max_search_pages": 20,
+    "max_product_pages": 100,
+    "max_requests": 200
+}

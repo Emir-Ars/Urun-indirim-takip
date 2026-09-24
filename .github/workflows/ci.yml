@@ -1,4 +1,4 @@
-name: Scraper checks
+name: Scraper and discovery checks
 
 on:
   push:

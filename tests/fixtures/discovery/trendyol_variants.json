@@ -1,0 +1,16 @@
+{
+  "isSuccess": true,
+  "statusCode": 200,
+  "result": [
+    {"type": "DsmColor", "values": [
+      {"name": "Black", "products": [
+        {"id": 11, "name": "iPhone 16 128 GB Siyah", "pageUrl": "/apple/iphone-16-128-gb-siyah-p-11"},
+        {"id": 14, "name": "iPhone 16 256 GB Siyah", "pageUrl": "/apple/iphone-16-256-gb-siyah-p-14"}
+      ]}
+    ]},
+    {"type": "Internal Memory", "values": [
+      {"name": "128 GB", "products": [{"id": 11, "pageUrl": "/apple/iphone-16-128-gb-siyah-p-11"}]},
+      {"name": "256 GB", "products": [{"id": 14, "pageUrl": "/apple/iphone-16-256-gb-siyah-p-14"}]}
+    ]}
+  ]
+}

@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 
 from pydantic import Field, field_validator
 
-from app.contracts import Contract
+from app.contracts import Contract, DiscoveryConfig
 
 
 class Runtime(Contract):
@@ -68,10 +68,16 @@ class Settings:
         self.db_path = Path(os.getenv("DB_PATH", "data/prices.sqlite3")).resolve()
         self.artifact_dir = Path(os.getenv("ARTIFACT_DIR", "artifacts")).resolve()
         self.catalog_path = Path(os.getenv("CATALOG_PATH", "config/catalog.json"))
+        self.discovery_path = Path(os.getenv("DISCOVERY_PATH", "config/discovery.json"))
         self.runtime_path = Path(os.getenv("RUNTIME_PATH", "config/runtime.json"))
         self.api_base_url = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
 
     def runtime(self) -> Runtime:
         return Runtime.model_validate_json(
             self.runtime_path.read_text(encoding="utf-8")
+        )
+
+    def discovery(self) -> DiscoveryConfig:
+        return DiscoveryConfig.model_validate_json(
+            self.discovery_path.read_text(encoding="utf-8")
         )

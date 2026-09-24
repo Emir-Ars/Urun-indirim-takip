@@ -6,6 +6,7 @@ from pathlib import Path
 
 from app.contracts import Catalog, ProductListing
 from app.scraper.factory import create_scraper
+from app.scraper.http import FetchError
 from app.settings import Settings
 
 
@@ -36,6 +37,7 @@ def main() -> None:
     platforms = {platform.key: platform for platform in catalog.platforms}
     observations = []
     platform_results = []
+    errors = []
 
     for item in catalog.listings:
         product = products[item.product_id]
@@ -67,6 +69,8 @@ def main() -> None:
             platform_results.append(
                 {
                     "platform": platform.name,
+                    "product_id": product.product_id,
+                    "listing_id": item.listing_id,
                     "production_result": with_price_display(
                         observation.model_dump(mode="json")
                     ),
@@ -74,18 +78,27 @@ def main() -> None:
                     "all_offers": [with_price_display(offer) for offer in offers],
                 }
             )
+        except (FetchError, ValueError) as exc:
+            errors.append({"listing_id": item.listing_id, "error": str(exc)})
         finally:
             scraper.close()
 
-    available = [item for item in observations if item.current_price is not None]
-    winner = min(available, key=lambda item: item.current_price) if available else None
+    winners = {}
+    for item in observations:
+        if item.current_price is None:
+            continue
+        previous = winners.get(item.product_id)
+        if previous is None or item.current_price < previous.current_price:
+            winners[item.product_id] = item
     result = {
         "checked_listings": len(observations),
         "money_unit": "kurus",
         "platform_results": platform_results,
-        "best_offer": (
-            with_price_display(winner.model_dump(mode="json")) if winner else None
-        ),
+        "errors": errors,
+        "best_offers_by_product": {
+            str(product_id): with_price_display(item.model_dump(mode="json"))
+            for product_id, item in winners.items()
+        },
     }
     print(json.dumps(result, ensure_ascii=False, indent=2, default=str))
 

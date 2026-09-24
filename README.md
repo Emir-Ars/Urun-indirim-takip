@@ -1,8 +1,9 @@
 # Akıllı Telefon İndirim Takip Sistemi
 
 Bu proje Trendyol ve Hepsiburada üzerindeki akıllı telefon tekliflerini toplar,
-doğrular ve karşılaştırılabilir tek bir veri biçimine dönüştürür. İlk tamamlanan
-kilometre taşı scraper ve katalog katmanıdır.
+doğrular ve karşılaştırılabilir tek bir veri biçimine dönüştürür. Şu anda
+scraper ve komutla çalışan model/renk keşfi kullanılabilir. Keşif, kaynakların
+göstermediği bütün ürün sayfalarını bulduğunu garanti etmez.
 
 ## Tamamlanan kapsam
 
@@ -15,15 +16,15 @@ kilometre taşı scraper ve katalog katmanıdır.
 - Para değerleri kuruş cinsinden tam sayı olarak üretilir.
 - Ürün ve izleme bağlantıları `config/catalog.json` üzerinden yönetilir.
 
-Bu kilometre taşında otomatik ürün/renk keşfi, veritabanı, API, arayüz ve ML
-katmanları Git kapsamına alınmamıştır. Bunlar sonraki bağımsız kilometre
-taşlarıdır.
+Veritabanı, API, arayüz ve ML sonraki bağımsız kilometre taşlarıdır.
 
-## Üretim akışı
+## Şu an çalışan akış
 
 ```mermaid
 flowchart LR
-    C[config/catalog.json] --> F[Scraper Factory]
+    M[config/discovery.json: marka ve model] --> D[Komutla keşif]
+    D --> C[config/catalog.json: doğrulanmış bağlantılar]
+    C --> F[Scraper Factory]
     F --> T[Trendyol Scraper]
     F --> H[Hepsiburada Scraper]
     T --> V[Kimlik ve teklif doğrulama]
@@ -35,6 +36,8 @@ flowchart LR
 `factory.py`, katalogdaki platform anahtarına göre doğru scraper sınıfını yükler.
 Her scraper içeride platformun bütün erişilebilir tekliflerini inceler. Uygulama
 katmanına yalnızca seçilen teklif bir `PriceObservation` olarak döner.
+Keşif ve canlı scraper kontrolü şimdilik ayrı komutlarla çalışır. Zamanlanmış
+toplama ve veritabanına yazma henüz bu akışa bağlanmamıştır.
 
 ### Trendyol
 
@@ -44,8 +47,8 @@ katmanına yalnızca seçilen teklif bir `PriceObservation` olarak döner.
 4. Buybox ve `otherMerchants` teklifleri okunur.
 5. Mevcut katalog bağlantısıyla aynı ürün sayfasına ait satıcılar karşılaştırılır.
 6. Başka renk veya ürün sayfasına yönlenen teklifler tanılamada gösterilir ancak
-   mevcut listing hesabına katılmaz. Otomatik keşif katmanı bunları daha sonra
-   ayrı listing olarak kaydedecektir.
+   mevcut listing hesabına katılmaz. Keşif kaynağında görülebilirlerse ayrı
+   bağlantı olarak kataloğa eklenebilirler.
 
 ### Hepsiburada
 
@@ -90,10 +93,8 @@ kontrol eder.
 
 Biçim ve statik kontroller:
 
-```powershell
-.venv\Scripts\python.exe -m black --check app tests
-.venv\Scripts\python.exe -m flake8 --jobs 1 app tests
-```
+CI, Git'e gönderilmiş dosyaları Black ve Flake8 ile denetler. Yerel çalışma
+dizinindeki sonraki aşama taslakları bu kilometre taşının parçası değildir.
 
 GitHub Actions aynı kontrolleri her push ve pull request işleminde çalıştırır.
 
@@ -124,6 +125,9 @@ Her platform için iki ayrı görünüm üretir:
 Bu araç üretimden farklı bir scraper kullanmaz. Factory üzerinden aynı platform
 sınıflarını çalıştırır; yalnızca test amacıyla scraper'ın o çalışma sırasında
 incelediği teklif listesini de ekrana basar.
+Çoklu ürün kataloğunda `best_offers_by_product` her `product_id` için ayrı
+hesaplanır; tek bağlantının hatası `errors` altında görünür ve diğer
+bağlantıların kontrolünü durdurmaz.
 
 ## Katalog
 
@@ -134,6 +138,69 @@ incelediği teklif listesini de ekrana basar.
 - Renk ve platform bağlantıları aynı ürüne bağlı ayrı listing kayıtlarıdır.
 - Bir kimlik geçmişte kullanıldıysa başka ürün veya URL için tekrar kullanılmaz.
 
-Yeni telefon ve renk bağlantılarının otomatik bulunması bir sonraki geliştirme
-aşamasıdır. Bu aşama tamamlandığında katalogda URL'leri elle yönetmek
-gerekmeyecektir.
+Katalog satıcıya özel URL tutmaz; ürün sayfası URL'si tutar. Scraper o sayfadaki
+erişilebilir satıcı tekliflerini karşılaştırıp en ucuz uygun teklifi döndürür.
+Aynı kapasitenin farklı renk ve ürün sayfaları ayrı ayrı izlenir; canlı kontrol
+aracı bunların sonuçlarından ürün başına en ucuzunu gösterir. Satıcıların tüm
+teklifleri fiyat geçmişine ayrı kayıt olarak yazılmaz.
+
+Yeni telefon ve renk bağlantıları aşağıdaki keşif komutuyla bulunur.
+
+## Otomatik model, kapasite ve renk keşfi
+
+`config/discovery.json` içindeki hedeflerde yalnızca marka ve tam model yazılır;
+ürün/renk URL'si girilmez.
+Örneğin `Apple` / `iPhone 16` hedefi `iPhone 16 Pro` veya `iPhone 16e`
+ürünlerini kapsamaz. Her depolama kapasitesi ayrı ürün, her renk ve platform
+bağlantısı aynı kapasiteye bağlı ayrı listing olur. Doğrulanmış stoksuz
+bağlantılar da izlenmek üzere korunur.
+
+Önce kataloğu değiştirmeden raporu gör:
+
+```powershell
+.venv\Scripts\python.exe -m app.discovery --dry-run --target apple_iphone_15
+```
+
+Doğrulanmış bağlantıları kataloğa eklemek için `--dry-run` olmadan çalıştır:
+
+```powershell
+.venv\Scripts\python.exe -m app.discovery --target apple_iphone_15
+```
+
+`--target` kaldırılırsa bütün etkin hedefler taranır. Ayrıntılı rapor
+`data/discovery_report.json` konumuna yazılır; `complete=false` erişim engeli,
+sayfa sınırı veya doğrulama sorunu nedeniyle taramanın kısmi olduğunu belirtir.
+Komut bu durumda çıkış kodu 2 döndürür; kısmi taramada doğrulanmış kayıtlar
+yine eklenir, var olan kayıtlar silinmez. `--dry-run` katalog dosyasını
+değiştirmez. Tanılama için aynı yol `tests/manual/live_discovery_check.py`
+üzerinden de çalıştırılabilir.
+
+Keşif, platform araması ve erişilebilir varyant verilerinde görünen sayfaları
+doğrular. Arama ve varyant kaynaklarının hiç göstermediği sayfaları bulduğunu
+iddia etmez; önceki keşiflerde kataloğa eklenmiş bağlantılar yeniden taramada
+görünmeseler de korunur. Aynı renk ve kapasitedeki farklı ürün sayfaları ayrı
+bağlantı olarak izlenebilir; satıcı başına URL tanımlanmaz. `observed_colors`
+raporu doğrulanan renkleri kapasite ve platform bazında gösterir; bu liste bütün
+pazaryeri renklerinin eksiksiz envanteri değildir. `complete` yalnızca kullanılan
+kaynakların taranmasının tamamlandığını ifade eder.
+`retained_unobserved_listings`, bu taramada görülmeyip katalogda korunan
+bağlantıları gösterir; bunlar doğrulanmış güncel teklif sayılmaz.
+
+Trendyol arama sayfaları ve varyant grupları, Hepsiburada ise filtrelenmiş
+arama sayfası, erişilebilen arama API'si ve ürün sayfası varyantlarıyla
+incelenir. Engellenen Hepsiburada API'si tam tarama iddiasını engeller.
+RAM ve ürün düzeyindeki garanti metni raporda kalır; garantiye göre fiyat
+karşılaştırması ve satıcıya garanti ataması bu aşamanın kapsamında değildir.
+Fiyat ve stok yalnızca scraper çalıştığında belirlenir; keşif arama kartı
+fiyatını veya varyant listesinde bulunmayı geçerli teklif saymaz.
+
+## Sıradaki aşamalar
+
+1. Keşif kapsamındaki boşlukları ölçmek ve mümkünse arama dışı ürünler için
+   sürdürülebilir otomatik kaynak bulmak; bulunamayanları raporda açık tutmak.
+2. Keşif ve scraper'ı zamanlanmış toplama akışına bağlamak; gözlemleri SQLite'a
+   tek yazıcıyla kaydedip tekrar kayıtları engellemek.
+3. Hazır fiyat/geçmiş özetlerini FastAPI uçlarından sunmak ve Streamlit'te
+   göstermek.
+4. Yeterli geçmiş biriktiğinde ML eğitim ve tahmin katmanını bağlamak; veri
+   yetersizse tahmin yüzdesi göstermemek.

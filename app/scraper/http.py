@@ -21,7 +21,13 @@ class FetchError(Exception):
 
 
 class PageClient:
-    def __init__(self, hosts: list[str], runtime: Runtime, client=None):
+    def __init__(
+        self,
+        hosts: list[str],
+        runtime: Runtime,
+        client=None,
+        request_budget: int | None = None,
+    ):
         self.hosts = set(hosts)
         self.runtime = runtime
         self._owned = client is None
@@ -33,6 +39,8 @@ class PageClient:
             },
         )
         self._last_request = 0.0
+        self.request_budget = request_budget
+        self.request_count = 0
 
     def _allowed(self, url: str) -> None:
         try:
@@ -64,7 +72,13 @@ class PageClient:
             try:
                 for _ in range(4):
                     self._allowed(target)
+                    if (
+                        self.request_budget is not None
+                        and self.request_count >= self.request_budget
+                    ):
+                        raise FetchError("limit", "HTTP istek sınırı doldu")
                     self._wait_for_interval()
+                    self.request_count += 1
                     response = self.client.request(
                         method,
                         target,
@@ -78,7 +92,7 @@ class PageClient:
                             raise FetchError("redirect", "Yönlendirme hedefi eksik")
                         target = urljoin(target, location)
                         continue
-                    if response.status_code in (401, 403, 429):
+                    if response.status_code in (401, 403, 418, 429):
                         raise FetchError(
                             "blocked",
                             f"Kaynak HTTP {response.status_code} döndürdü",
