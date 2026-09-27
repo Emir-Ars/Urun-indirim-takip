@@ -1,5 +1,6 @@
-"""Katalogdaki canlı scraper sonuçlarını DB'ye yazmadan ekrana basar."""
+"""Katalogdaki canlı scraper sonuçlarını hiçbir yere yazmadan ekrana basar."""
 
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -26,6 +27,11 @@ def with_price_display(values: dict) -> dict:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "prefix", nargs="?", default="", help="Yalnızca bu product_key ön eki"
+    )
+    args = parser.parse_args()
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
     settings = Settings()
@@ -43,6 +49,8 @@ def main() -> None:
         product = products[item.product_id]
         platform = platforms[item.platform]
         if not (item.active and product.active and platform.active):
+            continue
+        if not product.product_key.startswith(args.prefix):
             continue
         listing = ProductListing(
             **item.model_dump(),

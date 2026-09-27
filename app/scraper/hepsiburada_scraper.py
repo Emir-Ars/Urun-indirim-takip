@@ -317,9 +317,14 @@ class Scraper(BaseScraper):
             diagnostics.append(diagnostic)
             if listing_id:
                 diagnostic_by_id[listing_id] = diagnostic
-        if not full_listings or not any(
-            item.get("isSalable") is True for item in full_listings
-        ):
+        stock_signals = [item.get("isSalable") for item in full_listings]
+        if any(not isinstance(value, bool) for value in stock_signals):
+            # Alan eksikse veya adı değiştiyse stok bilinmiyor; Tükendi uydurulmaz.
+            raise FetchError(
+                "parse", "Hepsiburada satıcı listesinde stok bilgisi (isSalable) yok"
+            )
+        # Tükendi yalnız açık sinyalle: satıcı yok veya hepsi açıkça satılamaz.
+        if not any(stock_signals):
             self._last_offers = diagnostics
             return self.observation(
                 listing,

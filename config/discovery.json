@@ -7,10 +7,152 @@
             "active": true
         },
         {
+            "key": "apple_iphone_15_pro",
+            "brand": "Apple",
+            "model": "iPhone 15 Pro",
+            "active": true
+        },
+        {
+            "key": "apple_iphone_15_pro_max",
+            "brand": "Apple",
+            "model": "iPhone 15 Pro Max",
+            "active": true
+        },
+        {
             "key": "apple_iphone_16",
             "brand": "Apple",
             "model": "iPhone 16",
             "active": true
+        },
+        {
+            "key": "apple_iphone_16_pro",
+            "brand": "Apple",
+            "model": "iPhone 16 Pro",
+            "active": true
+        },
+        {
+            "key": "apple_iphone_16_pro_max",
+            "brand": "Apple",
+            "model": "iPhone 16 Pro Max",
+            "active": true
+        },
+        {
+            "key": "apple_iphone_17",
+            "brand": "Apple",
+            "model": "iPhone 17",
+            "active": true
+        },
+        {
+            "key": "apple_iphone_17_pro",
+            "brand": "Apple",
+            "model": "iPhone 17 Pro",
+            "active": true
+        },
+        {
+            "key": "apple_iphone_17_pro_max",
+            "brand": "Apple",
+            "model": "iPhone 17 Pro Max",
+            "active": true
+        },
+        {
+            "key": "samsung_galaxy_s25",
+            "brand": "Samsung",
+            "model": "Galaxy S25",
+            "active": true
+        },
+        {
+            "key": "samsung_galaxy_s25_ultra",
+            "brand": "Samsung",
+            "model": "Galaxy S25 Ultra",
+            "active": true
+        },
+        {
+            "key": "samsung_galaxy_s24",
+            "brand": "Samsung",
+            "model": "Galaxy S24",
+            "active": true
+        },
+        {
+            "key": "samsung_galaxy_s24_ultra",
+            "brand": "Samsung",
+            "model": "Galaxy S24 Ultra",
+            "active": true
+        },
+        {
+            "key": "samsung_galaxy_s24_fe",
+            "brand": "Samsung",
+            "model": "Galaxy S24 FE",
+            "active": true
+        },
+        {
+            "key": "samsung_galaxy_s23_fe",
+            "brand": "Samsung",
+            "model": "Galaxy S23 FE",
+            "active": true
+        },
+        {
+            "key": "samsung_galaxy_a55",
+            "brand": "Samsung",
+            "model": "Galaxy A55",
+            "active": true
+        },
+        {
+            "key": "samsung_galaxy_a54",
+            "brand": "Samsung",
+            "model": "Galaxy A54",
+            "active": true
+        },
+        {
+            "key": "xiaomi_14t_pro",
+            "brand": "Xiaomi",
+            "model": "14T Pro",
+            "active": true
+        },
+        {
+            "key": "xiaomi_13t_pro",
+            "brand": "Xiaomi",
+            "model": "13T Pro",
+            "active": true
+        },
+        {
+            "key": "xiaomi_redmi_note_14_pro_4g",
+            "brand": "Xiaomi",
+            "model": "Redmi Note 14 Pro",
+            "network": "4G",
+            "exclude_terms": ["5G"],
+            "active": true
+        },
+        {
+            "key": "xiaomi_redmi_note_14_pro_5g",
+            "brand": "Xiaomi",
+            "model": "Redmi Note 14 Pro 5G",
+            "active": true
+        },
+        {
+            "key": "xiaomi_redmi_note_13_pro_4g",
+            "brand": "Xiaomi",
+            "model": "Redmi Note 13 Pro",
+            "network": "4G",
+            "exclude_terms": ["5G"],
+            "active": true
+        },
+        {
+            "key": "xiaomi_redmi_note_13_pro_5g",
+            "brand": "Xiaomi",
+            "model": "Redmi Note 13 Pro 5G",
+            "active": true
+        },
+        {
+            "key": "poco_x6_pro",
+            "brand": "POCO",
+            "model": "X6 Pro",
+            "active": true
+        },
+        {
+            "key": "poco_x5_pro",
+            "brand": "POCO",
+            "model": "X5 Pro",
+            "active": false
         }
     ],
     "max_search_pages": 20,

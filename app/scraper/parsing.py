@@ -12,9 +12,11 @@ from app.scraper.http import FetchError
 # Keşif ve scraper aynı kimlik kurallarını kullanır; kurallar yalnız burada tutulur.
 EXCLUDED = re.compile(
     r"\b(?:kilif|kapak|koruyucu|sarj|adaptor|kablo|"
-    r"kulaklik|yenilenmis|refurbished|teshir|ikinci[ _-]*el)\b"
+    r"kulaklik|yenilenmis|refurbished|teshir|ikinci[ _-]*el|"
+    # Yurt dışı sürüm: Türkiye'de resmi servisi yok (karar, 27 Eylül 2026).
+    r"international[ -]*version|global[ -]*(?:version|surum)|yurt[ -]*disi)\b"
 )
-MODEL_SUFFIX = re.compile(r"\b(?:pro|plus|max|ultra|fe|lite|mini)\b")
+MODEL_SUFFIX = re.compile(r"\b(?:pro|plus|max|ultra|fe|lite|mini|edge|air)\b")
 # Satıcı/teklif düzeyinde kapsam dışı koşullar (her iki scraper kullanır).
 DISALLOWED_CONDITIONS = (
     re.compile(r"\byenilenmis\b"),
@@ -39,7 +41,9 @@ def money(value) -> int:
 
 
 def normalize(text: str) -> str:
-    text = text.casefold().replace("ı", "i")
+    # Satıcılar kelimeleri "_" ile ayırabiliyor ("Galaxy S25 Ultra_12GB_256GB");
+    # regex'teki \b alt çizgiyi harf saydığından boşluğa çevrilir.
+    text = text.casefold().replace("ı", "i").replace("_", " ")
     return "".join(
         c for c in unicodedata.normalize("NFKD", text) if not unicodedata.combining(c)
     )
@@ -55,9 +59,16 @@ def storage_gb(value) -> int | None:
 
 
 def title_storage(name: str) -> int | None:
-    """Başlıkta tek kapasite varsa döndürür; birden çoksa RAM tahmini yapmaz."""
+    """Başlıkta tek hafıza kapasitesi varsa döndürür; birden çoksa tahmin yapmaz.
+
+    Hemen ardından "RAM" yazan değer ("12 GB Ram") hafıza sayılmaz; canlıda
+    "Galaxy S25 128 GB 12 GB Ram" başlığı bu yüzden doğrulanamıyordu.
+    """
+    text = normalize(name)
     matches = [
-        storage_gb(match.group()) for match in CAPACITY.finditer(normalize(name))
+        storage_gb(match.group())
+        for match in CAPACITY.finditer(text)
+        if not re.match(r"\s*ram\b", text[match.end() :])
     ]
     matches = [value for value in matches if value is not None]
     return matches[0] if len(matches) == 1 else None
@@ -86,17 +97,34 @@ def matches_model(name: str, model: str) -> bool:
 def excluded_term(names, terms) -> str | None:
     """Adlardan birinde bütün sözcük olarak geçen ilk dışlanan ifade.
 
-    "5G" ifadesi "Note 14 5G" başlığında bulunur, "5 GB RAM" içinde bulunmaz.
+    "5G" ifadesi "Note 14 5G" başlığında bulunur; "5 GB RAM" ve 4G telefonların
+    "4.5G" yazımı içinde bulunmaz.
     """
     for term in terms:
         tokens = re.findall(r"[a-z]+|\d+", normalize(term))
         if not tokens:
             continue
         pattern = (
-            r"(?<![a-z0-9])" + r"[\s_-]*".join(map(re.escape, tokens)) + r"(?![a-z0-9])"
+            r"(?<![a-z0-9])(?<![0-9][.,])"
+            + r"[\s_-]*".join(map(re.escape, tokens))
+            + r"(?![a-z0-9])"
         )
         if any(re.search(pattern, normalize(name)) for name in names):
             return term
+    return None
+
+
+def network_type(value) -> str | None:
+    """Sayfanın "Mobil Bağlantı Hızı" değeri: "4G" veya "5G"; tanınmazsa None.
+
+    Hepsiburada 4G telefonları "4.5G" olarak yazar; bu 4G sayılır. "5G+",
+    "5G NR" veya "4G/5G" gibi 5G desteği söyleyen her değer 5G'dir.
+    """
+    text = normalize(str(value or "")).replace(" ", "")
+    if re.search(r"(?<![0-9.,])5g", text):
+        return "5G"
+    if re.fullmatch(r"4(?:[.,]5)?g\+?|lte|4glte", text):
+        return "4G"
     return None
 
 
@@ -126,7 +154,8 @@ def identify(
     if any(EXCLUDED.search(normalize(name)) for name in names):
         raise FetchError(
             "identity",
-            f"Yenilenmiş, ikinci el, teşhir veya aksesuar ürün kapsam dışında: {seen}",
+            "Yenilenmiş, ikinci el, teşhir, yurt dışı sürüm veya aksesuar ürün "
+            f"kapsam dışında: {seen}",
         )
     if not any(matches_model(name, model) for name in names):
         raise FetchError("identity", f"Sayfadaki model hedefle eşleşmiyor: {seen}")

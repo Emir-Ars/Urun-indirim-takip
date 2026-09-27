@@ -4,14 +4,22 @@ from abc import ABC, abstractmethod
 
 from app.contracts import DiscoveryIssue
 from app.scraper.http import FetchError, PageClient
+from app.scraper.parsing import network_type
 
 # Tek bir bozuk kaynak yanıtı bütün keşfi durdurmaz; bu hatalar rapora yazılır.
 RECOVERABLE = (FetchError, ValueError, TypeError, KeyError, AttributeError)
 
 
 def error_code(exc: Exception) -> str:
-    """Rapor için hata kodu: FetchError kodu veya beklenmeyen hatanın türü."""
-    return getattr(exc, "code", None) or type(exc).__name__
+    """Rapor için hata: FetchError kodu ve mesajı veya beklenmeyen hatanın türü.
+
+    Ör. "blocked: Kaynak HTTP 429 döndürdü (apigw.trendyol.com/...)"; engelin
+    türü (429 hız sınırı, 403 erişim reddi) çözümü belirlediği için rapora yazılır.
+    """
+    code = getattr(exc, "code", None)
+    if not code:
+        return type(exc).__name__
+    return f"{code}: {exc}" if str(exc) else code
 
 
 class BaseDiscovery(ABC):
@@ -48,6 +56,20 @@ class BaseDiscovery(ABC):
     def note(self, kind, **fields):
         """Sessiz kararların tanılama izi; rapora ve kataloğa yazılmaz."""
         self.trace.append({"kind": kind, **fields})
+
+    def verify_network(self, value, names):
+        """Sayfanın yapısal ağ türü hedefle çelişiyorsa reddet.
+
+        Alan boşsa sayfa geçer: satıcılar bu alanı çoğu zaman doldurmuyor ve
+        5G sayfaların başlığında zaten "5G" yazıyor (exclude_terms ile dışlanır).
+        """
+        found = network_type(value)
+        if found is not None and found != self.target.network:
+            raise FetchError(
+                "identity",
+                f"Ağ türü hedefle eşleşmiyor ({found}, beklenen "
+                f"{self.target.network}): {' | '.join(names)[:160]}",
+            )
 
     @abstractmethod
     def discover(self):

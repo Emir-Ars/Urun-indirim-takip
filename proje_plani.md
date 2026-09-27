@@ -1,9 +1,10 @@
 # Akıllı Telefon İndirim Takip ve Tahmin Sistemi — Proje Planı
 
-Son güncelleme: 25 Eylül 2026.
+Son güncelleme: 28 Eylül 2026.
 
-Bu belge **kararların ve aşama durumunun** ana kaynağıdır. Sistemin nasıl
-çalıştığı, komutlar ve dosyaların görevleri [README.md](README.md) içindedir.
+Bu belge **kararların ve aşama durumunun** ana kaynağıdır. Sistemin genel
+tanıtımı [README.md](README.md), ayrıntılı işleyişi, komutları, kuralları ve
+dosyaların görevleri [docs/teknik.md](docs/teknik.md) içindedir.
 "Uygulandı", "planlandı" ve "karar bekliyor" ifadeleri birbirinin yerine
 kullanılmaz; gerçek durum kod ve testlerle doğrulanır.
 
@@ -28,44 +29,53 @@ Kullanıcı arayüzde arama yaptığında canlı scraping veya model eğitimi
 | 1. Fiyat okuma (Trendyol, Hepsiburada scraper) | ✅ Uygulandı | `a36b5b6`, `b0f466c`, `a716c9a` |
 | 2. Otomatik model/kapasite/renk keşfi | ✅ Uygulandı | `e00a435` |
 | 3. Trendyol doğrulanmış stoksuz sayfa | ✅ Uygulandı | `e6664a3` |
-| 4. Scraper/discovery kabul kontrolü (6 adım) | ✅ Tamamlandı; commit kullanıcı onayı bekliyor | Bölüm 5 |
-| 5. Veritabanı ve zamanlanmış toplama | ⏳ Sıradaki; **karar bekliyor** | Bölüm 7 |
-| 6. FastAPI ve Streamlit | 🔜 Planlandı, başlanmadı | Bölüm 8 |
-| 7. ML (indirim tahmini) | 🔜 Planlandı, başlanmadı | Bölüm 8 |
-| 8. Docker ve 7/24 işletim | 🔜 Planlandı, başlanmadı | Bölüm 8 |
+| 4. Scraper/discovery kabul kontrolü (6 adım) | ✅ Tamamlandı | `4d5613d`, Bölüm 5 |
+| 5. Katalogun 25 hedefle sıfırdan kurulumu ve kod denetimi | ✅ Tamamlandı | Bölüm 6 |
+| 6. Veritabanı ve zamanlanmış toplama | ⏳ Sıradaki; **karar bekliyor** | Bölüm 8 |
+| 7. FastAPI ve Streamlit | 🔜 Planlandı, başlanmadı | Bölüm 9 |
+| 8. ML (indirim tahmini) | 🔜 Planlandı, başlanmadı | Bölüm 9 |
+| 9. Docker ve 7/24 işletim | 🔜 Planlandı, başlanmadı | Bölüm 9 |
 
 Yereldeki `app/database`, `app/ml_model`, `app/api`, `app/services`,
 `app/worker.py`, `frontend/`, Docker dosyaları ve Akakçe/Cimri taslakları
 tamamlanmış iş değildir; kullanıcıyla değerlendirilmeden projeye bağlanmaz,
 silinmez ve Git'e gönderilmez.
 
-Güncel katalog: 6 ürün (iPhone 15 ve iPhone 16; 128/256/512 GB), 45 bağlantı
-(Trendyol 14, Hepsiburada 31). Etkin keşif hedefleri: `apple_iphone_15`,
-`apple_iphone_16`.
+Güncel katalog (28 Eylül 2026): **59 ürün, 327 bağlantı** (Hepsiburada 213,
+Trendyol 114; 1 bağlantı pasif). Keşif hedefleri 25: Apple 9, Samsung 8, Xiaomi 6, POCO 2
+(X5 Pro satılmadığı için kapalı). Tam liste docs/teknik.md'deki "Yeni telefon ekleme"
+bölümündedir.
 
 ## 3. Ürün kapsamı ve kimlik kuralları (uygulandı)
 
 - Platformlar Trendyol ve Hepsiburada; kategori yalnızca yeni akıllı telefon.
-  Başlangıç hedefi 20–30 modeldir; bu sayı bugünkü katalog değildir.
-- Kullanıcı `config/discovery.json` içinde yalnızca marka ve tam model yazar.
+  Başlangıç hedefi 20–30 modeldi; bugün 25 hedef kataloğa alınmıştır.
+- Kullanıcı `config/discovery.json` içinde marka (sitedeki marka etiketi; POCO
+  ayrı marka) ve tam model yazar; gerekirse `exclude_terms` ve `network`.
   Yeni telefon için Python kodu değişmez, renk bağlantısı elle toplanmaz.
 - **Ürün** = marka + tam model + depolama kapasitesi. iPhone 15 128 GB ile
-  256 GB farklı `product_id` alır. Pro, Plus, Pro Max, Ultra, FE, mini, 16e ayrı
-  hedeflerdir. RAM farkı ürünü bölmez; bulunabilen RAM raporda tutulur.
+  256 GB farklı `product_id` alır. Pro, Plus, Pro Max, Ultra, FE, mini, Edge,
+  Air, 16e ayrı hedeflerdir. **RAM ve garanti türü ürünü bölmez** (karar, 27
+  Eylül 2026; Bölüm 6); bulunabilen RAM ve garanti yazısı raporda tutulur.
 - **Bağlantı** = ürünün bir sitedeki bir sayfası (genelde bir renk). Aynı renk
   ve kapasitenin farklı sayfaları ayrı bağlantı olarak izlenebilir. Katalog
   satıcı başına adres tutmaz.
-- Aynı adı taşıyan farklı telefonlar (ör. Redmi Note 14 4G / 5G) hedefteki
-  isteğe bağlı `exclude_terms` ile ayrılır. Genel bir "5G ayrı model" kuralı
-  bilinçli olarak yoktur.
-- Yenilenmiş, ikinci el, teşhir ve aksesuar ürünler reddedilir.
+- Aynı adı taşıyan farklı telefonlar hedefteki isteğe bağlı `exclude_terms`
+  (başlıktan) ve `network` (sayfanın yapısal "Mobil Bağlantı Hızı" değerinden)
+  ile ayrılır. 4G hedefi: `model: "Redmi Note 14 Pro"`, `network: "4G"`,
+  `exclude_terms: ["5G"]` → başlıkta veya özellikte 5G yazan sayfa dışlanır,
+  gerisi (alanı boş olanlar dahil) 4G sayılır. Genel bir "5G ayrı model"
+  kuralı bilinçli olarak yoktur.
+- Yenilenmiş, ikinci el, teşhir, yurt dışı sürüm ve aksesuar ürünler reddedilir.
 - Keşif ve scraper aynı kimlik kuralını kullanır (`app/scraper/parsing.py →
   identify`): model, kapasite (yapısal veri + başlık; çelişki reddedilir; TB
-  desteklenir) ve dışlanan ifadeler birlikte doğrulanır.
+  desteklenir) ve dışlanan ifadeler birlikte doğrulanır. `_` ile ayrılmış
+  adlar boşluklu gibi okunur.
+- Trendyol'da bağlantının rengi sayfanın renk seçicisindeki addır (varyant
+  listesi); satıcının "Renk" özelliği yalnız yedek olarak kullanılır.
 - Fiyat karşılaştırması aynı `product_id` içindeki takip edilen teklifler
   arasındadır; farklı kapasiteler karşılaştırılmaz.
-- Garanti türü (Türkiye garantili / yurt dışı sürümü) **ayrılmıyor**;
-  karar bekliyor (Bölüm 7).
+- Garanti türü ve RAM ürün kimliğine katılmaz (karar verildi, Bölüm 6).
 
 ## 4. Mimari ve veri kararları (uygulandı)
 
@@ -145,38 +155,123 @@ Bu adımda alınan kararlar:
 - Galaxy S24 ve Redmi Note 14 gerçek `discovery.json`'a eklenmedi; yalnızca
   denendi.
 
-## 6. Bilinen ve kabul edilen sınırlar
+## 6. Katalog kurulumu (25–27 Eylül 2026)
 
-- Hepsiburada arama API'si bizi engelliyor; Hepsiburada taraması her zaman
-  "kısmi" raporlanır. Kapsam arama/model sayfasının ilk sayfası ve ürün
-  sayfalarındaki seçenek listesiyle sağlanır.
-- iPhone dışındaki markalarda Hepsiburada model filtresi sayfası bulunamadı;
-  genel arama sayfası kullanılıyor (denemelerde bütün kartlar ilk sayfaya sığdı).
+Veritabanından önce katalog kalıcı hedef listesiyle sıfırdan kuruldu; böylece
+ürün kimliği kararları (RAM, garanti, 4G/5G, renk kaynağı) veritabanı yokken,
+kataloğu yeniden kurmanın ucuz olduğu anda verildi.
+
+- Eski katalog (6 ürün / 45 bağlantı) boşaltıldı; elle verilmiş 3 Trendyol
+  bağlantısı ve stoksuz sayfalar bilinçli olarak bırakıldı. Testler artık
+  `tests/fixtures/discovery/catalog.json` sabit kopyasını okur. Program
+  çıktıları, önbellekler ve geçici dosyalar temizlendi.
+- Kullanıcı 23 yeni model seçti (toplam 25 hedef). Her marka için döngü:
+  `discovery.json` → keşif → rapor incelemesi → canlı fiyat kontrolü →
+  kullanıcının tarayıcı karşılaştırması. Komutları kullanıcı kendi
+  terminalinden çalıştırdı; canlı işler arka planda yürütülmedi.
+- Sonuç: 57 ürün, 306 bağlantı (1'i pasif). Son toplu fiyat kontrolünde 304/306
+  okundu (163 Stokta Var, 70 Kritik Stok, 71 Tükendi); kalan 2 sayfanın "12 GB
+  Ram" başlık sorunu düzeltildi ve iki sayfa yeniden hatasız okundu.
+- Kapanış taraması (28 Eylül, gerçek yazma): düzeltilmiş kodla 24 etkin
+  hedefin tamamı tarandı (ilk 7'si bir önceki dry-run'da). Sıfır çakışma,
+  sıfır ağ hatası; yurt dışı sürüm sayfası yeni kuralla reddedildi. Satışa
+  yeni giren veya Hepsiburada'nın ilk sayfasında bu kez görünen 21 bağlantı ve
+  2 ürün (Galaxy S25 512 GB, Redmi Note 14 Pro 5G 256 GB) eklendi →
+  **59 ürün, 327 bağlantı**. Aynı gün 21 yeni bağlantı çıkması, pazaryerinin
+  sürekli değiştiğini ve keşfin düzenli çalışması gerektiğini gösterir
+  (Bölüm 8, keşfin zamanlanması). Kullanıcı tarayıcıda 9 sayfada fiyat, satıcı,
+  çizili fiyat ve stoku; 4 sayfada renk seçicisi ve ağ türü alanını doğruladı.
+- Düzeltilenler (docs/teknik.md "Katalog kurulumu" tabloları): Trendyol `/sr` sayfası
+  engeli (403), rapora HTTP kodu, `edge`/`air` ekleri, `_` ayraçlı adlar,
+  renk kaynağı (varyant listesi), POCO markası, `network` alanı, "4.5G"
+  dışlama hatası, "RAM" etiketli başlık kapasitesi, yurt dışı sürüm dışlama.
+- Kodu baştan okuyan denetim (27 Eylül) ek olarak şunları buldu ve düzeltildi:
+  Hepsiburada'da stok alanı eksikken Tükendi verilmesi (kural ihlali), 3 sn
+  beklemenin bağlantılar arasında uygulanmaması, çerez çakışması hatası, "5G+"
+  gibi ağ değerlerinin tanınmaması, katalogun CRLF yazılabilmesi. Testler
+  47 → 59. Ertelenen bulgular Bölüm 7'deki bakım listesindedir.
+
+Bu adımda alınan kararlar:
+
+- **RAM ürünü bölmez:** 57 üründe aynı kapasitenin farklı RAM'li sürümü
+  görülmedi; satıcı girişleri tutarsız (başlık "8+256", özellik "12 GB RAM").
+- **Garanti türü ürünü bölmez:** görülen garanti yazıları Türkiye'de geçerli
+  resmi garanti ("… Türkiye Garantili", "Resmi Distribütör Garantili", "KVK
+  Garantili"); garanti yazısı raporda bilgi olarak tutulur.
+- **Yurt dışı sürümler kapsam dışıdır:** satıcının garanti alanı güvenilir
+  değil (yurt dışı sürüm `trendyol_991304922` sayfasında "Apple Türkiye
+  Garantili" yazıyordu). Ürün adında "International Version", "Global
+  Version" veya "Yurt Dışı" geçen sayfa yenilenmiş/teşhir gibi reddedilir; o
+  bağlantı katalogda pasife alındı (tek seferlik düzeltme).
+- **4G/5G:** başlıkta veya özellikte 5G yazan sayfa 5G; gerisi 4G
+  (`network` + `exclude_terms`). Alanı boş bırakılmış, başlıksız bir 5G
+  sayfasının 4G'ye girme riski kabul edildi.
+- **Trendyol rengi** sayfanın renk seçicisindeki addır; dili karışıktır
+  (İngilizce adlar çevrilmez).
+- **Trendyol reklam kartları** (`count_mismatch`) için kod değişikliği yapılmadı;
+  bilinen sınır.
+- **POCO** ayrı marka olarak hedeflenir; X5 Pro satılmadığı için kapalı.
+
+## 7. Bilinen ve kabul edilen sınırlar
+
+- Hepsiburada arama API'si bizi engelliyor (HTTP 403, kalıcı); Hepsiburada
+  taraması her zaman "kısmi" raporlanır. Kapsam arama/model sayfasının ilk
+  sayfası (36 kart) ve ürün sayfalarındaki seçenek listesiyle sağlanır;
+  kalabalık aramalarda eksik kalabilir (Galaxy S25: 36/140, Redmi aramaları
+  kılıf ilanlarıyla dolu).
 - Trendyol araması ve varyant listesi yalnızca satıştaki sayfaları gösterir;
   stoktan çıkan sayfa yeniden keşfedilemez, önceden eklenmişse korunur.
-- Üç eski Trendyol bağlantısı (`trendyol_762254849`, `trendyol_762254854`,
-  `trendyol_865248542`) geçmişte elle verilmişti; otomatik keşfedilmiş sayılmaz.
-  Sitemap gibi ek kaynaklar araştırıldı, uygulanmadı.
-- Renk adları sitelerin etiketleridir; platformlar arasında birleştirilmez.
-- `exclude_terms` keşif anında uygulanır; sonradan eklenen terim eski katalog
-  kayıtlarını çıkarmaz.
+- Trendyol reklam kartları sayfa kaydırır; toplamdan 2–3 ürün hiçbir sayfaya
+  düşmez (`count_mismatch`). Sayfalamayla ulaşılamadığı ölçüldü.
+- Trendyol renk adları satıcı girdisi olduğu için dili karışıktır; bir sayfada
+  "Çok Renkli" kaldı. Renk adları platformlar arasında birleştirilmez.
+- Keşif, katalogdaki bağlantının rengini veya ürününü güncellemez; kural
+  değişirse katalog yeniden kurulur.
+- `exclude_terms` ve `network` keşif anında uygulanır; sonradan eklenen kural
+  eski katalog kayıtlarını çıkarmaz.
+- Arka arkaya çok tarama Trendyol'da geçici engele yol açabilir.
+- Ürün adında söylemeyen bir yurt dışı sürümü ayırt edilemez.
 - Siteler değişebilir; bakım gerekebilir. "Bir daha bakmaya gerek yok" garantisi
   verilmez.
 
-## 7. Açık kararlar
+### Bakım listesi (denetimde bulundu, ertelendi)
+
+Hiçbiri yanlış fiyat veya stok üretmez; ya güvenli tarafta hata verir ya da
+nadir durumdur. Veritabanı aşamasında veya bir hata görüldüğünde ele alınır.
+
+- Tek bir satıcının bozuk fiyatı bütün sayfayı `parse` hatası yapar (fiyat
+  uydurulmaz); teklif bazında atlanabilir.
+- Hepsiburada fiyat isteğine konan yedek değerler yanıtla karşılaştırılmıyor.
+- HTTP: 204/304 gibi yanıtlar başarı sayılıyor; POST yönlendirmede tekrar
+  gönderiliyor; tekrarlar sonrası 5xx `network` diye raporlanıyor; 8 MB sınırı
+  indirme sonrası denetleniyor.
+- Keşif: Trendyol varyant adresi `-p-<id>` biçimi için denetlenmiyor;
+  Hepsiburada canonical SKU'su alt dizeyle karşılaştırılıyor;
+  `filter_unavailable` iki kez yazılabiliyor; hiç aday bulamayan Trendyol
+  araması uyarısız "tam" sayılıyor; tarama sonrası yazma hatası "keşif
+  başlatılamadı" (çıkış 1) diye görünüyor; rapor yolu sabit.
+- Test kapsamı: Trendyol Kritik Stok, CLI çıkış kodları, dry-run'ın katalog
+  yazmaması, birçok uyarı türü ve HTTP yönlendirme/yeniden deneme yolları
+  testsiz.
+- Küçük ölü kod: etkisiz `except FetchError: raise` blokları, erişilmez satır,
+  regex'lerde artık gereksiz `_`, tekrarlanan `_seller_rating` çağrıları.
+- Hata kodları (`parse`, `identity`, `network`, `limit`, `http_error`…) teknik rehberde
+  tablo olarak yok.
+
+## 8. Açık kararlar
 
 | Konu | Durum |
 |---|---|
-| Garanti türüne göre ayrım (ör. `trendyol_991304922` "International Version") | Karar bekliyor |
+| Garanti türüne göre ayrım | **Karar verildi (27 Eylül 2026): ayrılmıyor;** yurt dışı sürümler ürün adından tanınıp kapsam dışı bırakılıyor. |
 | Veritabanı teknolojisi, veri modeli, çalışma ortamı | Karar bekliyor; SQLite önceki öneri, kesin değil |
-| Keşfin zamanlanması | Bu aşamada manuel; worker aşamasında değerlendirilecek |
+| Keşfin zamanlanması | Bu aşamada manuel; worker aşamasında değerlendirilecek. Kanıt: 28 Eylül kapanış taramasında tek günde 21 yeni bağlantı çıktı; Hepsiburada genel aramasının ilk 36 kartı her seferinde değişebildiği için tekrar eden keşif kapsamı artırır. |
 | Gelecek aşama tanımları (`PricePoint`, `ProductSummary`, `MarketRecord`, `coverage_version`, zamanlama/ML ayarları, FastAPI/LightGBM/Streamlit bağımlılıkları) | Kaldırıldı (25 Eylül 2026). İlgili aşamada yeni tasarıma göre yeniden eklenecek; yerel taslaklar o zamana kadar çalışmaz. |
 
 Kullanıcının veritabanı için belirttiği tercihler (**karar değil**, değerlendirmede
 kullanılacak): her kontrolde yalnızca seçilen teklifin saklanması, günde 2
 fiyat toplama, keşfin bu aşamada manuel kalması; çalışma ortamı henüz belli değil.
 
-## 8. Sonraki aşamalar (planlandı, başlanmadı)
+## 9. Sonraki aşamalar (planlandı, başlanmadı)
 
 ### Veritabanı ve zamanlanmış toplama
 
@@ -214,7 +309,7 @@ katalog kapsamı değiştiğinde sahte fiyat düşüşü oluşmaması. SQLite se
 Docker Compose ile süreçler, veri ve model kalıcılığı; GitHub Actions ile CI
 (bugün Black, Flake8, testler çalışıyor).
 
-## 9. Çalışma ve Git disiplini
+## 10. Çalışma ve Git disiplini
 
 - Kullanıcı projeyi öğrenerek geliştiriyor: her değişiklikte amaç, akışa
   bağlantı, doğrulama ve sınırlar anlatılır; adım adım ilerlenir; plan veya

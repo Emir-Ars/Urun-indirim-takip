@@ -150,8 +150,15 @@ def _atomic_catalog(path: Path, catalog: Catalog):
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = None
     try:
+        # newline="\n": Windows'ta da LF yazılır; her yazımda dosyanın bütün satır
+        # sonları değişmez.
         with tempfile.NamedTemporaryFile(
-            mode="w", encoding="utf-8", dir=path.parent, suffix=".tmp", delete=False
+            mode="w",
+            encoding="utf-8",
+            newline="\n",
+            dir=path.parent,
+            suffix=".tmp",
+            delete=False,
         ) as handle:
             temporary = Path(handle.name)
             json.dump(

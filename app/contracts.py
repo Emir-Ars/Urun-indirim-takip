@@ -158,6 +158,9 @@ class DiscoveryTarget(Contract):
     exclude_terms: list[Annotated[str, Field(min_length=1)]] = Field(
         default_factory=list
     )
+    # Başlığı ağ türünü söylemeyen modeller için (ör. Redmi Note 14 Pro 4G): sayfanın
+    # yapısal "Mobil Bağlantı Hızı" değeri bununla çelişirse ret; alan boşsa geçer.
+    network: Literal["4G", "5G"] | None = None
 
 
 class DiscoveryConfig(Contract):

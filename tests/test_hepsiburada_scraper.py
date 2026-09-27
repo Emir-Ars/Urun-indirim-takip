@@ -287,6 +287,28 @@ def test_empty_price_response_for_salable_listing_is_not_sold_out(listing):
     assert error.value.code == "api_error"
 
 
+def test_missing_stock_signal_is_an_error_not_sold_out(listing):
+    # "isSalable" alanı kalkar veya adı değişirse sayfalar sessizce Tükendi olmamalı.
+    item = full_listing("hb", "Hepsiburada", 56_999)
+    del item["isSalable"]
+    scraper, _session = scraper_with([item], [])
+
+    with pytest.raises(FetchError) as error:
+        scraper.fetch(listing)
+
+    assert error.value.code == "parse"
+
+
+def test_every_seller_explicitly_unsalable_is_out_of_stock(listing):
+    listings = [full_listing("hb", "Hepsiburada", 56_999, salable=False)]
+    scraper, session = scraper_with(listings, [])
+
+    observation = scraper.fetch(listing)
+
+    assert observation.stock_status == "Tükendi"
+    assert len(session.calls) == 2  # fiyat isteği gönderilmez
+
+
 def test_rejects_response_sku_mismatch(listing):
     listings = [full_listing("hb", "Hepsiburada", 57_249.01)]
     scraper, session = scraper_with(

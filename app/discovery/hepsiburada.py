@@ -45,6 +45,18 @@ def _variants(soup) -> list:
     return variants
 
 
+def _network(soup) -> str | None:
+    """Sayfanın ürün özelliklerindeki "Mobil Bağlantı Hızı" değeri (ör. "4.5G")."""
+    expected = normalize("Mobil Bağlantı Hızı")
+    for root in embedded_json(soup):
+        for node in nested_dicts(root):
+            if normalize(str(node.get("name", ""))) == expected and node.get(
+                "property"
+            ):
+                return str(node["property"])
+    return None
+
+
 class Discovery(BaseDiscovery):
     platform = "hepsiburada"
     hosts = ["www.hepsiburada.com", "blackgate.hepsiburada.com"]
@@ -215,6 +227,8 @@ class Discovery(BaseDiscovery):
             variant_capacity(soup, expected_sku),
             exclude=self.target.exclude_terms,
         )
+        if self.target.network:
+            self.verify_network(_network(soup), names)
         canonical = soup.select_one('link[rel="canonical"][href]')
         if canonical is not None:
             canonical_url = canonical["href"]

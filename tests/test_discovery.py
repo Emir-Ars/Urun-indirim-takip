@@ -12,7 +12,7 @@ from app.contracts import (
     DiscoveryResult,
     DiscoveryTarget,
 )
-from app.discovery.base import BaseDiscovery
+from app.discovery.base import BaseDiscovery, error_code
 from app.discovery.hepsiburada import Discovery as HepsiburadaDiscovery
 from app.discovery.service import (
     merge_catalog,
@@ -26,6 +26,7 @@ from app.scraper.parsing import (
     excluded_term,
     identify,
     matches_model,
+    network_type,
     storage_gb,
     title_storage,
     verify_identity,
@@ -33,7 +34,9 @@ from app.scraper.parsing import (
 from app.settings import Runtime
 
 FIXTURES = Path(__file__).parent / "fixtures" / "discovery"
-CATALOG = Path(__file__).parents[1] / "config" / "catalog.json"
+CONFIG = Path(__file__).parents[1] / "config"
+# Gerçek katalog keşifle değişir; testler 25 Eylül 2026 tarihli sabit kopyayı okur.
+CATALOG = FIXTURES / "catalog.json"
 
 
 def fixture(name):
@@ -65,9 +68,48 @@ def test_exact_model_and_storage():
     ):
         assert not matches_model(wrong, "iPhone 16")
     assert storage_gb("1 TB") == 1024
-    assert title_storage("iPhone 16 8 GB RAM 256 GB") is None
+    # "RAM" etiketli değer hafıza sayılmaz; canlı örnek: Galaxy S25 128 GB.
+    assert title_storage("iPhone 16 8 GB RAM 256 GB") == 256
+    assert title_storage("Samsung Galaxy S25 128 GB 12 GB Ram (Türkiye)") == 128
+    assert title_storage("Redmi Note 14 Pro 12GB+512GB Siyah") is None  # etiketsiz
     assert matches_model("Samsung Galaxy S24 8 GB RAM 256 GB", "Galaxy S24")
     assert not matches_model("Samsung Galaxy S24 Ultra 256 GB", "Galaxy S24")
+
+
+def test_variant_words_separate_models():
+    # Katalog hedeflerindeki kardeş modeller birbirine karışmamalı.
+    for title, model in (
+        ("Samsung Galaxy S25 Edge 256 GB", "Galaxy S25"),
+        ("Apple iPhone 17 Air 256 GB", "iPhone 17"),
+        ("Samsung Galaxy S24 FE 128 GB", "Galaxy S24"),
+        ("Samsung Galaxy S24+ 256 GB", "Galaxy S24"),
+        ("Samsung Galaxy S24 Ultra 256 GB", "Galaxy S24"),
+        ("Xiaomi Redmi Note 14 Pro+ 5G 512 GB", "Redmi Note 14 Pro 5G"),
+        ("Xiaomi Redmi Note 14 Pro 5G 256 GB", "Redmi Note 14 Pro 4G"),
+        ("Xiaomi 14T 512 GB", "14T Pro"),
+        ("Xiaomi 14T Pro 512 GB", "14T"),
+    ):
+        assert not matches_model(title, model), (title, model)
+    for title, model in (
+        ("Samsung Galaxy S25 Edge 256 GB", "Galaxy S25 Edge"),
+        ("Apple iPhone Air 256 GB", "iPhone Air"),
+        ("Samsung Galaxy S24FE 128 GB", "Galaxy S24 FE"),
+        ("Xiaomi Redmi Note 14 Pro 5G 256 GB", "Redmi Note 14 Pro 5G"),
+        ("Xiaomi Redmi Note 13 Pro 4G 256 GB", "Redmi Note 13 Pro 4G"),
+        ("Xiaomi 14T Pro 12 GB 512 GB", "14T Pro"),
+        ("Xiaomi POCO X6 Pro 5G 256 GB", "POCO X6 Pro"),
+    ):
+        assert matches_model(title, model), (title, model)
+
+
+def test_underscore_separated_titles():
+    # Canlı Trendyol adı: "_" regex'te harf sayıldığı için "Ultra" görülmüyor ve
+    # sayfa hem S25 hem S25 Ultra hedefine giriyordu (catalog_conflict).
+    title = "Galaxy S25 Ultra_12GB_256GB Gri"
+    assert not matches_model(title, "Galaxy S25")
+    assert matches_model(title, "Galaxy S25 Ultra")
+    assert identify([title], "Galaxy S25 Ultra", 256) == 256
+    assert not matches_model("Galaxy S25 Kılıf_Şeffaf", "Galaxy S25")
 
 
 def test_identity_rules_shared_by_discovery_and_scraper():
@@ -108,6 +150,11 @@ def test_target_exclude_terms_split_same_named_phones():
         identify(["Redmi Note 14 Pro 5G 8GB+256GB"], "Redmi Note 14 5G", 256)
     # "5 GB" bir kapasite ifadesidir; "5G" sanılmaz.
     assert excluded_term(["Telefon 4 GB + 5 GB RAM 128 GB"], ["5G"]) is None
+    # Canlı Hepsiburada başlığı: 4G telefon "4.5G Mobil Bağlantı" diye yazılır.
+    assert (
+        excluded_term(["Redmi Note 14 Pro 256 GB 4.5G Mobil Bağlantı"], ["5G"]) is None
+    )
+    assert excluded_term(["Redmi Note 14 Pro 5G 512 GB"], ["5G"]) == "5G"
 
     target = DiscoveryTarget(
         key="xiaomi_redmi_note_14",
@@ -189,7 +236,7 @@ def test_trendyol_search_card_survives_missing_variant(monkeypatch):
         discovery, "get_json", lambda url: fixture("trendyol_variants.json")
     )
 
-    def candidate(url, product_id):
+    def candidate(url, product_id, variant_color=None):
         return DiscoveryCandidate(
             target_key=iphone_15.key,
             platform="trendyol",
@@ -198,16 +245,162 @@ def test_trendyol_search_card_survives_missing_variant(monkeypatch):
             brand="Apple",
             model="iPhone 15",
             storage_gb=256,
-            color="Sarı",
+            color=variant_color or "Sarı",
         )
 
     monkeypatch.setattr(discovery, "_candidate", candidate)
     result = discovery.discover()
-    assert {item.platform_product_id for item in result.candidates} == {
-        "11",
-        "14",
-        "762254849",
+    # Varyant listesindeki renk adı adaya taşınır; listede olmayan kart kendi rengini
+    # kullanır.
+    assert {item.platform_product_id: item.color for item in result.candidates} == {
+        "11": "Black",
+        "14": "Black",
+        "762254849": "Sarı",
     }
+    discovery.close()
+
+
+def test_trendyol_color_prefers_page_color_selector(monkeypatch):
+    # Canlı örnek: sayfanın renk seçicisinde "Abis", ürün özelliğinde "Çok Renkli".
+    discovery = TrendyolDiscovery(
+        DiscoveryTarget(
+            key="apple_iphone_17_pro_max", brand="Apple", model="iPhone 17 Pro Max"
+        ),
+        DiscoveryConfig(targets=[]),
+        Runtime(request_interval_seconds=0),
+    )
+    product = {
+        "id": 985256830,
+        "name": "iPhone 17 Pro Max 256GB Abis",
+        "brand": {"name": "Apple"},
+        "category": {"name": "iPhone IOS Cep Telefonları"},
+        "attributes": [
+            {"key": {"name": "Renk"}, "value": {"name": "Çok Renkli"}},
+            {"key": {"name": "Dahili Hafıza"}, "value": {"name": "256 GB"}},
+        ],
+    }
+    html = (
+        "<html><body><script>"
+        f"window['__envoy__SHARED_PROPS'] = {json.dumps({'product': product})};"
+        "</script></body></html>"
+    )
+    monkeypatch.setattr(discovery, "get", lambda url: html)
+    url = "https://www.trendyol.com/apple/iphone-17-pro-max-256gb-abis-p-985256830"
+
+    assert discovery._candidate(url, "985256830", "Abis").color == "Abis"
+    assert discovery._candidate(url, "985256830").color == "Çok Renkli"
+    discovery.close()
+
+
+def test_network_type_values():
+    assert network_type("4G") == "4G"
+    assert network_type("4.5G") == "4G"  # Hepsiburada 4G telefonları böyle yazar
+    assert network_type("5G") == "5G"
+    for value in ("5G+", "5G NR", "4G/5G"):  # 5G desteği söyleyen her değer
+        assert network_type(value) == "5G", value
+    assert network_type(None) is None and network_type("3G") is None
+
+
+def test_foreign_version_pages_are_out_of_scope():
+    # Canlı örnek: trendyol_991304922, iPhone 16 128 GB karşılaştırmasına giriyordu.
+    for title in (
+        "iPhone 16 128GB Teal 5G with FaceTime International Version",
+        "Xiaomi 14T Pro 512 GB Global Version",
+        "Redmi Note 14 Pro 256 GB Yurt Dışı Sürüm",
+    ):
+        with pytest.raises(FetchError, match="yurt dışı"):
+            identify([title], "iPhone 16")  # kapsam kontrolü modelden önce yapılır
+    assert identify(["Apple iPhone 16 128 GB Deniz Mavisi"], "iPhone 16") == 128
+
+
+def network_target():
+    return DiscoveryTarget(
+        key="xiaomi_redmi_note_14_pro_4g",
+        brand="Xiaomi",
+        model="Redmi Note 14 Pro",
+        network="4G",
+        exclude_terms=["5G"],
+    )
+
+
+def test_trendyol_network_target_checks_page_attribute(monkeypatch):
+    # Canlı örnek: başlıkta 4G yok; "Mobil Bağlantı Hızı" özelliği 4G / 5G diyor.
+    discovery = TrendyolDiscovery(
+        network_target(),
+        DiscoveryConfig(targets=[]),
+        Runtime(request_interval_seconds=0),
+    )
+
+    def page(network):
+        attributes = [{"key": {"name": "Dahili Hafıza"}, "value": {"name": "256 GB"}}]
+        if network:
+            attributes.append(
+                {"key": {"name": "Mobil Bağlantı Hızı"}, "value": {"name": network}}
+            )
+        product = {
+            "id": 891692674,
+            "name": "Redmi Note 14 Pro 8+256 Siyah (Xiaomi Türkiye Garantili)",
+            "brand": {"name": "Xiaomi"},
+            "category": {"name": "Android Cep Telefonu"},
+            "attributes": attributes,
+        }
+        state = json.dumps({"product": product})
+        return f"<script>window['__envoy__SHARED_PROPS'] = {state};</script>"
+
+    url = "https://www.trendyol.com/xiaomi/redmi-note-14-pro-8-256-siyah-p-891692674"
+    monkeypatch.setattr(discovery, "get", lambda url: page("4G"))
+    assert discovery._candidate(url, "891692674").storage_gb == 256
+    # Satıcılar alanı çoğu zaman boş bırakır: alanı olmayan sayfa 4G sayılır.
+    monkeypatch.setattr(discovery, "get", lambda url: page(None))
+    assert discovery._candidate(url, "891692674").storage_gb == 256
+    # Yalnız açıkça 5G yazan özellik reddedilir.
+    monkeypatch.setattr(discovery, "get", lambda url: page("5G"))
+    with pytest.raises(FetchError, match="Ağ türü"):
+        discovery._candidate(url, "891692674")
+    # Başlıkta "5G" varsa özellik boş olsa da exclude_terms ile reddedilir.
+    monkeypatch.setattr(
+        discovery,
+        "get",
+        lambda url: page(None).replace("Pro 8+256", "Pro 5G 8+256"),
+    )
+    with pytest.raises(FetchError, match="5G"):
+        discovery._candidate(url, "891692674")
+    discovery.close()
+
+
+def test_hepsiburada_network_target_reads_page_property(monkeypatch):
+    # Canlı örnek: Hepsiburada özellik kaydı {"name": "Mobil Bağlantı Hızı",
+    # "property": "4.5G"}; başlıktaki "4.5G" değil, bu kayıt kullanılır.
+    discovery = HepsiburadaDiscovery(
+        network_target(),
+        DiscoveryConfig(targets=[]),
+        Runtime(request_interval_seconds=0),
+    )
+    sku = "HBCV00008KX994"
+
+    def page(network):
+        state = {
+            "sku": sku,
+            "definitionName": "Cep Telefonu",
+            "brand": "Xiaomi",
+            "allVariantCombinations": [
+                {"sku": sku, "Kapasite": "256 GB", "Renk": "Siyah"}
+            ],
+            "properties": [{"name": "Mobil Bağlantı Hızı", "property": network}],
+        }
+        return (
+            "<html><h1>Xiaomi Redmi Note 14 Pro Akıllı Telefon 8 GB RAM 256 GB Siyah"
+            " 4.5G Mobil Bağlantı Hızı</h1><script>"
+            f"window.DATA = {json.dumps(state)};</script></html>"
+        )
+
+    url = f"https://www.hepsiburada.com/xiaomi-redmi-note-14-pro-p-{sku}"
+    monkeypatch.setattr(discovery, "get", lambda url: page("4.5G"))
+    candidate, _ = discovery._product(url, sku)
+    assert candidate.storage_gb == 256
+    monkeypatch.setattr(discovery, "get", lambda url: page("5G"))
+    with pytest.raises(FetchError, match="Ağ türü"):
+        discovery._product(url, sku)
     discovery.close()
 
 
@@ -231,7 +424,7 @@ def test_trendyol_gone_search_card_is_reported_without_candidate(monkeypatch):
         ),
     )
 
-    def gone(url, product_id):
+    def gone(url, product_id, variant_color=None):
         raise FetchError("http_error", "Kaynak HTTP 410 döndürdü")
 
     monkeypatch.setattr(discovery, "_candidate", gone)
@@ -592,7 +785,7 @@ def test_run_writes_report_and_valid_link_despite_conflict(tmp_path, monkeypatch
     )
     monkeypatch.setenv("CATALOG_PATH", str(catalog_file))
     monkeypatch.setenv("DISCOVERY_PATH", str(discovery_file))
-    monkeypatch.setenv("RUNTIME_PATH", str(CATALOG.parent / "runtime.json"))
+    monkeypatch.setenv("RUNTIME_PATH", str(CONFIG / "runtime.json"))
     monkeypatch.chdir(tmp_path)
     conflicting, valid = conflict_candidates()
 
@@ -734,6 +927,38 @@ def test_hepsiburada_keeps_html_cards_when_api_is_blocked(monkeypatch):
     discovery.close()
 
 
+def test_trendyol_search_skips_html_search_page(monkeypatch):
+    # Canlıda www.trendyol.com/sr HTTP 403 ile engelleniyordu; içeriği kullanılmaz.
+    discovery = TrendyolDiscovery(
+        target(), DiscoveryConfig(targets=[]), Runtime(request_interval_seconds=0)
+    )
+    opened, api_headers = [], []
+    first = {"products": [], "_links": {"aggregation": "https://apigw.trendyol.com/a"}}
+    aggregations = {
+        "aggregation": [
+            {"filterKey": "WebBrand", "values": [{"id": 101470, "text": "Apple"}]},
+            {
+                "filterKey": "LeafCategory",
+                "values": [{"id": 164462, "text": "iPhone IOS Cep Telefonları"}],
+            },
+        ]
+    }
+
+    def get_json(url, headers=None):
+        api_headers.append(headers["Referer"])
+        return aggregations if url.endswith("/a") else first
+
+    monkeypatch.setattr(
+        discovery, "get", lambda url, headers=None: opened.append(url) or ""
+    )
+    monkeypatch.setattr(discovery, "get_json", get_json)
+    discovery._search()
+
+    assert opened == ["https://www.trendyol.com/"]
+    assert "lc=164462" in api_headers[-1]  # filtreli istek yine Referer taşır
+    discovery.close()
+
+
 def test_trendyol_malformed_search_response_is_reported(monkeypatch):
     discovery = TrendyolDiscovery(
         target(), DiscoveryConfig(targets=[]), Runtime(request_interval_seconds=0)
@@ -801,13 +1026,60 @@ class Session:
         pass
 
 
+def test_request_interval_is_shared_between_clients(monkeypatch):
+    # Canlı kontrol her bağlantı için yeni istemci açıyor; aynı siteye iki istek
+    # arasında bekleme yine uygulanmalı, başka siteye geçerken beklenmemeli.
+    import app.scraper.http as http
+
+    slept = []
+    monkeypatch.setattr(http, "_LAST_REQUEST", {})
+    monkeypatch.setattr(http.time, "monotonic", lambda: 100.0)
+    monkeypatch.setattr(http.time, "sleep", slept.append)
+
+    class Ok:
+        status_code = 200
+        headers = {}
+        content = b"ok"
+
+    class Quiet(Session):
+        def request(self, *args, **kwargs):
+            return Ok()
+
+    runtime = Runtime(request_interval_seconds=3)
+    for host in ("www.trendyol.com", "www.trendyol.com", "www.hepsiburada.com"):
+        PageClient([host], runtime, client=Quiet()).get(f"https://{host}/")
+    assert slept == [3.0]
+
+
+def test_cookie_conflict_is_treated_as_missing():
+    # curl_cffi, aynı adlı çerez iki alt alan adında farklıysa hata verir.
+    from curl_cffi.requests.cookies import CookieConflict
+
+    class Jar:
+        def get(self, name):
+            raise CookieConflict("iki alan adında aynı çerez")
+
+    class WithCookies(Session):
+        cookies = Jar()
+
+    client = PageClient(
+        ["www.hepsiburada.com"], Runtime(request_interval_seconds=0), WithCookies()
+    )
+    assert client.cookie("hbus_anonymousId") is None
+
+
 def test_http_418_is_blocked():
     client = PageClient(
         ["www.trendyol.com"], Runtime(request_interval_seconds=0), client=Session()
     )
     with pytest.raises(FetchError) as error:
-        client.get("https://www.trendyol.com/")
+        client.get("https://www.trendyol.com/sr?q=iphone")
     assert error.value.code == "blocked"
+    # Raporda engelin türü ve yeri görünür: 429 hız sınırı, 403 erişim reddi.
+    assert error_code(error.value) == (
+        "blocked: Kaynak HTTP 418 döndürdü (www.trendyol.com/sr)"
+    )
+    assert error_code(KeyError("key")) == "KeyError"
 
 
 def test_discovery_budget_is_enforced_by_http_layer():

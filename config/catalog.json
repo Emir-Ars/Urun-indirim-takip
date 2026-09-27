@@ -44,6 +44,62 @@
     },
     {
       "product_id": 4,
+      "product_key": "apple_iphone_15_pro_128gb",
+      "brand": "Apple",
+      "model": "iPhone 15 Pro",
+      "storage_gb": 128,
+      "active": true
+    },
+    {
+      "product_id": 5,
+      "product_key": "apple_iphone_15_pro_256gb",
+      "brand": "Apple",
+      "model": "iPhone 15 Pro",
+      "storage_gb": 256,
+      "active": true
+    },
+    {
+      "product_id": 6,
+      "product_key": "apple_iphone_15_pro_512gb",
+      "brand": "Apple",
+      "model": "iPhone 15 Pro",
+      "storage_gb": 512,
+      "active": true
+    },
+    {
+      "product_id": 7,
+      "product_key": "apple_iphone_15_pro_1024gb",
+      "brand": "Apple",
+      "model": "iPhone 15 Pro",
+      "storage_gb": 1024,
+      "active": true
+    },
+    {
+      "product_id": 8,
+      "product_key": "apple_iphone_15_pro_max_256gb",
+      "brand": "Apple",
+      "model": "iPhone 15 Pro Max",
+      "storage_gb": 256,
+      "active": true
+    },
+    {
+      "product_id": 9,
+      "product_key": "apple_iphone_15_pro_max_512gb",
+      "brand": "Apple",
+      "model": "iPhone 15 Pro Max",
+      "storage_gb": 512,
+      "active": true
+    },
+    {
+      "product_id": 10,
+      "product_key": "apple_iphone_15_pro_max_1024gb",
+      "brand": "Apple",
+      "model": "iPhone 15 Pro Max",
+      "storage_gb": 1024,
+      "active": true
+    },
+    {
+      "product_id": 11,
       "product_key": "apple_iphone_16_128gb",
       "brand": "Apple",
       "model": "iPhone 16",
@@ -51,7 +107,7 @@
       "active": true
     },
     {
-      "product_id": 5,
+      "product_id": 12,
       "product_key": "apple_iphone_16_256gb",
       "brand": "Apple",
       "model": "iPhone 16",
@@ -59,31 +115,383 @@
       "active": true
     },
     {
-      "product_id": 6,
+      "product_id": 13,
       "product_key": "apple_iphone_16_512gb",
       "brand": "Apple",
       "model": "iPhone 16",
       "storage_gb": 512,
       "active": true
+    },
+    {
+      "product_id": 14,
+      "product_key": "apple_iphone_16_pro_128gb",
+      "brand": "Apple",
+      "model": "iPhone 16 Pro",
+      "storage_gb": 128,
+      "active": true
+    },
+    {
+      "product_id": 15,
+      "product_key": "apple_iphone_16_pro_256gb",
+      "brand": "Apple",
+      "model": "iPhone 16 Pro",
+      "storage_gb": 256,
+      "active": true
+    },
+    {
+      "product_id": 16,
+      "product_key": "apple_iphone_16_pro_512gb",
+      "brand": "Apple",
+      "model": "iPhone 16 Pro",
+      "storage_gb": 512,
+      "active": true
+    },
+    {
+      "product_id": 17,
+      "product_key": "apple_iphone_16_pro_1024gb",
+      "brand": "Apple",
+      "model": "iPhone 16 Pro",
+      "storage_gb": 1024,
+      "active": true
+    },
+    {
+      "product_id": 18,
+      "product_key": "apple_iphone_16_pro_max_256gb",
+      "brand": "Apple",
+      "model": "iPhone 16 Pro Max",
+      "storage_gb": 256,
+      "active": true
+    },
+    {
+      "product_id": 19,
+      "product_key": "apple_iphone_16_pro_max_512gb",
+      "brand": "Apple",
+      "model": "iPhone 16 Pro Max",
+      "storage_gb": 512,
+      "active": true
+    },
+    {
+      "product_id": 20,
+      "product_key": "apple_iphone_16_pro_max_1024gb",
+      "brand": "Apple",
+      "model": "iPhone 16 Pro Max",
+      "storage_gb": 1024,
+      "active": true
+    },
+    {
+      "product_id": 21,
+      "product_key": "apple_iphone_17_256gb",
+      "brand": "Apple",
+      "model": "iPhone 17",
+      "storage_gb": 256,
+      "active": true
+    },
+    {
+      "product_id": 22,
+      "product_key": "apple_iphone_17_512gb",
+      "brand": "Apple",
+      "model": "iPhone 17",
+      "storage_gb": 512,
+      "active": true
+    },
+    {
+      "product_id": 23,
+      "product_key": "apple_iphone_17_pro_256gb",
+      "brand": "Apple",
+      "model": "iPhone 17 Pro",
+      "storage_gb": 256,
+      "active": true
+    },
+    {
+      "product_id": 24,
+      "product_key": "apple_iphone_17_pro_512gb",
+      "brand": "Apple",
+      "model": "iPhone 17 Pro",
+      "storage_gb": 512,
+      "active": true
+    },
+    {
+      "product_id": 25,
+      "product_key": "apple_iphone_17_pro_1024gb",
+      "brand": "Apple",
+      "model": "iPhone 17 Pro",
+      "storage_gb": 1024,
+      "active": true
+    },
+    {
+      "product_id": 26,
+      "product_key": "apple_iphone_17_pro_max_256gb",
+      "brand": "Apple",
+      "model": "iPhone 17 Pro Max",
+      "storage_gb": 256,
+      "active": true
+    },
+    {
+      "product_id": 27,
+      "product_key": "apple_iphone_17_pro_max_512gb",
+      "brand": "Apple",
+      "model": "iPhone 17 Pro Max",
+      "storage_gb": 512,
+      "active": true
+    },
+    {
+      "product_id": 28,
+      "product_key": "apple_iphone_17_pro_max_1024gb",
+      "brand": "Apple",
+      "model": "iPhone 17 Pro Max",
+      "storage_gb": 1024,
+      "active": true
+    },
+    {
+      "product_id": 29,
+      "product_key": "apple_iphone_17_pro_max_2048gb",
+      "brand": "Apple",
+      "model": "iPhone 17 Pro Max",
+      "storage_gb": 2048,
+      "active": true
+    },
+    {
+      "product_id": 30,
+      "product_key": "samsung_galaxy_s25_128gb",
+      "brand": "Samsung",
+      "model": "Galaxy S25",
+      "storage_gb": 128,
+      "active": true
+    },
+    {
+      "product_id": 31,
+      "product_key": "samsung_galaxy_s25_256gb",
+      "brand": "Samsung",
+      "model": "Galaxy S25",
+      "storage_gb": 256,
+      "active": true
+    },
+    {
+      "product_id": 32,
+      "product_key": "samsung_galaxy_s25_ultra_256gb",
+      "brand": "Samsung",
+      "model": "Galaxy S25 Ultra",
+      "storage_gb": 256,
+      "active": true
+    },
+    {
+      "product_id": 33,
+      "product_key": "samsung_galaxy_s25_ultra_512gb",
+      "brand": "Samsung",
+      "model": "Galaxy S25 Ultra",
+      "storage_gb": 512,
+      "active": true
+    },
+    {
+      "product_id": 34,
+      "product_key": "samsung_galaxy_s25_ultra_1024gb",
+      "brand": "Samsung",
+      "model": "Galaxy S25 Ultra",
+      "storage_gb": 1024,
+      "active": true
+    },
+    {
+      "product_id": 35,
+      "product_key": "samsung_galaxy_s24_128gb",
+      "brand": "Samsung",
+      "model": "Galaxy S24",
+      "storage_gb": 128,
+      "active": true
+    },
+    {
+      "product_id": 36,
+      "product_key": "samsung_galaxy_s24_256gb",
+      "brand": "Samsung",
+      "model": "Galaxy S24",
+      "storage_gb": 256,
+      "active": true
+    },
+    {
+      "product_id": 37,
+      "product_key": "samsung_galaxy_s24_ultra_256gb",
+      "brand": "Samsung",
+      "model": "Galaxy S24 Ultra",
+      "storage_gb": 256,
+      "active": true
+    },
+    {
+      "product_id": 38,
+      "product_key": "samsung_galaxy_s24_ultra_512gb",
+      "brand": "Samsung",
+      "model": "Galaxy S24 Ultra",
+      "storage_gb": 512,
+      "active": true
+    },
+    {
+      "product_id": 39,
+      "product_key": "samsung_galaxy_s24_ultra_1024gb",
+      "brand": "Samsung",
+      "model": "Galaxy S24 Ultra",
+      "storage_gb": 1024,
+      "active": true
+    },
+    {
+      "product_id": 40,
+      "product_key": "samsung_galaxy_s24_fe_256gb",
+      "brand": "Samsung",
+      "model": "Galaxy S24 FE",
+      "storage_gb": 256,
+      "active": true
+    },
+    {
+      "product_id": 41,
+      "product_key": "samsung_galaxy_s23_fe_128gb",
+      "brand": "Samsung",
+      "model": "Galaxy S23 FE",
+      "storage_gb": 128,
+      "active": true
+    },
+    {
+      "product_id": 42,
+      "product_key": "samsung_galaxy_s23_fe_256gb",
+      "brand": "Samsung",
+      "model": "Galaxy S23 FE",
+      "storage_gb": 256,
+      "active": true
+    },
+    {
+      "product_id": 43,
+      "product_key": "samsung_galaxy_a55_128gb",
+      "brand": "Samsung",
+      "model": "Galaxy A55",
+      "storage_gb": 128,
+      "active": true
+    },
+    {
+      "product_id": 44,
+      "product_key": "samsung_galaxy_a55_256gb",
+      "brand": "Samsung",
+      "model": "Galaxy A55",
+      "storage_gb": 256,
+      "active": true
+    },
+    {
+      "product_id": 45,
+      "product_key": "samsung_galaxy_a54_128gb",
+      "brand": "Samsung",
+      "model": "Galaxy A54",
+      "storage_gb": 128,
+      "active": true
+    },
+    {
+      "product_id": 46,
+      "product_key": "samsung_galaxy_a54_256gb",
+      "brand": "Samsung",
+      "model": "Galaxy A54",
+      "storage_gb": 256,
+      "active": true
+    },
+    {
+      "product_id": 47,
+      "product_key": "xiaomi_14t_pro_256gb",
+      "brand": "Xiaomi",
+      "model": "14T Pro",
+      "storage_gb": 256,
+      "active": true
+    },
+    {
+      "product_id": 48,
+      "product_key": "xiaomi_14t_pro_512gb",
+      "brand": "Xiaomi",
+      "model": "14T Pro",
+      "storage_gb": 512,
+      "active": true
+    },
+    {
+      "product_id": 49,
+      "product_key": "xiaomi_13t_pro_512gb",
+      "brand": "Xiaomi",
+      "model": "13T Pro",
+      "storage_gb": 512,
+      "active": true
+    },
+    {
+      "product_id": 50,
+      "product_key": "xiaomi_redmi_note_14_pro_5g_512gb",
+      "brand": "Xiaomi",
+      "model": "Redmi Note 14 Pro 5G",
+      "storage_gb": 512,
+      "active": true
+    },
+    {
+      "product_id": 51,
+      "product_key": "xiaomi_redmi_note_13_pro_5g_256gb",
+      "brand": "Xiaomi",
+      "model": "Redmi Note 13 Pro 5G",
+      "storage_gb": 256,
+      "active": true
+    },
+    {
+      "product_id": 52,
+      "product_key": "xiaomi_redmi_note_13_pro_5g_512gb",
+      "brand": "Xiaomi",
+      "model": "Redmi Note 13 Pro 5G",
+      "storage_gb": 512,
+      "active": true
+    },
+    {
+      "product_id": 53,
+      "product_key": "poco_x6_pro_512gb",
+      "brand": "POCO",
+      "model": "X6 Pro",
+      "storage_gb": 512,
+      "active": true
+    },
+    {
+      "product_id": 54,
+      "product_key": "xiaomi_redmi_note_14_pro_4g_256gb",
+      "brand": "Xiaomi",
+      "model": "Redmi Note 14 Pro",
+      "storage_gb": 256,
+      "active": true
+    },
+    {
+      "product_id": 55,
+      "product_key": "xiaomi_redmi_note_14_pro_4g_512gb",
+      "brand": "Xiaomi",
+      "model": "Redmi Note 14 Pro",
+      "storage_gb": 512,
+      "active": true
+    },
+    {
+      "product_id": 56,
+      "product_key": "xiaomi_redmi_note_13_pro_4g_256gb",
+      "brand": "Xiaomi",
+      "model": "Redmi Note 13 Pro",
+      "storage_gb": 256,
+      "active": true
+    },
+    {
+      "product_id": 57,
+      "product_key": "xiaomi_redmi_note_13_pro_4g_512gb",
+      "brand": "Xiaomi",
+      "model": "Redmi Note 13 Pro",
+      "storage_gb": 512,
+      "active": true
+    },
+    {
+      "product_id": 58,
+      "product_key": "samsung_galaxy_s25_512gb",
+      "brand": "Samsung",
+      "model": "Galaxy S25",
+      "storage_gb": 512,
+      "active": true
+    },
+    {
+      "product_id": 59,
+      "product_key": "xiaomi_redmi_note_14_pro_5g_256gb",
+      "brand": "Xiaomi",
+      "model": "Redmi Note 14 Pro 5G",
+      "storage_gb": 256,
+      "active": true
     }
   ],
   "listings": [
-    {
-      "listing_id": "hepsiburada_iphone_15_128gb_mavi",
-      "product_id": 1,
-      "platform": "hepsiburada",
-      "url": "https://www.hepsiburada.com/apple-iphone-15-128-gb-mavi-p-HBCV00004X9ZCK",
-      "color": "Mavi",
-      "active": true
-    },
-    {
-      "listing_id": "trendyol_iphone_15_128gb_mavi",
-      "product_id": 1,
-      "platform": "trendyol",
-      "url": "https://www.trendyol.com/apple/iphone-15-128-gb-mavi-p-762254881",
-      "color": "Mavi",
-      "active": true
-    },
     {
       "listing_id": "hepsiburada_hbcv00004x9zch",
       "product_id": 1,
@@ -109,11 +517,27 @@
       "active": true
     },
     {
+      "listing_id": "hepsiburada_hbcv00004x9zck",
+      "product_id": 1,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-15-128-gb-mavi-p-HBCV00004X9ZCK",
+      "color": "Mavi",
+      "active": true
+    },
+    {
       "listing_id": "hepsiburada_hbcv00004x9zcl",
       "product_id": 1,
       "platform": "hepsiburada",
       "url": "https://www.hepsiburada.com/apple-iphone-15-128-gb-p-HBCV00004X9ZCL",
       "color": "Yeşil",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv0000d3aulb",
+      "product_id": 1,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-15-siyah-128gb-p-HBCV0000D3AULB",
+      "color": "Siyah",
       "active": true
     },
     {
@@ -129,7 +553,15 @@
       "product_id": 1,
       "platform": "trendyol",
       "url": "https://www.trendyol.com/apple/iphone-15-128-gb-siyah-p-762254878",
-      "color": "Siyah",
+      "color": "Black",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_762254881",
+      "product_id": 1,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-15-128-gb-mavi-p-762254881",
+      "color": "Blue",
       "active": true
     },
     {
@@ -177,7 +609,7 @@
       "product_id": 2,
       "platform": "trendyol",
       "url": "https://www.trendyol.com/apple/iphone-15-256-gb-siyah-p-762254844",
-      "color": "Siyah",
+      "color": "Black",
       "active": true
     },
     {
@@ -185,7 +617,7 @@
       "product_id": 2,
       "platform": "trendyol",
       "url": "https://www.trendyol.com/apple/iphone-15-256-gb-mavi-p-762254862",
-      "color": "Mavi",
+      "color": "Blue",
       "active": true
     },
     {
@@ -229,8 +661,248 @@
       "active": true
     },
     {
-      "listing_id": "hepsiburada_hbcv00006y4hfj",
+      "listing_id": "hepsiburada_hbcv00004xa872",
       "product_id": 4,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/iphone-15-pro-128-gb-siyah-titanyum-p-HBCV00004XA872",
+      "color": "Siyah Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00004xa873",
+      "product_id": 4,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/iphone-15-pro-128-gb-beyaz-titanyum-p-HBCV00004XA873",
+      "color": "Beyaz Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00004xa874",
+      "product_id": 4,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-15-pro-128-gb-naturel-titanyum-p-HBCV00004XA874",
+      "color": "Natürel Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00004xa875",
+      "product_id": 4,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-15-pro-128-gb-mavi-titanyum-p-HBCV00004XA875",
+      "color": "Mavi Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_762254869",
+      "product_id": 4,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-15-pro-128-gb-naturel-titanyum-p-762254869",
+      "color": "Çok Renkli",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00004xa877",
+      "product_id": 5,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/iphone-15-pro-256-gb-siyah-titanyum-p-HBCV00004XA877",
+      "color": "Siyah Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00004xa878",
+      "product_id": 5,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-15-pro-256-gb-beyaz-titanyum-p-HBCV00004XA878",
+      "color": "Beyaz Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00004xa879",
+      "product_id": 5,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-15-pro-256-gb-naturel-titanyum-p-HBCV00004XA879",
+      "color": "Natürel Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00004xa87a",
+      "product_id": 5,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-15-pro-256-gb-mavi-titanyum-p-HBCV00004XA87A",
+      "color": "Mavi Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00004xa87c",
+      "product_id": 6,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-15-pro-512-gb-siyah-titanyum-p-HBCV00004XA87C",
+      "color": "Siyah Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00004xa87d",
+      "product_id": 6,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/iphone-15-pro-512-gb-beyaz-titanyum-p-HBCV00004XA87D",
+      "color": "Beyaz Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00004xa87e",
+      "product_id": 6,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/iphone-15-pro-512-gb-naturel-titanyum-p-HBCV00004XA87E",
+      "color": "Natürel Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00004xa87f",
+      "product_id": 6,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/iphone-15-pro-512-gb-mavi-titanyum-p-HBCV00004XA87F",
+      "color": "Mavi Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00004xa87h",
+      "product_id": 7,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-15-pro-1-tb-siyah-titanyum-p-HBCV00004XA87H",
+      "color": "Siyah Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00004xa87i",
+      "product_id": 7,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-15-pro-1-tb-beyaz-titanyum-p-HBCV00004XA87I",
+      "color": "Beyaz Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00004xa87j",
+      "product_id": 7,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/iphone-15-pro-1-tb-naturel-titanyum-p-HBCV00004XA87J",
+      "color": "Natürel Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00004xa87k",
+      "product_id": 7,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-15-pro-1-tb-mavi-titanyum-p-HBCV00004XA87K",
+      "color": "Mavi Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00004xa8g6",
+      "product_id": 8,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-15-pro-max-256-gb-siyah-titanyum-p-HBCV00004XA8G6",
+      "color": "Siyah Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00004xa8g7",
+      "product_id": 8,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/iphone-15-pro-max-beyaz-256-gb-8-gb-ram-akilli-telefon-apple-turkiye-garantili-p-HBCV00004XA8G7",
+      "color": "Beyaz Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00004xa8g8",
+      "product_id": 8,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-15-pro-max-256-gb-naturel-titanyum-p-HBCV00004XA8G8",
+      "color": "Natürel Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00004xa8g9",
+      "product_id": 8,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-15-pro-max-256-gb-mavi-titanyum-p-HBCV00004XA8G9",
+      "color": "Mavi Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_762254852",
+      "product_id": 8,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-15-pro-max-256-gb-siyah-titanyum-p-762254852",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00004xa8gb",
+      "product_id": 9,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-15-pro-max-512-gb-siyah-titanyum-p-HBCV00004XA8GB",
+      "color": "Siyah Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00004xa8gc",
+      "product_id": 9,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-15-pro-max-512-gb-beyaz-titanyum-p-HBCV00004XA8GC",
+      "color": "Beyaz Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00004xa8gd",
+      "product_id": 9,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/iphone-15-pro-max-512-gb-naturel-titanyum-p-HBCV00004XA8GD",
+      "color": "Natürel Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00004xa8ge",
+      "product_id": 9,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-15-pro-max-512-gb-mavi-titanyum-p-HBCV00004XA8GE",
+      "color": "Mavi Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00004xa8gg",
+      "product_id": 10,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-15-pro-max-1-tb-siyah-titanyum-p-HBCV00004XA8GG",
+      "color": "Siyah Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00004xa8gh",
+      "product_id": 10,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-15-pro-max-1-tb-beyaz-titanyum-p-HBCV00004XA8GH",
+      "color": "Beyaz Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00004xa8gi",
+      "product_id": 10,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/iphone-15-pro-max-1-tb-naturel-titanyum-p-HBCV00004XA8GI",
+      "color": "Natürel Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00004xa8gj",
+      "product_id": 10,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-15-pro-max-1-tb-mavi-titanyum-p-HBCV00004XA8GJ",
+      "color": "Mavi Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006y4hfj",
+      "product_id": 11,
       "platform": "hepsiburada",
       "url": "https://www.hepsiburada.com/apple-iphone-16-128gb-siyah-p-HBCV00006Y4HFJ",
       "color": "Siyah",
@@ -238,7 +910,7 @@
     },
     {
       "listing_id": "hepsiburada_hbcv00006y4hfl",
-      "product_id": 4,
+      "product_id": 11,
       "platform": "hepsiburada",
       "url": "https://www.hepsiburada.com/apple-iphone-16-128gb-beyaz-p-HBCV00006Y4HFL",
       "color": "Beyaz",
@@ -246,7 +918,7 @@
     },
     {
       "listing_id": "hepsiburada_hbcv00006y4hfn",
-      "product_id": 4,
+      "product_id": 11,
       "platform": "hepsiburada",
       "url": "https://www.hepsiburada.com/apple-iphone-16-128gb-lacivert-tas-p-HBCV00006Y4HFN",
       "color": "Laciverttaş",
@@ -254,7 +926,7 @@
     },
     {
       "listing_id": "hepsiburada_hbcv00006y4hfp",
-      "product_id": 4,
+      "product_id": 11,
       "platform": "hepsiburada",
       "url": "https://www.hepsiburada.com/apple-iphone-16-128gb-deniz-mavisi-p-HBCV00006Y4HFP",
       "color": "Deniz Mavisi",
@@ -262,95 +934,15 @@
     },
     {
       "listing_id": "hepsiburada_hbcv00006y4hu3",
-      "product_id": 4,
+      "product_id": 11,
       "platform": "hepsiburada",
       "url": "https://www.hepsiburada.com/apple-iphone-16-128gb-pembe-p-HBCV00006Y4HU3",
       "color": "Pembe",
       "active": true
     },
     {
-      "listing_id": "hepsiburada_hbcv00006y4hfr",
-      "product_id": 5,
-      "platform": "hepsiburada",
-      "url": "https://www.hepsiburada.com/apple-iphone-16-256gb-siyah-p-HBCV00006Y4HFR",
-      "color": "Siyah",
-      "active": true
-    },
-    {
-      "listing_id": "hepsiburada_hbcv00006y4hft",
-      "product_id": 5,
-      "platform": "hepsiburada",
-      "url": "https://www.hepsiburada.com/apple-iphone-16-256gb-beyaz-p-HBCV00006Y4HFT",
-      "color": "Beyaz",
-      "active": true
-    },
-    {
-      "listing_id": "hepsiburada_hbcv00006y4hfv",
-      "product_id": 5,
-      "platform": "hepsiburada",
-      "url": "https://www.hepsiburada.com/apple-iphone-16-256gb-pembe-p-HBCV00006Y4HFV",
-      "color": "Pembe",
-      "active": true
-    },
-    {
-      "listing_id": "hepsiburada_hbcv00006y4hfx",
-      "product_id": 5,
-      "platform": "hepsiburada",
-      "url": "https://www.hepsiburada.com/apple-iphone-16-256gb-deniz-mavisi-p-HBCV00006Y4HFX",
-      "color": "Deniz Mavisi",
-      "active": true
-    },
-    {
-      "listing_id": "hepsiburada_hbcv00006y4hu5",
-      "product_id": 5,
-      "platform": "hepsiburada",
-      "url": "https://www.hepsiburada.com/apple-iphone-16-256gb-lacivert-tas-p-HBCV00006Y4HU5",
-      "color": "Laciverttaş",
-      "active": true
-    },
-    {
-      "listing_id": "hepsiburada_hbcv00006y4hfz",
-      "product_id": 6,
-      "platform": "hepsiburada",
-      "url": "https://www.hepsiburada.com/apple-iphone-16-512gb-siyah-p-HBCV00006Y4HFZ",
-      "color": "Siyah",
-      "active": true
-    },
-    {
-      "listing_id": "hepsiburada_hbcv00006y4hg1",
-      "product_id": 6,
-      "platform": "hepsiburada",
-      "url": "https://www.hepsiburada.com/apple-iphone-16-512gb-lacivert-tas-p-HBCV00006Y4HG1",
-      "color": "Laciverttaş",
-      "active": true
-    },
-    {
-      "listing_id": "hepsiburada_hbcv00006y4hg3",
-      "product_id": 6,
-      "platform": "hepsiburada",
-      "url": "https://www.hepsiburada.com/apple-iphone-16-512gb-deniz-mavisi-p-HBCV00006Y4HG3",
-      "color": "Deniz Mavisi",
-      "active": true
-    },
-    {
-      "listing_id": "hepsiburada_hbcv00006y4hu7",
-      "product_id": 6,
-      "platform": "hepsiburada",
-      "url": "https://www.hepsiburada.com/apple-iphone-16-512gb-beyaz-p-HBCV00006Y4HU7",
-      "color": "Beyaz",
-      "active": true
-    },
-    {
-      "listing_id": "hepsiburada_hbcv00006y4hu9",
-      "product_id": 6,
-      "platform": "hepsiburada",
-      "url": "https://www.hepsiburada.com/apple-iphone-16-512gb-pembe-p-HBCV00006Y4HU9",
-      "color": "Pembe",
-      "active": true
-    },
-    {
       "listing_id": "trendyol_1116290560",
-      "product_id": 4,
+      "product_id": 11,
       "platform": "trendyol",
       "url": "https://www.trendyol.com/apple/iphone-16-128-gb-siyah-p-1116290560",
       "color": "Siyah",
@@ -358,7 +950,7 @@
     },
     {
       "listing_id": "trendyol_857296082",
-      "product_id": 4,
+      "product_id": 11,
       "platform": "trendyol",
       "url": "https://www.trendyol.com/apple/iphone-16-128gb-beyaz-p-857296082",
       "color": "Beyaz",
@@ -366,7 +958,7 @@
     },
     {
       "listing_id": "trendyol_857296095",
-      "product_id": 4,
+      "product_id": 11,
       "platform": "trendyol",
       "url": "https://www.trendyol.com/apple/iphone-16-128gb-siyah-p-857296095",
       "color": "Siyah",
@@ -374,15 +966,15 @@
     },
     {
       "listing_id": "trendyol_857296121",
-      "product_id": 4,
+      "product_id": 11,
       "platform": "trendyol",
       "url": "https://www.trendyol.com/apple/iphone-16-128gb-laciverttas-p-857296121",
-      "color": "Lacivert",
+      "color": "Laciverttaş",
       "active": true
     },
     {
       "listing_id": "trendyol_857296122",
-      "product_id": 4,
+      "product_id": 11,
       "platform": "trendyol",
       "url": "https://www.trendyol.com/apple/iphone-16-128gb-pembe-p-857296122",
       "color": "Pembe",
@@ -390,42 +982,2130 @@
     },
     {
       "listing_id": "trendyol_991304922",
-      "product_id": 4,
+      "product_id": 11,
       "platform": "trendyol",
       "url": "https://www.trendyol.com/apple/iphone-16-128gb-teal-5g-with-facetime-international-version-p-991304922",
-      "color": "Mavi",
+      "color": "Deniz Mavisi",
+      "active": false
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006y4hfr",
+      "product_id": 12,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-16-256gb-siyah-p-HBCV00006Y4HFR",
+      "color": "Siyah",
       "active": true
     },
     {
-      "listing_id": "trendyol_762254849",
-      "product_id": 2,
-      "platform": "trendyol",
-      "url": "https://www.trendyol.com/apple/iphone-15-256-gb-sari-p-762254849",
-      "color": "Sarı",
+      "listing_id": "hepsiburada_hbcv00006y4hft",
+      "product_id": 12,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-16-256gb-beyaz-p-HBCV00006Y4HFT",
+      "color": "Beyaz",
       "active": true
     },
     {
-      "listing_id": "trendyol_762254854",
-      "product_id": 2,
-      "platform": "trendyol",
-      "url": "https://www.trendyol.com/apple/iphone-15-256-gb-pembe-p-762254854",
+      "listing_id": "hepsiburada_hbcv00006y4hfv",
+      "product_id": 12,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-16-256gb-pembe-p-HBCV00006Y4HFV",
       "color": "Pembe",
       "active": true
     },
     {
-      "listing_id": "trendyol_865248542",
-      "product_id": 2,
+      "listing_id": "hepsiburada_hbcv00006y4hfx",
+      "product_id": 12,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-16-256gb-deniz-mavisi-p-HBCV00006Y4HFX",
+      "color": "Deniz Mavisi",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006y4hu5",
+      "product_id": 12,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-16-256gb-lacivert-tas-p-HBCV00006Y4HU5",
+      "color": "Laciverttaş",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_857296134",
+      "product_id": 12,
       "platform": "trendyol",
-      "url": "https://www.trendyol.com/apple/iphone-15-256-gb-akilli-telefon-siyah-p-865248542",
+      "url": "https://www.trendyol.com/apple/iphone-16-256gb-siyah-p-857296134",
       "color": "Siyah",
       "active": true
     },
     {
-      "listing_id": "hepsiburada_hbcv0000d3aulb",
-      "product_id": 1,
+      "listing_id": "hepsiburada_hbcv00006y4hfz",
+      "product_id": 13,
       "platform": "hepsiburada",
-      "url": "https://www.hepsiburada.com/apple-iphone-15-siyah-128gb-p-HBCV0000D3AULB",
+      "url": "https://www.hepsiburada.com/apple-iphone-16-512gb-siyah-p-HBCV00006Y4HFZ",
       "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006y4hg1",
+      "product_id": 13,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-16-512gb-lacivert-tas-p-HBCV00006Y4HG1",
+      "color": "Laciverttaş",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006y4hg3",
+      "product_id": 13,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-16-512gb-deniz-mavisi-p-HBCV00006Y4HG3",
+      "color": "Deniz Mavisi",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006y4hu7",
+      "product_id": 13,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-16-512gb-beyaz-p-HBCV00006Y4HU7",
+      "color": "Beyaz",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006y4hu9",
+      "product_id": 13,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-16-512gb-pembe-p-HBCV00006Y4HU9",
+      "color": "Pembe",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006y4hbh",
+      "product_id": 14,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-16-pro-128gb-siyah-p-HBCV00006Y4HBH",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006y4hbj",
+      "product_id": 14,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-16-pro-128gb-beyaz-p-HBCV00006Y4HBJ",
+      "color": "Beyaz",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006y4hbl",
+      "product_id": 14,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-16-pro-128gb-naturel-titanyum-p-HBCV00006Y4HBL",
+      "color": "Natürel Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006y4hgl",
+      "product_id": 14,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-16-pro-128gb-col-titanyum-p-HBCV00006Y4HGL",
+      "color": "Çöl Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006y4hbn",
+      "product_id": 15,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-16-pro-256gb-siyah-p-HBCV00006Y4HBN",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006y4hbp",
+      "product_id": 15,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-16-pro-256gb-beyaz-p-HBCV00006Y4HBP",
+      "color": "Beyaz",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006y4hbr",
+      "product_id": 15,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-16-pro-256gb-col-titanyum-p-HBCV00006Y4HBR",
+      "color": "Çöl Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006y4hbt",
+      "product_id": 15,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-16-pro-256gb-naturel-titanyum-p-HBCV00006Y4HBT",
+      "color": "Natürel Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_857296104",
+      "product_id": 15,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-16-pro-256gb-siyah-titanyum-p-857296104",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006y4hbv",
+      "product_id": 16,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-16-pro-512gb-siyah-p-HBCV00006Y4HBV",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006y4hbx",
+      "product_id": 16,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-16-pro-512gb-col-titanyum-p-HBCV00006Y4HBX",
+      "color": "Çöl Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006y4hgn",
+      "product_id": 16,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-16-pro-512gb-beyaz-p-HBCV00006Y4HGN",
+      "color": "Beyaz",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006y4hgp",
+      "product_id": 16,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-16-pro-512gb-naturel-titanyum-p-HBCV00006Y4HGP",
+      "color": "Natürel Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006y4hbz",
+      "product_id": 17,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-16-pro-1-tb-beyaz-p-HBCV00006Y4HBZ",
+      "color": "Beyaz",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006y4hc1",
+      "product_id": 17,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/iphone-16-pro-1tb-col-titanyum-p-HBCV00006Y4HC1",
+      "color": "Çöl Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006y4hc3",
+      "product_id": 17,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/iphone-16-pro-1-tb-naturel-titanyum-p-HBCV00006Y4HC3",
+      "color": "Natürel Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006y4hgr",
+      "product_id": 17,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-16-pro-1-tb-siyah-p-HBCV00006Y4HGR",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006y4hc5",
+      "product_id": 18,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-16-pro-max-256gb-col-titanyum-p-HBCV00006Y4HC5",
+      "color": "Çöl Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006y4hc7",
+      "product_id": 18,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-16-pro-max-256gb-naturel-titanyum-p-HBCV00006Y4HC7",
+      "color": "Natürel Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006y4hgt",
+      "product_id": 18,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-16-pro-max-256gb-siyah-p-HBCV00006Y4HGT",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006y4hgv",
+      "product_id": 18,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-16-pro-max-256gb-beyaz-p-HBCV00006Y4HGV",
+      "color": "Beyaz",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_857296109",
+      "product_id": 18,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-16-pro-max-256gb-col-titanyum-p-857296109",
+      "color": "Çöl Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006y4hc9",
+      "product_id": 19,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-16-pro-max-512gb-siyah-p-HBCV00006Y4HC9",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006y4hcb",
+      "product_id": 19,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-16-pro-max-512gb-beyaz-p-HBCV00006Y4HCB",
+      "color": "Beyaz",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006y4i9p",
+      "product_id": 19,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-16-pro-max-512gb-col-titanyum-p-HBCV00006Y4I9P",
+      "color": "Çöl Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006y4i9r",
+      "product_id": 19,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-16-pro-max-512gb-naturel-titanyum-p-HBCV00006Y4I9R",
+      "color": "Natürel Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006y4i9t",
+      "product_id": 20,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-16-pro-max-1-tb-siyah-p-HBCV00006Y4I9T",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006y4i9v",
+      "product_id": 20,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-16-pro-max-1-tb-beyaz-p-HBCV00006Y4I9V",
+      "color": "Beyaz",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006y4i9x",
+      "product_id": 20,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-16-pro-max-1-tb-col-beji-p-HBCV00006Y4I9X",
+      "color": "Çöl Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006y4i9z",
+      "product_id": 20,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-16-pro-max-1-tb-naturel-titanyum-p-HBCV00006Y4I9Z",
+      "color": "Natürel Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_857296092",
+      "product_id": 20,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-16-pro-max-1tb-siyah-titanyum-p-857296092",
+      "color": "Siyah Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00009z3xzz",
+      "product_id": 21,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-17-256-gb-ada-cayi-p-HBCV00009Z3XZZ",
+      "color": "Ada Çayı",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00009z3y37",
+      "product_id": 21,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-17-256-gb-lavanta-p-HBCV00009Z3Y37",
+      "color": "Lavanta",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00009z3y49",
+      "product_id": 21,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-17-256-gb-siyah-p-HBCV00009Z3Y49",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00009z3yj1",
+      "product_id": 21,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-17-256-gb-beyaz-p-HBCV00009Z3YJ1",
+      "color": "Beyaz",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00009z40tf",
+      "product_id": 21,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-17-256-gb-sis-mavisi-p-HBCV00009Z40TF",
+      "color": "Sis Mavisi",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_985256842",
+      "product_id": 21,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-17-256gb-siyah-p-985256842",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_985256845",
+      "product_id": 21,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-17-256gb-beyaz-p-985256845",
+      "color": "White",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_985256848",
+      "product_id": 21,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-17-256gb-sis-mavisi-p-985256848",
+      "color": "Blue",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_985256856",
+      "product_id": 21,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-17-256gb-lavanta-p-985256856",
+      "color": "Lavender",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_985256863",
+      "product_id": 21,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-17-256gb-ada-cayi-p-985256863",
+      "color": "Sage",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00009z3sg0",
+      "product_id": 22,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-17-512-gb-lavanta-p-HBCV00009Z3SG0",
+      "color": "Lavanta",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00009z3v96",
+      "product_id": 22,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-17-512-gb-siyah-p-HBCV00009Z3V96",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00009z3xdk",
+      "product_id": 22,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-17-512-gb-beyaz-p-HBCV00009Z3XDK",
+      "color": "Beyaz",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00009z3xin",
+      "product_id": 22,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-17-512-gb-ada-cayi-p-HBCV00009Z3XIN",
+      "color": "Ada Çayı",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00009z3ypj",
+      "product_id": 22,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-17-512-gb-sis-mavisi-p-HBCV00009Z3YPJ",
+      "color": "Sis Mavisi",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_985256816",
+      "product_id": 22,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-17-512gb-siyah-p-985256816",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_985256823",
+      "product_id": 22,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-17-512gb-beyaz-p-985256823",
+      "color": "White",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_985256833",
+      "product_id": 22,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-17-512gb-lavanta-p-985256833",
+      "color": "Lavender",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_985256839",
+      "product_id": 22,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-17-512gb-ada-cayi-p-985256839",
+      "color": "Sage",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00009z3xl5",
+      "product_id": 23,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-17-pro-256-gb-kozmik-turuncu-p-HBCV00009Z3XL5",
+      "color": "Kozmik Turuncu",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00009z3ypk",
+      "product_id": 23,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-17-pro-256-gb-abis-p-HBCV00009Z3YPK",
+      "color": "Abis",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00009z40dm",
+      "product_id": 23,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-17-pro-256-gb-gumus-p-HBCV00009Z40DM",
+      "color": "Gümüş",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_985256847",
+      "product_id": 23,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-17-pro-256gb-gumus-p-985256847",
+      "color": "Silver",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_985256852",
+      "product_id": 23,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-17-pro-256gb-kozmik-turuncu-p-985256852",
+      "color": "Cosmic Orange",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_990828141",
+      "product_id": 23,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-17-pro-256gb-5g-deep-blue-p-990828141",
+      "color": "Deep Blue",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00009z3sg2",
+      "product_id": 24,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-17-pro-512-gb-kozmik-turuncu-p-HBCV00009Z3SG2",
+      "color": "Kozmik Turuncu",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00009z3xdn",
+      "product_id": 24,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-17-pro-512-gb-gumus-p-HBCV00009Z3XDN",
+      "color": "Gümüş",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00009z3xxb",
+      "product_id": 24,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-17-pro-512-gb-abis-p-HBCV00009Z3XXB",
+      "color": "Abis",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_985256843",
+      "product_id": 24,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-17-pro-512gb-gumus-p-985256843",
+      "color": "Silver",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_985256846",
+      "product_id": 24,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-17-pro-512gb-kozmik-turuncu-p-985256846",
+      "color": "Cosmic Orange",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_985256849",
+      "product_id": 24,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-17-pro-512gb-abis-p-985256849",
+      "color": "Deep Blue",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00009z3z03",
+      "product_id": 25,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-17-pro-1-tb-kozmik-turuncu-p-HBCV00009Z3Z03",
+      "color": "Kozmik Turuncu",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00009z3zab",
+      "product_id": 25,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-17-pro-1-tb-gumus-p-HBCV00009Z3ZAB",
+      "color": "Gümüş",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00009z403y",
+      "product_id": 25,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-17-pro-1-tb-abis-p-HBCV00009Z403Y",
+      "color": "Abis",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_985256857",
+      "product_id": 25,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-17-pro-1tb-gumus-p-985256857",
+      "color": "Silver",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_985256864",
+      "product_id": 25,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-17-pro-1tb-kozmik-turuncu-p-985256864",
+      "color": "Cosmic Orange",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00009z3xio",
+      "product_id": 26,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-17-pro-max-256-gb-gumus-p-HBCV00009Z3XIO",
+      "color": "Gümüş",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00009z3xoe",
+      "product_id": 26,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-17-pro-max-256-gb-abis-p-HBCV00009Z3XOE",
+      "color": "Abis",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00009z3z8c",
+      "product_id": 26,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-17-pro-max-256-gb-kozmik-turuncu-p-HBCV00009Z3Z8C",
+      "color": "Kozmik Turuncu",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_985256821",
+      "product_id": 26,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-17-pro-max-256gb-gumus-p-985256821",
+      "color": "Silver",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_985256825",
+      "product_id": 26,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-17-pro-max-256gb-kozmik-turuncu-p-985256825",
+      "color": "Cosmic Orange",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_985256830",
+      "product_id": 26,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-17-pro-max-256gb-abis-p-985256830",
+      "color": "Abis",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00009z3sg4",
+      "product_id": 27,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-17-pro-max-512-gb-abis-p-HBCV00009Z3SG4",
+      "color": "Abis",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00009z3xg8",
+      "product_id": 27,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-17-pro-max-512-gb-kozmik-turuncu-p-HBCV00009Z3XG8",
+      "color": "Kozmik Turuncu",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00009z6wra",
+      "product_id": 27,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-17-pro-max-512-gb-gumus-p-HBCV00009Z6WRA",
+      "color": "Gümüş",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_985256835",
+      "product_id": 27,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-17-pro-max-512gb-gumus-p-985256835",
+      "color": "Silver",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_985256866",
+      "product_id": 27,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-17-pro-max-512gb-kozmik-turuncu-p-985256866",
+      "color": "Cosmic Orange",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_985256867",
+      "product_id": 27,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-17-pro-max-512gb-abis-p-985256867",
+      "color": "Abis",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00009z3u2s",
+      "product_id": 28,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-17-pro-max-1-tb-gumus-p-HBCV00009Z3U2S",
+      "color": "Gümüş",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00009z3xg9",
+      "product_id": 28,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-17-pro-max-1-tb-abis-p-HBCV00009Z3XG9",
+      "color": "Abis",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00009z4112",
+      "product_id": 28,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-17-pro-max-1-tb-kozmik-turuncu-p-HBCV00009Z4112",
+      "color": "Kozmik Turuncu",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_985256868",
+      "product_id": 28,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-17-pro-max-1tb-gumus-p-985256868",
+      "color": "Silver",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_985256869",
+      "product_id": 28,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-17-pro-max-1tb-kozmik-turuncu-p-985256869",
+      "color": "Cosmic Orange",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_985256870",
+      "product_id": 28,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-17-pro-max-1tb-abis-p-985256870",
+      "color": "Abis",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00009z7ym8",
+      "product_id": 29,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-17-pro-max-2-tb-gumus-p-HBCV00009Z7YM8",
+      "color": "Gümüş",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00009z7ym9",
+      "product_id": 29,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-17-pro-max-2-tb-kozmik-turuncu-p-HBCV00009Z7YM9",
+      "color": "Kozmik Turuncu",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00009z7yma",
+      "product_id": 29,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-17-pro-max-2-tb-abis-p-HBCV00009Z7YMA",
+      "color": "Abis",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_1135932809",
+      "product_id": 29,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/mg004tu-a-iphone-17-pro-max-2-tb-akilli-telefon-kozmik-turuncu-p-1135932809",
+      "color": "Turuncu",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_985256815",
+      "product_id": 29,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-17-pro-max-2tb-gumus-p-985256815",
+      "color": "Silver",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_985256820",
+      "product_id": 29,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-17-pro-max-2tb-kozmik-turuncu-p-985256820",
+      "color": "Cosmic Orange",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00007jdvrh",
+      "product_id": 30,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s25-128-gb-12-gb-ram-samsung-turkiye-garantili-lacivert-p-HBCV00007JDVRH",
+      "color": "Lacivert",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00007mid9g",
+      "product_id": 30,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s25-128-gb-12-gb-ram-samsung-turkiye-garantili-gumus-p-HBCV00007MID9G",
+      "color": "Gümüş",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00007mif53",
+      "product_id": 30,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s25-128-gb-12-gb-ram-samsung-turkiye-garantili-buz-mavisi-p-HBCV00007MIF53",
+      "color": "Ice Blue",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_892326443",
+      "product_id": 30,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s25-128-gb-lacivert-samsung-turkiye-garantili-p-892326443",
+      "color": "Lacivert",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00007vse9v",
+      "product_id": 31,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s25-256-gb-samsung-turkiye-garantili-gumus-p-HBCV00007VSE9V",
+      "color": "Gümüş",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00007vse9x",
+      "product_id": 31,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s25-256-gb-samsung-turkiye-garantili-mint-yesili-p-HBCV00007VSE9X",
+      "color": "Nane Yeşili",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00007vshae",
+      "product_id": 31,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s25-256-gb-samsung-turkiye-garantili-buz-mavisi-p-HBCV00007VSHAE",
+      "color": "Buz Mavisi",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00007vshag",
+      "product_id": 31,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s25-256-gb-samsung-turkiye-garantili-lacivert-p-HBCV00007VSHAG",
+      "color": "Lacivert",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv0000atwvmc",
+      "product_id": 31,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s25-p-HBCV0000ATWVMC",
+      "color": "Gümüş",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_889950708",
+      "product_id": 31,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s25-256-gb-buz-mavisi-p-889950708",
+      "color": "Buz Mavisi",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_889950715",
+      "product_id": 31,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s25-256-gb-mint-yesili-p-889950715",
+      "color": "Mint Yeşili",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_889950718",
+      "product_id": 31,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s25-256-gb-lacivert-p-889950718",
+      "color": "Lacivert",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_897453998",
+      "product_id": 31,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s25-256-gb-lacivert-cep-telefonu-samsung-turkiye-garantili-p-897453998",
+      "color": "Lacivert",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_897494158",
+      "product_id": 31,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s25-256-gb-buz-mavisi-cep-telefonu-samsung-turkiye-garantili-p-897494158",
+      "color": "Buz Mavisi",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_902073915",
+      "product_id": 31,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s25-12-256-gb-akilli-telefon-gumus-turkiye-garantili-p-902073915",
+      "color": "Gümüş",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00007vshat",
+      "product_id": 32,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s25-ultra-256-gb-titanyum-siyah-p-HBCV00007VSHAT",
+      "color": "Siyah Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00007vshax",
+      "product_id": 32,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s25-ultra-256-gb-titanyum-gri-p-HBCV00007VSHAX",
+      "color": "Gri Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00007vshaz",
+      "product_id": 32,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s25-ultra-256-gb-titanyum-mavi-p-HBCV00007VSHAZ",
+      "color": "Mavi Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00007vxfp0",
+      "product_id": 32,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s25-ultra-256-gb-titanyum-gumus-p-HBCV00007VXFP0",
+      "color": "Gümüş Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_897458120",
+      "product_id": 32,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s25-ultra-12gb-256gb-gri-p-897458120",
+      "color": "Gri",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_897483807",
+      "product_id": 32,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s25-ultra-256-gb-titanyum-siyah-cep-telefonu-samsung-turkiye-garantili-p-897483807",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_897489922",
+      "product_id": 32,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s25-ultra-256-gb-titanyum-mavi-cep-telefonu-turkiye-garantili-p-897489922",
+      "color": "Mavi",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00007midsu",
+      "product_id": 33,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s25-ultra-512-gb-12-gb-ram-samsung-turkiye-garantili-p-HBCV00007MIDSU",
+      "color": "Siyah Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00007miemj",
+      "product_id": 33,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s25-ultra-512-gb-12-gb-ram-samsung-turkiye-garantili-mavi-titanyum-p-HBCV00007MIEMJ",
+      "color": "Mavi Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00007miep5",
+      "product_id": 33,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s25-ultra-512-gb-12-gb-ram-samsung-turkiye-garantili-gumus-titanyum-p-HBCV00007MIEP5",
+      "color": "Gümüş Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00007mif54",
+      "product_id": 33,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s25-ultra-512-gb-12-gb-ram-samsung-turkiye-garantili-gri-titanyum-p-HBCV00007MIF54",
+      "color": "Gri Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_889950711",
+      "product_id": 33,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s25-ultra-512-gb-titanyum-gumus-samsung-turkiye-garantili-p-889950711",
+      "color": "Gümüş",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_889950713",
+      "product_id": 33,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s25-ultra-512-gb-titanyum-gri-p-889950713",
+      "color": "Gri",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_889950720",
+      "product_id": 33,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s25-ultra-512-gb-titanyum-mavi-p-889950720",
+      "color": "Mavi",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_889950721",
+      "product_id": 33,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s25-ultra-512-gb-titanyum-siyah-samsung-turkiye-garantili-p-889950721",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00007midsw",
+      "product_id": 34,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s25-ultra-1-tb-12-gb-ram-samsung-turkiye-garantili-gumus-titanyum-p-HBCV00007MIDSW",
+      "color": "Gümüş Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00007miemk",
+      "product_id": 34,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s25-ultra-1-tb-12-gb-ram-samsung-turkiye-garantili-mavi-titanyum-p-HBCV00007MIEMK",
+      "color": "Mavi Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00007mieml",
+      "product_id": 34,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s25-ultra-1-tb-12-gb-ram-samsung-turkiye-garantili-gri-titanyum-p-HBCV00007MIEML",
+      "color": "Gri Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00007mieup",
+      "product_id": 34,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s25-ultra-1-tb-12-gb-ram-samsung-turkiye-garantili-siyah-titanyum-p-HBCV00007MIEUP",
+      "color": "Siyah Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_889950706",
+      "product_id": 34,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s25-ultra-1-tb-titanyum-gri-samsung-turkiye-garantili-p-889950706",
+      "color": "Titanyum Gri",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_889950714",
+      "product_id": 34,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s25-ultra-1-tb-titanyum-mavi-p-889950714",
+      "color": "Mavi",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_889950716",
+      "product_id": 34,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s25-ultra-5g-12gb-1tb-akilli-telefon-titanyum-gumus-p-889950716",
+      "color": "Gri",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_889950717",
+      "product_id": 34,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s25-ultra-1-tb-titanyum-siyah-p-889950717",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00005mljw4",
+      "product_id": 35,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s24-128-gb-8-gb-ram-samsung-turkiye-garantili-mor-p-HBCV00005MLJW4",
+      "color": "Mor",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00005mll38",
+      "product_id": 35,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s24-128-gb-8-gb-ram-samsung-turkiye-garantili-sari-p-HBCV00005MLL38",
+      "color": "Sarı",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00005mll39",
+      "product_id": 35,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s24-128-gb-8-gb-ram-samsung-turkiye-garantili-gri-p-HBCV00005MLL39",
+      "color": "Gri",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00005mll3a",
+      "product_id": 35,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s24-128-gb-8-gb-ram-samsung-turkiye-garantili-siyah-p-HBCV00005MLL3A",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_792043222",
+      "product_id": 35,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s24-8-gb-ram-128-gb-siyah-p-792043222",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00005mlja9",
+      "product_id": 36,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s24-256-gb-8-gb-ram-samsung-turkiye-garantili-siyah-p-HBCV00005MLJA9",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00005mlkrk",
+      "product_id": 36,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s24-256-gb-8-gb-ram-samsung-turkiye-garantili-sari-p-HBCV00005MLKRK",
+      "color": "Sarı",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00005mlkwk",
+      "product_id": 36,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s24-256-gb-8-gb-ram-samsung-turkiye-garantili-gri-p-HBCV00005MLKWK",
+      "color": "Gri",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00005mll3b",
+      "product_id": 36,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s24-256-gb-8-gb-ram-samsung-turkiye-garantili-mor-p-HBCV00005MLL3B",
+      "color": "Mor",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_792775312",
+      "product_id": 36,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s24-256-gb-gri-p-792775312",
+      "color": "Gri",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_792775314",
+      "product_id": 36,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s24-256-gb-siyah-p-792775314",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00005mll3k",
+      "product_id": 37,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s24-ultra-256-gb-12-gb-ram-samsung-turkiye-garantili-sari-p-HBCV00005MLL3K",
+      "color": "Sarı",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00005mll3l",
+      "product_id": 37,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s24-ultra-256-gb-12-gb-ram-samsung-turkiye-garantili-mor-p-HBCV00005MLL3L",
+      "color": "Mor",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00005mll3m",
+      "product_id": 37,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s24-ultra-256-gb-12-gb-ram-samsung-turkiye-garantili-gri-p-HBCV00005MLL3M",
+      "color": "Gri",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00005mll3n",
+      "product_id": 37,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s24-ultra-256-gb-12-gb-ram-samsung-turkiye-garantili-siyah-p-HBCV00005MLL3N",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_792557582",
+      "product_id": 37,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s24-ultra-12-gb-ram-256-gb-titanyum-siyah-p-792557582",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_792557583",
+      "product_id": 37,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s24-ultra-12-gb-ram-256-gb-titanyum-gri-p-792557583",
+      "color": "Gri",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_792557585",
+      "product_id": 37,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s24-ultra-12-gb-ram-256-gb-titanyum-mor-p-792557585",
+      "color": "Mor",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_860945716",
+      "product_id": 37,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s24-ultra-12gb-256gb-titanyum-siyah-5g-p-860945716",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00005mlibt",
+      "product_id": 38,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s24-ultra-512-gb-12-gb-ram-samsung-turkiye-garantili-mavi-p-HBCV00005MLIBT",
+      "color": "Mavi",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00005mlkat",
+      "product_id": 38,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s24-ultra-512-gb-12-gb-ram-samsung-turkiye-garantili-gri-p-HBCV00005MLKAT",
+      "color": "Gri",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00005mll3o",
+      "product_id": 38,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s24-ultra-512-gb-12-gb-ram-samsung-turkiye-garantili-sari-p-HBCV00005MLL3O",
+      "color": "Sarı",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00005mll3r",
+      "product_id": 38,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s24-ultra-512-gb-12-gb-ram-samsung-turkiye-garantili-siyah-p-HBCV00005MLL3R",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_792557594",
+      "product_id": 38,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s24-ultra-12-gb-ram-512-gb-titanyum-siyah-p-792557594",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_792557597",
+      "product_id": 38,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s24-ultra-12-gb-ram-512-gb-titanyum-gri-p-792557597",
+      "color": "Gri",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_792557587",
+      "product_id": 39,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s24-ultra-1-tb-titanyum-gri-samsung-turkiye-garantili-p-792557587",
+      "color": "Gri",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006y94o4",
+      "product_id": 40,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s24-fe-256-gb-8-gb-ram-samsung-turkiye-garantili-nane-rengi-p-HBCV00006Y94O4",
+      "color": "Nane Rengi",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006y94zr",
+      "product_id": 40,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s24-fe-256-gb-8-gb-ram-samsung-turkiye-garantili-grafit-p-HBCV00006Y94ZR",
+      "color": "Grafit",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006y95d9",
+      "product_id": 40,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s24-fe-256-gb-8-gb-ram-samsung-turkiye-garantili-gri-p-HBCV00006Y95D9",
+      "color": "Gri",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006y95kk",
+      "product_id": 40,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s24-fe-256-gb-8-gb-ram-samsung-turkiye-garantili-mavi-p-HBCV00006Y95KK",
+      "color": "Mavi",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_864687399",
+      "product_id": 40,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s24-fe-256-gb-yesil-cep-telefonu-samsung-turkiye-garantili-p-864687399",
+      "color": "Yeşil",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_864687683",
+      "product_id": 40,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s24-fe-256-gb-8-gb-ram-gri-p-864687683",
+      "color": "Gri",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_864687875",
+      "product_id": 40,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s24-fe-8-256gb-graphite-siyah-p-864687875",
+      "color": "Grafit",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv000052wyq3",
+      "product_id": 41,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s23-fe-128-gb-mor-samsung-turkiye-garantili-5g-mobil-baglanti-hizi-p-HBCV000052WYQ3",
+      "color": "Mor",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_767487793",
+      "product_id": 41,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s23-fe-128-gb-mor-samsung-turkiye-garantili-p-767487793",
+      "color": "Mor",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_767487797",
+      "product_id": 41,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s23-fe-128-gb-gri-samsung-turkiye-garantili-p-767487797",
+      "color": "Gri",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_767487806",
+      "product_id": 41,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s23-fe-128-gb-krem-samsung-turkiye-garantili-p-767487806",
+      "color": "Krem",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv000052wyq6",
+      "product_id": 42,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s23-fe-256-gb-grafit-modeli-resmi-distributor-garantili-5g-mobil-baglanti-hizi-p-HBCV000052WYQ6",
+      "color": "Grafit",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv000052wyq7",
+      "product_id": 42,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s23-fe-256-gb-samsung-turkiye-garantili-nane-rengi-p-HBCV000052WYQ7",
+      "color": "Nane Rengi",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv000052wyq8",
+      "product_id": 42,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s23-fe-256-gb-samsung-turkiye-garantili-mor-p-HBCV000052WYQ8",
+      "color": "Mor",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv000052wyq9",
+      "product_id": 42,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s23-fe-256-gb-samsung-turkiye-garantili-krem-rengi-p-HBCV000052WYQ9",
+      "color": "Krem",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_767487800",
+      "product_id": 42,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s23-fe-256-gb-gri-samsung-turkiye-garantili-p-767487800",
+      "color": "Gri",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_767487807",
+      "product_id": 42,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s23-fe-8-gb-ram-256-gb-krem-p-767487807",
+      "color": "Krem",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv000062mzaa",
+      "product_id": 43,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-a55-128-gb-8-gb-ram-samsung-turkiye-garantili-sari-p-HBCV000062MZAA",
+      "color": "Sarı",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv000062n008",
+      "product_id": 43,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-a55-128-gb-8-gb-ram-samsung-turkiye-garantili-acik-mavi-p-HBCV000062N008",
+      "color": "Açık Mavi",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv000062ncxn",
+      "product_id": 43,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-a55-128-gb-8-gb-ram-samsung-turkiye-garantili-p-HBCV000062NCXN",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_820703067",
+      "product_id": 43,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-a55-5g-128-gb-8-gb-ram-buz-mavisi-samsung-turkiye-garantili-p-820703067",
+      "color": "Mavi",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv000062n7c3",
+      "product_id": 44,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-a55-256-gb-8-gb-ram-samsung-turkiye-garantili-siyah-p-HBCV000062N7C3",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv000062n7cv",
+      "product_id": 44,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-a55-256-gb-8-gb-ram-samsung-turkiye-garantili-acik-mavi-p-HBCV000062N7CV",
+      "color": "Açık Mavi",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv000040i5h8",
+      "product_id": 45,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-a54-128-gb-8-gb-ram-samsung-turkiye-garantili-acik-yesil-p-HBCV000040I5H8",
+      "color": "Açık Yeşil",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv000040i6n5",
+      "product_id": 45,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-a54-128-gb-8-gb-ram-samsung-turkiye-garantili-siyah-p-HBCV000040I6N5",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv000040i6n6",
+      "product_id": 45,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-a54-128-gb-8-gb-ram-samsung-turkiye-garantili-beyaz-p-HBCV000040I6N6",
+      "color": "Beyaz",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_676507062",
+      "product_id": 45,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-a54-5g-128-gb-8-gb-ram-grafit-p-676507062",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv000040i5cw",
+      "product_id": 46,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-a54-256-gb-8-gb-ram-samsung-turkiye-garantili-acik-yesil-p-HBCV000040I5CW",
+      "color": "Açık Yeşil",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv000040i5h9",
+      "product_id": 46,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-a54-256-gb-8-gb-ram-samsung-turkiye-garantili-siyah-p-HBCV000040I5H9",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv000040i5ha",
+      "product_id": 46,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-a54-256-gb-8-gb-ram-samsung-turkiye-garantili-beyaz-p-HBCV000040I5HA",
+      "color": "Beyaz",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_679293925",
+      "product_id": 46,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-a54-5g-256-gb-siyah-cep-telefonu-samsung-turkiye-garantili-p-679293925",
+      "color": "siyah",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_679425558",
+      "product_id": 46,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-a54-5g-256-gb-yesil-cep-telefonu-samsung-turkiye-garantili-p-679425558",
+      "color": "Yeşil",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_679425559",
+      "product_id": 46,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-a54-5g-256-gb-beyaz-cep-telefonu-samsung-turkiye-garantili-p-679425559",
+      "color": "Beyaz",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006ya8b2",
+      "product_id": 47,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/xiaomi-14t-pro-256-gb-12-gb-ram-xiaomi-turkiye-garantili-mavi-titanyum-p-HBCV00006YA8B2",
+      "color": "Mavi Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006ya8b3",
+      "product_id": 47,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/xiaomi-14t-pro-256-gb-12-gb-ram-xiaomi-turkiye-garantili-titan-gri-p-HBCV00006YA8B3",
+      "color": "Titan Gri",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006ya8b4",
+      "product_id": 47,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/xiaomi-14t-pro-256-gb-12-gb-ram-xiaomi-turkiye-garantili-siyah-p-HBCV00006YA8B4",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006ya8b0",
+      "product_id": 48,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/xiaomi-14t-pro-512-gb-12-gb-ram-xiaomi-turkiye-garantili-siyah-p-HBCV00006YA8B0",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_963232257",
+      "product_id": 48,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/xiaomi/14t-pro-512-gb-gri-xiaomi-turkiye-garantili-p-963232257",
+      "color": "Gri",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv000050hxw1",
+      "product_id": 49,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/xiaomi-13t-pro-512-gb-12-gb-ram-xiaomi-turkiye-garantili-siyah-p-HBCV000050HXW1",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_767723608",
+      "product_id": 49,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/xiaomi/13t-pro-512-gb-12-gb-ram-siyah-cep-telefonu-xiaomi-turkiye-garantili-p-767723608",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_767724103",
+      "product_id": 49,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/xiaomi/13t-pro-512-gb-12-gb-ram-mavi-cep-telefonu-xiaomi-turkiye-garantili-p-767724103",
+      "color": "Mavi",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00007pn67q",
+      "product_id": 50,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/redmi-note-14-pro-5g-512-gb-12-gb-ram-xiaomi-turkiye-garantili-mor-p-HBCV00007PN67Q",
+      "color": "Mor",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00007pn6kw",
+      "product_id": 50,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/redmi-note-14-pro-5g-512-gb-12-gb-ram-xiaomi-turkiye-garantili-siyah-p-HBCV00007PN6KW",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_891692661",
+      "product_id": 50,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/xiaomi/redmi-note-14-pro-5g-12gb-ram-512gb-mor-p-891692661",
+      "color": "Mor",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_891692664",
+      "product_id": 50,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/xiaomi/redmi-note-14-pro-5g-12gb-ram-512gb-siyah-p-891692664",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv0000a1hq64",
+      "product_id": 51,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/redmi-note-13-pro-5g-8gb-ram-256-gb-akilli-cep-telefonu-turkiye-garantili-p-HBCV0000A1HQ64",
+      "color": "Beyaz",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_930528202",
+      "product_id": 51,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/xiaomi/redmi-note-13-pro-5g-8gb-ram-256-gb-akilli-cep-telefonu-turkiye-garantili-p-930528202",
+      "color": "Mavi",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_930528376",
+      "product_id": 51,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/xiaomi/redmi-note-13-pro-5g-8gb-ram-256-gb-akilli-cep-telefonu-turkiye-garantili-p-930528376",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00009n6edz",
+      "product_id": 52,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/redmi-note-13-pro-5g-16-6gb-ram-512-gb-akilli-cep-telefonu-turkiye-garantili-p-HBCV00009N6EDZ",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00009n6hg5",
+      "product_id": 52,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/redmi-note-13-pro-5g-16-6gb-ram-512-gb-akilli-cep-telefonu-turkiye-garantili-p-HBCV00009N6HG5",
+      "color": "Beyaz",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00009nanhg",
+      "product_id": 52,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/redmi-note-13-pro-5g-16-6gb-ram-512-gb-akilli-cep-telefonu-turkiye-garantili-p-HBCV00009NANHG",
+      "color": "Mavi",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00005ozslz",
+      "product_id": 53,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/poco-x6-pro-5g-512-gb-12-gb-ram-poco-turkiye-garantili-siyah-p-HBCV00005OZSLZ",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00005ozsm0",
+      "product_id": 53,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/poco-x6-pro-5g-512-gb-12-gb-ram-poco-turkiye-garantili-gri-p-HBCV00005OZSM0",
+      "color": "Gri",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00005ozsm1",
+      "product_id": 53,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/poco-x6-pro-5g-512-gb-12-gb-ram-poco-turkiye-garantili-sari-p-HBCV00005OZSM1",
+      "color": "Sarı",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00007pli1k",
+      "product_id": 54,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/redmi-note-14-pro-256-gb-8-gb-ram-xiaomi-turkiye-garantili-siyah-p-HBCV00007PLI1K",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00007pn3zo",
+      "product_id": 54,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/redmi-note-14-pro-256-gb-8-gb-ram-xiaomi-turkiye-garantili-mor-p-HBCV00007PN3ZO",
+      "color": "Mor",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00007pn4qh",
+      "product_id": 54,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/redmi-note-14-pro-256-gb-8-gb-ram-xiaomi-turkiye-garantili-mavi-p-HBCV00007PN4QH",
+      "color": "Mavi",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00008kx994",
+      "product_id": 54,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/xiaomi-redmi-note-14-pro-akilli-telefon-8-gb-ram-256-gb-siyah-4-5g-mobil-baglanti-hizi-p-HBCV00008KX994",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_891692665",
+      "product_id": 54,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/xiaomi/redmi-note-14-pro-8gb-256gb-mor-xiaomi-turkiye-garantili-p-891692665",
+      "color": "Mor",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_891692669",
+      "product_id": 54,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/xiaomi/redmi-note-14-pro-8-256-mavi-xiaomi-turkiye-garantili-p-891692669",
+      "color": "Mavi",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_891692674",
+      "product_id": 54,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/xiaomi/redmi-note-14-pro-8-256-siyah-xiaomi-turkiye-garantili-p-891692674",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_928257185",
+      "product_id": 54,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/xiaomi/redmi-note-14-pro-8-256-gb-mor-akilli-telefon-p-928257185",
+      "color": "Mor",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00007pli1m",
+      "product_id": 55,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/redmi-note-14-pro-512-gb-12-gb-ram-xiaomi-turkiye-garantili-mor-p-HBCV00007PLI1M",
+      "color": "Mor",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00007plqlt",
+      "product_id": 55,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/redmi-note-14-pro-512-gb-12-gb-ram-xiaomi-turkiye-garantili-siyah-p-HBCV00007PLQLT",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00007pltjq",
+      "product_id": 55,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/redmi-note-14-pro-512-gb-12-gb-ram-xiaomi-turkiye-garantili-mavi-p-HBCV00007PLTJQ",
+      "color": "Mavi",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv0000jrzzce",
+      "product_id": 55,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/xiaomi-redmi-note-14-pro-512-gb-12-gb-ram-turkiye-garantili-gold-p-HBCV0000JRZZCE",
+      "color": "Gold",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_891692666",
+      "product_id": 55,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/xiaomi/redmi-note-14-pro-12gb-ram-512gb-rom-mavi-p-891692666",
+      "color": "Mavi",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_891692667",
+      "product_id": 55,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/xiaomi/redmi-note-14-pro-12gb-512gb-siyah-xiaomi-turkiye-garantili-p-891692667",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_891692668",
+      "product_id": 55,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/xiaomi/redmi-note-14-pro-12gb-ram-512gb-rom-mor-xiaomi-turkiye-garantili-p-891692668",
+      "color": "Mor",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_797235140",
+      "product_id": 56,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/xiaomi/redmi-note-13-pro-8-gb-ram-256-gb-yesil-cep-telefonu-xiaomi-turkiye-garantili-p-797235140",
+      "color": "Yeşil",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_797235141",
+      "product_id": 56,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/xiaomi/redmi-note-13-pro-8-gb-ram-256-gb-mor-cep-telefonu-xiaomi-turkiye-garantili-p-797235141",
+      "color": "Mor",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_797235142",
+      "product_id": 56,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/xiaomi/redmi-note-13-pro-8-gb-ram-256-gb-siyah-cep-telefonu-xiaomi-turkiye-garantili-p-797235142",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_797235137",
+      "product_id": 57,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/xiaomi/redmi-note-13-pro-12-gb-ram-512-gb-siyah-cep-telefonu-xiaomi-turkiye-garantili-p-797235137",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00005pzuwa",
+      "product_id": 56,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/redmi-note-13-pro-256-gb-8-gb-ram-xiaomi-turkiye-garantili-siyah-p-HBCV00005PZUWA",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00005pzuwb",
+      "product_id": 56,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/redmi-note-13-pro-256-gb-8-gb-ram-xiaomi-turkiye-garantili-yesil-p-HBCV00005PZUWB",
+      "color": "Yeşil",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00005pzuwc",
+      "product_id": 56,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/redmi-note-13-pro-256-gb-8-gb-ram-xiaomi-turkiye-garantili-mor-p-HBCV00005PZUWC",
+      "color": "Mor",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_797235138",
+      "product_id": 57,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/xiaomi/redmi-note-13-pro-12-gb-ram-512-gb-yesil-cep-telefonu-xiaomi-turkiye-garantili-p-797235138",
+      "color": "Yeşil",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_797235139",
+      "product_id": 57,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/xiaomi/redmi-note-13-pro-512gb-12gb-ram-mor-cep-telefonu-turkiye-garantili-p-797235139",
+      "color": "Mor",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_762254875",
+      "product_id": 6,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-15-pro-512-gb-beyaz-titanyum-p-762254875",
+      "color": "Beyaz",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_857296083",
+      "product_id": 14,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-16-pro-128gb-siyah-titanyum-p-857296083",
+      "color": "Siyah Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_857296094",
+      "product_id": 14,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-16-pro-128gb-col-titanyum-p-857296094",
+      "color": "Çöl Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_857296103",
+      "product_id": 15,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-16-pro-256gb-naturel-titanyum-p-857296103",
+      "color": "Natürel Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00007midnn",
+      "product_id": 31,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s25-256-gb-12-gb-ram-samsung-turkiye-garantili-buz-mavisi-p-HBCV00007MIDNN",
+      "color": "Ice Blue",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00007miefk",
+      "product_id": 31,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s25-256-gb-12-gb-ram-samsung-turkiye-garantili-gumus-p-HBCV00007MIEFK",
+      "color": "Gümüş",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00007miemh",
+      "product_id": 31,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s25-256-gb-12-gb-ram-samsung-turkiye-garantili-lacivert-p-HBCV00007MIEMH",
+      "color": "Lacivert",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00007miemi",
+      "product_id": 31,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s25-256-gb-12-gb-ram-samsung-turkiye-garantili-mint-yesili-p-HBCV00007MIEMI",
+      "color": "Mint Yeşili",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00008bcy51",
+      "product_id": 58,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s25-512-gb-12-gb-ram-samsung-turkiye-garantili-koyu-mavi-p-HBCV00008BCY51",
+      "color": "Koyu Mavi",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00005mll3u",
+      "product_id": 39,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s24-ultra-1-tb-12-gb-ram-samsung-turkiye-garantili-sari-p-HBCV00005MLL3U",
+      "color": "Sarı",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006ya8ay",
+      "product_id": 48,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/xiaomi-14t-pro-512-gb-12-gb-ram-xiaomi-turkiye-garantili-mavi-titanyum-p-HBCV00006YA8AY",
+      "color": "Mavi Titanyum",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_859623150",
+      "product_id": 48,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/xiaomi/14t-pro-512-gb-siyah-xiaomi-turkiye-garantili-p-859623150",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv000050hxw3",
+      "product_id": 49,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/xiaomi-13t-pro-512-gb-12-gb-ram-xiaomi-turkiye-garantili-alp-mavisi-p-HBCV000050HXW3",
+      "color": "Alp Mavisi",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv0000dhxgjg",
+      "product_id": 59,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/xiaomi-redmi-note-14-pro-5g-256-gb-8-gb-ram-xiaomi-turkiye-garantili-p-HBCV0000DHXGJG",
+      "color": "Beyaz",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv0000dhxjwe",
+      "product_id": 59,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/xiaomi-redmi-note-14-pro-5g-256-gb-8-gb-ram-xiaomi-turkiye-garantili-p-HBCV0000DHXJWE",
+      "color": "Yeşil",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv0000dhxkti",
+      "product_id": 59,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/xiaomi-redmi-note-14-pro-5g-256-gb-8-gb-ram-xiaomi-turkiye-garantili-p-HBCV0000DHXKTI",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv0000dhxktj",
+      "product_id": 59,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/xiaomi-redmi-note-14-pro-5g-256-gb-8-gb-ram-xiaomi-turkiye-garantili-p-HBCV0000DHXKTJ",
+      "color": "Mor",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv000081pewo",
+      "product_id": 51,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/xiaomi-redmi-note-13-pro-5g-256-gb-8-gb-ram-xiaomi-turkiye-garantili-siyah-p-HBCV000081PEWO",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00008gizfi",
+      "product_id": 51,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/redmi-note-13-pro-5g-256-gb-8-gb-ram-turkiye-garantili-mavi-p-HBCV00008GIZFI",
+      "color": "Mavi",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_930528176",
+      "product_id": 51,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/xiaomi/redmi-note-13-pro-5g-8gb-ram-256-gb-akilli-cep-telefonu-turkiye-garantili-p-930528176",
+      "color": "Beyaz",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_794323791",
+      "product_id": 53,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/poco/x6-pro-5g-12-gb-ram-512-gb-gri-cep-telefonu-xiaomi-turkiye-garantili-p-794323791",
+      "color": "Gri",
       "active": true
     }
   ]

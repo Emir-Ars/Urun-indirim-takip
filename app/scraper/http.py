@@ -5,6 +5,7 @@ import time
 from urllib.parse import urljoin, urlsplit
 
 from curl_cffi import requests as curl_requests
+from curl_cffi.requests.cookies import CookieConflict
 from curl_cffi.requests.exceptions import RequestException
 
 from app.contracts import public_url
@@ -12,6 +13,9 @@ from app.settings import Runtime
 
 MAX_RESPONSE_BYTES = 8 * 1024 * 1024
 REDIRECT_STATUSES = {301, 302, 303, 307, 308}
+# Son istek zamanı alan adı başına ve süreç genelinde tutulur: her bağlantı için
+# yeni istemci açılsa da aynı siteye istekler arasındaki bekleme korunur.
+_LAST_REQUEST: dict[str, float] = {}
 
 
 class FetchError(Exception):
@@ -38,7 +42,6 @@ class PageClient:
                 "Accept-Language": "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7",
             },
         )
-        self._last_request = 0.0
         self.request_budget = request_budget
         self.request_count = 0
 
@@ -50,13 +53,13 @@ class PageClient:
         if urlsplit(url).hostname not in self.hosts:
             raise FetchError("invalid_host", "İstek platformun alan adı dışında")
 
-    def _wait_for_interval(self) -> None:
+    def _wait_for_interval(self, host: str) -> None:
         delay = self.runtime.request_interval_seconds - (
-            time.monotonic() - self._last_request
+            time.monotonic() - _LAST_REQUEST.get(host, float("-inf"))
         )
         if delay > 0:
             time.sleep(delay)
-        self._last_request = time.monotonic()
+        _LAST_REQUEST[host] = time.monotonic()
 
     @staticmethod
     def _body(response) -> bytes:
@@ -77,7 +80,7 @@ class PageClient:
                         and self.request_count >= self.request_budget
                     ):
                         raise FetchError("limit", "HTTP istek sınırı doldu")
-                    self._wait_for_interval()
+                    self._wait_for_interval(urlsplit(target).hostname)
                     self.request_count += 1
                     response = self.client.request(
                         method,
@@ -93,9 +96,11 @@ class PageClient:
                         target = urljoin(target, location)
                         continue
                     if response.status_code in (401, 403, 418, 429):
+                        parts = urlsplit(target)
                         raise FetchError(
                             "blocked",
-                            f"Kaynak HTTP {response.status_code} döndürdü",
+                            f"Kaynak HTTP {response.status_code} döndürdü "
+                            f"({parts.hostname}{parts.path})",
                         )
                     if response.status_code >= 500:
                         raise RequestException(
@@ -150,7 +155,9 @@ class PageClient:
     def cookie(self, name: str) -> str | None:
         try:
             return self.client.cookies.get(name)
-        except (KeyError, TypeError, ValueError):
+        except (KeyError, TypeError, ValueError, CookieConflict):
+            # Aynı adlı çerez iki alt alan adında farklı değerle varsa hata verir;
+            # çağıran taraf çerez yokmuş gibi devam eder.
             return None
 
     def close(self):

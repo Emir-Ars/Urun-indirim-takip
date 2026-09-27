@@ -59,8 +59,9 @@ class Discovery(BaseDiscovery):
         query = f"{self.target.brand} {self.target.model}"
         search_params = {"q": query, "qt": query, "st": query, "os": "1"}
         referer = HOME + "sr?" + urlencode(search_params)
+        # HTML arama sayfası (/sr) açılmaz: içeriği kullanılmıyor ve canlıda
+        # HTTP 403 ile engelleniyordu. API'ye yalnız Referer olarak gönderilir.
         self.get(HOME)
-        self.get(referer)
         params = {
             **search_params,
             "pathModel": "sr",
@@ -132,7 +133,6 @@ class Discovery(BaseDiscovery):
             filters = ({"wb": brand} if brand else {}) | {"lc": category}
             params.update(filters)
             referer = HOME + "sr?" + urlencode(search_params | filters)
-            self.get(referer)
             headers["Referer"] = referer
             first = self.get_json(SEARCH + "?" + urlencode(params), headers=headers)
         self.note(
@@ -225,7 +225,7 @@ class Discovery(BaseDiscovery):
         self.issue("search_limit", "Arama sayfası sınırı doldu")
         return groups, cards, False
 
-    def _candidate(self, url, expected_id):
+    def _candidate(self, url, expected_id, variant_color=None):
         self.product_pages += 1
         html = self.get(url)
         state = assigned_json(
@@ -260,7 +260,11 @@ class Discovery(BaseDiscovery):
             exclude=self.target.exclude_terms,
         )
         attrs = product.get("attributes") or []
-        color = attribute(attrs, "Renk", "WebColor") or ""
+        if self.target.network:
+            self.verify_network(attribute(attrs, "Mobil Bağlantı Hızı"), [name])
+        # Renk, sayfanın renk seçicisindeki addır (varyant listesi, ör. "Abis").
+        # Satıcının "Renk" özelliği ("Çok Renkli" gibi) yalnız bu ad yoksa kullanılır.
+        color = variant_color or attribute(attrs, "Renk", "WebColor") or ""
         ram = storage_gb(
             attribute(attrs, "RAM Kapasitesi", "Ram (System Memory)") or ""
         )
@@ -283,6 +287,7 @@ class Discovery(BaseDiscovery):
         found = {}
         complete = False
         choices = {}
+        colors = {}
         cards = {}
         try:
             groups, cards, complete = self._search_candidates()
@@ -312,6 +317,10 @@ class Discovery(BaseDiscovery):
                                     choices[str(item["id"])] = urljoin(
                                         HOME, item["pageUrl"]
                                     )
+                                    if axis.get("type") == "DsmColor" and value.get(
+                                        "name"
+                                    ):
+                                        colors[str(item["id"])] = str(value["name"])
                     if not any(
                         item.get("id")
                         for axis in response.get("result", [])
@@ -337,7 +346,9 @@ class Discovery(BaseDiscovery):
                 self.issue("product_limit", "Ürün sayfası sınırı doldu")
                 break
             try:
-                found[product_id] = self._candidate(url, product_id)
+                found[product_id] = self._candidate(
+                    url, product_id, colors.get(product_id)
+                )
             except RECOVERABLE as exc:
                 self.issue("candidate_rejected", f"{product_id}: {exc}")
         return DiscoveryResult(
