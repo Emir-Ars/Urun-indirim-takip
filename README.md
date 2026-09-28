@@ -28,7 +28,8 @@ flowchart LR
 ```
 
 Bugün biten kısım: telefonların sayfalarını bulan **keşif** ve o sayfalardaki
-fiyatları okuyan **scraper**. Sıradaki aşama veritabanı.
+fiyatları okuyan **scraper**. Sürmekte olan aşama: PostgreSQL veritabanı ve
+günde 2 kez otomatik fiyat toplama.
 
 ## Nasıl çalışır
 
@@ -50,8 +51,8 @@ flowchart LR
 
 - **Keşif** seyrek çalışır; yeni model eklerken ya da ara sıra. Sayfaları
   kullanıcı değil sistem bulur ve her birini ayrıca açıp doğrular.
-- **Fiyat okuma** günde 2 kez çalışacak (veritabanı aşamasında). Bugün sonucu
-  ekrana ve dosyaya yazar.
+- **Fiyat okuma** günde 2 kez (10:00 ve 22:00) çalışıp sonuçları PostgreSQL'e
+  yazacak (veritabanı aşaması, sürüyor). Bugün sonucu ekrana ve dosyaya yazar.
 - Yeni telefon eklemek için kod değişmez; `discovery.json` dosyasına bir satır
   eklenir.
 
@@ -159,7 +160,6 @@ docs/teknik.md      ayrıntılı teknik rehber
 
 ## Not
 
-Yerelde bulunan `app/database`, `app/api`, `app/ml_model`, `app/services`,
-`app/worker.py`, `frontend/` ve Docker dosyaları sonraki aşamaların eski
-taslaklarıdır. Git'e gönderilmezler ve bugünkü kodla çalışmazlar; ilgili
-aşamada yeniden ele alınacaklardır.
+Önceki aşamalardan kalan yerel taslaklar (eski veritabanı, API, ML, arayüz ve
+Docker dosyaları) `_eski_taslaklar/` klasöründedir. Git'e gönderilmezler ve
+bugünkü kodla çalışmazlar; yalnızca örnek olarak incelenebilirler.

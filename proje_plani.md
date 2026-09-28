@@ -31,15 +31,16 @@ Kullanıcı arayüzde arama yaptığında canlı scraping veya model eğitimi
 | 3. Trendyol doğrulanmış stoksuz sayfa | ✅ Uygulandı | `e6664a3` |
 | 4. Scraper/discovery kabul kontrolü (6 adım) | ✅ Tamamlandı | `4d5613d`, Bölüm 5 |
 | 5. Katalogun 25 hedefle sıfırdan kurulumu ve kod denetimi | ✅ Tamamlandı | Bölüm 6 |
-| 6. Veritabanı ve zamanlanmış toplama | ⏳ Sıradaki; **karar bekliyor** | Bölüm 8 |
+| 6. Veritabanı ve zamanlanmış toplama | ⏳ Sürüyor: kararlar verildi, Adım 0 tamamlandı | Bölüm 9 |
 | 7. FastAPI ve Streamlit | 🔜 Planlandı, başlanmadı | Bölüm 9 |
 | 8. ML (indirim tahmini) | 🔜 Planlandı, başlanmadı | Bölüm 9 |
 | 9. Docker ve 7/24 işletim | 🔜 Planlandı, başlanmadı | Bölüm 9 |
 
-Yereldeki `app/database`, `app/ml_model`, `app/api`, `app/services`,
-`app/worker.py`, `frontend/`, Docker dosyaları ve Akakçe/Cimri taslakları
-tamamlanmış iş değildir; kullanıcıyla değerlendirilmeden projeye bağlanmaz,
-silinmez ve Git'e gönderilmez.
+Önceki aşamalardan kalan yerel taslaklar (eski `app/database`, `app/ml_model`,
+`app/api`, `app/services`, `app/worker.py`, `frontend/`, Docker dosyaları ve
+Akakçe/Cimri taslakları) 28 Eylül 2026'da `_eski_taslaklar/` klasörüne taşındı;
+silinmedi, `.gitignore` ile Git dışında tutulur. Tamamlanmış iş değildir,
+projeye bağlı değildir; yeni tasarımda yalnızca örnek olarak incelenebilir.
 
 Güncel katalog (28 Eylül 2026): **59 ürün, 327 bağlantı** (Hepsiburada 213,
 Trendyol 114; 1 bağlantı pasif). Keşif hedefleri 25: Apple 9, Samsung 8, Xiaomi 6, POCO 2
@@ -263,23 +264,64 @@ nadir durumdur. Veritabanı aşamasında veya bir hata görüldüğünde ele al�
 | Konu | Durum |
 |---|---|
 | Garanti türüne göre ayrım | **Karar verildi (27 Eylül 2026): ayrılmıyor;** yurt dışı sürümler ürün adından tanınıp kapsam dışı bırakılıyor. |
-| Veritabanı teknolojisi, veri modeli, çalışma ortamı | Karar bekliyor; SQLite önceki öneri, kesin değil |
-| Keşfin zamanlanması | Bu aşamada manuel; worker aşamasında değerlendirilecek. Kanıt: 28 Eylül kapanış taramasında tek günde 21 yeni bağlantı çıktı; Hepsiburada genel aramasının ilk 36 kartı her seferinde değişebildiği için tekrar eden keşif kapsamı artırır. |
+| Veritabanı teknolojisi, veri modeli, çalışma ortamı | **Karar verildi (28 Eylül 2026):** PostgreSQL 17, `psycopg` + ham SQL, kullanıcının bilgisayarı, günde 2 tur; ayrıntı Bölüm 9. SQLite önerisi bırakıldı. |
+| Keşfin zamanlanması | **Karar verildi (28 Eylül 2026):** bu aşamada manuel, haftada bir; fiyat turuyla ortak kilit. Otomasyon, veritabanı birkaç hafta sorunsuz çalıştıktan sonra değerlendirilir. Kanıt: 28 Eylül kapanış taramasında tek günde 21 yeni bağlantı çıktı; Hepsiburada genel aramasının ilk 36 kartı her seferinde değişebildiği için tekrar eden keşif kapsamı artırır. |
+| Akakçe/Cimri piyasa geçmişinin ML'de kullanımı | Karar bekliyor; veri canlıda görüldükten sonra (Bölüm 9, veritabanı Adım 8). |
 | Gelecek aşama tanımları (`PricePoint`, `ProductSummary`, `MarketRecord`, `coverage_version`, zamanlama/ML ayarları, FastAPI/LightGBM/Streamlit bağımlılıkları) | Kaldırıldı (25 Eylül 2026). İlgili aşamada yeni tasarıma göre yeniden eklenecek; yerel taslaklar o zamana kadar çalışmaz. |
 
-Kullanıcının veritabanı için belirttiği tercihler (**karar değil**, değerlendirmede
-kullanılacak): her kontrolde yalnızca seçilen teklifin saklanması, günde 2
-fiyat toplama, keşfin bu aşamada manuel kalması; çalışma ortamı henüz belli değil.
+## 9. Sonraki aşamalar
 
-## 9. Sonraki aşamalar (planlandı, başlanmadı)
+### Veritabanı ve zamanlanmış toplama (sürüyor)
 
-### Veritabanı ve zamanlanmış toplama
+Amaç: katalogdaki etkin sayfaları günde 2 kez okuyup her sonucu kalıcı,
+izlenebilir ve tekrarsız saklamak. Scraper ve discovery değişmez; yeni toplama
+turu `fetch()` sonucunu veritabanına yazar. Korunacak gereksinimler: tekrar
+kayıt engelleme; tur ve sayfa düzeyinde izlenebilirlik; fiyat gözlemi /
+Tükendi / toplama hatasının ayrı tutulması; katalog kapsamı değiştiğinde sahte
+fiyat düşüşü oluşmaması.
 
-Başlamadan önce kullanıcıyla durum değerlendirmesi yapılır. Korunacak
-gereksinimler: tekrar kayıt engelleme, koşu ve bağlantı düzeyinde
-izlenebilirlik, fiyat gözlemi / Tükendi / toplama hatasının ayrı tutulması,
-katalog kapsamı değiştiğinde sahte fiyat düşüşü oluşmaması. SQLite seçilirse
-önceki öneri WAL, `busy_timeout=5000`, tek yazıcı ve salt okunur okuyuculardır.
+Kararlar (28 Eylül 2026, kullanıcıyla):
+
+| Konu | Karar |
+|---|---|
+| Çalışma ortamı | Kullanıcının Windows bilgisayarı; Görev Zamanlayıcı ile her gün **10:00 ve 22:00**. Bilgisayar kapalıyken kaçan tur, açılınca bir kez telafi edilir. Sunucu Aşama 9'da. |
+| Saklanan veri | Her turda sayfa başına yalnızca **seçilen teklif** (`fetch()` sonucu); scraper sözleşmesi değişmez. Satıcı bazlı geçmişin toplanmaması bilerek kabul edildi (27 Eylül ölçümü: 304 sayfada 1.021 uygun teklif). |
+| Keşif | Bu aşamada manuel, haftada bir; kullanıcı çalıştırır ve raporu okur. Fiyat turu ile keşif **ortak kilit** paylaşır, aynı anda çalışmaz (3 sn bekleme süreç içinde tutulduğundan iki süreç siteye iki kat hızla gider). |
+| Veritabanı | **PostgreSQL 17**, Windows servisi. Gerekçe: kısmi benzersizlik ve CHECK kısıtlarıyla kuralların veritabanında garanti edilmesi, `timestamptz`, transaction içinde migration, kullanıcının önceki deneyimi. |
+| Erişim | **`psycopg` 3 + ham SQL + numaralı migration dosyaları**; ORM yok. Veri şekilleri Pydantic sözleşmelerinde kalır. |
+| Sonuç tablosu | Tek tablo `listing_checks`: her tur × planlanan sayfa bir satır; `outcome` fiyat / Tükendi / hata. CHECK kısıtları hatanın fiyat veya Tükendi olarak yazılmasını engeller. |
+| Sahte fiyat düşüşü | İki tur ancak **cevap veren sayfa kümesi** (fiyat veya Tükendi dönen sayfalar) aynıysa karşılaştırılır. Hata cevap değildir; Tükendi gerçek cevaptır. |
+| Bağlantı ve yetki | Şifresiz `DATABASE_URL` / `TEST_DATABASE_URL`; şifre PostgreSQL'in `pgpass.conf` dosyasında, repoda değil. Proje kullanıcısı `fiyat_takip` yönetici değildir; yalnızca kendi iki veritabanının sahibidir. |
+
+Adımlar (her biri ayrı commit):
+
+| Adım | Durum |
+|---|---|
+| 0. Hazırlık: taslakların taşınması, PostgreSQL 17, `fiyat_takip` kullanıcısı, `fiyat_takip` ve `fiyat_takip_test` veritabanları | ✅ Tamamlandı (28 Eylül) |
+| 1. Şema, migrate komutu, CI'da PostgreSQL | 🔜 Sıradaki |
+| 2. Katalogun veritabanına eşitlenmesi | 🔜 |
+| 3. Toplama turu ve ortak kilit | 🔜 |
+| 4. Karşılaştırılabilirlik görünümü (sahte düşüş kuralı) | 🔜 |
+| 5. Canlı deneme (kullanıcı çalıştırır) | 🔜 |
+| 6. Görev Zamanlayıcı ve 2–3 günlük gözlem | 🔜 |
+| 7. Kapanış belgeleri | 🔜 |
+| 8. Akakçe/Cimri piyasa geçmişi araştırması (toplama çalışırken) | 🔜 |
+
+Adım 0'da görülenler:
+
+- Türkçe Windows'ta kurulum programının varsayılan locale'i
+  (`Turkish_Türkiye.1254`) ASCII dışı karakter içerdiği için `initdb`
+  başarısız oldu; kurulum programı yine de "tamamlandı" dedi, servis ve veri
+  klasörü oluşmadı. Yeniden kurulumda küme `C` locale'iyle kuruldu; proje
+  veritabanları `LOCALE_PROVIDER builtin`, `C.UTF-8` ile oluşturuldu (Türkçe
+  karakterler saklanır, sıralama işletim sisteminden bağımsızdır).
+- Yerel kurulum yalnızca bu bilgisayardan gelen bağlantılara izin verir
+  (`pg_hba.conf`). Aşama 9'da sunucuya geçerken güçlü şifre ve erişim kuralları
+  yeniden ele alınır.
+
+Sıra gerekçesi: kendi fiyat verimiz geriye dönük toplanamaz, Akakçe/Cimri
+geçmişi toplanabilir. Bu yüzden önce toplama başlatılır, piyasa geçmişi
+araştırması (Adım 8) toplama çalışırken yapılır.
 
 ### FastAPI ve Streamlit
 
@@ -301,8 +343,10 @@ katalog kapsamı değiştiğinde sahte fiyat düşüşü oluşmaması. SQLite se
 - Kapsamı değişen pencereler eğitimde kullanılmaz; en az 30 günlük geçmiş veya
   doğrulanmış model yoksa olasılık gösterilmez. Zaman sıralı değerlendirme ve
   sabit referanstan iyi Brier skoru olmadan model yayımlanmaz.
-- Akakçe/Cimri geçmişi araştırılacak; piyasa minimumu, takip edilen tekliflerin
-  minimumuymuş gibi etiketlenmez.
+- Akakçe/Cimri geçmişi veritabanı Adım 8'de araştırılacak; uygunsa ayrı bir
+  tabloda "piyasa minimumu" olarak tutulur, takip edilen tekliflerin
+  minimumuymuş gibi etiketlenmez. ML'de nasıl kullanılacağı veri görüldükten
+  sonra kararlaştırılır.
 
 ### İşletim
 
@@ -317,8 +361,12 @@ Docker Compose ile süreçler, veri ve model kalıcılığı; GitHub Actions ile
 - Otomatik testler kuralları kayıtlı yanıtlarla, canlı kontrol araçları bugünkü
   site uyumunu sınar; ikisi birbirine karıştırılmaz. "Testler geçti", "bütün
   pazaryeri tarandı" anlamına gelmez.
-- Git'e yalnızca biten aşamanın dosyaları açıkça seçilerek eklenir; `git add .`
+- Git'e yalnızca biten adımın dosyaları açıkça seçilerek eklenir; `git add .`
   kullanılmaz. Taslaklar, `data/` ve `artifacts/` çıktıları ve gizli ayarlar
-  gönderilmez. Commit, aşama bitince kullanıcı izniyle yapılır.
-- Black/Flake8 yerelde değişen dosyalarda çalıştırılır; CI Git'teki dosyaları
-  denetler.
+  gönderilmez.
+- Her plan adımı bitince tek commit atılır (karar, 28 Eylül 2026): testler ve
+  biçim denetimleri geçer, dosya listesi ve Türkçe mesaj kullanıcıya gösterilir,
+  onayıyla commit + push yapılır; her commit'te CI yeşil olmalıdır. Yazar
+  yalnızca kullanıcıdır; commit mesajına ortak yazar satırı eklenmez.
+- Black/Flake8 yerelde de CI'daki gibi `app tests` üzerinde çalıştırılır
+  (taslaklar `_eski_taslaklar/` altında olduğu için mümkün).

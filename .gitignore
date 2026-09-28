@@ -16,3 +16,5 @@ artifacts/*
 .scratch/
 config/*.lock
 config/*.tmp
+# Önceki aşamalardan kalan, projeye bağlı olmayan yerel taslaklar
+_eski_taslaklar/

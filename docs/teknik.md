@@ -78,9 +78,9 @@ Windows ve PowerShell, Python sanal ortamı `.venv`:
 # Otomatik testler (internete çıkmaz)
 .venv\Scripts\python.exe -m pytest tests/test_trendyol_scraper.py tests/test_hepsiburada_scraper.py tests/test_discovery.py -q
 
-# Biçim ve kalite kontrolü (yalnız değişen dosyalarda çalıştırın)
-.venv\Scripts\python.exe -m black --check <dosyalar>
-.venv\Scripts\python.exe -m flake8 <dosyalar>
+# Biçim ve kalite kontrolü (CI'daki gibi)
+.venv\Scripts\python.exe -m black --check app tests
+.venv\Scripts\python.exe -m flake8 app tests
 
 # Keşif: önce kataloğu değiştirmeden rapor
 .venv\Scripts\python.exe -m app.discovery --dry-run --target apple_iphone_15
@@ -103,9 +103,9 @@ tamamı yaklaşık 50 dakikadır. Keşif raporu her çalışmada (dry-run dahil)
 `data/discovery_report.json` dosyasının üzerine yazılır; saklamak istediğiniz
 raporu kopyalayın.
 
-`--target` verilmezse bütün etkin hedefler taranır. Yerelde sonraki aşamalara
-ait taslak dosyalar bulunduğu için Black/Flake8'i bütün `app` klasöründe değil,
-değişen dosyalarda çalıştırın; CI yalnızca Git'teki dosyaları denetler.
+`--target` verilmezse bütün etkin hedefler taranır. Eski taslaklar
+`_eski_taslaklar/` klasörüne taşındığı için Black/Flake8 CI'daki gibi bütün
+klasörde çalıştırılabilir: `black --check app tests`, `flake8 app tests`.
 
 Gerçek dosyalara dokunmadan denemek için ortam değişkeni kullanılabilir:
 
