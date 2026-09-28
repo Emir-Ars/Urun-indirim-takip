@@ -111,7 +111,7 @@ Windows ve PowerShell, Python sanal ortamı `.venv`:
 
 # Fiyat toplama turu: sitelere istek atar ve sonuçları veritabanına yazar
 .venv\Scripts\python.exe -m app.collection --prefix poco_   # yalnız POCO (4 sayfa)
-.venv\Scripts\python.exe -m app.collection                  # bütün etkin sayfalar (~35 dk)
+.venv\Scripts\python.exe -m app.collection                  # bütün etkin sayfalar (~31 dk)
 
 # Biçim ve kalite kontrolü (CI'daki gibi)
 .venv\Scripts\python.exe -m black --check app tests
@@ -370,8 +370,9 @@ teklif döner. Bütün teklifler canlı kontrol aracında (`all_offers`) görül
 ## Veritabanı (PostgreSQL)
 
 Fiyat toplama turlarının sonuçları PostgreSQL 17'de saklanır. Bugün şema,
-`migrate`, katalog eşitleme ve toplama turu hazırdır; canlı deneme ve
-zamanlayıcı sonraki adımlardır ([proje_plani.md](../proje_plani.md) Bölüm 9).
+`migrate`, katalog eşitleme ve toplama turu hazırdır. İlk tam tur 28 Eylül
+2026'da 326 sayfanın tamamını 31 dakikada hatasız okudu; zamanlayıcı sıradaki
+adımdır ([proje_plani.md](../proje_plani.md) Bölüm 9).
 
 ### Bir kerelik kurulum (Windows)
 
@@ -596,6 +597,10 @@ böylece keşfin kabul ettiği sayfayı scraper aynı girdilerle reddetmez.
 - Arka arkaya çok tarama Trendyol'da geçici engele yol açabilir (25 Eylül'de
   yarım saatte 7 tarama sonrası 10 dakika engel). Günlük fiyat toplama bu
   yoğunlukta değildir; keşif seyrek çalışır.
+- Fiyat ve stok iki tur arasında değişip geri dönebilir; veritabanındaki geçmiş
+  turların anlık görüntüleridir. 28 Eylül'de bir Trendyol sayfası 2 saatte
+  Tükendi'den Kritik Stok'a ("Son 1 ürün"), bir Hepsiburada sayfası 71.059
+  TL'den 75.524 TL'ye geçti.
 - Siteler sayfa yapısını değiştirebilir; bu durumda bakım gerekebilir. Kod,
   değişiklikte sessizce yanlış sonuç üretmek yerine hatayı raporlamaya çalışır.
 

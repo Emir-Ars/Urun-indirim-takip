@@ -83,7 +83,8 @@ modeller de ayrıdır. RAM ve garanti türü ürünü bölmez.
 | Siteler | Trendyol, Hepsiburada |
 | Takip edilen modeller | 24 (Apple 9 · Samsung 8 · Xiaomi 6 · POCO 1) |
 | Katalog | 59 ürün, 327 sayfa (28 Eylül 2026) |
-| Testler | 143 otomatik test (65'i gerçek PostgreSQL üzerinde); her push'ta GitHub Actions |
+| Fiyat toplama | İlk tam tur 28 Eylül 2026: 326/326 sayfa, 31 dakika, hatasız |
+| Testler | 144 otomatik test (66'sı gerçek PostgreSQL üzerinde); her push'ta GitHub Actions |
 
 ```mermaid
 pie title Takip edilen sayfalar

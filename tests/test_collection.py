@@ -212,7 +212,7 @@ def test_ctrl_c_interrupts_run_and_keeps_written_results(migrated, catalog_path)
     run_id = migrated.execute("SELECT max(run_id) FROM collection_runs").fetchone()[0]
     status, _, planned, finished, note = run_row(migrated, run_id)
     assert (status, planned, finished) == ("interrupted", 7, True)
-    assert "KeyboardInterrupt" in note
+    assert note == "Durduruldu: KeyboardInterrupt"
     checked = results(migrated, run_id)
     assert checked["trendyol_1"][0] == "offer"
     # Bakılamayan sayfalar sonuçsuz ("planlandı") kalır; uydurma sonuç yok.
@@ -372,6 +372,12 @@ def test_close_failure_keeps_the_result(migrated, catalog_path):
 def test_prefix_is_written_to_the_run_note(migrated, catalog_path):
     report, _ = run_collect(migrated, catalog_path, prefix="poco_")
     assert run_row(migrated, report.run_id)[4] == "--prefix poco_"
+
+
+def test_run_without_prefix_has_no_note(migrated, catalog_path):
+    # 28 Eylül canlı turunda not NULL yerine '' yazılmıştı (concat_ws).
+    report, _ = run_collect(migrated, catalog_path)
+    assert run_row(migrated, report.run_id)[4] is None
 
 
 # --- Komut satırı ve ortak kilit -------------------------------------------------

@@ -31,7 +31,7 @@ Kullanıcı arayüzde arama yaptığında canlı scraping veya model eğitimi
 | 3. Trendyol doğrulanmış stoksuz sayfa | ✅ Uygulandı | `e6664a3` |
 | 4. Scraper/discovery kabul kontrolü (6 adım) | ✅ Tamamlandı | `4d5613d`, Bölüm 5 |
 | 5. Katalogun 25 hedefle sıfırdan kurulumu ve kod denetimi | ✅ Tamamlandı | Bölüm 6 |
-| 6. Veritabanı ve zamanlanmış toplama | ⏳ Sürüyor: Adım 0–3 tamamlandı (şema, katalog eşitleme, toplama turu); sıradaki canlı deneme | Bölüm 9 |
+| 6. Veritabanı ve zamanlanmış toplama | ⏳ Sürüyor: Adım 0–3 ve 5 tamamlandı (şema, katalog eşitleme, toplama turu, ilk tam tur 326/326 hatasız); sıradaki Görev Zamanlayıcı | Bölüm 9 |
 | 7. FastAPI ve Streamlit | 🔜 Planlandı, başlanmadı | Bölüm 9 |
 | 8. ML (indirim tahmini) | 🔜 Planlandı, başlanmadı | Bölüm 9 |
 | 9. Docker ve 7/24 işletim | 🔜 Planlandı, başlanmadı | Bölüm 9 |
@@ -234,6 +234,9 @@ Bu adımda alınan kararlar:
 - `exclude_terms` ve `network` keşif anında uygulanır; sonradan eklenen kural
   eski katalog kayıtlarını çıkarmaz.
 - Arka arkaya çok tarama Trendyol'da geçici engele yol açabilir.
+- Fiyat ve stok iki tur arasında (12 saat) değişip geri dönebilir; bu
+  değişiklikler görülmez. Geçmiş, turların anlık görüntüleridir (28 Eylül:
+  bir sayfa 2 saatte Tükendi → Kritik Stok, bir başkası 71.059 → 75.524 TL).
 - Ürün adında söylemeyen bir yurt dışı sürümü ayırt edilemez.
 - Siteler değişebilir; bakım gerekebilir. "Bir daha bakmaya gerek yok" garantisi
   verilmez.
@@ -308,8 +311,8 @@ veriyle de denenir.
 | 2. Katalogun veritabanına eşitlenmesi | ✅ Tamamlandı (28 Eylül): `python -m app.database sync-catalog [--dry-run]`; kimlik değişiminde hiçbir şey yazmadan durur, katalogdan düşen kayıt pasife alınır; 22 test (toplam 113) |
 | 3. Toplama turu ve ortak kilit | ✅ Tamamlandı (28 Eylül): `python -m app.collection [--prefix] [--scheduled]`; sayfa sonucu hemen ve bir kez yazılır, yarım kalan tur sonraki turda kapatılır; tur, keşif ve iki canlı kontrol aracı `data/scrape.lock` kilidini paylaşır; ayrıca veritabanı tur kilidi. Commit öncesi üç ek kontrol: (1) bağımsız kod incelemesi, 13 bulgu, 7 numara hariç hepsi düzeltildi ve testlendi (7 → Adım 4); (2) kasıtlı bozma testi: 37 bozmanın 33'ü testlerce yakalandı, kaçan 4'ü önceden tahmin edilen eşzamanlılık/güvenlik korumaları; (3) ilk canlı tur (`--prefix poco_`, 4 sayfa, 25 sn): 4/4 fiyat, çıkış 0. Testler 22 (toplam 143). |
 | 4. Karşılaştırılabilirlik görünümü (sahte düşüş kuralı) | 🔜 (6'dan sonra). Aynı migration'a bağımsız incelemeden ertelenen iki kural eklenecek: `sold_out` satırında fiyat/satıcı yasağı ve kimlik alanlarının değiştirilmesini, satır silinmesini reddeden tetikleyici (bugün yalnızca kodda korunuyor; elle SQL ile bozulabilir). |
-| 5. Canlı deneme (kullanıcı çalıştırır) | 🔜 Sıradaki |
-| 6. Görev Zamanlayıcı ve 2–3 günlük gözlem | 🔜 |
+| 5. Canlı deneme (kullanıcı çalıştırır) | ✅ Tamamlandı (28 Eylül): ilk tam tur (tur 2, 15:48–16:19 TR saati, **30 dk 55 sn**): 326/326 sayfa okundu, **0 hata, 0 engellenme**; iki sayfa arası en uzun bekleme 9,4 sn. Hepsiburada 213: 139 fiyat, 74 Tükendi; Trendyol 113: 110 fiyat (77 Kritik Stok), 3 Tükendi. 8 ürünün bütün sayfaları Tükendi (çoğu eski iPhone'ların yüksek kapasiteleri). Tarayıcı karşılaştırması 4 sayfa: fiyat, çizili fiyat, satıcı, kuruşlu fiyat (turda 31 tane) ve Kritik Stok eşleşti; 15:49'da Tükendi okunan `trendyol_762254862` 17:47'de "Son 1 ürün" gösteriyordu, yeniden okumada da Kritik Stok çıktı (sayfa arada değişmiş). Aynı ürünün bir sayfasında fiyat 2 saatte 71.059 → 75.524 TL oldu. Bulunan tek hata: ön ek verilmeyen turda `note` NULL yerine boş yazı oluyordu (`concat_ws`); düzeltildi, test eklendi (toplam 144). Tur 2'nin kaydı elle değiştirilmedi. |
+| 6. Görev Zamanlayıcı ve 2–3 günlük gözlem | 🔜 Sıradaki |
 | 7. Kapanış belgeleri | 🔜 |
 | 8. Akakçe/Cimri piyasa geçmişi araştırması (Adım 6'nın 2–3 günlük gözlemi sırasında) | 🔜 |
 

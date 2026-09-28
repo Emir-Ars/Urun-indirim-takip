@@ -121,10 +121,11 @@ def finish_run(
     conn: psycopg.Connection, run_id: int, status: str, note: str | None = None
 ) -> None:
     """Süren turu kapatır; tur zaten kapanmışsa hata verir (sessiz geçmez)."""
+    # concat_ws bütün parçalar NULL olunca '' döndürür; not yoksa NULL kalsın.
     cursor = conn.execute(
         "UPDATE collection_runs"
         " SET status = %s, finished_at = greatest(now(), started_at),"
-        " note = concat_ws('; ', note, %s::text)"
+        " note = nullif(concat_ws('; ', note, %s::text), '')"
         " WHERE run_id = %s AND status = 'running'",
         (status, note, run_id),
     )
