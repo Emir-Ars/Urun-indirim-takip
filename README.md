@@ -82,7 +82,7 @@ modeller de ayrıdır. RAM ve garanti türü ürünü bölmez.
 | Siteler | Trendyol, Hepsiburada |
 | Takip edilen modeller | 24 (Apple 9 · Samsung 8 · Xiaomi 6 · POCO 1) |
 | Katalog | 59 ürün, 327 sayfa (28 Eylül 2026) |
-| Testler | 91 otomatik test (32'si PostgreSQL üzerinde); her push'ta GitHub Actions |
+| Testler | 113 otomatik test (38'i gerçek PostgreSQL üzerinde); her push'ta GitHub Actions |
 
 ```mermaid
 pie title Takip edilen sayfalar
@@ -107,8 +107,10 @@ python -m venv .venv
 # 2. Otomatik testler (internete çıkmaz; veritabanı testleri TEST_DATABASE_URL ister)
 .venv\Scripts\python.exe -m pytest -q
 
-# 3. Veritabanı şeması (PostgreSQL 17 kurulduktan sonra, DATABASE_URL ile)
+# 3. Veritabanı (PostgreSQL 17 kurulduktan sonra, DATABASE_URL ile):
+#    şemayı kur, katalogu veritabanına eşitle
 .venv\Scripts\python.exe -m app.database migrate
+.venv\Scripts\python.exe -m app.database sync-catalog
 
 # 4. Canlı deneme (sitelere istek atar)
 [Console]::OutputEncoding = [Text.Encoding]::UTF8
@@ -148,7 +150,7 @@ app/
   contracts.py      veri şekilleri ve doğrulama
   scraper/          fiyat okuma: tek HTTP kapısı, ortak kimlik kuralları, site okuyucuları
   discovery/        keşif: site aramaları, katalogla birleştirme, rapor
-  database/         PostgreSQL: bağlantı, numaralı migration dosyaları ve komutu
+  database/         PostgreSQL: bağlantı, migration dosyaları, katalog eşitleme, komutlar
 tests/              otomatik testler; manual/ altında canlı kontrol araçları
 docs/teknik.md      ayrıntılı teknik rehber
 ```

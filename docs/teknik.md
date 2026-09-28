@@ -65,13 +65,15 @@ geçmişi. Kararların ve aşama durumunun ana kaynağı
 | `connection.py` | PostgreSQL bağlantısı. Adres `DATABASE_URL` ortam değişkeninden okunur (şifresiz); şifre PostgreSQL'in `pgpass.conf` dosyasındadır. Oturum saati UTC. |
 | `migrate.py` | Migration koşucusu: `migrations/` altındaki numaralı SQL dosyalarını sırayla, her birini tek transaction'da ve yalnızca bir kez uygular; `schema_migrations` tablosuna parmak iziyle yazar. |
 | `migrations/001_initial.sql` | Katalog kopyası, toplama turları ve sayfa sonuçları tabloları; bütün kurallar (`CHECK`, `UNIQUE`, yabancı anahtarlar). |
-| `__main__.py` | Komut satırı: `python -m app.database migrate` / `status`. |
+| `catalog_sync.py` | `catalog.json`'u veritabanındaki kopyaya eşitler: `plan_sync` farkı veritabanına dokunmadan hesaplar, `sync_catalog` tek transaction'da yazar. |
+| `__main__.py` | Komut satırı: `python -m app.database migrate` / `status` / `sync-catalog [--dry-run]`. |
 
 ### Testler ve CI
 
 | Yer | Ne işe yarar |
 |---|---|
 | `tests/test_trendyol_scraper.py`, `tests/test_hepsiburada_scraper.py`, `tests/test_discovery.py` | Kayıtlı örnek verilerle otomatik testler (59 test). İnternete çıkmaz. |
+| `tests/test_catalog_sync.py` | Katalog eşitleme (22 test): kararlar veritabanısız, yazma/deneme/çakışma ve komut satırı gerçek PostgreSQL'de. |
 | `tests/test_database.py`, `tests/conftest.py` | Migration koşucusu ve şema kuralları (32 test), gerçek PostgreSQL'de. Yalnızca `TEST_DATABASE_URL`'deki, adı `_test` ile biten veritabanını kullanır ve her testten önce onu boşaltır. Değişken yoksa yerelde atlanır, CI'da başarısız olur. |
 | `tests/fixtures/discovery/` | Testlerin kullandığı örnek site yanıtları ve kataloğun sabit bir kopyası (`catalog.json`); testler gerçek kataloğa bağlı değildir. |
 | `tests/manual/live_scraper_check.py` | Katalogdaki sayfaları canlı okur; bütün satıcıları gösterir. İsteğe bağlı `product_key` ön eki (ör. `samsung_`) ile yalnız o ürünler. |
@@ -87,11 +89,15 @@ Windows ve PowerShell, Python sanal ortamı `.venv`:
 .venv\Scripts\python.exe -m pip install -e ".[dev]"
 
 # Otomatik testler (internete çıkmaz; veritabanı testleri TEST_DATABASE_URL ister)
-.venv\Scripts\python.exe -m pytest tests/test_trendyol_scraper.py tests/test_hepsiburada_scraper.py tests/test_discovery.py tests/test_database.py -q
+.venv\Scripts\python.exe -m pytest tests/test_trendyol_scraper.py tests/test_hepsiburada_scraper.py tests/test_discovery.py tests/test_database.py tests/test_catalog_sync.py -q
 
 # Veritabanı şeması: bekleyen migration'ları uygula / durumu göster
 .venv\Scripts\python.exe -m app.database migrate
 .venv\Scripts\python.exe -m app.database status
+
+# Katalogu veritabanına eşitle (önce deneme; keşif kataloğu değiştirdikten sonra)
+.venv\Scripts\python.exe -m app.database sync-catalog --dry-run
+.venv\Scripts\python.exe -m app.database sync-catalog
 
 # Biçim ve kalite kontrolü (CI'daki gibi)
 .venv\Scripts\python.exe -m black --check app tests
@@ -349,8 +355,8 @@ teklif döner. Bütün teklifler canlı kontrol aracında (`all_offers`) görül
 
 ## Veritabanı (PostgreSQL)
 
-Fiyat toplama turlarının sonuçları PostgreSQL 17'de saklanır. Bugün şema ve
-`migrate` komutu hazırdır; katalog eşitleme ve toplama turu sonraki adımlardır
+Fiyat toplama turlarının sonuçları PostgreSQL 17'de saklanır. Bugün şema,
+`migrate` ve katalog eşitleme hazırdır; toplama turu sonraki adımdır
 ([proje_plani.md](../proje_plani.md) Bölüm 9).
 
 ### Bir kerelik kurulum (Windows)
@@ -415,6 +421,29 @@ yazamaz (`tests/test_database.py` her birini dener):
   kuralları `CASE` ile ve her koşul `IS NOT NULL` ile korunarak yazıldı
   (korumasız yazımda satıcısı boş bir fiyat satırı kabul ediliyordu).
 
+### Katalog eşitleme (`sync-catalog`)
+
+`listing_checks` yalnızca veritabanında var olan sayfayı kabul eder; bu yüzden
+`catalog.json` önce veritabanındaki kopyaya (`platforms`, `products`,
+`listings`) yazılır. Asıl kaynak dosyadır. Toplama turu da kendi başında aynı
+eşitlemeyi çalıştıracaktır; komut, keşiften sonra farkı gözle görmek içindir.
+
+- Tek transaction: ya bütün değişiklikler yazılır ya hiçbiri. `--dry-run`
+  aynı işi yapıp sonunda geri alır.
+- Yeni kayıt eklenir. Değişebilen alanlar güncellenir: platform adı ve
+  aktifliği, ürün aktifliği, sayfanın adresi, rengi ve aktifliği.
+- **Kimlik alanları değişemez:** ürünün `product_key`, marka, model ve
+  kapasitesi; sayfanın `product_id`'si ve platformu. Değişmişse (ya da yeni bir
+  kayıt başka kaydın `product_key`'ini veya adresini kullanıyorsa) eşitleme
+  hiçbir şey yazmadan durur ve bütün çakışmaları listeler. Gerekçe: o sayfanın
+  geçmiş fiyatları yanlış ürüne bağlanırdı.
+- Katalogdan düşen kayıt silinmez (geçmiş fiyatlar ona bağlıdır), pasife
+  alınır ve raporlanır.
+- İkinci çalıştırma değişiklik yapmaz. Şema güncel değilse (bekleyen migration)
+  eşitleme başlamaz.
+- Çıktıdaki parmak izi, `catalog.json`'un sha256'sıdır (satır sonundan
+  bağımsız); toplama turları hangi katalogla yapıldığını bununla kaydedecek.
+
 ### Migration kuralları
 
 - Dosya adı `NNN_ad.sql`; numaralar 001'den boşluksuz artar.
@@ -457,8 +486,8 @@ böylece keşfin kabul ettiği sayfayı scraper aynı girdilerle reddetmez.
   kanıtlar. Hata düzeltmelerinin her biri, canlıda görülen gerçek bir örneğe
   dayanan regresyon testiyle korunur. Sitelerin bugün hâlâ aynı yapıda olduğunu
   kanıtlamaz.
-- **Veritabanı testleri (32):** Şema kurallarının ve migration koşucusunun
-  gerçek PostgreSQL'de çalıştığını kanıtlar. Fiyat toplama turunun doğru
+- **Veritabanı testleri (32 + 22):** Şema kurallarının, migration koşucusunun
+  ve katalog eşitlemenin gerçek PostgreSQL'de çalıştığını kanıtlar. Fiyat toplama turunun doğru
   çalıştığını henüz kanıtlamaz (tur sonraki adımdadır).
 - **Canlı kontrol araçları:** Bugünkü site uyumunu aynı üretim koduyla sınar.
   Pazaryerindeki her sayfanın katalogda olduğunu kanıtlamaz.

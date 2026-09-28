@@ -31,7 +31,7 @@ Kullanıcı arayüzde arama yaptığında canlı scraping veya model eğitimi
 | 3. Trendyol doğrulanmış stoksuz sayfa | ✅ Uygulandı | `e6664a3` |
 | 4. Scraper/discovery kabul kontrolü (6 adım) | ✅ Tamamlandı | `4d5613d`, Bölüm 5 |
 | 5. Katalogun 25 hedefle sıfırdan kurulumu ve kod denetimi | ✅ Tamamlandı | Bölüm 6 |
-| 6. Veritabanı ve zamanlanmış toplama | ⏳ Sürüyor: Adım 0–1 tamamlandı (şema ve migrate) | Bölüm 9 |
+| 6. Veritabanı ve zamanlanmış toplama | ⏳ Sürüyor: Adım 0–2 tamamlandı (şema, migrate, katalog eşitleme) | Bölüm 9 |
 | 7. FastAPI ve Streamlit | 🔜 Planlandı, başlanmadı | Bölüm 9 |
 | 8. ML (indirim tahmini) | 🔜 Planlandı, başlanmadı | Bölüm 9 |
 | 9. Docker ve 7/24 işletim | 🔜 Planlandı, başlanmadı | Bölüm 9 |
@@ -299,13 +299,13 @@ Adımlar (her biri ayrı commit):
 |---|---|
 | 0. Hazırlık: taslakların taşınması, PostgreSQL 17, `fiyat_takip` kullanıcısı, `fiyat_takip` ve `fiyat_takip_test` veritabanları | ✅ Tamamlandı (28 Eylül) |
 | 1. Şema, migrate komutu, CI'da PostgreSQL | ✅ Tamamlandı (28 Eylül): `001_initial.sql`, `python -m app.database migrate/status`, 32 veritabanı testi (toplam 91) |
-| 2. Katalogun veritabanına eşitlenmesi | 🔜 Sıradaki |
-| 3. Toplama turu ve ortak kilit | 🔜 |
+| 2. Katalogun veritabanına eşitlenmesi | ✅ Tamamlandı (28 Eylül): `python -m app.database sync-catalog [--dry-run]`; kimlik değişiminde hiçbir şey yazmadan durur, katalogdan düşen kayıt pasife alınır; 22 test (toplam 113) |
+| 3. Toplama turu ve ortak kilit | 🔜 Sıradaki |
 | 4. Karşılaştırılabilirlik görünümü (sahte düşüş kuralı) | 🔜 |
 | 5. Canlı deneme (kullanıcı çalıştırır) | 🔜 |
 | 6. Görev Zamanlayıcı ve 2–3 günlük gözlem | 🔜 |
 | 7. Kapanış belgeleri | 🔜 |
-| 8. Akakçe/Cimri piyasa geçmişi araştırması (toplama çalışırken) | 🔜 |
+| 8. Akakçe/Cimri piyasa geçmişi araştırması (Adım 6'nın 2–3 günlük gözlemi sırasında) | 🔜 |
 
 Adım 0'da görülenler:
 
@@ -320,8 +320,18 @@ Adım 0'da görülenler:
   yeniden ele alınır.
 
 Sıra gerekçesi: kendi fiyat verimiz geriye dönük toplanamaz, Akakçe/Cimri
-geçmişi toplanabilir. Bu yüzden önce toplama başlatılır, piyasa geçmişi
-araştırması (Adım 8) toplama çalışırken yapılır.
+geçmişi toplanabilir. Bu yüzden önce toplama başlatılır; piyasa geçmişi
+araştırması (Adım 8), Adım 6'da zamanlayıcının 2–3 gün gözlendiği bekleme
+süresinde yapılır (karar, 28 Eylül 2026).
+
+Eski canlı kontrol çıktıları veritabanına aktarılmaz (karar, 28 Eylül 2026):
+`data/scraper_all.json` (27 Eylül, 304 sayfa) aynı gece düzeltilen hatalı
+kodla toplandı. 304 sayfa 19 dakikada okunmuş (3 sn bekleme hatası; doğrusu
+~35 dk), Hepsiburada'da stok alanı eksikken Tükendi verme hatası da o sırada
+vardı; o günkü katalog 306 sayfaydı. Hangi kodla ve katalogla toplandığı
+izlenemeyen tek bir anlık görüntünün ML'e katkısı ihmal edilebilir, yanlış veri
+riski gerçektir. İlk gerçek veri Adım 5'teki canlı denemeyle girer; elle veri
+eklenmez.
 
 ### FastAPI ve Streamlit
 
