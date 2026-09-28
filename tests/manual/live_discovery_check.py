@@ -10,6 +10,7 @@ import sys
 
 from app.contracts import Catalog
 from app.discovery.service import _adapter, run
+from app.scrape_lock import ScrapeBusy, scrape_lock
 from app.settings import Settings
 
 
@@ -50,7 +51,13 @@ def main():
     args = parser.parse_args()
     traces = []
     adapters = traced_adapters(traces) if args.trace else None
-    report = run(dry_run=True, target_key=args.target, adapters=adapters)
+    try:
+        # Fiyat turu veya başka bir tarama sürerken siteye gidilmesin.
+        with scrape_lock():
+            report = run(dry_run=True, target_key=args.target, adapters=adapters)
+    except ScrapeBusy as exc:
+        print(f"Başlatılmadı: {exc}", file=sys.stderr)
+        return 3
     output = report.model_dump(mode="json")
     if args.trace:
         output = {"report": output, "traces": traces}

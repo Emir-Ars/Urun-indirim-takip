@@ -22,10 +22,14 @@ def connect(url: str) -> psycopg.Connection:
 
     Her komut kendi başına kalıcı olur (autocommit); birlikte kalıcı olması
     gereken komutlar çağıran tarafta `with conn.transaction():` içinde çalışır.
+    Süre sınırları: sunucuya bağlanma 10 sn; bir tablo kilidini bekleme 30 sn
+    (ör. pgAdmin'de yarım bırakılmış bir işlem zamanlanmış turu sonsuza kadar
+    bekletmesin, hata versin).
     """
     return psycopg.connect(
         url,
         autocommit=True,
         application_name="fiyat_takip",
-        options="-c TimeZone=UTC",
+        connect_timeout=10,
+        options="-c TimeZone=UTC -c lock_timeout=30s",
     )

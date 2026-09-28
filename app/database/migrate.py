@@ -52,7 +52,10 @@ def checksum(text: str) -> str:
 
 def load(directory: Path = MIGRATIONS_DIR) -> list[Migration]:
     migrations = []
-    for path in sorted(directory.glob("*.sql")):
+    # Uzantı büyük/küçük harften bağımsız aranır: Windows'ta "001_a.SQL" ile
+    # Linux'ta farklı davranılmasın, kurala uymayan ad her yerde hata versin.
+    paths = [p for p in directory.iterdir() if p.suffix.lower() == ".sql"]
+    for path in sorted(paths):
         match = _FILE_NAME.match(path.name)
         if match is None:
             raise MigrationError(
@@ -60,6 +63,8 @@ def load(directory: Path = MIGRATIONS_DIR) -> list[Migration]:
             )
         text = path.read_text(encoding="utf-8-sig")
         migrations.append(Migration(int(match[1]), match[2], text, checksum(text)))
+    if not migrations:
+        raise MigrationError(f"Migration dosyası bulunamadı: {directory}")
     if [m.version for m in migrations] != list(range(1, len(migrations) + 1)):
         raise MigrationError("Migration numaraları 001'den başlayıp boşluksuz artmalı")
     return migrations

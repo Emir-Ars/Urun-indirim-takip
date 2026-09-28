@@ -11,6 +11,8 @@ import pytest
 
 from app.database.connection import connect
 
+TEST_DATABASE_LOCK = 2026_0930
+
 
 @pytest.fixture
 def db():
@@ -27,6 +29,9 @@ def db():
                 f"Güvenlik: '{name}' bir test veritabanı değil (adı _test ile bitmeli)",
                 returncode=1,
             )
+        # Aynı anda iki pytest çalışırsa biri diğerinin şemasını silmesin: kilit
+        # test bitene (bağlantı kapanana) kadar tutulur, ikincisi bekler.
+        conn.execute("SELECT pg_advisory_lock(%s)", (TEST_DATABASE_LOCK,))
         conn.execute("DROP SCHEMA public CASCADE")
         conn.execute("CREATE SCHEMA public")
         yield conn

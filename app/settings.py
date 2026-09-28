@@ -21,6 +21,8 @@ class Settings:
         self.catalog_path = Path(os.getenv("CATALOG_PATH", "config/catalog.json"))
         self.discovery_path = Path(os.getenv("DISCOVERY_PATH", "config/discovery.json"))
         self.runtime_path = Path(os.getenv("RUNTIME_PATH", "config/runtime.json"))
+        # Siteye giden bütün girişlerin paylaştığı kilit (app/scrape_lock.py).
+        self.lock_path = Path(os.getenv("SCRAPE_LOCK_PATH", "data/scrape.lock"))
 
     def runtime(self) -> Runtime:
         return Runtime.model_validate_json(

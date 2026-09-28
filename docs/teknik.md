@@ -34,7 +34,8 @@ geçmişi. Kararların ve aşama durumunun ana kaynağı
 | Dosya | Ne işe yarar |
 |---|---|
 | `contracts.py` | Verinin şekilleri ve doğrulaması (Pydantic V2 strict): `Product`, `Listing`, `Catalog`, `PriceObservation`, keşif hedefleri ve raporu. Hatalı veri içeri giremez (ör. fiyat alanına "Tükendi"). Yalnızca biten aşamanın kullandığı tanımları içerir. |
-| `settings.py` | Ayar dosyalarını okur. `CATALOG_PATH`, `DISCOVERY_PATH`, `RUNTIME_PATH` ortam değişkenleriyle başka dosya gösterilebilir. |
+| `settings.py` | Ayar dosyalarını okur. `CATALOG_PATH`, `DISCOVERY_PATH`, `RUNTIME_PATH`, `SCRAPE_LOCK_PATH` ortam değişkenleriyle başka dosya gösterilebilir. |
+| `scrape_lock.py` | Siteye giden bütün girişlerin paylaştığı kilit (`data/scrape.lock`). Fiyat turu, keşif ve iki canlı kontrol aracı alır; biri sürerken diğeri beklemeden "sürüyor" deyip çıkar. Süreç çökse bile işletim sistemi kilidi bırakır. |
 
 ### Fiyat okuma: `app/scraper/`
 
@@ -62,19 +63,28 @@ geçmişi. Kararların ve aşama durumunun ana kaynağı
 
 | Dosya | Ne işe yarar |
 |---|---|
-| `connection.py` | PostgreSQL bağlantısı. Adres `DATABASE_URL` ortam değişkeninden okunur (şifresiz); şifre PostgreSQL'in `pgpass.conf` dosyasındadır. Oturum saati UTC. |
+| `connection.py` | PostgreSQL bağlantısı. Adres `DATABASE_URL` ortam değişkeninden okunur (şifresiz); şifre PostgreSQL'in `pgpass.conf` dosyasındadır. Oturum saati UTC; bağlanma 10 sn, tablo kilidi bekleme 30 sn ile sınırlı (yarım bırakılmış bir işlem turu sonsuza kadar bekletmez, hata verir). |
 | `migrate.py` | Migration koşucusu: `migrations/` altındaki numaralı SQL dosyalarını sırayla, her birini tek transaction'da ve yalnızca bir kez uygular; `schema_migrations` tablosuna parmak iziyle yazar. |
 | `migrations/001_initial.sql` | Katalog kopyası, toplama turları ve sayfa sonuçları tabloları; bütün kurallar (`CHECK`, `UNIQUE`, yabancı anahtarlar). |
 | `catalog_sync.py` | `catalog.json`'u veritabanındaki kopyaya eşitler: `plan_sync` farkı veritabanına dokunmadan hesaplar, `sync_catalog` tek transaction'da yazar. |
+| `runs.py` | Tur SQL'leri: veritabanı tur kilidi, yarım kalan turu kapatma, turu ve planlanan sayfaları açma, sayfa sonucunu (bir kez, yalnızca süren tura) yazma, turu kapatma, özet. |
 | `__main__.py` | Komut satırı: `python -m app.database migrate` / `status` / `sync-catalog [--dry-run]`. |
+
+### Fiyat toplama turu: `app/collection/`
+
+| Dosya | Ne işe yarar |
+|---|---|
+| `service.py` | Bir tur: şema kontrolü, yarım kalan turu kapatma, katalog eşitleme, planlama, her sayfayı mevcut scraper'la okuyup sonucunu hemen yazma, turu kapatma. Scraper ile veritabanını bağlayan tek yer. |
+| `__main__.py` | Komut satırı: `python -m app.collection [--prefix ÖN_EK] [--scheduled]`; ortak kilidi alır. |
 
 ### Testler ve CI
 
 | Yer | Ne işe yarar |
 |---|---|
 | `tests/test_trendyol_scraper.py`, `tests/test_hepsiburada_scraper.py`, `tests/test_discovery.py` | Kayıtlı örnek verilerle otomatik testler (59 test). İnternete çıkmaz. |
-| `tests/test_catalog_sync.py` | Katalog eşitleme (22 test): kararlar veritabanısız, yazma/deneme/çakışma ve komut satırı gerçek PostgreSQL'de. |
-| `tests/test_database.py`, `tests/conftest.py` | Migration koşucusu ve şema kuralları (32 test), gerçek PostgreSQL'de. Yalnızca `TEST_DATABASE_URL`'deki, adı `_test` ile biten veritabanını kullanır ve her testten önce onu boşaltır. Değişken yoksa yerelde atlanır, CI'da başarısız olur. |
+| `tests/test_collection.py` | Toplama turu (22 test): sahte scraper'larla her sonuç türü, Ctrl+C, yarım kalan tur, başka süreçteki tur, veritabanının reddettiği değer, ön ek, çakışma, çıkış kodları ve ortak kilit; gerçek PostgreSQL'de, internete çıkmadan. |
+| `tests/test_catalog_sync.py` | Katalog eşitleme (26 test): kararlar veritabanısız, yazma/deneme/çakışma ve komut satırı gerçek PostgreSQL'de. |
+| `tests/test_database.py`, `tests/conftest.py` | Migration koşucusu, şema kuralları ve `migrate`/`status` komutları (36 test), gerçek PostgreSQL'de. Yalnızca `TEST_DATABASE_URL`'deki, adı `_test` ile biten veritabanını kullanır ve her testten önce onu boşaltır; aynı anda iki pytest çalışırsa ikincisi bekler. Değişken yoksa yerelde atlanır, CI'da başarısız olur. |
 | `tests/fixtures/discovery/` | Testlerin kullandığı örnek site yanıtları ve kataloğun sabit bir kopyası (`catalog.json`); testler gerçek kataloğa bağlı değildir. |
 | `tests/manual/live_scraper_check.py` | Katalogdaki sayfaları canlı okur; bütün satıcıları gösterir. İsteğe bağlı `product_key` ön eki (ör. `samsung_`) ile yalnız o ürünler. |
 | `tests/manual/live_discovery_check.py` | Keşfi kataloğa yazmadan canlı çalıştırır; `--trace` ile her kararın nedenini gösterir. |
@@ -89,7 +99,7 @@ Windows ve PowerShell, Python sanal ortamı `.venv`:
 .venv\Scripts\python.exe -m pip install -e ".[dev]"
 
 # Otomatik testler (internete çıkmaz; veritabanı testleri TEST_DATABASE_URL ister)
-.venv\Scripts\python.exe -m pytest tests/test_trendyol_scraper.py tests/test_hepsiburada_scraper.py tests/test_discovery.py tests/test_database.py tests/test_catalog_sync.py -q
+.venv\Scripts\python.exe -m pytest -q
 
 # Veritabanı şeması: bekleyen migration'ları uygula / durumu göster
 .venv\Scripts\python.exe -m app.database migrate
@@ -98,6 +108,10 @@ Windows ve PowerShell, Python sanal ortamı `.venv`:
 # Katalogu veritabanına eşitle (önce deneme; keşif kataloğu değiştirdikten sonra)
 .venv\Scripts\python.exe -m app.database sync-catalog --dry-run
 .venv\Scripts\python.exe -m app.database sync-catalog
+
+# Fiyat toplama turu: sitelere istek atar ve sonuçları veritabanına yazar
+.venv\Scripts\python.exe -m app.collection --prefix poco_   # yalnız POCO (4 sayfa)
+.venv\Scripts\python.exe -m app.collection                  # bütün etkin sayfalar (~35 dk)
 
 # Biçim ve kalite kontrolü (CI'daki gibi)
 .venv\Scripts\python.exe -m black --check app tests
@@ -356,8 +370,8 @@ teklif döner. Bütün teklifler canlı kontrol aracında (`all_offers`) görül
 ## Veritabanı (PostgreSQL)
 
 Fiyat toplama turlarının sonuçları PostgreSQL 17'de saklanır. Bugün şema,
-`migrate` ve katalog eşitleme hazırdır; toplama turu sonraki adımdır
-([proje_plani.md](../proje_plani.md) Bölüm 9).
+`migrate`, katalog eşitleme ve toplama turu hazırdır; canlı deneme ve
+zamanlayıcı sonraki adımlardır ([proje_plani.md](../proje_plani.md) Bölüm 9).
 
 ### Bir kerelik kurulum (Windows)
 
@@ -421,6 +435,41 @@ yazamaz (`tests/test_database.py` her birini dener):
   kuralları `CASE` ile ve her koşul `IS NOT NULL` ile korunarak yazıldı
   (korumasız yazımda satıcısı boş bir fiyat satırı kabul ediliyordu).
 
+### Toplama turu (`python -m app.collection`)
+
+1. Ortak kilidi alır (`data/scrape.lock`); başka bir tur, keşif veya canlı
+   kontrol sürüyorsa beklemeden çıkar (kod 3).
+2. Şema güncel değilse durur. Veritabanının kendi tur kilidini (advisory lock)
+   alır; aynı veritabanını kullanan başka bir süreç (ör. farklı kilit dosyasıyla
+   çalışan bir kopya) tur yürütüyorsa çıkar (kod 3) ve onun turuna dokunmaz. İki
+   kilit de bizdeyse `running` kalmış eski turlar yarıda kalmıştır;
+   `interrupted` yapılır.
+3. Katalogu eşitler (aşağıdaki kurallar); çakışma varsa tur açılmaz.
+4. Etkin sayfa + etkin ürün + etkin platform (isteğe bağlı `--prefix`) planlanır;
+   tur satırı ve planlanan sayfalar (sonuçsuz) tek transaction'da yazılır.
+5. Her sayfa mevcut scraper'la (`fetch`) okunur ve sonucu **hemen** yazılır;
+   tur ortasında bilgisayar kapanırsa okunanlar kaybolmaz. Ekrana
+   `[12/326] listing_id  fiyat 57.249,00 TL · satıcı (Stokta Var)` biçiminde
+   ilerleme yazılır.
+6. Tur `completed` yapılır ve özet basılır.
+
+| `fetch()` sonucu | `listing_checks` |
+|---|---|
+| Stokta Var / Kritik Stok | `offer` + fiyat, satıcı, puan, stok |
+| Tükendi | `sold_out`; fiyat ve satıcı **yazılmaz** (satın alınamayan fiyat "en ucuz" hesabına karışmasın) |
+| `FetchError` (`blocked`, `network`, `parse`, `identity`, `no_eligible_offer`…) | `error` + aynı kod ve mesaj |
+| Doğrulama hatası (`ValueError`) | `error`, `validation` |
+| Beklenmeyen hata | `error`, `unexpected`; ayrıntı ekrana yazılır, **tur sürer** |
+| Veritabanı değeri reddetti (ör. sütuna sığmayan fiyat) | `error`, `storage`; **tur sürer**. Metinlerdeki NUL (`\x00`) karakteri yazmadan önce silinir |
+| Ctrl+C veya veritabanı hatası | Tur `interrupted`; bakılmayan sayfalar sonuçsuz kalır |
+
+Çıkış kodları: `0` tamamlandı ve hata yok; `2` tamamlandı ama bazı sayfalarda
+hata var; `1` başlayamadı (şema, çakışma, veritabanı); `3` kilit meşgul;
+`130` Ctrl+C. `--scheduled` turu `scheduled` olarak kaydeder (Görev
+Zamanlayıcı için); verilmezse `manual`. `--prefix` kullanıldıysa turun
+notuna yazılır. Sonuç yalnızca süren tura yazılabilir; kapanmış bir tur
+yeniden kapatılmaya çalışılırsa hata verir (sessiz geçmez).
+
 ### Katalog eşitleme (`sync-catalog`)
 
 `listing_checks` yalnızca veritabanında var olan sayfayı kabul eder; bu yüzden
@@ -439,6 +488,11 @@ eşitlemeyi çalıştıracaktır; komut, keşiften sonra farkı gözle görmek i
   geçmiş fiyatları yanlış ürüne bağlanırdı.
 - Katalogdan düşen kayıt silinmez (geçmiş fiyatlar ona bağlıdır), pasife
   alınır ve raporlanır.
+- Her tabloda önce güncellemeler, sonra eklemeler yazılır: bir sayfanın adresi
+  değişip eski adres yeni bir sayfaya verildiyse sorun çıkmaz. İki sayfanın
+  adresi yer değiştirmişse tek adımda yazılamaz; hiçbir şey yazılmadan açık bir
+  çakışma mesajı verilir.
+- Katalog dosyası başında BOM olsa da okunur.
 - İkinci çalıştırma değişiklik yapmaz. Şema güncel değilse (bekleyen migration)
   eşitleme başlamaz.
 - Çıktıdaki parmak izi, `catalog.json`'un sha256'sıdır (satır sonundan
@@ -446,7 +500,9 @@ eşitlemeyi çalıştıracaktır; komut, keşiften sonra farkı gözle görmek i
 
 ### Migration kuralları
 
-- Dosya adı `NNN_ad.sql`; numaralar 001'den boşluksuz artar.
+- Dosya adı `NNN_ad.sql`; numaralar 001'den boşluksuz artar. Uzantı büyük harfle
+  yazılmış (`.SQL`) ya da kurala uymayan ad hata verir; hiç dosya bulunamazsa da
+  hata verilir. Dosyalar pakete dahildir (`pyproject.toml`, `package-data`).
 - Her dosya tek transaction'da uygulanır; hata verirse o dosyadan hiçbir iz
   kalmaz (PostgreSQL'de tablo oluşturma da geri alınır). Aynı anda iki
   `migrate` çalışırsa ikincisi bekler.
@@ -486,9 +542,15 @@ böylece keşfin kabul ettiği sayfayı scraper aynı girdilerle reddetmez.
   kanıtlar. Hata düzeltmelerinin her biri, canlıda görülen gerçek bir örneğe
   dayanan regresyon testiyle korunur. Sitelerin bugün hâlâ aynı yapıda olduğunu
   kanıtlamaz.
-- **Veritabanı testleri (32 + 22):** Şema kurallarının, migration koşucusunun
-  ve katalog eşitlemenin gerçek PostgreSQL'de çalıştığını kanıtlar. Fiyat toplama turunun doğru
-  çalıştığını henüz kanıtlamaz (tur sonraki adımdadır).
+- **Veritabanı testleri (36 + 26 + 22):** Şema kurallarının, migration
+  koşucusunun, katalog eşitlemenin ve toplama turunun gerçek PostgreSQL'de
+  doğru çalıştığını kanıtlar. Tur testleri sahte scraper kullanır; turun
+  gerçek sitelerle çalıştığını yalnızca canlı tur gösterir.
+- **Kasıtlı bozma (mutasyon) denetimi:** Testlerin gerçekten hata
+  yakalayabildiğini sınamak için kodun kritik satırları projenin bir kopyasında
+  (ağ kapalıyken) tek tek bozuldu ve testlerin bozmayı yakalayıp yakalamadığına
+  bakıldı (sonuç: proje_plani.md Bölüm 9, Adım 3). Yakalanmayanlar bilinçli
+  olarak testsiz bırakılan eşzamanlılık korumalarıdır.
 - **Canlı kontrol araçları:** Bugünkü site uyumunu aynı üretim koduyla sınar.
   Pazaryerindeki her sayfanın katalogda olduğunu kanıtlamaz.
 - "Testler geçti" ile "bütün pazaryeri eksiksiz tarandı" aynı şey değildir.

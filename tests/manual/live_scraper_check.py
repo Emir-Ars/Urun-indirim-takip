@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 from app.contracts import Catalog, ProductListing
+from app.scrape_lock import ScrapeBusy, scrape_lock
 from app.scraper.factory import create_scraper
 from app.scraper.http import FetchError
 from app.settings import Settings
@@ -34,6 +35,15 @@ def main() -> None:
     args = parser.parse_args()
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
+    try:
+        # Fiyat turu veya başka bir tarama sürerken siteye gidilmesin.
+        with scrape_lock():
+            check(args.prefix)
+    except ScrapeBusy as exc:
+        sys.exit(f"Başlatılmadı: {exc}")
+
+
+def check(prefix: str) -> None:
     settings = Settings()
     runtime = settings.runtime()
     catalog = Catalog.model_validate_json(
@@ -50,7 +60,7 @@ def main() -> None:
         platform = platforms[item.platform]
         if not (item.active and product.active and platform.active):
             continue
-        if not product.product_key.startswith(args.prefix):
+        if not product.product_key.startswith(prefix):
             continue
         listing = ProductListing(
             **item.model_dump(),

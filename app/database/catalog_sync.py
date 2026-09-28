@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import psycopg
-from psycopg import sql
+from psycopg import errors, sql
 from psycopg.rows import dict_row
 
 from app.contracts import Catalog
@@ -80,7 +80,7 @@ class SyncPlan:
 
 def read_catalog(path: Path) -> tuple[Catalog, str]:
     """Katalogu sözleşmeyle doğrulayarak okur; (katalog, parmak izi) döndürür."""
-    text = path.read_text(encoding="utf-8")
+    text = path.read_text(encoding="utf-8-sig")  # BOM'lu dosya da okunur
     return Catalog.model_validate_json(text), checksum(text)
 
 
@@ -162,7 +162,16 @@ def sync_catalog(
             "LOCK TABLE platforms, products, listings IN SHARE ROW EXCLUSIVE MODE"
         )
         plan = plan_sync(_read_current(conn), catalog)
-        _apply(conn, plan)
+        try:
+            _apply(conn, plan)
+        except errors.UniqueViolation as exc:
+            # Son durum geçerli ama tek adımda uygulanamıyor (ör. iki sayfanın
+            # adresi yer değiştirmiş). Transaction geri alınır, hiçbir şey yazılmaz.
+            raise CatalogConflict(
+                "Katalog tek adımda eşitlenemedi (benzersiz bir değer iki kayıt "
+                "arasında yer değiştiriyor); hiçbir şey yazılmadı. Değişikliği iki "
+                f"adımda yapın. Ayrıntı: {exc}"
+            ) from exc
     return plan
 
 
@@ -202,19 +211,12 @@ def _read_current(conn: psycopg.Connection) -> Rows:
 
 
 def _apply(conn: psycopg.Connection, plan: SyncPlan) -> None:
+    # Her tabloda önce güncellemeler, sonra eklemeler: bir sayfanın adresi
+    # değişip eski adres yeni bir sayfaya verildiyse ekleme çakışmasın.
     with conn.cursor() as cursor:
         for table in TABLES:
             changes = plan.tables[table.name]
             name, key = sql.Identifier(table.name), sql.Identifier(table.key)
-            if changes.added:
-                cursor.executemany(
-                    sql.SQL("INSERT INTO {} ({}) VALUES ({})").format(
-                        name,
-                        sql.SQL(", ").join(map(sql.Identifier, table.columns)),
-                        sql.SQL(", ").join(sql.Placeholder() * len(table.columns)),
-                    ),
-                    [[row[c] for c in table.columns] for row in changes.added],
-                )
             for row_key, diff in changes.updated:
                 cursor.execute(
                     sql.SQL("UPDATE {} SET {} WHERE {} = %s").format(
@@ -232,4 +234,13 @@ def _apply(conn: psycopg.Connection, plan: SyncPlan) -> None:
                         name, key
                     ),
                     [changes.deactivated],
+                )
+            if changes.added:
+                cursor.executemany(
+                    sql.SQL("INSERT INTO {} ({}) VALUES ({})").format(
+                        name,
+                        sql.SQL(", ").join(map(sql.Identifier, table.columns)),
+                        sql.SQL(", ").join(sql.Placeholder() * len(table.columns)),
+                    ),
+                    [[row[c] for c in table.columns] for row in changes.added],
                 )

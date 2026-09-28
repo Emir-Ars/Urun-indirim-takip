@@ -31,7 +31,7 @@ Kullanıcı arayüzde arama yaptığında canlı scraping veya model eğitimi
 | 3. Trendyol doğrulanmış stoksuz sayfa | ✅ Uygulandı | `e6664a3` |
 | 4. Scraper/discovery kabul kontrolü (6 adım) | ✅ Tamamlandı | `4d5613d`, Bölüm 5 |
 | 5. Katalogun 25 hedefle sıfırdan kurulumu ve kod denetimi | ✅ Tamamlandı | Bölüm 6 |
-| 6. Veritabanı ve zamanlanmış toplama | ⏳ Sürüyor: Adım 0–2 tamamlandı (şema, migrate, katalog eşitleme) | Bölüm 9 |
+| 6. Veritabanı ve zamanlanmış toplama | ⏳ Sürüyor: Adım 0–3 tamamlandı (şema, katalog eşitleme, toplama turu); sıradaki canlı deneme | Bölüm 9 |
 | 7. FastAPI ve Streamlit | 🔜 Planlandı, başlanmadı | Bölüm 9 |
 | 8. ML (indirim tahmini) | 🔜 Planlandı, başlanmadı | Bölüm 9 |
 | 9. Docker ve 7/24 işletim | 🔜 Planlandı, başlanmadı | Bölüm 9 |
@@ -94,7 +94,10 @@ bölümündedir.
   `get_product_data` içindedir. Factory platform modülünü adından yükler; yeni
   site mevcut scraper'a koşul eklenerek değil kendi modülüyle eklenir.
 - Discovery scraper'dan ayrıdır: keşif bağlantı bulur, scraper fiyat ve stok
-  okur. Scraper/discovery içinde SQL veya ML yapılmaz.
+  okur. Scraper/discovery içinde SQL veya ML yapılmaz. Scraper ile veritabanını
+  yalnızca toplama turu (`app/collection`) bağlar; SQL `app/database` içindedir.
+- Siteye giden bütün girişler (tur, keşif, canlı kontrol araçları) ortak bir
+  dosya kilidi (`data/scrape.lock`) paylaşır; aynı anda iki süreç siteye gitmez.
 - Tanılama izi (`trace`) ve bütün teklif listesi yalnız manuel kontrol
   araçlarında görünür; üretim sözleşmesi sade kalır ve araçlar aynı üretim
   kodunu kullanır.
@@ -293,16 +296,19 @@ Kararlar (28 Eylül 2026, kullanıcıyla):
 | Sahte fiyat düşüşü | İki tur ancak **cevap veren sayfa kümesi** (fiyat veya Tükendi dönen sayfalar) aynıysa karşılaştırılır. Hata cevap değildir; Tükendi gerçek cevaptır. |
 | Bağlantı ve yetki | Şifresiz `DATABASE_URL` / `TEST_DATABASE_URL`; şifre PostgreSQL'in `pgpass.conf` dosyasında, repoda değil. Proje kullanıcısı `fiyat_takip` yönetici değildir; yalnızca kendi iki veritabanının sahibidir. |
 
-Adımlar (her biri ayrı commit):
+Adımlar (her biri ayrı commit). Uygulama sırası 28 Eylül'de **3 → 5 → 6 → 4**
+olarak değiştirildi: canlı deneme ve zamanlayıcı öne alındı ki gerçek veri
+erken birikmeye başlasın; görünüm (4) veri toplanırken yazılır ve gerçek
+veriyle de denenir.
 
 | Adım | Durum |
 |---|---|
 | 0. Hazırlık: taslakların taşınması, PostgreSQL 17, `fiyat_takip` kullanıcısı, `fiyat_takip` ve `fiyat_takip_test` veritabanları | ✅ Tamamlandı (28 Eylül) |
 | 1. Şema, migrate komutu, CI'da PostgreSQL | ✅ Tamamlandı (28 Eylül): `001_initial.sql`, `python -m app.database migrate/status`, 32 veritabanı testi (toplam 91) |
 | 2. Katalogun veritabanına eşitlenmesi | ✅ Tamamlandı (28 Eylül): `python -m app.database sync-catalog [--dry-run]`; kimlik değişiminde hiçbir şey yazmadan durur, katalogdan düşen kayıt pasife alınır; 22 test (toplam 113) |
-| 3. Toplama turu ve ortak kilit | 🔜 Sıradaki |
-| 4. Karşılaştırılabilirlik görünümü (sahte düşüş kuralı) | 🔜 |
-| 5. Canlı deneme (kullanıcı çalıştırır) | 🔜 |
+| 3. Toplama turu ve ortak kilit | ✅ Tamamlandı (28 Eylül): `python -m app.collection [--prefix] [--scheduled]`; sayfa sonucu hemen ve bir kez yazılır, yarım kalan tur sonraki turda kapatılır; tur, keşif ve iki canlı kontrol aracı `data/scrape.lock` kilidini paylaşır; ayrıca veritabanı tur kilidi. Commit öncesi üç ek kontrol: (1) bağımsız kod incelemesi, 13 bulgu, 7 numara hariç hepsi düzeltildi ve testlendi (7 → Adım 4); (2) kasıtlı bozma testi: 37 bozmanın 33'ü testlerce yakalandı, kaçan 4'ü önceden tahmin edilen eşzamanlılık/güvenlik korumaları; (3) ilk canlı tur (`--prefix poco_`, 4 sayfa, 25 sn): 4/4 fiyat, çıkış 0. Testler 22 (toplam 143). |
+| 4. Karşılaştırılabilirlik görünümü (sahte düşüş kuralı) | 🔜 (6'dan sonra). Aynı migration'a bağımsız incelemeden ertelenen iki kural eklenecek: `sold_out` satırında fiyat/satıcı yasağı ve kimlik alanlarının değiştirilmesini, satır silinmesini reddeden tetikleyici (bugün yalnızca kodda korunuyor; elle SQL ile bozulabilir). |
+| 5. Canlı deneme (kullanıcı çalıştırır) | 🔜 Sıradaki |
 | 6. Görev Zamanlayıcı ve 2–3 günlük gözlem | 🔜 |
 | 7. Kapanış belgeleri | 🔜 |
 | 8. Akakçe/Cimri piyasa geçmişi araştırması (Adım 6'nın 2–3 günlük gözlemi sırasında) | 🔜 |

@@ -46,13 +46,14 @@ flowchart LR
         P["Her sayfadaki<br/>satıcıları karşılaştır"] --> E["En ucuz<br/>uygun teklif"]
     end
     E --> O["Fiyat · satıcı · stok"]
-    O -.-> DB[("🔜 Veritabanı")]
+    O --> DB[("PostgreSQL<br/>fiyat geçmişi")]
 ```
 
 - **Keşif** seyrek çalışır; yeni model eklerken ya da ara sıra. Sayfaları
   kullanıcı değil sistem bulur ve her birini ayrıca açıp doğrular.
-- **Fiyat okuma** günde 2 kez (10:00 ve 22:00) çalışıp sonuçları PostgreSQL'e
-  yazacak (veritabanı aşaması, sürüyor). Bugün sonucu ekrana ve dosyaya yazar.
+- **Fiyat toplama turu** (`python -m app.collection`) her sayfanın sonucunu
+  PostgreSQL'e yazar. Günde 2 kez (10:00 ve 22:00) kendiliğinden çalışması
+  veritabanı aşamasının sıradaki adımıdır.
 - Yeni telefon eklemek için kod değişmez; `discovery.json` dosyasına bir satır
   eklenir.
 
@@ -82,7 +83,7 @@ modeller de ayrıdır. RAM ve garanti türü ürünü bölmez.
 | Siteler | Trendyol, Hepsiburada |
 | Takip edilen modeller | 24 (Apple 9 · Samsung 8 · Xiaomi 6 · POCO 1) |
 | Katalog | 59 ürün, 327 sayfa (28 Eylül 2026) |
-| Testler | 113 otomatik test (38'i gerçek PostgreSQL üzerinde); her push'ta GitHub Actions |
+| Testler | 143 otomatik test (65'i gerçek PostgreSQL üzerinde); her push'ta GitHub Actions |
 
 ```mermaid
 pie title Takip edilen sayfalar
@@ -112,7 +113,10 @@ python -m venv .venv
 .venv\Scripts\python.exe -m app.database migrate
 .venv\Scripts\python.exe -m app.database sync-catalog
 
-# 4. Canlı deneme (sitelere istek atar)
+# 4. Fiyat toplama turu (sitelere istek atar; sonuçları veritabanına yazar)
+.venv\Scripts\python.exe -m app.collection --prefix poco_
+
+# 5. Canlı deneme (sitelere istek atar, hiçbir yere yazmaz)
 [Console]::OutputEncoding = [Text.Encoding]::UTF8
 .venv\Scripts\python.exe -m app.discovery --dry-run --target apple_iphone_15
 .venv\Scripts\python.exe tests\manual\live_scraper_check.py apple_iphone_15_128
@@ -150,7 +154,9 @@ app/
   contracts.py      veri şekilleri ve doğrulama
   scraper/          fiyat okuma: tek HTTP kapısı, ortak kimlik kuralları, site okuyucuları
   discovery/        keşif: site aramaları, katalogla birleştirme, rapor
-  database/         PostgreSQL: bağlantı, migration dosyaları, katalog eşitleme, komutlar
+  database/         PostgreSQL: bağlantı, migration dosyaları, katalog eşitleme, tur SQL'leri
+  collection/       fiyat toplama turu: sayfaları okuyup sonuçları veritabanına yazar
+  scrape_lock.py    siteye giden bütün girişlerin ortak kilidi
 tests/              otomatik testler; manual/ altında canlı kontrol araçları
 docs/teknik.md      ayrıntılı teknik rehber
 ```

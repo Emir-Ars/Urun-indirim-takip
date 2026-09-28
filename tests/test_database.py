@@ -1,10 +1,12 @@
 """Migration koşucusu ve şema kuralları; gerçek PostgreSQL test veritabanında."""
 
+import os
 from datetime import datetime, timezone
 
 import pytest
 from psycopg import errors, sql
 
+from app.database.__main__ import main
 from app.database.migrate import (
     MigrationError,
     applied,
@@ -111,6 +113,37 @@ def test_load_rejects_gaps_and_bad_names(tmp_path):
     write(bad_name, "1_a.sql", "SELECT 1;")
     with pytest.raises(MigrationError, match="dosya adı"):
         load(bad_name)
+
+
+def test_load_rejects_missing_files_and_upper_case_names(tmp_path):
+    with pytest.raises(MigrationError, match="bulunamadı"):
+        load(tmp_path)
+    write(tmp_path, "001_A.SQL", "SELECT 1;")
+    with pytest.raises(MigrationError, match="dosya adı"):
+        load(tmp_path)
+
+
+def test_connection_sets_utc_and_lock_timeout(db):
+    assert db.execute("SHOW TimeZone").fetchone()[0] == "UTC"
+    assert db.execute("SHOW lock_timeout").fetchone()[0] == "30s"
+
+
+def test_cli_status_and_migrate(db, monkeypatch, capsys):
+    monkeypatch.setenv("DATABASE_URL", os.environ["TEST_DATABASE_URL"])
+    assert main(["status"]) == 0
+    assert "001_initial.sql  BEKLİYOR" in capsys.readouterr().out
+    assert main(["migrate"]) == 0
+    assert "uygulandı: 001_initial.sql" in capsys.readouterr().out
+    assert main(["migrate"]) == 0
+    assert "Şema güncel" in capsys.readouterr().out
+    assert main(["status"]) == 0
+    assert "001_initial.sql  uygulandı" in capsys.readouterr().out
+
+
+def test_cli_without_database_url_fails(monkeypatch, capsys):
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+    assert main(["status"]) == 1
+    assert "DATABASE_URL tanımlı değil" in capsys.readouterr().err
 
 
 def test_migrate_applies_each_file_once(db):

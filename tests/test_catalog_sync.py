@@ -253,6 +253,52 @@ def test_deactivation_keeps_the_row(migrated):
     assert rows == [("trendyol_1", True), ("trendyol_2", False)]
 
 
+def test_product_deactivation_is_written(migrated):
+    sync_catalog(migrated, BASE)
+    sync_catalog(migrated, make([product(1, 128)], [listing(1, 1)]))
+    rows = migrated.execute(
+        "SELECT product_id, active FROM products ORDER BY product_id"
+    ).fetchall()
+    assert rows == [(1, True), (2, False)]
+
+
+def test_address_moved_to_a_new_listing_is_applied(migrated):
+    sync_catalog(migrated, BASE)
+    old_url = listing(1, 1)["url"]
+    new = make(
+        [product(1, 128), product(2, 256)],
+        [
+            listing(1, 1, url="https://www.trendyol.com/yeni-p-1"),
+            listing(2, 2),
+            listing(3, 1, url=old_url),
+        ],
+    )
+    sync_catalog(migrated, new)  # önce güncelleme, sonra ekleme: çakışma yok
+    urls = dict(migrated.execute("SELECT listing_id, url FROM listings").fetchall())
+    assert urls["trendyol_3"] == old_url
+
+
+def test_address_swap_is_a_clear_conflict(migrated):
+    sync_catalog(migrated, BASE)
+    swapped = make(
+        [product(1, 128), product(2, 256)],
+        [
+            listing(1, 1, url=listing(2, 2)["url"]),
+            listing(2, 2, url=listing(1, 1)["url"]),
+        ],
+    )
+    with pytest.raises(CatalogConflict, match="iki adımda"):
+        sync_catalog(migrated, swapped)
+    urls = dict(migrated.execute("SELECT listing_id, url FROM listings").fetchall())
+    assert urls["trendyol_1"] == listing(1, 1)["url"]  # hiçbir şey yazılmadı
+
+
+def test_catalog_with_byte_order_mark_is_read(tmp_path):
+    path = tmp_path / "bom.json"
+    path.write_bytes(b"\xef\xbb\xbf" + FIXTURE.read_bytes())
+    assert read_catalog(path)[0] == read_catalog(FIXTURE)[0]
+
+
 def test_synced_listing_accepts_a_result_row(migrated):
     sync_catalog(migrated, BASE)
     run_id = migrated.execute(

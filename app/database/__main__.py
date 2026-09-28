@@ -25,8 +25,9 @@ def main(argv=None) -> int:
         "--dry-run", action="store_true", help="Değişiklikleri göster, yazma"
     )
     args = parser.parse_args(argv)
-    if hasattr(sys.stdout, "reconfigure"):
-        sys.stdout.reconfigure(encoding="utf-8")
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="backslashreplace")
     try:
         with connect(database_url()) as conn:
             if args.command == "migrate":

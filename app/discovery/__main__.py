@@ -5,6 +5,7 @@ import json
 import sys
 
 from app.discovery.service import run
+from app.scrape_lock import ScrapeBusy, scrape_lock
 
 
 def main(argv=None):
@@ -13,8 +14,10 @@ def main(argv=None):
     parser.add_argument("--target", help="Yalnızca bu hedefi çalıştır")
     args = parser.parse_args(argv)
     try:
-        report = run(dry_run=args.dry_run, target_key=args.target)
-    except (OSError, ValueError, ImportError) as exc:
+        # Fiyat turuyla aynı anda siteye gidilmesin (ortak kilit).
+        with scrape_lock():
+            report = run(dry_run=args.dry_run, target_key=args.target)
+    except (OSError, ValueError, ImportError, ScrapeBusy) as exc:
         print(f"Keşif başlatılamadı: {exc}", file=sys.stderr)
         return 1
     print(json.dumps(report.model_dump(mode="json"), ensure_ascii=False, indent=2))
