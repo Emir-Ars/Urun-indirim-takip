@@ -1,4 +1,4 @@
-name: Scraper and discovery checks
+name: Tests and style checks
 
 on:
   push:
@@ -7,6 +7,25 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: fiyat_takip
+          # Yalnızca bu işte açılıp silinen test sunucusu içindir.
+          POSTGRES_PASSWORD: ci_only
+          POSTGRES_DB: fiyat_takip_test
+          # Yerel kurulumla aynı: builtin C.UTF-8 (işletim sisteminden bağımsız).
+          POSTGRES_INITDB_ARGS: --encoding=UTF8 --locale-provider=builtin --builtin-locale=C.UTF-8
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql://fiyat_takip:ci_only@localhost:5432/fiyat_takip_test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

@@ -31,7 +31,7 @@ Kullanıcı arayüzde arama yaptığında canlı scraping veya model eğitimi
 | 3. Trendyol doğrulanmış stoksuz sayfa | ✅ Uygulandı | `e6664a3` |
 | 4. Scraper/discovery kabul kontrolü (6 adım) | ✅ Tamamlandı | `4d5613d`, Bölüm 5 |
 | 5. Katalogun 25 hedefle sıfırdan kurulumu ve kod denetimi | ✅ Tamamlandı | Bölüm 6 |
-| 6. Veritabanı ve zamanlanmış toplama | ⏳ Sürüyor: kararlar verildi, Adım 0 tamamlandı | Bölüm 9 |
+| 6. Veritabanı ve zamanlanmış toplama | ⏳ Sürüyor: Adım 0–1 tamamlandı (şema ve migrate) | Bölüm 9 |
 | 7. FastAPI ve Streamlit | 🔜 Planlandı, başlanmadı | Bölüm 9 |
 | 8. ML (indirim tahmini) | 🔜 Planlandı, başlanmadı | Bölüm 9 |
 | 9. Docker ve 7/24 işletim | 🔜 Planlandı, başlanmadı | Bölüm 9 |
@@ -298,8 +298,8 @@ Adımlar (her biri ayrı commit):
 | Adım | Durum |
 |---|---|
 | 0. Hazırlık: taslakların taşınması, PostgreSQL 17, `fiyat_takip` kullanıcısı, `fiyat_takip` ve `fiyat_takip_test` veritabanları | ✅ Tamamlandı (28 Eylül) |
-| 1. Şema, migrate komutu, CI'da PostgreSQL | 🔜 Sıradaki |
-| 2. Katalogun veritabanına eşitlenmesi | 🔜 |
+| 1. Şema, migrate komutu, CI'da PostgreSQL | ✅ Tamamlandı (28 Eylül): `001_initial.sql`, `python -m app.database migrate/status`, 32 veritabanı testi (toplam 91) |
+| 2. Katalogun veritabanına eşitlenmesi | 🔜 Sıradaki |
 | 3. Toplama turu ve ortak kilit | 🔜 |
 | 4. Karşılaştırılabilirlik görünümü (sahte düşüş kuralı) | 🔜 |
 | 5. Canlı deneme (kullanıcı çalıştırır) | 🔜 |

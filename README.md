@@ -82,7 +82,7 @@ modeller de ayrıdır. RAM ve garanti türü ürünü bölmez.
 | Siteler | Trendyol, Hepsiburada |
 | Takip edilen modeller | 24 (Apple 9 · Samsung 8 · Xiaomi 6 · POCO 1) |
 | Katalog | 59 ürün, 327 sayfa (28 Eylül 2026) |
-| Testler | 59 otomatik test; her push'ta GitHub Actions |
+| Testler | 91 otomatik test (32'si PostgreSQL üzerinde); her push'ta GitHub Actions |
 
 ```mermaid
 pie title Takip edilen sayfalar
@@ -104,10 +104,13 @@ Windows ve PowerShell:
 python -m venv .venv
 .venv\Scripts\python.exe -m pip install -e ".[dev]"
 
-# 2. Otomatik testler (internete çıkmaz)
+# 2. Otomatik testler (internete çıkmaz; veritabanı testleri TEST_DATABASE_URL ister)
 .venv\Scripts\python.exe -m pytest -q
 
-# 3. Canlı deneme (sitelere istek atar)
+# 3. Veritabanı şeması (PostgreSQL 17 kurulduktan sonra, DATABASE_URL ile)
+.venv\Scripts\python.exe -m app.database migrate
+
+# 4. Canlı deneme (sitelere istek atar)
 [Console]::OutputEncoding = [Text.Encoding]::UTF8
 .venv\Scripts\python.exe -m app.discovery --dry-run --target apple_iphone_15
 .venv\Scripts\python.exe tests\manual\live_scraper_check.py apple_iphone_15_128
@@ -116,6 +119,8 @@ python -m venv .venv
 `--dry-run` kataloğa yazmaz; raporu `data/discovery_report.json` dosyasına
 yazar. Canlı komutları arka arkaya çok kez çalıştırmayın; siteler geçici olarak
 engelleyebilir. Bütün komutlar: [docs/teknik.md](docs/teknik.md#komutların-ayrıntısı).
+PostgreSQL kurulumu (Türkçe Windows'ta locale `C` seçilmeli) ve veritabanı
+kuralları: [docs/teknik.md](docs/teknik.md#veritabanı-postgresql).
 
 ## Yeni telefon ekleme
 
@@ -143,6 +148,7 @@ app/
   contracts.py      veri şekilleri ve doğrulama
   scraper/          fiyat okuma: tek HTTP kapısı, ortak kimlik kuralları, site okuyucuları
   discovery/        keşif: site aramaları, katalogla birleştirme, rapor
+  database/         PostgreSQL: bağlantı, numaralı migration dosyaları ve komutu
 tests/              otomatik testler; manual/ altında canlı kontrol araçları
 docs/teknik.md      ayrıntılı teknik rehber
 ```

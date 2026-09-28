@@ -13,6 +13,7 @@ geçmişi. Kararların ve aşama durumunun ana kaynağı
 - [Yeni telefon ekleme: bütün kurallar](#yeni-telefon-ekleme-bütün-kurallar)
 - [Keşif nasıl çalışır](#keşif-nasıl-çalışır)
 - [Fiyat okuma nasıl çalışır](#fiyat-okuma-nasıl-çalışır)
+- [Veritabanı (PostgreSQL)](#veritabanı-postgresql)
 - [Kimlik kuralları](#kimlik-kuralları)
 - [Testler ne kanıtlar, ne kanıtlamaz](#testler-ne-kanıtlar-ne-kanıtlamaz)
 - [Bilinen sınırlar](#bilinen-sınırlar)
@@ -57,15 +58,25 @@ geçmişi. Kararların ve aşama durumunun ana kaynağı
 | `service.py` | Platformları çalıştırır, sonuçları katalogla birleştirir, raporu yazar. |
 | `__main__.py` | Komut satırı: `python -m app.discovery`. |
 
+### Veritabanı: `app/database/`
+
+| Dosya | Ne işe yarar |
+|---|---|
+| `connection.py` | PostgreSQL bağlantısı. Adres `DATABASE_URL` ortam değişkeninden okunur (şifresiz); şifre PostgreSQL'in `pgpass.conf` dosyasındadır. Oturum saati UTC. |
+| `migrate.py` | Migration koşucusu: `migrations/` altındaki numaralı SQL dosyalarını sırayla, her birini tek transaction'da ve yalnızca bir kez uygular; `schema_migrations` tablosuna parmak iziyle yazar. |
+| `migrations/001_initial.sql` | Katalog kopyası, toplama turları ve sayfa sonuçları tabloları; bütün kurallar (`CHECK`, `UNIQUE`, yabancı anahtarlar). |
+| `__main__.py` | Komut satırı: `python -m app.database migrate` / `status`. |
+
 ### Testler ve CI
 
 | Yer | Ne işe yarar |
 |---|---|
 | `tests/test_trendyol_scraper.py`, `tests/test_hepsiburada_scraper.py`, `tests/test_discovery.py` | Kayıtlı örnek verilerle otomatik testler (59 test). İnternete çıkmaz. |
+| `tests/test_database.py`, `tests/conftest.py` | Migration koşucusu ve şema kuralları (32 test), gerçek PostgreSQL'de. Yalnızca `TEST_DATABASE_URL`'deki, adı `_test` ile biten veritabanını kullanır ve her testten önce onu boşaltır. Değişken yoksa yerelde atlanır, CI'da başarısız olur. |
 | `tests/fixtures/discovery/` | Testlerin kullandığı örnek site yanıtları ve kataloğun sabit bir kopyası (`catalog.json`); testler gerçek kataloğa bağlı değildir. |
 | `tests/manual/live_scraper_check.py` | Katalogdaki sayfaları canlı okur; bütün satıcıları gösterir. İsteğe bağlı `product_key` ön eki (ör. `samsung_`) ile yalnız o ürünler. |
 | `tests/manual/live_discovery_check.py` | Keşfi kataloğa yazmadan canlı çalıştırır; `--trace` ile her kararın nedenini gösterir. |
-| `.github/workflows/ci.yml` | Her push/pull request'te Black, Flake8 ve testleri çalıştırır. |
+| `.github/workflows/ci.yml` | Her push/pull request'te geçici bir PostgreSQL 17 açar (yereldeki gibi `C.UTF-8`) ve Black, Flake8 ile bütün testleri çalıştırır. |
 
 ## Komutların ayrıntısı
 
@@ -75,8 +86,12 @@ Windows ve PowerShell, Python sanal ortamı `.venv`:
 # Kurulum: yalnız biten aşamanın bağımlılıkları + test/biçim araçları
 .venv\Scripts\python.exe -m pip install -e ".[dev]"
 
-# Otomatik testler (internete çıkmaz)
-.venv\Scripts\python.exe -m pytest tests/test_trendyol_scraper.py tests/test_hepsiburada_scraper.py tests/test_discovery.py -q
+# Otomatik testler (internete çıkmaz; veritabanı testleri TEST_DATABASE_URL ister)
+.venv\Scripts\python.exe -m pytest tests/test_trendyol_scraper.py tests/test_hepsiburada_scraper.py tests/test_discovery.py tests/test_database.py -q
+
+# Veritabanı şeması: bekleyen migration'ları uygula / durumu göster
+.venv\Scripts\python.exe -m app.database migrate
+.venv\Scripts\python.exe -m app.database status
 
 # Biçim ve kalite kontrolü (CI'daki gibi)
 .venv\Scripts\python.exe -m black --check app tests
@@ -332,6 +347,86 @@ eklenir), `1` keşif başlatılamadı.
 gösterir. Satıcıların bütün teklifleri tek tek kaydedilmez; yalnızca seçilen
 teklif döner. Bütün teklifler canlı kontrol aracında (`all_offers`) görülebilir.
 
+## Veritabanı (PostgreSQL)
+
+Fiyat toplama turlarının sonuçları PostgreSQL 17'de saklanır. Bugün şema ve
+`migrate` komutu hazırdır; katalog eşitleme ve toplama turu sonraki adımlardır
+([proje_plani.md](../proje_plani.md) Bölüm 9).
+
+### Bir kerelik kurulum (Windows)
+
+1. EDB'nin PostgreSQL 17 kurulum programı; bileşenler: Server ve Command Line
+   Tools. **"Locale" adımında `C` seçilmelidir.** Türkçe Windows'un varsayılan
+   locale adı `Turkish_Türkiye.1254` ASCII dışı karakter içerdiği için `initdb`
+   başarısız olur; kurulum programı yine de "tamamlandı" der ama servis ve veri
+   klasörü oluşmaz (28 Eylül 2026'da yaşandı).
+2. Yönetici olarak (`psql -U postgres -h localhost`) proje kullanıcısı ve iki
+   veritabanı:
+
+   ```sql
+   CREATE ROLE fiyat_takip LOGIN;
+   \password fiyat_takip
+   CREATE DATABASE fiyat_takip OWNER fiyat_takip TEMPLATE template0 ENCODING 'UTF8' LOCALE_PROVIDER builtin BUILTIN_LOCALE 'C.UTF-8';
+   CREATE DATABASE fiyat_takip_test OWNER fiyat_takip TEMPLATE template0 ENCODING 'UTF8' LOCALE_PROVIDER builtin BUILTIN_LOCALE 'C.UTF-8';
+   ```
+
+   `fiyat_takip` yönetici değildir; yalnızca bu iki veritabanının sahibidir.
+   Şifrede Türkçe karakter kullanılmamalıdır (psql konsolu ile `pgpass.conf`
+   farklı kodlama kullanır). Yerel kurulum yalnızca bu bilgisayardan gelen
+   bağlantılara izin verir (`pg_hba.conf`).
+3. Şifre `%APPDATA%\postgresql\pgpass.conf` dosyasına:
+   `localhost:5432:*:fiyat_takip:ŞİFRE`. Repoda ve ortam değişkeninde şifre
+   bulunmaz.
+4. Şifresiz adresler kullanıcı ortam değişkeni olarak (sonra VS Code/terminal
+   yeniden açılır):
+
+   ```powershell
+   setx DATABASE_URL "postgresql://fiyat_takip@localhost:5432/fiyat_takip"
+   setx TEST_DATABASE_URL "postgresql://fiyat_takip@localhost:5432/fiyat_takip_test"
+   ```
+
+5. `python -m app.database migrate` tabloları kurar.
+
+### Tablolar
+
+| Tablo | İçerik |
+|---|---|
+| `platforms`, `products`, `listings` | `catalog.json`'un kopyası (asıl kaynak dosyadır). Kayıt silinmez; yabancı anahtarlar bu kopyaya dayanır. |
+| `collection_runs` | Her fiyat toplama turu: başlama şekli (`scheduled`/`manual`), durum (`running`/`completed`/`interrupted`), zamanlar, turun başındaki `catalog.json` parmak izi, planlanan sayfa sayısı. |
+| `listing_checks` | Her tur × planlanan sayfa bir satır. Tur başında sonuçsuz açılır (`outcome` boş = planlandı, bakılmadı); sayfa okununca `offer` (fiyat), `sold_out` (Tükendi) veya `error` (hata kodu) olur. Fiyat alanları `PriceObservation` ile aynıdır, para kuruş. |
+| `schema_migrations` | Uygulanan migration dosyaları ve parmak izleri. |
+
+### Veritabanının zorladığı kurallar
+
+Kurallar kodda değil tabloda tanımlıdır; koddaki bir hata bile aykırı satır
+yazamaz (`tests/test_database.py` her birini dener):
+
+- Aynı turda aynı sayfa bir kez yazılır (`PRIMARY KEY (run_id, listing_id)`).
+- Hata sonucu fiyat, satıcı veya stok taşımaz; fiyat sonucu satıcısız ve
+  Tükendi stoklu olamaz; Tükendi sonucu yalnız `Tükendi` stokla yazılır;
+  planlanmış ama bakılmamış satır hiçbir sonuç alanı taşımaz.
+- Bir sayfanın sonucu başka bir ürünün altına yazılamaz
+  (`(listing_id, product_id)` yabancı anahtarı).
+- Aynı anda yalnızca bir tur `running` olabilir (kısmi benzersiz indeks).
+  Süren turun bitiş zamanı yoktur, biten turun vardır.
+- Satıcı puanı ölçeği aşamaz; fiyatlar sıfırdan büyüktür; marka + model +
+  kapasite büyük/küçük harften bağımsız tekildir.
+- `CHECK` ifadesi NULL sonuç verirse satır kabul edilir. Bu yüzden sonuç
+  kuralları `CASE` ile ve her koşul `IS NOT NULL` ile korunarak yazıldı
+  (korumasız yazımda satıcısı boş bir fiyat satırı kabul ediliyordu).
+
+### Migration kuralları
+
+- Dosya adı `NNN_ad.sql`; numaralar 001'den boşluksuz artar.
+- Her dosya tek transaction'da uygulanır; hata verirse o dosyadan hiçbir iz
+  kalmaz (PostgreSQL'de tablo oluşturma da geri alınır). Aynı anda iki
+  `migrate` çalışırsa ikincisi bekler.
+- **Uygulanmış dosya değiştirilmez;** değişiklik yeni numaralı dosyayla yapılır.
+  Değiştirilirse parmak izi tutmaz ve `migrate`/`status` hata verir. Parmak izi
+  satır sonundan bağımsızdır (Windows CRLF ile CI'daki LF aynı sayılır).
+- Veritabanında kodda olmayan bir sürüm varsa ("veritabanı koddan yeni") komut
+  hata verir.
+
 ## Kimlik kuralları
 
 Keşif ve scraper aynı fonksiyonu (`app/scraper/parsing.py → identify`) kullanır;
@@ -362,6 +457,9 @@ böylece keşfin kabul ettiği sayfayı scraper aynı girdilerle reddetmez.
   kanıtlar. Hata düzeltmelerinin her biri, canlıda görülen gerçek bir örneğe
   dayanan regresyon testiyle korunur. Sitelerin bugün hâlâ aynı yapıda olduğunu
   kanıtlamaz.
+- **Veritabanı testleri (32):** Şema kurallarının ve migration koşucusunun
+  gerçek PostgreSQL'de çalıştığını kanıtlar. Fiyat toplama turunun doğru
+  çalıştığını henüz kanıtlamaz (tur sonraki adımdadır).
 - **Canlı kontrol araçları:** Bugünkü site uyumunu aynı üretim koduyla sınar.
   Pazaryerindeki her sayfanın katalogda olduğunu kanıtlamaz.
 - "Testler geçti" ile "bütün pazaryeri eksiksiz tarandı" aynı şey değildir.
