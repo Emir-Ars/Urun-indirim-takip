@@ -95,9 +95,11 @@ geçmişi. Kararların ve aşama durumunun ana kaynağı
 | `tests/test_collection.py` | Toplama turu (40 test; 36'sı gerçek PostgreSQL'de): sahte scraper'larla her sonuç türü, Ctrl+C, tur ortasında veritabanı hatası, yarım kalan tur, başka süreçteki tur, iki kilidin her durumda bırakılması, pasif sayfa/ürün/platform, ön ek, çıkış kodları ve zamanlanmış turun log dosyası (ekran akışı yokken ve log açılamazken dahil). |
 | `tests/test_catalog_sync.py` | Katalog eşitleme (29 test; 13'ü gerçek PostgreSQL'de): kararlar veritabanısız, yazma/deneme/çakışma ve komut satırı veritabanında. |
 | `tests/test_database.py` | Migration koşucusu, şemanın bütün `CHECK`/`UNIQUE`/yabancı anahtar kuralları (her biri geçerli ve geçersiz örnekle), `migrate`/`status` komutları (yeniden adlandırılan migration dahil) ve iki emniyet kemerinin kendisi (79 test; 67'si gerçek PostgreSQL'de). |
+| `tests/test_market_history_probe.py` | Piyasa geçmişi araştırmasında aday tablo satırları, ürün kimliği, sentetik 365 günlük grafik yanıtı, eksik/bozuk fiyat ve tablo uyuşmazlığı (12 ağsız test). Gerçek fiyat dizileri Git dışındaki yerel raporlardadır. |
 | `tests/fixtures/discovery/` | Testlerin kullandığı örnek site yanıtları ve kataloğun sabit bir kopyası (`catalog.json`); testler gerçek kataloğa bağlı değildir. |
 | `tests/manual/live_scraper_check.py` | Katalogdaki sayfaları canlı okur; bütün satıcıları gösterir. İsteğe bağlı `product_key` ön eki (ör. `samsung_`) ile yalnız o ürünler; sayfa seçimi toplama turuyla aynı fonksiyondur. |
 | `tests/manual/live_discovery_check.py` | Keşfi kataloğa yazmadan canlı çalıştırır; `--trace` ile her kararın nedenini gösterir. Raporu `data/discovery_report.json` dosyasının üzerine yazar. |
+| `tests/manual/market_history_probe.py` | Akakçe için tek örnek sayfayı, Cimri için ürün sayfası ve grafik API'sini ortak HTTP katmanı ve tarama kilidiyle okur. Cimri'nin tarihli fiyat noktalarını Git dışındaki yerel JSON raporuna yazar; ham HTML'yi ve veritabanını yazmaz. |
 | `.github/workflows/ci.yml` | Her push/pull request'te geçici bir PostgreSQL 17 açar (yereldeki gibi `C.UTF-8`) ve Black, Flake8 ile bütün testleri çalıştırır. |
 
 ## Komutların ayrıntısı
@@ -147,6 +149,46 @@ powershell -ExecutionPolicy Bypass -File scripts\zamanlayici_kur.ps1 -Kaldir
 .venv\Scripts\python.exe tests\manual\live_scraper_check.py
 .venv\Scripts\python.exe tests\manual\live_scraper_check.py samsung_ | Out-File -Encoding utf8 data\scraper_samsung.json
 ```
+
+### Piyasa geçmişi araştırması (Adım 8)
+
+Kaynak seçimi için örnekler: `apple_iphone_16_128gb`,
+`samsung_galaxy_s24_256gb`, `xiaomi_14t_pro_256gb`. Akakçe ve Cimri için
+ürün geçmişi URL'si tarayıcıda ayrı ayrı bulunur; araç otomatik arama yapmaz.
+Her çalışmada yönlendirme/tekrar dahil en çok dört HTTP denemesi yapılır ve
+`data/scrape.lock` kilidi alınır. Cimri'de önce sayfanın model/kapasitesi ve
+gömülü ürün kimliği doğrulanır; sonra aynı HTTP oturumuyla
+`POST https://www.cimri.com/api/cimri` üzerinden `priceHistoryV2Query`
+çağrılır. Örnek komut biçimi:
+
+```powershell
+.venv\Scripts\python.exe tests\manual\market_history_probe.py akakce apple_iphone_16_128gb "<ürünün HTTPS adresi>"
+.venv\Scripts\python.exe tests\manual\market_history_probe.py cimri xiaomi_14t_pro_256gb "https://www.cimri.com/cep-telefonlari/en-ucuz-xiaomi-14t-pro-fiyatlari%2Ca2372365900"
+```
+
+Rapor `artifacts/market_history_probe/<kaynak>_<product_key>.json` dosyasına
+yazılır; aynı örnek tekrar çalıştırılırsa dosya güncellenir. Terminal yalnız
+kısa özet gösterir. Cimri raporunda eski tarihten yeniye `history.points`
+(`day`, `price_tl`), nokta/eksik fiyat sayısı ve gömülü tablonun grafikle
+karşılaştırılması bulunur. `null` fiyat uydurulmadan korunur; kimlik veya ortak
+tarihte fiyat uyuşmazlığı hata olur. Çıkış 0 okuma/ayrıştırma tamamlandı ve
+**manuel inceleme gerekiyor**, 2 HTTP/kimlik/veri hatası, 3 ortak kilit meşgul
+demektir. Testlerin geçmesi canlı API erişimini veya her günün ayrı fiyat
+gözlemi olduğunu kanıtlamaz. Ham sayfa, veritabanı ve katalog değiştirilmez.
+
+29 Eylül 2026'da [Akakçe kullanım sözleşmesinde](https://www.akakce.com/kullanim-sozlesmesi/)
+ve [Cimri kullanım koşullarında](https://www.cimri.com/kullanim-kosullari)
+içerik kopyalama/işleme kısıtları görüldü. Az sayıda sayfa teknik araştırma
+için incelenir; düzenli geçmiş indirme ve projede saklama ayrıca
+değerlendirilir. Kaynak seçilirse yalnız onun geçmişi ele alınır; iki sitenin
+serileri birleştirilmez.
+
+Kullanıcının çalıştırdığı üç Cimri canlı denemesinde ürün kimliği eşleşti;
+her biri 365 nokta (30 Eylül 2025–29 Eylül 2026), 0 eksik fiyat ve gömülü
+tablodaki 90/90 fiyat eşleşmesini verdi. Bu teknik doğrulama, fiyatların her
+gün bağımsız ölçüldüğünü veya tarihsel satıcı kapsamını kanıtlamaz. Resmî
+koşullardaki kopyalama/işleme kısıtları nedeniyle Cimri verisinin düzenli
+indirilmesi ve veritabanına alınması bu araştırma sonunda başlatılmadı.
 
 Türkçe karakterlerin terminalde doğru görünmesi için oturum başında bir kez
 `[Console]::OutputEncoding = [Text.Encoding]::UTF8` çalıştırın. Keşif hedef
@@ -658,7 +700,7 @@ böylece keşfin kabul ettiği sayfayı scraper aynı girdilerle reddetmez.
 
 ## Testler ne kanıtlar, ne kanıtlamaz
 
-- **Otomatik testler (414; 116'sı gerçek PostgreSQL'de):** Kuralların doğru
+- **Otomatik testler (426; 116'sı gerçek PostgreSQL'de):** Kuralların doğru
   çalıştığını kayıtlı ve sahte yanıtlarla kanıtlar. Hata düzeltmelerinin her
   biri, canlıda görülen gerçek bir örneğe dayanan regresyon testiyle korunur.
   Sitelerin bugün hâlâ aynı yapıda olduğunu kanıtlamaz. Veritabanı testleri
