@@ -6,9 +6,20 @@ import re
 
 from app.scraper.base import BaseScraper
 from app.scraper.http import FetchError
+from app.settings import Runtime
 
 
-def create_scraper(platform: str, hosts: list[str], runtime) -> BaseScraper:
+def create_scraper(platform: str, hosts: list[str], runtime: Runtime) -> BaseScraper:
+    """Platform adaptörünü yükleyip kurar.
+
+    Eklenti sözleşmesi: katalogdaki `Platform.key` (ör. "trendyol") →
+    `app/scraper/<key>_scraper.py` modülündeki `Scraper` sınıfı; sınıf
+    BaseScraper'ın soyut olmayan bir alt sınıfı olmalıdır. Yeni site kendi
+    modülüyle eklenir, mevcut scraper'a koşul eklenmez. Anahtar deseni
+    contracts.Key ile aynıdır; katalog dışından çağıranlara karşı (ör. "../x")
+    burada yeniden denetlenir. Her türlü yükleme veya kurma hatası
+    FetchError("plugin") olur; toplama turu bunu sayfa hatası olarak kaydeder.
+    """
     if not re.fullmatch(r"[a-z][a-z0-9_]*", platform):
         raise FetchError("plugin", "Geçersiz platform anahtarı")
     try:

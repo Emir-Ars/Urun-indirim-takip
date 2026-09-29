@@ -52,8 +52,9 @@ flowchart LR
 - **Keşif** seyrek çalışır; yeni model eklerken ya da ara sıra. Sayfaları
   kullanıcı değil sistem bulur ve her birini ayrıca açıp doğrular.
 - **Fiyat toplama turu** (`python -m app.collection`) her sayfanın sonucunu
-  PostgreSQL'e yazar. Günde 2 kez (10:00 ve 22:00) kendiliğinden çalışması
-  veritabanı aşamasının sıradaki adımıdır.
+  PostgreSQL'e yazar. Görev Zamanlayıcı'ya kurulunca
+  (`scripts/zamanlayici_kur.ps1`) her gün 10:00 ve 22:00'de penceresiz çalışır;
+  çıktısı `data/logs/` altına yazılır.
 - Yeni telefon eklemek için kod değişmez; `discovery.json` dosyasına bir satır
   eklenir.
 
@@ -83,8 +84,8 @@ modeller de ayrıdır. RAM ve garanti türü ürünü bölmez.
 | Siteler | Trendyol, Hepsiburada |
 | Takip edilen modeller | 24 (Apple 9 · Samsung 8 · Xiaomi 6 · POCO 1) |
 | Katalog | 59 ürün, 327 sayfa (28 Eylül 2026) |
-| Fiyat toplama | İlk tam tur 28 Eylül 2026: 326/326 sayfa, 31 dakika, hatasız |
-| Testler | 144 otomatik test (66'sı gerçek PostgreSQL üzerinde); her push'ta GitHub Actions |
+| Fiyat toplama | İlk tam tur 28 Eylül 2026: 326/326 sayfa, 31 dakika, hatasız. Görev Zamanlayıcı 28 Eylül'de kuruldu; günde 2 tur (10:00, 22:00) |
+| Testler | 414 otomatik test (116'sı gerçek PostgreSQL üzerinde); her push'ta GitHub Actions. Testler internete çıkamaz ve gerçek veritabanına dokunamaz (otomatik emniyet kemerleri) |
 
 ```mermaid
 pie title Takip edilen sayfalar
@@ -117,7 +118,11 @@ python -m venv .venv
 # 4. Fiyat toplama turu (sitelere istek atar; sonuçları veritabanına yazar)
 .venv\Scripts\python.exe -m app.collection --prefix poco_
 
-# 5. Canlı deneme (sitelere istek atar, hiçbir yere yazmaz)
+#    Her gün 10:00 ve 22:00 için Görev Zamanlayıcı'ya kur (yönetici izni gerekmez)
+powershell -ExecutionPolicy Bypass -File scripts\zamanlayici_kur.ps1
+
+# 5. Canlı deneme (sitelere istek atar; kataloğa ve veritabanına yazmaz,
+#    keşif raporunu data/discovery_report.json dosyasının üzerine yazar)
 [Console]::OutputEncoding = [Text.Encoding]::UTF8
 .venv\Scripts\python.exe -m app.discovery --dry-run --target apple_iphone_15
 .venv\Scripts\python.exe tests\manual\live_scraper_check.py apple_iphone_15_128
@@ -158,6 +163,8 @@ app/
   database/         PostgreSQL: bağlantı, migration dosyaları, katalog eşitleme, tur SQL'leri
   collection/       fiyat toplama turu: sayfaları okuyup sonuçları veritabanına yazar
   scrape_lock.py    siteye giden bütün girişlerin ortak kilidi
+scripts/
+  zamanlayici_kur.ps1  günde 2 turu Windows Görev Zamanlayıcı'ya kurar
 tests/              otomatik testler; manual/ altında canlı kontrol araçları
 docs/teknik.md      ayrıntılı teknik rehber
 ```

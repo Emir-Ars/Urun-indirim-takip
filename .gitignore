@@ -9,10 +9,19 @@ pytest-cache-files-*/
 *.log
 build/
 dist/
+# Program çıktıları: loglar, kilit, keşif raporu, canlı kontrol çıktıları.
 data/*
 !data/.gitkeep
+# Yerel araç ve test çıktıları; bugün kod kullanmıyor, ileride model dosyaları için.
 artifacts/*
 !artifacts/.gitkeep
+# Claude Code'un makineye özel izin ayarları.
+.claude/settings.local.json
+# Yerel dosyalar: araçlar arası devir notu, kullanıcının geçiş notu ve Claude
+# Code'un AGENTS.md sarmalayıcısı.
+DEVAM.md
+ARAC_GECISI.md
+CLAUDE.md
 .scratch/
 config/*.lock
 config/*.tmp

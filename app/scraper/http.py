@@ -13,18 +13,65 @@ from app.settings import Runtime
 
 MAX_RESPONSE_BYTES = 8 * 1024 * 1024
 REDIRECT_STATUSES = {301, 302, 303, 307, 308}
+# Yönlendirmeler elle izlenir. Her yönlendirme ayrı istek sayılır: bütçeden
+# düşer, 3 sn aralık uygulanır ve hedef alan adı yeniden denetlenir (izinsiz
+# alana yönlendirme = invalid_host). Bundan fazlası "redirect" hatasıdır.
+MAX_REDIRECTS = 3
 # Son istek zamanı alan adı başına ve süreç genelinde tutulur: her bağlantı için
 # yeni istemci açılsa da aynı siteye istekler arasındaki bekleme korunur.
 _LAST_REQUEST: dict[str, float] = {}
 
 
 class FetchError(Exception):
+    """Sayfa okunamadı; `code` hatanın türü, mesaj ayrıntısıdır.
+
+    Kod, toplama turunda `listing_checks.error_code` sütununa, keşifte rapora
+    aynen yazılır. Hiçbiri fiyat veya Tükendi yerine geçmez. Üretilen kodlar:
+
+    HTTP katmanı (bu dosya):
+      invalid_url        adres düz bir HTTPS adresi değil (kullanıcı adı, port
+                         veya # parçası içeriyor ya da şeması https değil)
+      invalid_host       adres veya yönlendirme hedefi platformun alan adı dışında
+      limit              istek bütçesi doldu (bütçeyi yalnız keşif verir)
+      redirect           yönlendirme hedefi eksik veya 3'ten fazla yönlendirme
+      blocked            kaynak 401/403/418/429 döndürdü; tekrar denenmez
+      http_error         diğer 4xx (ör. 404); kalıcı sayılır, tekrar denenmez
+      network            bağlantı hatası, zaman aşımı veya 5xx; tekrarlardan
+                         sonra da sürdü
+      too_large          yanıt 8 MB sınırını aştı
+      parse              yanıt UTF-8 metin veya JSON nesnesi değil
+    Platform adaptörleri, keşif ve ortak kimlik kuralı:
+      parse              sayfa/API verisi beklenen yapıda değil ya da teklif
+                         Pydantic doğrulamasından geçmedi (scraper/base.py)
+      identity           sayfa hedef ürün değil: model, kapasite, dışlanan ifade,
+                         ağ türü ya da yenilenmiş/aksesuar/yurt dışı sürüm
+                         (parsing.identify; keşif ve scraper ortak)
+      no_eligible_offer  uygun satılabilir teklif yok, ama Tükendi için açık
+                         stok sinyali de yok (Tükendi uydurulmaz)
+      api_error          Hepsiburada satıcı veya fiyat API'si başarısız ya da
+                         satılabilir teklif için boş yanıt verdi
+      plugin             platform adaptörü yüklenemedi (scraper/factory.py)
+
+    Toplama turu (app/collection/service.py) FetchError dışındaki hatalara aynı
+    sütunda kendi kodlarını verir: validation (gözlem doğrulanamadı veya başka
+    sayfaya ait), unexpected (beklenmeyen istisna), storage (veritabanı değeri
+    reddetti).
+    """
+
     def __init__(self, code: str, message: str):
         self.code = code
         super().__init__(message)
 
 
 class PageClient:
+    """Tek platformun alan adlarına giden istemci.
+
+    `request_budget` verilirse (keşif) yeniden denemeler ve yönlendirmeler
+    dahil gerçek HTTP denemeleri `request_count` ile sayılır ve sınırlanır.
+    Dışarıdan `client` verilmezse curl_cffi oturumu Chrome taklidiyle açılır
+    ve `close()` onu kapatır; verilen istemciyi çağıran taraf kapatır.
+    """
+
     def __init__(
         self,
         hosts: list[str],
@@ -68,12 +115,18 @@ class PageClient:
             raise FetchError("too_large", "Yanıt 8 MB sınırını aştı")
         return body
 
-    def _request(self, method: str, url: str, **kwargs):
-        self._allowed(url)
+    def _request(self, method: str, url: str, **kwargs) -> bytes:
+        """İsteği gönderir ve başarılı yanıtın gövdesini (8 MB denetimli) döndürür.
+
+        Adres, ilk turda `target == url` olduğundan döngüdeki ilk `_allowed`
+        çağrısıyla istek gitmeden denetlenir. Döngü en az bir kez döner
+        (Runtime.request_attempts >= 1) ve son deneme her zaman ya döner ya da
+        FetchError verir; döngüden sonrasına ulaşılmaz.
+        """
         for attempt in range(self.runtime.request_attempts):
             target = url
             try:
-                for _ in range(4):
+                for _ in range(MAX_REDIRECTS + 1):
                     self._allowed(target)
                     if (
                         self.request_budget is not None
@@ -102,6 +155,9 @@ class PageClient:
                             f"Kaynak HTTP {response.status_code} döndürdü "
                             f"({parts.hostname}{parts.path})",
                         )
+                    # 5xx geçici sayılır: ağ hatası gibi aşağıda tekrar denenir;
+                    # son denemede de sürerse kod "network" olur. Diğer 4xx
+                    # kalıcıdır, tekrar denenmez.
                     if response.status_code >= 500:
                         raise RequestException(
                             f"Kaynak HTTP {response.status_code} döndürdü",
@@ -112,28 +168,28 @@ class PageClient:
                             "http_error",
                             f"Kaynak HTTP {response.status_code} döndürdü",
                         )
-                    self._body(response)
-                    return response
+                    return self._body(response)
                 raise FetchError("redirect", "Çok fazla yönlendirme")
-            except FetchError:
-                raise
+            # FetchError (blocked, limit, redirect, too_large…) burada
+            # yakalanmaz; tekrar denenmeden olduğu gibi yükselir.
             except RequestException as exc:
                 if attempt + 1 == self.runtime.request_attempts:
                     raise FetchError("network", str(exc)) from exc
-                time.sleep(min(2**attempt, 8))
-        raise FetchError("network", "İstek tamamlanamadı")
+                # Üstel bekleme: 1 sn, sonra 2 sn. request_attempts en çok 3
+                # olduğundan (app/settings.py) daha uzun bekleme oluşmaz.
+                time.sleep(2**attempt)
 
     def get(self, url: str, *, headers: dict | None = None) -> str:
-        response = self._request("GET", url, headers=headers)
+        body = self._request("GET", url, headers=headers)
         try:
-            return self._body(response).decode("utf-8")
+            return body.decode("utf-8")
         except UnicodeDecodeError as exc:
             raise FetchError("parse", "Kaynak UTF-8 metin döndürmedi") from exc
 
     def get_json(self, url: str, *, headers: dict | None = None) -> dict:
-        response = self._request("GET", url, headers=headers)
+        body = self._request("GET", url, headers=headers)
         try:
-            data = json.loads(self._body(response).decode("utf-8"))
+            data = json.loads(body.decode("utf-8"))
         except (UnicodeDecodeError, TypeError, ValueError) as exc:
             raise FetchError("parse", "Kaynak geçerli JSON döndürmedi") from exc
         if not isinstance(data, dict):
@@ -143,9 +199,9 @@ class PageClient:
     def post_json(
         self, url: str, payload: dict, *, headers: dict | None = None
     ) -> dict:
-        response = self._request("POST", url, json=payload, headers=headers)
+        body = self._request("POST", url, json=payload, headers=headers)
         try:
-            data = json.loads(self._body(response).decode("utf-8"))
+            data = json.loads(body.decode("utf-8"))
         except (UnicodeDecodeError, TypeError, ValueError) as exc:
             raise FetchError("parse", "Kaynak geçerli JSON döndürmedi") from exc
         if not isinstance(data, dict):

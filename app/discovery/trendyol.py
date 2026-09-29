@@ -57,6 +57,8 @@ class Discovery(BaseDiscovery):
 
     def _search(self):
         query = f"{self.target.brand} {self.target.model}"
+        # Parametreler sitenin kendi arama isteğindeki değerlerdir; hangilerinin
+        # zorunlu olduğu ölçülmedi. Anlamlı ayar değildir, olduğu gibi gönderilir.
         search_params = {"q": query, "qt": query, "st": query, "os": "1"}
         referer = HOME + "sr?" + urlencode(search_params)
         # HTML arama sayfası (/sr) açılmaz: içeriği kullanılmıyor ve canlıda
@@ -207,6 +209,8 @@ class Discovery(BaseDiscovery):
                 if isinstance(total, int) and len(seen_ids) != total:
                     self.issue("count_mismatch", f"{len(seen_ids)} / {total}")
                     return groups, cards, False
+                # Sayfalama sorunsuz bitti; yine de _search'te yazılan
+                # category_partial / filter_unavailable uyarısı aramayı kısmi sayar.
                 return groups, cards, not self.issues
             parts = urlsplit(next_url)
             query = dict(parse_qsl(parts.query))
@@ -220,6 +224,9 @@ class Discovery(BaseDiscovery):
                     "repeated_page", "Sonraki arama bağlantısı geçersiz/tekrarlı"
                 )
                 return groups, cards, False
+            if number + 1 >= self.config.max_search_pages:
+                # Sınır doldu ama sonraki sayfa var: işlenmeyecek sayfa istenmez.
+                break
             seen_urls.add(next_url)
             page = self.get_json(next_url, headers=headers)
         self.issue("search_limit", "Arama sayfası sınırı doldu")
@@ -232,6 +239,10 @@ class Discovery(BaseDiscovery):
             BeautifulSoup(html, "html.parser"), "__envoy__SHARED_PROPS"
         )
         product = (state or {}).get("product")
+        # Kart adresinin yalnız biçimi (-p-<id>) denetlenir, adresteki kimlik kartla
+        # karşılaştırılmaz; varyant listesindeki adres hiç denetlenmez. HTTP katmanı
+        # izinli alan adlarında yönlendirmeyi izlediği için site başka bir ürüne
+        # götürebilir; sayfanın kendi kimliği beklenenle tutmazsa aday reddedilir.
         if not isinstance(product, dict) or str(product.get("id")) != expected_id:
             raise FetchError("identity", "Trendyol ürün kimliği uyuşmuyor")
         brand = (product.get("brand") or {}).get("name", "")
@@ -356,6 +367,9 @@ class Discovery(BaseDiscovery):
             target_key=self.target.key,
             candidates=list(found.values()),
             issues=self.issues,
+            # complete yalnız arama aşamasını kapsar; varyant, ürün sınırı ve
+            # candidate_rejected gibi sonradan eklenen uyarılar da taramayı kısmi
+            # sayar.
             complete=complete and not self.issues,
             search_pages=self.search_pages,
             product_pages=self.product_pages,

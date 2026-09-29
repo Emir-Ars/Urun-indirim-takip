@@ -6,14 +6,18 @@ build-backend = "setuptools.build_meta"
 name = "telefon-indirim-takip"
 version = "0.1.0"
 description = "Katalog tabanlı akıllı telefon fiyat takibi ve indirim tahmini"
-requires-python = ">=3.12,<3.15"
+# Yalnız Python 3.13 test ediliyor (CI ve yerel .venv); aralık buna göre.
+requires-python = ">=3.13,<3.14"
 dependencies = [
   "pydantic>=2.10,<3", "curl-cffi>=0.7,<1", "beautifulsoup4>=4.12,<5",
   "filelock>=3.16,<4", "psycopg[binary]>=3.2,<4"
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.3,<9", "black>=25.1,<27", "flake8>=7.1,<8"]
+# Black her yıl ocak sürümünde biçim kurallarını değiştirir; aralık tek yılın
+# sürümüne sabit ki yerel ve CI aynı biçimlesin. Yıl atlanırken kod bir kez
+# yeniden biçimlenir ve ayrı commit olur.
+dev = ["pytest>=8.3,<9", "black>=26.1,<27", "flake8>=7.1,<8"]
 
 [tool.setuptools.packages.find]
 include = ["app*"]
@@ -24,7 +28,7 @@ include = ["app*"]
 
 [tool.black]
 line-length = 88
-target-version = ["py312"]
+target-version = ["py313"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -9,6 +9,11 @@ from psycopg import sql
 # Veritabanı düzeyindeki tur kilidi. Dosya kilidi (app/scrape_lock.py) aynı
 # bilgisayardaki süreçleri ayırır; bu kilit aynı veritabanını kullanan her
 # süreci (ör. ileride Docker) ayırır. Bağlantı kapanınca kendiliğinden düşer.
+# Advisory kilit numaraları veritabanı başına tek ad alanıdır: migrate.py'deki
+# _LOCK_ID (2026_0928) ve testlerin kilidi (tests/conftest.py, 2026_0930) ile
+# aynı olmamalı. Oturum kilidi yeniden girilebilir (reentrant): aynı bağlantı
+# kilidi ikinci kez isterse yine alır; başka bir sürecin kilidi tuttuğunu
+# sınamak için ayrı bağlantı gerekir.
 _RUN_LOCK_ID = 2026_0929
 
 
@@ -54,6 +59,9 @@ def close_stale_runs(conn: psycopg.Connection) -> list[int]:
     tur çalışmıyor, 'running' kalan her tur yarıda kalmıştır (ör. bilgisayar
     kapandı).
     """
+    # greatest(now(), started_at): sistem saati geri alınmışsa now() turun
+    # başlangıcından küçük olabilir; CHECK (finished_at >= started_at) bozulmasın
+    # diye büyük olan yazılır (finish_run da aynı ifadeyi kullanır).
     rows = conn.execute(
         "UPDATE collection_runs"
         " SET status = 'interrupted', finished_at = greatest(now(), started_at),"
@@ -122,6 +130,7 @@ def finish_run(
 ) -> None:
     """Süren turu kapatır; tur zaten kapanmışsa hata verir (sessiz geçmez)."""
     # concat_ws bütün parçalar NULL olunca '' döndürür; not yoksa NULL kalsın.
+    # greatest(now(), started_at): nedeni close_stale_runs'ta.
     cursor = conn.execute(
         "UPDATE collection_runs"
         " SET status = %s, finished_at = greatest(now(), started_at),"

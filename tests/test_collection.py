@@ -1,8 +1,11 @@
 """Fiyat toplama turu: sahte scraper'larla (internete çıkmaz), gerçek PostgreSQL'de."""
 
+import contextlib
 import json
 import os
+import sys
 
+import psycopg
 import pytest
 
 import app.collection.service as service
@@ -117,10 +120,10 @@ class _FakeScraper:
             raise self.owner.close_error
 
 
-def write_catalog(path, listings=LISTINGS):
+def write_catalog(path, listings=LISTINGS, products=PRODUCTS, platforms=PLATFORMS):
     path.write_text(
         json.dumps(
-            {"platforms": PLATFORMS, "products": PRODUCTS, "listings": listings}
+            {"platforms": platforms, "products": products, "listings": listings}
         ),
         encoding="utf-8",
     )
@@ -161,6 +164,40 @@ def run_row(conn, run_id):
 
 def run_count(conn):
     return conn.execute("SELECT count(*) FROM collection_runs").fetchone()[0]
+
+
+def last_run_id(conn):
+    return conn.execute("SELECT max(run_id) FROM collection_runs").fetchone()[0]
+
+
+def run_lock_is_free():
+    """Tur kilidini başka bir bağlantıdan dener.
+
+    Advisory kilit aynı bağlantıda yeniden alınabildiği için bırakılmadığı
+    ancak başka bir bağlantıdan görülür.
+    """
+    other = connect(os.environ["TEST_DATABASE_URL"])
+    try:
+        free = runs.try_lock_runs(other)
+        if free:
+            runs.unlock_runs(other)
+        return free
+    finally:
+        other.close()
+
+
+def break_second_write(monkeypatch):
+    """İkinci sayfanın sonucu yazılırken bağlantı kopmuş gibi davranır."""
+    real = runs.record_result
+    writes = []
+
+    def flaky(conn, run_id, listing_id, result):
+        writes.append(listing_id)
+        if len(writes) == 2:
+            raise psycopg.OperationalError("bağlantı koptu")
+        real(conn, run_id, listing_id, result)
+
+    monkeypatch.setattr(runs, "record_result", flaky)
 
 
 @pytest.fixture
@@ -209,7 +246,7 @@ def test_ctrl_c_interrupts_run_and_keeps_written_results(migrated, catalog_path)
     behaviours = {**BEHAVIOURS, "trendyol_2": KeyboardInterrupt()}
     with pytest.raises(KeyboardInterrupt):
         run_collect(migrated, catalog_path, behaviours)
-    run_id = migrated.execute("SELECT max(run_id) FROM collection_runs").fetchone()[0]
+    run_id = last_run_id(migrated)
     status, _, planned, finished, note = run_row(migrated, run_id)
     assert (status, planned, finished) == ("interrupted", 7, True)
     assert note == "Durduruldu: KeyboardInterrupt"
@@ -220,6 +257,62 @@ def test_ctrl_c_interrupts_run_and_keeps_written_results(migrated, catalog_path)
     # Sonraki tur normal başlar.
     report, _ = run_collect(migrated, catalog_path)
     assert run_row(migrated, report.run_id)[0] == "completed"
+
+
+def test_database_error_mid_run_interrupts_it_and_keeps_written_results(
+    migrated, catalog_path, monkeypatch
+):
+    break_second_write(monkeypatch)
+    with pytest.raises(psycopg.OperationalError):
+        run_collect(migrated, catalog_path)
+    run_id = last_run_id(migrated)
+    status, _, _, finished, note = run_row(migrated, run_id)
+    assert (status, finished) == ("interrupted", True)
+    assert note == "Durduruldu: OperationalError"
+    checked = results(migrated, run_id)
+    assert checked["trendyol_1"][0] == "offer"
+    # Bağlantı hatası 'storage' sonucu gibi yazılıp geçilmez; tur durur.
+    assert [v[0] for k, v in checked.items() if k != "trendyol_1"] == [None] * 6
+    assert run_lock_is_free()
+
+
+def test_run_that_cannot_be_closed_stays_running_until_the_next_run(
+    migrated, catalog_path, monkeypatch
+):
+    def dead_connection(*_, **__):
+        raise psycopg.OperationalError("kapatılamadı")
+
+    with monkeypatch.context() as patch:
+        break_second_write(patch)
+        patch.setattr(runs, "finish_run", dead_connection)
+        # Kapatma hatası asıl hatayı gölgelemez.
+        with pytest.raises(psycopg.OperationalError, match="bağlantı koptu"):
+            run_collect(migrated, catalog_path)
+    run_id = last_run_id(migrated)
+    assert run_row(migrated, run_id)[0] == "running"
+    report, _ = run_collect(migrated, catalog_path)
+    assert report.closed_stale == [run_id]
+    assert run_row(migrated, run_id)[0] == "interrupted"
+
+
+@pytest.mark.parametrize(
+    "prefix, behaviours, raised",
+    [
+        ("", BEHAVIOURS, None),
+        ("olmayan_", BEHAVIOURS, CollectionError),
+        ("", {**BEHAVIOURS, "trendyol_2": KeyboardInterrupt()}, KeyboardInterrupt),
+    ],
+    ids=["completed", "not_started", "ctrl_c"],
+)
+def test_run_lock_is_released_for_other_connections(
+    migrated, catalog_path, prefix, behaviours, raised
+):
+    # Bugün her tur bağlantısını kapatır; tek bağlantıyı uzun süre kullanan bir
+    # süreçte sızan kilit sonraki bütün turları "başka tur sürüyor" diye durdururdu.
+    expected = pytest.raises(raised) if raised else contextlib.nullcontext()
+    with expected:
+        run_collect(migrated, catalog_path, behaviours, prefix=prefix)
+    assert run_lock_is_free()
 
 
 def test_stale_running_run_is_closed_by_next_run(migrated, catalog_path):
@@ -244,6 +337,35 @@ def test_prefix_plans_only_matching_products(migrated, catalog_path):
     report, _ = run_collect(migrated, catalog_path, prefix="poco_")
     assert report.planned == 1
     assert list(results(migrated, report.run_id)) == ["trendyol_7"]
+
+
+def test_inactive_product_and_platform_are_not_planned(tmp_path):
+    # Katalog, pasif ürüne veya platforma bağlı etkin sayfaya izin verir.
+    products = [PRODUCTS[0], {**PRODUCTS[1], "active": False}]
+    platforms = [PLATFORMS[0], {**PLATFORMS[1], "active": False}]
+    path = write_catalog(
+        tmp_path / "catalog.json", products=products, platforms=platforms
+    )
+    catalog, _ = read_catalog(path)
+    planned = service.plan_listings(catalog)
+    # trendyol_7 pasif ürünün, hepsiburada_4-6 pasif platformun; trendyol_8 pasif.
+    assert [item.listing_id for item in planned] == [
+        "trendyol_1",
+        "trendyol_2",
+        "trendyol_3",
+    ]
+
+
+def test_planned_listing_carries_product_identity_for_the_scraper(catalog_path):
+    # Scraper sayfanın doğru telefon olduğunu bu model ve kapasiteyle denetler.
+    catalog, _ = read_catalog(catalog_path)
+    [item] = service.plan_listings(catalog, prefix="poco_")
+    assert (item.listing_id, item.product_name, item.model, item.storage_gb) == (
+        "trendyol_7",
+        "POCO X6 Pro 512 GB",
+        "X6 Pro",
+        512,
+    )
 
 
 def test_no_matching_listing_opens_no_run(migrated, catalog_path):
@@ -293,6 +415,26 @@ def test_closed_run_accepts_no_result_and_cannot_be_closed_again(
         runs.finish_run(migrated, run_id, "interrupted")
 
 
+def test_result_for_unplanned_listing_is_refused(migrated, catalog_path):
+    run_id = open_run(migrated, catalog_path)  # yalnız trendyol_1 planlı
+    result = service.error_result("network", "bağlantı koptu")
+    with pytest.raises(RuntimeError, match="planlı değil"):
+        runs.record_result(migrated, run_id, "trendyol_2", result)
+    # Yeni satır eklenmedi, planlı satıra da dokunulmadı.
+    assert results(migrated, run_id) == {"trendyol_1": (None, None, None, None, False)}
+
+
+def test_summary_counts_listings_without_result_as_unchecked(migrated, catalog_path):
+    # Üretimde özet yalnız tamamlanan turdan alınır; 'unchecked' komut satırının
+    # "bakılmadı" adını verdiği anahtardır.
+    run_id = open_run(migrated, catalog_path, [("trendyol_1", 1), ("trendyol_2", 1)])
+    result = service.error_result("network", "bağlantı koptu")
+    runs.record_result(migrated, run_id, "trendyol_1", result)
+    summary = runs.run_summary(migrated, run_id)
+    assert summary.outcomes == {"error": 1, "unchecked": 1}
+    assert summary.error_codes == {"network": 1}
+
+
 def test_run_held_by_another_connection_is_not_touched(migrated, catalog_path):
     # Başka bir süreç (ör. farklı kilit dosyası kullanan bir kopya) tur yürütüyor.
     other = connect(os.environ["TEST_DATABASE_URL"])
@@ -333,6 +475,26 @@ def test_nul_character_is_removed_from_text(migrated, catalog_path):
         (report.run_id,),
     ).fetchone()[0]
     assert seller == "Satıcı A"
+
+
+def test_long_error_message_is_cut_and_empty_one_is_stored_as_null(
+    migrated, catalog_path
+):
+    behaviours = {
+        **BEHAVIOURS,
+        "trendyol_1": FetchError("network", "x" * 1000),
+        "hepsiburada_4": FetchError("parse", ""),
+    }
+    report, _ = run_collect(migrated, catalog_path, behaviours)
+    messages = dict(
+        migrated.execute(
+            "SELECT listing_id, error_message FROM listing_checks"
+            " WHERE run_id = %s AND outcome = 'error'",
+            (report.run_id,),
+        ).fetchall()
+    )
+    assert len(messages["trendyol_1"]) == service.MAX_ERROR_MESSAGE
+    assert messages["hepsiburada_4"] is None
 
 
 def test_sold_out_never_stores_a_price(migrated, catalog_path):
@@ -392,6 +554,7 @@ def cli_env(migrated, catalog_path, tmp_path, monkeypatch):
     monkeypatch.setenv("CATALOG_PATH", str(catalog_path))
     monkeypatch.setenv("RUNTIME_PATH", str(runtime))
     monkeypatch.setenv("SCRAPE_LOCK_PATH", str(lock))
+    monkeypatch.setenv("LOG_DIR", str(tmp_path / "logs"))
     return migrated, lock
 
 
@@ -423,8 +586,10 @@ def test_cli_refuses_while_lock_is_held(cli_env, monkeypatch, capsys):
     assert run_count(conn) == 0
 
 
-def test_cli_ctrl_c_returns_130_and_closes_the_run(cli_env, monkeypatch, capsys):
-    conn, _ = cli_env
+def test_cli_ctrl_c_returns_130_closes_the_run_and_releases_the_lock(
+    cli_env, monkeypatch, capsys
+):
+    conn, lock = cli_env
     behaviours = {**BEHAVIOURS, "trendyol_2": KeyboardInterrupt()}
     monkeypatch.setattr(service, "create_scraper", FakeScrapers(behaviours))
     assert main([]) == 130
@@ -432,18 +597,41 @@ def test_cli_ctrl_c_returns_130_and_closes_the_run(cli_env, monkeypatch, capsys)
     assert conn.execute("SELECT status FROM collection_runs").fetchone() == (
         "interrupted",
     )
+    with scrape_lock(lock):
+        pass
 
 
-def test_cli_start_failure_returns_1(cli_env, monkeypatch, capsys):
-    conn, _ = cli_env
+def test_cli_start_failure_returns_1_and_releases_the_lock(
+    cli_env, monkeypatch, capsys
+):
+    conn, lock = cli_env
     monkeypatch.setattr(service, "create_scraper", FakeScrapers(BEHAVIOURS))
     assert main(["--prefix", "olmayan_"]) == 1
     assert "Planlanacak" in capsys.readouterr().err
     assert run_count(conn) == 0
+    with scrape_lock(lock):
+        pass
 
 
-def test_discovery_refuses_while_lock_is_held(cli_env, monkeypatch, capsys):
-    _, lock = cli_env
+def test_cli_database_error_mid_run_returns_1_and_interrupts_the_run(
+    cli_env, monkeypatch, capsys
+):
+    conn, lock = cli_env
+    monkeypatch.setattr(service, "create_scraper", FakeScrapers(BEHAVIOURS))
+    break_second_write(monkeypatch)
+    assert main([]) == 1
+    assert "Tur başarısız: bağlantı koptu" in capsys.readouterr().err
+    assert conn.execute("SELECT status FROM collection_runs").fetchone() == (
+        "interrupted",
+    )
+    with scrape_lock(lock):
+        pass
+
+
+def test_discovery_refuses_while_lock_is_held(tmp_path, monkeypatch, capsys):
+    # Veritabanı gerekmez: TEST_DATABASE_URL yokken de keşfin kilit kuralı sınanır.
+    lock = tmp_path / "scrape.lock"
+    monkeypatch.setenv("SCRAPE_LOCK_PATH", str(lock))
 
     def must_not_run(**_):
         raise AssertionError("Kilit meşgulken keşif başlamamalıydı")
@@ -451,5 +639,76 @@ def test_discovery_refuses_while_lock_is_held(cli_env, monkeypatch, capsys):
     # Kilit bozulsa bile test gerçek keşfi (canlı istek) başlatamaz.
     monkeypatch.setattr("app.discovery.__main__.run", must_not_run)
     with scrape_lock(lock):
-        assert discovery_main(["--dry-run"]) == 1
-    assert "sürüyor" in capsys.readouterr().err
+        # Tur ve canlı araçlarla aynı: başka tarama sürüyorsa 3.
+        assert discovery_main(["--dry-run"]) == 3
+    error = capsys.readouterr().err
+    assert "Keşif başlatılmadı" in error and "sürüyor" in error
+
+
+# --- Zamanlanmış turun log dosyası -----------------------------------------------
+
+
+def log_text(tmp_path):
+    [path] = (tmp_path / "logs").glob("tur_*.log")
+    return path.read_text(encoding="utf-8")
+
+
+def test_scheduled_run_writes_everything_to_a_log(cli_env, tmp_path, monkeypatch):
+    monkeypatch.setattr(service, "create_scraper", FakeScrapers(BEHAVIOURS))
+    assert main(["--scheduled"]) == 2
+    text = log_text(tmp_path)
+    assert "[7/7]" in text  # her sayfanın ilerleme satırı
+    assert "Tükendi" in text  # Türkçe karakterler bozulmadan
+    assert "RuntimeError: scraper içinde hata" in text  # beklenmeyen hata ayrıntısı
+    assert "Hata kodları" in text
+    assert text.rstrip().endswith("Çıkış kodu: 2")
+
+
+def test_scheduled_run_without_console_still_logs(cli_env, tmp_path, monkeypatch):
+    # pythonw.exe (Görev Zamanlayıcı) altında ekran akışları hiç yoktur.
+    monkeypatch.setattr(service, "create_scraper", FakeScrapers(BEHAVIOURS))
+    monkeypatch.setattr(sys, "stdout", None)
+    monkeypatch.setattr(sys, "stderr", None)
+    assert main(["--scheduled"]) == 2
+    assert "Hata kodları" in log_text(tmp_path)
+
+
+def test_busy_scheduled_run_is_logged(cli_env, tmp_path, monkeypatch):
+    _, lock = cli_env
+    monkeypatch.setattr(service, "create_scraper", FakeScrapers(BEHAVIOURS))
+    with scrape_lock(lock):
+        assert main(["--scheduled"]) == 3
+    text = log_text(tmp_path)
+    assert "Tur başlatılmadı" in text
+    assert text.rstrip().endswith("Çıkış kodu: 3")
+
+
+def test_program_error_is_logged_with_exit_1(cli_env, tmp_path, monkeypatch):
+    def crash(*_, **__):
+        raise TypeError("beklenmeyen program hatası")
+
+    monkeypatch.setattr("app.collection.__main__.collect", crash)
+    assert main(["--scheduled"]) == 1
+    text = log_text(tmp_path)
+    assert "TypeError: beklenmeyen program hatası" in text
+    assert text.rstrip().endswith("Çıkış kodu: 1")
+
+
+def test_scheduled_run_does_not_start_when_log_cannot_be_opened(
+    tmp_path, monkeypatch, capsys
+):
+    # LOG_DIR bir dosyayı gösterir: klasör oluşturulamaz (OSError).
+    not_a_dir = tmp_path / "logs"
+    not_a_dir.write_text("", encoding="utf-8")
+    monkeypatch.setenv("LOG_DIR", str(not_a_dir))
+    started = []
+    monkeypatch.setattr("app.collection.__main__.run", lambda *a: started.append(a))
+    assert main(["--scheduled"]) == 1
+    assert "Log dosyası açılamadı" in capsys.readouterr().err
+    assert started == []  # ne kilit ne veritabanı: tur hiç başlatılmadı
+
+
+def test_manual_run_writes_no_log(cli_env, tmp_path, monkeypatch):
+    monkeypatch.setattr(service, "create_scraper", FakeScrapers(BEHAVIOURS))
+    assert main(["--prefix", "poco_"]) == 0
+    assert not (tmp_path / "logs").exists()

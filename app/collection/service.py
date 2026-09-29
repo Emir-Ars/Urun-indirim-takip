@@ -124,7 +124,10 @@ def check_listing(
         return to_result(observation)
     except FetchError as exc:
         return error_result(exc.code, str(exc))
-    except ValueError as exc:  # Pydantic doğrulama hataları da buradadır
+    # Gerçek scraper'larda doğrulama hataları (Pydantic dahil) BaseScraper.fetch
+    # içinde 'parse' FetchError'a çevrilir ve factory yalnız BaseScraper kabul
+    # eder; bu dal yalnız enjekte edilen `create`'e (testler) karşı savunmadır.
+    except ValueError as exc:
         return error_result("validation", str(exc))
     except Exception as exc:  # Tek bir sayfa bütün turu düşürmesin.
         traceback.print_exc()
@@ -204,6 +207,8 @@ def _collect(conn, catalog_path, runtime, trigger, prefix, create, out) -> RunRe
         runs.finish_run(conn, run_id, "completed")
     except BaseException as exc:
         # Ctrl+C veya veritabanı hatası: yazılanlar kalır, bakılmayanlar sonuçsuz.
+        # Bağlantı kopmuşsa kapatma da başarısız olur; asıl hata gölgelenmesin
+        # diye yutulur, 'running' kalan turu sonraki tur 'interrupted' yapar.
         with suppress(psycopg.Error, RuntimeError):
             runs.finish_run(
                 conn, run_id, "interrupted", note=f"Durduruldu: {type(exc).__name__}"

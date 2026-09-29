@@ -19,9 +19,12 @@ def _adapter(platform: str):
     if not re.fullmatch(r"[a-z][a-z0-9_]*", platform):
         raise ValueError("Geçersiz platform anahtarı")
     module = importlib.import_module(f"app.discovery.{platform}")
-    implementation = module.Discovery
+    # Discovery adı olmayan modül (ör. base) de sözleşme hatasıdır: ValueError,
+    # komut satırında traceback yerine çıkış 1.
+    implementation = getattr(module, "Discovery", None)
     if (
-        not inspect.isclass(implementation)
+        implementation is None
+        or not inspect.isclass(implementation)
         or not issubclass(implementation, BaseDiscovery)
         or inspect.isabstract(implementation)
     ):
@@ -30,6 +33,12 @@ def _adapter(platform: str):
 
 
 def _url_identity(platform, url):
+    """Bağlantının adresindeki site kimliği (Trendyol -p-<sayı>, Hepsiburada HBCV…).
+
+    Mevcut bağlantılar listing_id ile değil bu kimlikle eşleştirilir; böylece elle
+    adlandırılmış eski kayıtlar da (ör. trendyol_iphone_15_128gb_mavi) "zaten var"
+    sayılır. .upper(), adreste küçük harfle yazılmış SKU'yu adayın kimliğiyle eşitler.
+    """
     patterns = {
         "trendyol": r"-p-(\d+)(?:[/?]|$)",
         "hepsiburada": r"-p-(HBCV[A-Z0-9]+)(?:[/?]|$)",
@@ -74,6 +83,10 @@ def merge_catalog(catalog: Catalog, candidates):
     added_listings = []
     existing_listings = []
     conflicts = []
+    # Sıralama kimlik atamasını belirleyici yapar: yeni product_id'ler next_id'den
+    # sırayla verilir. Adaylar sitenin döndürdüğü sırayla değil sabit anahtarla
+    # işlendiği için aynı aday kümesi her zaman aynı kimlikleri ve katalog sırasını
+    # üretir (kimlik bir kez verilir, sonra değişmez).
     for candidate in sorted(
         candidates,
         key=lambda item: (
@@ -195,7 +208,10 @@ def observed_colors(candidates):
 
 
 def retained_unobserved_listings(catalog, targets, results):
-    """Bu taramada görünmeyen, ancak katalogdan silinmeyen bağlantıları gösterir."""
+    """Etkin olduğu hâlde bu taramada görülmeyen sayfalar (katalogdan silinmez).
+
+    Pasif bağlantılar zaten takip edilmediği için listelenmez.
+    """
     by_key = {target.key: target for target in targets}
     retained = set()
     for result in results:
@@ -211,7 +227,8 @@ def retained_unobserved_listings(catalog, targets, results):
         }
         for listing in catalog.listings:
             if (
-                listing.product_id in product_ids
+                listing.active
+                and listing.product_id in product_ids
                 and listing.platform == result.platform
                 and _url_identity(listing.platform, listing.url) not in observed
             ):
@@ -223,7 +240,8 @@ def run(*, dry_run=False, target_key=None, adapters=None):
     settings = Settings()
     config = settings.discovery()
     catalog_path = settings.catalog_path
-    catalog = Catalog.model_validate_json(catalog_path.read_text(encoding="utf-8"))
+    # utf-8-sig: Windows düzenleyicilerinin koyduğu BOM da okunur; BOM'suz dosya aynı.
+    catalog = Catalog.model_validate_json(catalog_path.read_text(encoding="utf-8-sig"))
     runtime = settings.runtime()
     targets = [
         item
@@ -249,11 +267,18 @@ def run(*, dry_run=False, target_key=None, adapters=None):
                 discovery.close()
     candidates = [candidate for result in results for candidate in result.candidates]
     if dry_run:
+        # Önizleme: birleştirme sonucu yalnız rapora girer; katalog kilidi alınmaz,
+        # dosya hiç yazılmaz.
         _, products, listings, existing, conflicts = merge_catalog(catalog, candidates)
     else:
+        # Bu kilit yalnız kataloğun oku-birleştir-yaz anını korur; siteye gidişi
+        # sıraya koyan data/scrape.lock çağıran tarafta (__main__, canlı araç)
+        # alınır. Tarama dakikalar sürdüğü için katalog kilit altında yeniden
+        # okunur: bu arada dosya değişmiş olabilir. İçerik değişmediyse dosya hiç
+        # yazılmaz; tekrar çalıştırmada bayt düzeyinde aynı kalır.
         with FileLock(str(catalog_path) + ".lock", timeout=30):
             latest = Catalog.model_validate_json(
-                catalog_path.read_text(encoding="utf-8")
+                catalog_path.read_text(encoding="utf-8-sig")
             )
             updated, products, listings, existing, conflicts = merge_catalog(
                 latest, candidates

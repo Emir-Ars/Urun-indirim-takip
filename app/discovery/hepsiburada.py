@@ -292,6 +292,10 @@ class Discovery(BaseDiscovery):
         except RECOVERABLE as exc:
             self.issue("search_fetch", error_code(exc))
         seen = set()
+        # Kuyruk arama kartlarıyla başlar ve her ürün/grup sayfasının seçenek
+        # listesiyle (allVariantCombinations) büyür: stoksuz olduğu için aramada
+        # görünmeyen kapasiteler böyle bulunur. seen/queue denetimi aynı SKU'nun iki
+        # kez açılmasını engeller.
         while queue:
             if self.product_pages >= self.config.max_product_pages:
                 self.issue("product_limit", "Ürün sayfası sınırı doldu")
@@ -314,6 +318,10 @@ class Discovery(BaseDiscovery):
             target_key=self.target.key,
             candidates=list(found.values()),
             issues=self.issues,
+            # Arama API'si canlıda kalıcı olarak engelli (HTTP 403, search_api
+            # uyarısı); bu yüzden Hepsiburada taraması bugün her zaman kısmi sayılır
+            # ve keşif komutu 2 ile çıkar. Kapsam, arama/model sayfasının ilk sayfası
+            # ile ürün sayfalarındaki seçenek listesinden gelir.
             complete=not self.issues,
             search_pages=self.search_pages,
             product_pages=self.product_pages,

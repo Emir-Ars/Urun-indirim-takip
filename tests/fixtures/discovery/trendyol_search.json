@@ -1,8 +1,8 @@
 {
   "products": [
-    {"id": 11, "name": "iPhone 16 128 GB Siyah", "brand": "Apple", "category": {"name": "IOS Cep Telefonları"}, "groupId": 7},
-    {"id": 12, "name": "iPhone 16 Pro 128 GB", "brand": "Apple", "category": {"name": "IOS Cep Telefonları"}, "groupId": 8},
-    {"id": 13, "name": "iPhone 16 Uyumlu Kılıf", "brand": "Apple", "category": {"name": "Telefon Aksesuarları"}, "groupId": 9}
+    {"id": 11, "name": "iPhone 16 128 GB Siyah", "brand": "Apple", "category": {"name": "IOS Cep Telefonları"}, "groupId": 7, "url": "/apple/iphone-16-128-gb-siyah-p-11?boutiqueId=61&merchantId=1"},
+    {"id": 12, "name": "iPhone 16 Pro 128 GB", "brand": "Apple", "category": {"name": "IOS Cep Telefonları"}, "groupId": 8, "url": "/apple/iphone-16-pro-128-gb-p-12?boutiqueId=61&merchantId=1"},
+    {"id": 13, "name": "iPhone 16 Uyumlu Kılıf", "brand": "Apple", "category": {"name": "Telefon Aksesuarları"}, "groupId": 9, "url": "/apple/iphone-16-uyumlu-kilif-p-13?boutiqueId=61&merchantId=2"}
   ],
   "pageIndex": 1,
   "total": 3,

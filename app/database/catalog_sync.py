@@ -32,6 +32,9 @@ class Table:
 
 # Sıra önemli: sayfalar ürünlere ve platformlara bağlıdır.
 TABLES = (
+    # Platformun `hosts` alanı veritabanına yazılmaz: tur, siteye gideceği alan
+    # adlarını dosyadaki katalogdan alır. Veritabanındaki kopya yabancı anahtarlar
+    # ve raporlama içindir (anahtar, ad, aktiflik).
     Table("platforms", "key", (), ("name", "active")),
     Table(
         "products",

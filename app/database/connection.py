@@ -7,11 +7,11 @@ import psycopg
 DATABASE_URL_ENV = "DATABASE_URL"
 
 
-def database_url(env: str = DATABASE_URL_ENV) -> str:
-    url = os.getenv(env, "").strip()
+def database_url() -> str:
+    url = os.getenv(DATABASE_URL_ENV, "").strip()
     if not url:
         raise RuntimeError(
-            f"{env} tanımlı değil (ör. "
+            f"{DATABASE_URL_ENV} tanımlı değil (ör. "
             "postgresql://fiyat_takip@localhost:5432/fiyat_takip)"
         )
     return url

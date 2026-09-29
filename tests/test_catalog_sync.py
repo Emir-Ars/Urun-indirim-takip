@@ -24,6 +24,12 @@ PLATFORM = {
     "hosts": ["www.trendyol.com"],
     "active": True,
 }
+HEPSIBURADA = {
+    "key": "hepsiburada",
+    "name": "Hepsiburada",
+    "hosts": ["www.hepsiburada.com"],
+    "active": True,
+}
 
 
 def product(product_id, storage_gb, **changes):
@@ -136,12 +142,10 @@ def test_mutable_fields_are_updated():
     ],
 )
 def test_listing_identity_cannot_change(changed, field):
-    hepsiburada = {**PLATFORM, "key": "hepsiburada", "name": "Hepsiburada"}
-    hepsiburada["hosts"] = ["www.hepsiburada.com"]
     new = make(
         [product(1, 128), product(2, 256)],
         [changed, listing(2, 2)],
-        platforms=(PLATFORM, hepsiburada),
+        platforms=(PLATFORM, HEPSIBURADA),
     )
     with pytest.raises(CatalogConflict, match=f"trendyol_1: {field} değişemez"):
         plan_sync(catalog_rows(BASE), new)
@@ -198,6 +202,23 @@ def test_new_product_reusing_an_existing_key_is_conflict():
         [listing(1, 1)],
     )
     with pytest.raises(CatalogConflict, match="product_key"):
+        plan_sync(catalog_rows(BASE), new)
+
+
+def test_new_product_reusing_an_existing_identity_is_conflict():
+    # Ürün 2 katalogdan düşmüş ama veritabanında duruyor; aynı marka + model +
+    # kapasite yeni bir kimlikle geri geliyor. Katalog sözleşmesi yalnız katalog
+    # içindeki tekrarı görür; bu çakışmayı plan_sync yakalamazsa veritabanı
+    # indeksi yazarken reddeder ve kullanıcı yanıltıcı "iki adımda" mesajını
+    # görür. Marka büyük harfle yazıldı: karşılaştırma harf büyüklüğüne bakmaz.
+    new = make(
+        [
+            product(1, 128),
+            product(3, 256, product_key="apple_iphone_15_256gb_v2", brand="APPLE"),
+        ],
+        [listing(1, 1)],
+    )
+    with pytest.raises(CatalogConflict, match="brand\\+model\\+storage_gb"):
         plan_sync(catalog_rows(BASE), new)
 
 
@@ -260,6 +281,58 @@ def test_product_deactivation_is_written(migrated):
         "SELECT product_id, active FROM products ORDER BY product_id"
     ).fetchall()
     assert rows == [(1, True), (2, False)]
+
+
+def test_platform_deactivation_is_written(migrated):
+    hepsiburada_page = listing(
+        2,
+        1,
+        listing_id="hepsiburada_2",
+        platform="hepsiburada",
+        url="https://www.hepsiburada.com/apple-iphone-15-p-2",
+    )
+    sync_catalog(
+        migrated,
+        make(
+            [product(1, 128)],
+            [listing(1, 1), hepsiburada_page],
+            platforms=(PLATFORM, HEPSIBURADA),
+        ),
+    )
+    # Platform ve ona bağlı sayfa katalogdan düşüyor: ikisi de pasif kalır.
+    plan = sync_catalog(migrated, make([product(1, 128)], [listing(1, 1)]))
+    assert plan.tables["platforms"].deactivated == ["hepsiburada"]
+    rows = migrated.execute("SELECT key, active FROM platforms ORDER BY key")
+    assert rows.fetchall() == [("hepsiburada", False), ("trendyol", True)]
+    rows = migrated.execute("SELECT listing_id, active FROM listings ORDER BY 1")
+    assert rows.fetchall() == [("hepsiburada_2", False), ("trendyol_1", True)]
+
+
+def test_updated_columns_are_written(migrated):
+    # Plan testi (test_mutable_fields_are_updated) yalnız farkı hesaplıyor;
+    # burada güncellenen değerlerin doğru sütunlara yazıldığı geri okunur.
+    sync_catalog(migrated, BASE)
+    new = make(
+        [product(1, 128), product(2, 256, active=False)],
+        [
+            listing(1, 1, color="Gece Siyahı", url="https://www.trendyol.com/x-p-1"),
+            listing(2, 2, active=False),
+        ],
+        platforms=({**PLATFORM, "name": "Trendyol Türkiye"},),
+    )
+    sync_catalog(migrated, new)
+    rows = migrated.execute("SELECT key, name, active FROM platforms")
+    assert rows.fetchall() == [("trendyol", "Trendyol Türkiye", True)]
+    rows = migrated.execute("SELECT product_id, active FROM products ORDER BY 1")
+    assert rows.fetchall() == [(1, True), (2, False)]
+    rows = migrated.execute(
+        "SELECT listing_id, url, color, active FROM listings ORDER BY 1"
+    )
+    assert rows.fetchall() == [
+        ("trendyol_1", "https://www.trendyol.com/x-p-1", "Gece Siyahı", True),
+        ("trendyol_2", listing(2, 2)["url"], "Siyah", False),
+    ]
+    assert not sync_catalog(migrated, new).changed
 
 
 def test_address_moved_to_a_new_listing_is_applied(migrated):

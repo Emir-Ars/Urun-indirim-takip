@@ -2,8 +2,8 @@
 
 Kurallar: dosya adı `NNN_ad.sql`; numaralar 001'den boşluksuz artar. Her dosya
 tek transaction'da uygulanır ve `schema_migrations` tablosuna parmak iziyle
-yazılır; hata olursa o dosyadan hiçbir iz kalmaz. Uygulanmış dosya bir daha
-değiştirilmez, şema değişikliği yeni numaralı dosyayla yapılır.
+yazılır; hata olursa o dosyadan hiçbir iz kalmaz. Uygulanmış dosyanın içeriği
+de adı da bir daha değiştirilmez, şema değişikliği yeni numaralı dosyayla yapılır.
 """
 
 import hashlib
@@ -16,7 +16,10 @@ import psycopg
 
 MIGRATIONS_DIR = Path(__file__).with_name("migrations")
 _FILE_NAME = re.compile(r"^(\d{3})_([a-z0-9_]+)\.sql$")
-# Aynı anda iki migrate çalışırsa ikincisi bu kilidi bekler.
+# Aynı anda iki migrate çalışırsa ikincisi bu kilidi bekler. Advisory kilit
+# numaraları veritabanı başına tek ad alanıdır; projedeki diğerleri runs.py
+# (_RUN_LOCK_ID 2026_0929) ve tests/conftest.py (TEST_DATABASE_LOCK 2026_0930).
+# Numaralar farklı kalmalı; yeni kilit yeni numara alır.
 _LOCK_ID = 2026_0928
 _BOOKKEEPING = """
 CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -65,14 +68,20 @@ def load(directory: Path = MIGRATIONS_DIR) -> list[Migration]:
         migrations.append(Migration(int(match[1]), match[2], text, checksum(text)))
     if not migrations:
         raise MigrationError(f"Migration dosyası bulunamadı: {directory}")
-    if [m.version for m in migrations] != list(range(1, len(migrations) + 1)):
-        raise MigrationError("Migration numaraları 001'den başlayıp boşluksuz artmalı")
+    versions = [m.version for m in migrations]
+    if versions != list(range(1, len(migrations) + 1)):
+        # Bulunan numaralar gösterilir: aynı numaralı iki dosya ([1, 1]) ile
+        # atlanmış numara ([1, 3]) mesajdan ayırt edilsin.
+        raise MigrationError(
+            "Migration numaraları 001'den başlayıp boşluksuz artmalı"
+            f" (bulunan: {versions})"
+        )
     return migrations
 
 
 def applied(conn: psycopg.Connection) -> list[tuple[int, str, datetime]]:
     """Uygulanmış migration'lar: (numara, ad, uygulanma zamanı)."""
-    if conn.execute("SELECT to_regclass('schema_migrations')").fetchone()[0] is None:
+    if not _bookkeeping_exists(conn):
         return []
     return conn.execute(
         "SELECT version, name, applied_at FROM schema_migrations ORDER BY version"
@@ -113,24 +122,39 @@ def migrate(
         done.append(migration)
 
 
+def _bookkeeping_exists(conn: psycopg.Connection) -> bool:
+    # Hiç migrate çalışmamış veritabanında kayıt tablosu yoktur; to_regclass
+    # tablo yoksa hata vermek yerine NULL döndürür.
+    row = conn.execute("SELECT to_regclass('schema_migrations')").fetchone()
+    return row[0] is not None
+
+
 def _unapplied(
     conn: psycopg.Connection, migrations: list[Migration]
 ) -> list[Migration]:
     known = {m.version: m for m in migrations}
     recorded = {}
-    if conn.execute("SELECT to_regclass('schema_migrations')").fetchone()[0]:
-        recorded = dict(
-            conn.execute("SELECT version, checksum FROM schema_migrations").fetchall()
-        )
+    if _bookkeeping_exists(conn):
+        rows = conn.execute("SELECT version, name, checksum FROM schema_migrations")
+        recorded = {version: (name, digest) for version, name, digest in rows}
     unknown = sorted(set(recorded) - set(known))
     if unknown:
         raise MigrationError(
             f"Veritabanı koddan daha yeni: kodda olmayan sürüm(ler) {unknown}"
         )
-    for version, digest in recorded.items():
-        if known[version].checksum != digest:
+    for version, (name, digest) in recorded.items():
+        migration = known[version]
+        # Kayıttaki ad, migrate()'in yazdığı Migration.name'dir: dosya adının
+        # numarasız ve uzantısız kısmı (ör. "initial"); aynı biçimle karşılaştırılır.
+        if migration.name != name:
             raise MigrationError(
-                f"Uygulanmış {known[version].file_name} değiştirilmiş; şema "
+                f"Uygulanmış {version:03d}_{name}.sql yeniden adlandırılmış "
+                f"(şimdiki adı {migration.file_name}); uygulanmış dosyanın adı "
+                "değiştirilmez, eski adını geri verin"
+            )
+        if migration.checksum != digest:
+            raise MigrationError(
+                f"Uygulanmış {migration.file_name} değiştirilmiş; şema "
                 "değişikliği için yeni numaralı bir migration dosyası yazın"
             )
     return [m for m in migrations if m.version not in recorded]

@@ -34,7 +34,7 @@ geçmişi. Kararların ve aşama durumunun ana kaynağı
 | Dosya | Ne işe yarar |
 |---|---|
 | `contracts.py` | Verinin şekilleri ve doğrulaması (Pydantic V2 strict): `Product`, `Listing`, `Catalog`, `PriceObservation`, keşif hedefleri ve raporu. Hatalı veri içeri giremez (ör. fiyat alanına "Tükendi"). Yalnızca biten aşamanın kullandığı tanımları içerir. |
-| `settings.py` | Ayar dosyalarını okur. `CATALOG_PATH`, `DISCOVERY_PATH`, `RUNTIME_PATH`, `SCRAPE_LOCK_PATH` ortam değişkenleriyle başka dosya gösterilebilir. |
+| `settings.py` | Ayar dosyalarını okur. `CATALOG_PATH`, `DISCOVERY_PATH`, `RUNTIME_PATH`, `SCRAPE_LOCK_PATH`, `LOG_DIR` ortam değişkenleriyle başka dosya veya klasör gösterilebilir. |
 | `scrape_lock.py` | Siteye giden bütün girişlerin paylaştığı kilit (`data/scrape.lock`). Fiyat turu, keşif ve iki canlı kontrol aracı alır; biri sürerken diğeri beklemeden "sürüyor" deyip çıkar. Süreç çökse bile işletim sistemi kilidi bırakır. |
 
 ### Fiyat okuma: `app/scraper/`
@@ -75,19 +75,29 @@ geçmişi. Kararların ve aşama durumunun ana kaynağı
 | Dosya | Ne işe yarar |
 |---|---|
 | `service.py` | Bir tur: şema kontrolü, yarım kalan turu kapatma, katalog eşitleme, planlama, her sayfayı mevcut scraper'la okuyup sonucunu hemen yazma, turu kapatma. Scraper ile veritabanını bağlayan tek yer. |
-| `__main__.py` | Komut satırı: `python -m app.collection [--prefix ÖN_EK] [--scheduled]`; ortak kilidi alır. |
+| `__main__.py` | Komut satırı: `python -m app.collection [--prefix ÖN_EK] [--scheduled]`; ortak kilidi alır. `--scheduled` ile çıktı `data/logs/` altındaki log dosyasına da yazılır. |
+
+### Zamanlayıcı: `scripts/`
+
+| Dosya | Ne işe yarar |
+|---|---|
+| `zamanlayici_kur.ps1` | Fiyat toplama turunu Windows Görev Zamanlayıcı'ya kurar (her gün 10:00 ve 22:00, penceresiz); `-Kaldir` ile siler. Ayarları [Zamanlanmış tur](#zamanlanmış-tur-görev-zamanlayıcı) bölümündedir. |
 
 ### Testler ve CI
 
 | Yer | Ne işe yarar |
 |---|---|
-| `tests/test_trendyol_scraper.py`, `tests/test_hepsiburada_scraper.py`, `tests/test_discovery.py` | Kayıtlı örnek verilerle otomatik testler (59 test). İnternete çıkmaz. |
-| `tests/test_collection.py` | Toplama turu (22 test): sahte scraper'larla her sonuç türü, Ctrl+C, yarım kalan tur, başka süreçteki tur, veritabanının reddettiği değer, ön ek, çakışma, çıkış kodları ve ortak kilit; gerçek PostgreSQL'de, internete çıkmadan. |
-| `tests/test_catalog_sync.py` | Katalog eşitleme (26 test): kararlar veritabanısız, yazma/deneme/çakışma ve komut satırı gerçek PostgreSQL'de. |
-| `tests/test_database.py`, `tests/conftest.py` | Migration koşucusu, şema kuralları ve `migrate`/`status` komutları (36 test), gerçek PostgreSQL'de. Yalnızca `TEST_DATABASE_URL`'deki, adı `_test` ile biten veritabanını kullanır ve her testten önce onu boşaltır; aynı anda iki pytest çalışırsa ikincisi bekler. Değişken yoksa yerelde atlanır, CI'da başarısız olur. |
+| `tests/conftest.py` | Bütün testlerin emniyet kemerleri: her testte gerçek curl_cffi isteği kesilir (sahte istemci kullanmayı unutan test siteye gitmek yerine başarısız olur) ve kalıcı `DATABASE_URL` silinir. `db` fixture'ı yalnızca `TEST_DATABASE_URL`'deki, adı `_test` ile biten veritabanını kullanır ve her testten önce onu boşaltır; aynı anda iki pytest çalışırsa ikincisi en çok 30 sn bekler. Değişken yoksa veritabanı testleri yerelde atlanır, CI'da başarısız olur. |
+| `tests/test_http.py` | HTTP katmanı (59 test): hata kodları, 8 MB sınırı, yönlendirme kuralları, 5xx tekrarı ve bekleme süreleri, istek bütçesi, istekler arası bekleme, factory. Ayrıca mimari kural: `app/` içinde `requests`/`httpx`/`playwright`/`selenium` yok, `curl_cffi` yalnız `http.py`'de. |
+| `tests/test_contracts.py` | Pydantic sözleşmeleri (71 test): satılabilir teklif fiyat ve satıcı taşır, puan ölçeği aşamaz, katalog kimlik/referans/alan adı kuralları, `money()` kuruş çevirimi. |
+| `tests/test_trendyol_scraper.py`, `tests/test_hepsiburada_scraper.py` | Fiyat okuma (40 + 25 test): seçilen teklif, eşit fiyatta satıcı adı, çizili fiyat, Kritik Stok, Tükendi'nin yalnız açık sinyalle verilmesi, ret nedenleri, `parse` dönüşümü. Sahte sayfa ve istemci; internete çıkmaz. |
+| `tests/test_discovery.py` | Keşif (71 test): kimlik kuralları, sayfalama ve uyarı türleri, katalog birleştirme (aynı adaylar hep aynı kimlikleri alır), dry-run'ın kataloğa yazmaması, LF satır sonu, BOM'lu ayar dosyaları, UTF-8 çıktı, çıkış kodları ve gerçek `config/*.json` dosyalarının sözleşmeye uyması. |
+| `tests/test_collection.py` | Toplama turu (40 test; 36'sı gerçek PostgreSQL'de): sahte scraper'larla her sonuç türü, Ctrl+C, tur ortasında veritabanı hatası, yarım kalan tur, başka süreçteki tur, iki kilidin her durumda bırakılması, pasif sayfa/ürün/platform, ön ek, çıkış kodları ve zamanlanmış turun log dosyası (ekran akışı yokken ve log açılamazken dahil). |
+| `tests/test_catalog_sync.py` | Katalog eşitleme (29 test; 13'ü gerçek PostgreSQL'de): kararlar veritabanısız, yazma/deneme/çakışma ve komut satırı veritabanında. |
+| `tests/test_database.py` | Migration koşucusu, şemanın bütün `CHECK`/`UNIQUE`/yabancı anahtar kuralları (her biri geçerli ve geçersiz örnekle), `migrate`/`status` komutları (yeniden adlandırılan migration dahil) ve iki emniyet kemerinin kendisi (79 test; 67'si gerçek PostgreSQL'de). |
 | `tests/fixtures/discovery/` | Testlerin kullandığı örnek site yanıtları ve kataloğun sabit bir kopyası (`catalog.json`); testler gerçek kataloğa bağlı değildir. |
-| `tests/manual/live_scraper_check.py` | Katalogdaki sayfaları canlı okur; bütün satıcıları gösterir. İsteğe bağlı `product_key` ön eki (ör. `samsung_`) ile yalnız o ürünler. |
-| `tests/manual/live_discovery_check.py` | Keşfi kataloğa yazmadan canlı çalıştırır; `--trace` ile her kararın nedenini gösterir. |
+| `tests/manual/live_scraper_check.py` | Katalogdaki sayfaları canlı okur; bütün satıcıları gösterir. İsteğe bağlı `product_key` ön eki (ör. `samsung_`) ile yalnız o ürünler; sayfa seçimi toplama turuyla aynı fonksiyondur. |
+| `tests/manual/live_discovery_check.py` | Keşfi kataloğa yazmadan canlı çalıştırır; `--trace` ile her kararın nedenini gösterir. Raporu `data/discovery_report.json` dosyasının üzerine yazar. |
 | `.github/workflows/ci.yml` | Her push/pull request'te geçici bir PostgreSQL 17 açar (yereldeki gibi `C.UTF-8`) ve Black, Flake8 ile bütün testleri çalıştırır. |
 
 ## Komutların ayrıntısı
@@ -112,6 +122,13 @@ Windows ve PowerShell, Python sanal ortamı `.venv`:
 # Fiyat toplama turu: sitelere istek atar ve sonuçları veritabanına yazar
 .venv\Scripts\python.exe -m app.collection --prefix poco_   # yalnız POCO (4 sayfa)
 .venv\Scripts\python.exe -m app.collection                  # bütün etkin sayfalar (~31 dk)
+
+# Zamanlanmış tur: görevi kur (tekrar çalıştırmak yeniden kurar), hemen bir kez
+# başlat, son/sonraki çalışmayı göster, kaldır. Loglar: data\logs\tur_*.log
+powershell -ExecutionPolicy Bypass -File scripts\zamanlayici_kur.ps1
+Start-ScheduledTask -TaskPath '\FiyatTakip\' -TaskName 'FiyatToplamaTuru'
+Get-ScheduledTaskInfo -TaskPath '\FiyatTakip\' -TaskName 'FiyatToplamaTuru'
+powershell -ExecutionPolicy Bypass -File scripts\zamanlayici_kur.ps1 -Kaldir
 
 # Biçim ve kalite kontrolü (CI'daki gibi)
 .venv\Scripts\python.exe -m black --check app tests
@@ -140,14 +157,23 @@ raporu kopyalayın.
 
 `--target` verilmezse bütün etkin hedefler taranır. Eski taslaklar
 `_eski_taslaklar/` klasörüne taşındığı için Black/Flake8 CI'daki gibi bütün
-klasörde çalıştırılabilir: `black --check app tests`, `flake8 app tests`.
+klasörde çalıştırılabilir (yukarıdaki biçim komutları).
 
 Gerçek dosyalara dokunmadan denemek için ortam değişkeni kullanılabilir:
 
 ```powershell
 $env:CATALOG_PATH = "data/deneme_katalog.json"   # kataloğun kopyası
 $env:DISCOVERY_PATH = "data/deneme_hedef.json"   # geçici hedefler
+# deneme bitince (ya da yeni bir terminal açın):
+Remove-Item Env:CATALOG_PATH, Env:DISCOVERY_PATH
 ```
+
+**Dikkat:** Bu değişkenler o terminal kapanana kadar geçerlidir ve toplama turu
+(`python -m app.collection`) ile `sync-catalog` da onları okur. Deneme
+kataloğu tanımlıyken tur veya eşitleme çalıştırılırsa deneme kayıtları gerçek
+veritabanına yazılır ve silinmez (kayıt silinmez kuralı); sonra gerçek katalog
+aynı kimliği başka bir telefona verirse eşitleme çakışmayla durur. Zamanlanmış
+tur kendi ortamında çalıştığı için etkilenmez.
 
 ## Yeni telefon ekleme: bütün kurallar
 
@@ -276,7 +302,7 @@ $env:DISCOVERY_PATH = "data/deneme_hedef.json"   # geçici hedefler
 | `results` | Hedef × platform başına ayrıntı: adaylar (renk, RAM, garanti yazısı), uyarılar, taranan arama/ürün sayfası sayısı. RAM ve garanti yazısını yalnız Trendyol doldurur. |
 | `added_products`, `added_listings` | Bu çalışmada eklenen ürünler/sayfalar. |
 | `existing_listings` | Yeniden görülen, zaten katalogda olan sayfalar. |
-| `retained_unobserved_listings` | Bu taramada görülmeyen ama katalogda korunan sayfalar; güncel teklif sayılmaz. |
+| `retained_unobserved_listings` | Etkin olduğu hâlde bu taramada görülmeyen, katalogda korunan sayfalar; güncel teklif sayılmaz. Pasif sayfalar listelenmez. |
 | `pending` | Taramayı kısmi yapan nedenler (aşağıdaki tablo). |
 | `rejected` | Reddedilen sayfalar ve nedenleri (gözlenen ürün adıyla) ve `catalog_conflict` kayıtları. |
 | `observed_colors` | Kapasite ve platform bazında bulunan renkler; pazaryerinin eksiksiz renk listesi değildir. |
@@ -296,7 +322,7 @@ $env:DISCOVERY_PATH = "data/deneme_hedef.json"   # geçici hedefler
 | `search_limit`, `product_limit` | Sayfa veya ürün sınırı doldu. |
 | `repeated_page` | Site aynı sonuç sayfasını tekrar döndürdü; sayfalama durduruldu. |
 | `variant_fetch`, `missing_variants` | Varyant listesi alınamadı veya boş geldi. |
-| `group_url_pending` | Hepsiburada kartının adresi ne ürün (`-p-`) ne grup (`-pm-`) biçiminde; çözülemedi. |
+| `group_url_pending` | Hepsiburada arama API'sinin varyant kaydındaki adres ne ürün (`-p-`) ne grup (`-pm-`) biçiminde; aday çözülemedi. API bugün engelli olduğundan (`search_api`) fiilen görülmez. HTML arama sayfasında bu iki kalıba uymayan bağlantılar (menü, kategori…) kart sayılmaz ve uyarısız atlanır. |
 
 `rejected` içindeki kayıtlar (tek bir aday atlanır, tarama sürer):
 
@@ -306,7 +332,15 @@ $env:DISCOVERY_PATH = "data/deneme_hedef.json"   # geçici hedefler
 | `catalog_conflict` | Sayfa katalogda başka bir ürüne bağlı; aday yazılmadı, mevcut kayıt korundu. |
 
 Komutun çıkış kodu: `0` tam tarama, `2` kısmi tarama (doğrulanmış kayıtlar yine
-eklenir), `1` keşif başlatılamadı.
+eklenir; Hepsiburada arama API'si engelli olduğu için bugün her zaman 2), `1`
+keşif başlatılamadı (hedef yok, ayar dosyası bozuk, platform adaptörü
+yüklenemedi…), `3` kilit meşgul (tur, başka bir keşif veya canlı kontrol
+sürüyor). Çıktı UTF-8'dir; dosyaya yönlendirildiğinde de Türkçe karakterler
+bozulmaz. `catalog.json`, `discovery.json` ve `runtime.json` başında BOM olsa
+da okunur (PowerShell'in `Out-File -Encoding utf8` ile yazdığı kopya gibi);
+katalog her zaman BOM'suz ve LF satır sonuyla yazılır. Trendyol'da arama sayfası
+sınırı (`max_search_pages`) dolunca sonraki sayfa istenmez, `search_limit`
+yazılır.
 
 ## Fiyat okuma nasıl çalışır
 
@@ -367,12 +401,36 @@ eklenir), `1` keşif başlatılamadı.
 gösterir. Satıcıların bütün teklifleri tek tek kaydedilmez; yalnızca seçilen
 teklif döner. Bütün teklifler canlı kontrol aracında (`all_offers`) görülebilir.
 
+### Hata kodları
+
+Sayfa okunamazsa `FetchError(code, mesaj)` verilir (`app/scraper/http.py`).
+Kod, toplama turunda `listing_checks.error_code` sütununa, keşifte rapora aynen
+yazılır; hiçbiri fiyat veya Tükendi yerine geçmez.
+
+| Kod | Nerede | Anlamı |
+|---|---|---|
+| `invalid_url` | HTTP | Adres düz bir HTTPS adresi değil (kullanıcı adı, port, `#` parçası ya da başka şema). |
+| `invalid_host` | HTTP | Adres veya yönlendirme hedefi platformun izinli alan adı dışında. |
+| `limit` | HTTP | İstek bütçesi doldu (bütçeyi yalnız keşif verir). |
+| `redirect` | HTTP | Yönlendirmenin hedefi yok ya da 3'ten fazla yönlendirme. |
+| `blocked` | HTTP | Kaynak 401/403/418/429 döndürdü (engellendi); tekrar denenmez. |
+| `http_error` | HTTP | Diğer 4xx (ör. 404); kalıcı sayılır, tekrar denenmez. |
+| `network` | HTTP | Bağlantı hatası, zaman aşımı veya 5xx; tekrarlardan sonra da sürdü. |
+| `too_large` | HTTP | Yanıt 8 MB sınırını aştı. |
+| `parse` | HTTP, scraper | Yanıt UTF-8 metin/JSON değil ya da sayfa verisi beklenen yapıda değil; teklif sözleşme doğrulamasından geçmedi. |
+| `identity` | scraper, keşif | Sayfa hedef ürün değil: model, kapasite, dışlanan ifade, ağ türü ya da yenilenmiş/aksesuar/yurt dışı sürüm. |
+| `no_eligible_offer` | scraper | Uygun satılabilir teklif yok, ama Tükendi için açık stok sinyali de yok. |
+| `api_error` | Hepsiburada | Satıcı listesi veya fiyat API'si başarısız ya da satılabilir satıcı için boş yanıt verdi. |
+| `plugin` | factory | Platform adaptörü yüklenemedi. |
+| `validation`, `unexpected`, `storage` | toplama turu | Gözlem doğrulanamadı veya başka sayfaya ait; beklenmeyen istisna (ayrıntı loga yazılır); veritabanı değeri reddetti. Tur üçünde de sürer. |
+
 ## Veritabanı (PostgreSQL)
 
 Fiyat toplama turlarının sonuçları PostgreSQL 17'de saklanır. Bugün şema,
 `migrate`, katalog eşitleme ve toplama turu hazırdır. İlk tam tur 28 Eylül
-2026'da 326 sayfanın tamamını 31 dakikada hatasız okudu; zamanlayıcı sıradaki
-adımdır ([proje_plani.md](../proje_plani.md) Bölüm 9).
+2026'da 326 sayfanın tamamını 31 dakikada hatasız okudu. Günde 2 turu
+Görev Zamanlayıcı başlatır ([Zamanlanmış tur](#zamanlanmış-tur-görev-zamanlayıcı);
+durum: [proje_plani.md](../proje_plani.md) Bölüm 9).
 
 ### Bir kerelik kurulum (Windows)
 
@@ -420,7 +478,7 @@ adımdır ([proje_plani.md](../proje_plani.md) Bölüm 9).
 ### Veritabanının zorladığı kurallar
 
 Kurallar kodda değil tabloda tanımlıdır; koddaki bir hata bile aykırı satır
-yazamaz (`tests/test_database.py` her birini dener):
+yazamaz (`tests/test_database.py` aşağıdakilerin her birini dener):
 
 - Aynı turda aynı sayfa bir kez yazılır (`PRIMARY KEY (run_id, listing_id)`).
 - Hata sonucu fiyat, satıcı veya stok taşımaz; fiyat sonucu satıcısız ve
@@ -459,24 +517,78 @@ yazamaz (`tests/test_database.py` her birini dener):
 | Stokta Var / Kritik Stok | `offer` + fiyat, satıcı, puan, stok |
 | Tükendi | `sold_out`; fiyat ve satıcı **yazılmaz** (satın alınamayan fiyat "en ucuz" hesabına karışmasın) |
 | `FetchError` (`blocked`, `network`, `parse`, `identity`, `no_eligible_offer`…) | `error` + aynı kod ve mesaj |
-| Doğrulama hatası (`ValueError`) | `error`, `validation` |
+| Gözlem başka bir sayfaya ait ya da scraper doğrulanmamış veri döndürdü (`ValueError`) | `error`, `validation`. Gerçek scraper'larda sayfa içindeki doğrulama hatası zaten `parse` koduyla gelir |
 | Beklenmeyen hata | `error`, `unexpected`; ayrıntı ekrana yazılır, **tur sürer** |
 | Veritabanı değeri reddetti (ör. sütuna sığmayan fiyat) | `error`, `storage`; **tur sürer**. Metinlerdeki NUL (`\x00`) karakteri yazmadan önce silinir |
-| Ctrl+C veya veritabanı hatası | Tur `interrupted`; bakılmayan sayfalar sonuçsuz kalır |
+| Ctrl+C veya veritabanı hatası | Tur `interrupted`; bakılmayan sayfalar sonuçsuz kalır. Veritabanı bağlantısı tamamen koptuysa tur kapatılamaz ve `running` kalır; bir sonraki tur onu `interrupted` yapar |
 
 Çıkış kodları: `0` tamamlandı ve hata yok; `2` tamamlandı ama bazı sayfalarda
-hata var; `1` başlayamadı (şema, çakışma, veritabanı); `3` kilit meşgul;
-`130` Ctrl+C. `--scheduled` turu `scheduled` olarak kaydeder (Görev
+hata var; `1` başlayamadı (şema, çakışma, `DATABASE_URL`, `runtime.json`)
+**ya da** tur ortasında veritabanı hatasıyla kesildi (tur `interrupted`, o ana
+kadar yazılanlar kalır); `3` kilit meşgul; `130` Ctrl+C. `--scheduled` turu `scheduled` olarak kaydeder (Görev
 Zamanlayıcı için); verilmezse `manual`. `--prefix` kullanıldıysa turun
 notuna yazılır. Sonuç yalnızca süren tura yazılabilir; kapanmış bir tur
 yeniden kapatılmaya çalışılırsa hata verir (sessiz geçmez).
+
+### Zamanlanmış tur (Görev Zamanlayıcı)
+
+`scripts/zamanlayici_kur.ps1`, Windows Görev Zamanlayıcı'ya
+`\FiyatTakip\FiyatToplamaTuru` görevini kurar. Yönetici izni gerekmez; tekrar
+çalıştırmak görevi aynı ayarlarla yeniden kurar, `-Kaldir` siler. Windows
+varsayılan olarak `.ps1` çalıştırmadığı için komut
+`powershell -ExecutionPolicy Bypass -File …` biçimindedir (izin yalnız o komut
+içindir, sistem ayarı değişmez).
+
+| Ayar | Değer | Neden |
+|---|---|---|
+| Tetikleyiciler | Her gün yerel saatle 10:00 ve 22:00 | Karar ([proje_plani.md](../proje_plani.md) Bölüm 9). Görev Zamanlayıcı saati varsayılan olarak UTC'ye çevirir; script yerel saat yazar. |
+| Eylem | `.venv\Scripts\pythonw.exe -m app.collection --scheduled`; çalışma klasörü proje klasörü | `pythonw` pencere açmaz: 31 dakika açık kalan ve kapatılınca turu kesen bir pencere olmaz. `config\` ve `data\` yolları çalışma klasörüne göredir. |
+| Kaçan tur | "Kaçırılırsa en kısa sürede çalıştır" | Bilgisayar kapalıyken kaçan tur, açılınca **bir kez** yapılır (iki tur kaçtıysa da bir kez). |
+| Pil | Pildeyken de başlar, pile geçince durmaz | Windows'un varsayılanı yalnız şarjdayken çalıştırmaktır; dizüstünde pilde tur hiç başlamazdı. |
+| Uyandırma | Yok | Uykudaki bilgisayar uyandırılmaz; kaçan tur açılınca telafi edilir. |
+| Aynı anda | Görev çalışıyorsa yeni kopya başlatılmaz | Ortak kilit de engeller. |
+| Süre sınırı | 2 saat | Normal tur ~31 dk. Görev Zamanlayıcı süreci zorla kapatırsa tur `running` kalır; bir sonraki tur onu `interrupted` yapar. |
+| Kullanıcı | Kurulumu yapan kullanıcı, yalnız oturum açıkken | Windows şifresi saklanmaz; `DATABASE_URL` ve `pgpass.conf` bu kullanıcınındır. Kilitli ekran "oturum açık" sayılır. |
+
+`--scheduled` ile bütün çıktı `data/logs/tur_<yerel tarih-saat>.log` dosyasına
+da yazılır: başlangıç satırı, her sayfanın ilerleme satırı, beklenmeyen
+hataların ayrıntısı (traceback), özet ve **çıkış kodu**. Başlayamayan (kod 1)
+ve kilit meşgul olduğu için atlanan (kod 3) turlar da log bırakır. Tek istisna:
+log dosyasının kendisi açılamazsa (ör. `data\logs` yazılamıyor) `pythonw`
+altında hiçbir yere yazı düşmez; yalnız Görev Zamanlayıcı sonucu `0x1` görünür.
+Dosya satır satır yazılır; tur ortasında bilgisayar kapanırsa o ana kadarki
+satırlar kalır. `pythonw` altında ekran akışları yoktur; tek yazılı kayıt bu
+dosyadır. Loglar silinmez (tur başına ~30 KB).
+
+Görev Zamanlayıcı "Son çalıştırma sonucu"nu onaltılık gösterir: `0x0`
+hatasız, `0x2` bazı sayfalar hatalı, `0x3` kilit meşgul (tur atlandı, yeniden
+denenmez), `0x1` başlayamadı ya da veritabanı hatasıyla kesildi. Görev
+çalışırken `0x41301` (267009) görünür; bu hata değil, "çalışıyor" kodudur.
+Ayrıntı log dosyasında, sonuçlar veritabanındadır
+(`collection_runs.trigger = 'scheduled'`).
+
+Sınırlar:
+
+- 10:00 veya 22:00'de elle keşif ya da canlı kontrol sürüyorsa zamanlanmış tur
+  başlamaz (kod 3) ve o tur telafi edilmez.
+- Bilgisayar açılışında başlayan telafi turu ağ bağlantısı kurulmadan
+  başlayabilir; ilk sayfalar `network` hatası alabilir.
+- Tur bilgisayarın o anki internet bağlantısına bağlıdır. Bağlantı tur
+  ortasında koparsa o sıradaki sayfalar `network` hatası alır, bağlantı dönünce
+  tur kaldığı yerden sürer ve tamamlanır; hata alan sayfalar aynı turda yeniden
+  denenmez (28 Eylül, ilk zamanlanmış tur: 326 sayfanın 47'si `network`, 279'u
+  okundu, çıkış 2). İnternet hiç yoksa tur bütün sayfalara hata yazarak biter
+  (art arda hatada erken durdurma yok). Hata "cevap" sayılmadığı için sahte
+  fiyat veya sahte düşüş oluşmaz.
+- Tur yarıda kesilirse (bilgisayar kapandı, süre sınırı) Görev Zamanlayıcı onu
+  "çalıştı" saydığı için telafi edilmez.
 
 ### Katalog eşitleme (`sync-catalog`)
 
 `listing_checks` yalnızca veritabanında var olan sayfayı kabul eder; bu yüzden
 `catalog.json` önce veritabanındaki kopyaya (`platforms`, `products`,
 `listings`) yazılır. Asıl kaynak dosyadır. Toplama turu da kendi başında aynı
-eşitlemeyi çalıştıracaktır; komut, keşiften sonra farkı gözle görmek içindir.
+eşitlemeyi çalıştırır; komut, keşiften sonra farkı gözle görmek içindir.
 
 - Tek transaction: ya bütün değişiklikler yazılır ya hiçbiri. `--dry-run`
   aynı işi yapıp sonunda geri alır.
@@ -497,7 +609,8 @@ eşitlemeyi çalıştıracaktır; komut, keşiften sonra farkı gözle görmek i
 - İkinci çalıştırma değişiklik yapmaz. Şema güncel değilse (bekleyen migration)
   eşitleme başlamaz.
 - Çıktıdaki parmak izi, `catalog.json`'un sha256'sıdır (satır sonundan
-  bağımsız); toplama turları hangi katalogla yapıldığını bununla kaydedecek.
+  bağımsız); toplama turları hangi katalogla yapıldığını
+  `collection_runs.catalog_sha256` alanında bununla kaydeder.
 
 ### Migration kuralları
 
@@ -506,10 +619,16 @@ eşitlemeyi çalıştıracaktır; komut, keşiften sonra farkı gözle görmek i
   hata verilir. Dosyalar pakete dahildir (`pyproject.toml`, `package-data`).
 - Her dosya tek transaction'da uygulanır; hata verirse o dosyadan hiçbir iz
   kalmaz (PostgreSQL'de tablo oluşturma da geri alınır). Aynı anda iki
-  `migrate` çalışırsa ikincisi bekler.
+  `migrate` çalışırsa ikincisi bekler (en çok 30 sn, bağlantının
+  `lock_timeout` ayarı; sonra hata verir).
 - **Uygulanmış dosya değiştirilmez;** değişiklik yeni numaralı dosyayla yapılır.
   Değiştirilirse parmak izi tutmaz ve `migrate`/`status` hata verir. Parmak izi
   satır sonundan bağımsızdır (Windows CRLF ile CI'daki LF aynı sayılır).
+- Uygulanmış dosya **yeniden adlandırılamaz** da: `schema_migrations` dosyanın
+  numarasız adını (ör. `initial`) tutar; ad değişirse `migrate` ve `status` eski
+  ve yeni adı gösteren bir hatayla durur. Numaralar boşluksuz artmazsa (atlanmış
+  ya da aynı numaralı iki dosya) hata mesajı bulunan numaraları listeler (ör.
+  `bulunan: [1, 1]`).
 - Veritabanında kodda olmayan bir sürüm varsa ("veritabanı koddan yeni") komut
   hata verir.
 
@@ -539,19 +658,24 @@ böylece keşfin kabul ettiği sayfayı scraper aynı girdilerle reddetmez.
 
 ## Testler ne kanıtlar, ne kanıtlamaz
 
-- **Otomatik testler (59):** Kuralların doğru çalıştığını kayıtlı yanıtlarla
-  kanıtlar. Hata düzeltmelerinin her biri, canlıda görülen gerçek bir örneğe
-  dayanan regresyon testiyle korunur. Sitelerin bugün hâlâ aynı yapıda olduğunu
-  kanıtlamaz.
-- **Veritabanı testleri (36 + 26 + 22):** Şema kurallarının, migration
-  koşucusunun, katalog eşitlemenin ve toplama turunun gerçek PostgreSQL'de
-  doğru çalıştığını kanıtlar. Tur testleri sahte scraper kullanır; turun
-  gerçek sitelerle çalıştığını yalnızca canlı tur gösterir.
+- **Otomatik testler (414; 116'sı gerçek PostgreSQL'de):** Kuralların doğru
+  çalıştığını kayıtlı ve sahte yanıtlarla kanıtlar. Hata düzeltmelerinin her
+  biri, canlıda görülen gerçek bir örneğe dayanan regresyon testiyle korunur.
+  Sitelerin bugün hâlâ aynı yapıda olduğunu kanıtlamaz. Veritabanı testleri
+  şema kurallarının, migration koşucusunun, katalog eşitlemenin ve toplama
+  turunun gerçek PostgreSQL'de doğru çalıştığını kanıtlar; tur testleri sahte
+  scraper kullanır, turun gerçek sitelerle çalıştığını yalnızca canlı tur
+  gösterir. Bilinen bir hata `xfail(strict=True)` ile işaretlenir: test hatayı
+  belgeler, hata düzeltilince test "beklenmedik geçti" diye uyarır.
 - **Kasıtlı bozma (mutasyon) denetimi:** Testlerin gerçekten hata
   yakalayabildiğini sınamak için kodun kritik satırları projenin bir kopyasında
-  (ağ kapalıyken) tek tek bozuldu ve testlerin bozmayı yakalayıp yakalamadığına
-  bakıldı (sonuç: proje_plani.md Bölüm 9, Adım 3). Yakalanmayanlar bilinçli
-  olarak testsiz bırakılan eşzamanlılık korumalarıdır.
+  ya da yalnız bellekte (ağ kapalıyken) tek tek bozuldu ve testlerin bozmayı
+  yakalayıp yakalamadığına bakıldı (sonuçlar: proje_plani.md Bölüm 9, Adım 3 ve
+  Adım 6). Yakalanmayanlar bilinçli olarak testsiz bırakılan eşzamanlılık
+  korumaları ya da davranışı değiştirmeyen (eşdeğer) bozmalardır.
+- **Linux/Windows farkı:** CI Linux'ta çalışır; `pythonw`, Windows kod sayfası
+  ve Görev Zamanlayıcı yalnız bu bilgisayarda, canlı turla sınanır. Kataloğun
+  LF yazılması testi yalnız Windows'ta anlamlıdır (Linux zaten LF yazar).
 - **Canlı kontrol araçları:** Bugünkü site uyumunu aynı üretim koduyla sınar.
   Pazaryerindeki her sayfanın katalogda olduğunu kanıtlamaz.
 - "Testler geçti" ile "bütün pazaryeri eksiksiz tarandı" aynı şey değildir.

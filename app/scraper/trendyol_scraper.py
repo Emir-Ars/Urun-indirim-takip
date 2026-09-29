@@ -75,6 +75,10 @@ def _offer(
     current, original, reason = _price(
         variant.get("price") or merchant.get("price") or {}
     )
+    # Stok yalnız açık sinyalle belirlenir: False → Tükendi, True → Stokta Var
+    # (isRunningOut bool True ise Kritik Stok). Alan yoksa stok bilinmiyor sayılır ve
+    # teklif elenir; Tükendi uydurulmaz. fallback_stock yalnız ana satıcı için
+    # verilen ürün düzeyindeki inStock'tur.
     in_stock = variant.get("inStock", fallback_stock)
     sellable = variant.get("sellable", in_stock)
     if in_stock is False or sellable is False:
@@ -93,13 +97,19 @@ def _offer(
         for pattern in DISALLOWED_CONDITIONS
     ):
         reason = "disallowed_condition"
+    # otherMerchants kardeş renk sayfalarının satıcılarını da içerir; yalnız bu
+    # sayfanın (-p-<id>) teklifleri sayılır, yoksa başka rengin fiyatı bu
+    # bağlantıya yazılırdı.
     if _product_id(offer_url) != _product_id(listing.url):
         reason = "different_product_page"
     score = (merchant.get("sellerScore") or {}).get("value")
+    listing_id = variant.get("listingId")
     return {
-        "listing_id": str(variant.get("listingId", "")) or None,
+        "listing_id": str(listing_id) if listing_id not in (None, "") else None,
         "seller_name": str(seller_name) if seller_name else None,
         "seller_rating": float(score) if score is not None else None,
+        # Trendyol satıcı puanını 10 üzerinden verir (ör. 9,3). Ölçek puanla
+        # birlikte saklanır; ileride değişirse eski puanlarla karışmaz.
         "seller_rating_scale": 10.0 if score is not None else None,
         "current_price": current,
         "original_price": original,
@@ -114,6 +124,8 @@ def _offer(
 class Scraper(BaseScraper):
     def __init__(self, hosts, runtime, client=None):
         super().__init__(hosts, runtime, client)
+        # Tanılama: son okunan sayfanın bütün teklifleri, elenenler ret nedeniyle
+        # birlikte. PriceObservation'a girmez; canlı kontrol aracı ve testler okur.
         self._last_offers = []
 
     def get_product_data(self, listing):
@@ -155,6 +167,10 @@ class Scraper(BaseScraper):
         candidates = [offer for offer in offers if offer["eligible"]]
         if not candidates:
             self._last_offers = offers
+            # Tükendi yalnız açık sinyalle: bu sayfaya ait, kapsam içi tekliflerin
+            # hepsi açıkça stok dışı olmalı. Yenilenmiş/teşhir satıcının
+            # stoksuzluğu ve başka renk sayfaları karara girmez. Biri bile açıkça
+            # stok dışı değilse (ör. stoku belirsiz) hata döner, Tükendi uydurulmaz.
             on_page = [
                 offer
                 for offer in offers

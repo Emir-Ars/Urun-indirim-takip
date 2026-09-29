@@ -18,7 +18,7 @@ def traced_adapters(collected):
     """Üretim adaptörlerini yalnız izlerini toplayan alt sınıflarla sarar."""
     settings = Settings()
     catalog = Catalog.model_validate_json(
-        settings.catalog_path.read_text(encoding="utf-8")
+        settings.catalog_path.read_text(encoding="utf-8-sig")
     )
     adapters = {}
     for platform in catalog.platforms:

@@ -1,4 +1,5 @@
 import json
+from uuid import UUID
 
 import pytest
 
@@ -12,17 +13,11 @@ SKU = "HBCV00004X9ZCK"
 
 
 class FakeResponse:
+    # PageClient yanıttan yalnız status_code, headers ve content okur.
     def __init__(self, *, status=200, text="", data=None):
         self.status_code = status
-        self.text = text
         self.content = text.encode() if data is None else json.dumps(data).encode()
         self.headers = {}
-        self.data = data
-
-    def json(self):
-        if self.data is None:
-            raise ValueError("JSON değil")
-        return self.data
 
 
 class FakeSession:
@@ -136,14 +131,14 @@ def api_response(offers, *, sku=SKU):
     }
 
 
-def response_offer(listing_id, seller, price, *, discounted=None):
+def response_offer(listing_id, seller, price, *, discounted=None, campaigns=None):
     price_data = {"price": price}
     if discounted is not None:
         price_data["discountedPrice"] = discounted
     return {
         "listingId": listing_id,
         "merchantName": seller,
-        "campaigns": [],
+        "campaigns": campaigns or [],
         "priceData": price_data,
     }
 
@@ -173,6 +168,8 @@ def test_fetches_all_listings_and_selects_cheapest(listing):
     observation = scraper.fetch(listing)
 
     assert observation.current_price == 5_724_901
+    # Liste fiyatı satış fiyatına eşit: sayfada üstü çizili fiyat görünmez.
+    assert observation.original_price is None
     assert observation.seller_name == "Hepsiburada"
     assert observation.stock_status == "Stokta Var"
     assert [call[:2] for call in session.calls] == [
@@ -236,6 +233,150 @@ def test_filters_conditions_and_uses_discounted_price(listing):
     assert observation.seller_rating == 9.7
     assert len(scraper._last_offers) == 3
     assert sum(offer["eligible"] for offer in scraper._last_offers) == 1
+
+
+def offer_by_id(scraper, listing_id):
+    return next(o for o in scraper._last_offers if o["listing_id"] == listing_id)
+
+
+def test_price_response_campaign_text_rejects_refurbished_offer(listing):
+    # Satıcı adı ve etiketleri temiz; "yenilenmiş" yalnız fiyat yanıtındaki kampanya
+    # metninde geçiyor. Daha pahalı temiz satıcının seçilmesi, seçimin en ucuz
+    # kuralıyla değil ret nedeniyle değiştiğini gösterir.
+    listings = [
+        full_listing("valid", "Geçerli Satıcı", 50_000),
+        full_listing("other", "Diğer Satıcı", 52_000),
+    ]
+    offers = [
+        response_offer(
+            "valid",
+            "Geçerli Satıcı",
+            50_000,
+            campaigns=[{"text": "Yenilenmiş ürün"}],
+        ),
+        response_offer("other", "Diğer Satıcı", 52_000),
+    ]
+    scraper, session = scraper_with(listings, offers)
+
+    observation = scraper.fetch(listing)
+
+    assert observation.seller_name == "Diğer Satıcı"
+    assert observation.current_price == 5_200_000
+    assert len(session.calls) == 3
+    rejected = offer_by_id(scraper, "valid")
+    assert rejected["eligible"] is False
+    assert rejected["rejection_reason"] == "disallowed_condition"
+
+
+def test_equal_prices_select_seller_by_name(listing):
+    # Kimlik sırası ad sırasının tersi: seçim listingId'ye veya sıraya göre olsaydı
+    # Zeta kazanırdı.
+    listings = [
+        full_listing("1", "Zeta Satıcı", 50_000),
+        full_listing("2", "Alfa Satıcı", 50_000),
+    ]
+    offers = [
+        response_offer("1", "Zeta Satıcı", 50_000),
+        response_offer("2", "Alfa Satıcı", 50_000),
+    ]
+    scraper, _session = scraper_with(listings, offers)
+
+    observation = scraper.fetch(listing)
+
+    assert observation.seller_name == "Alfa Satıcı"
+    assert offer_by_id(scraper, "2")["selected"] is True
+    assert offer_by_id(scraper, "1")["selected"] is False
+
+
+def test_selected_diagnostic_is_marked_when_listing_id_is_integer(listing):
+    # API listingId'yi sayı olarak döndürürse de kazanan tanılama kaydı bulunmalı.
+    listings = [
+        full_listing(12345, "Hepsiburada", 56_999),
+        full_listing(67890, "Diğer Satıcı", 58_000),
+    ]
+    offers = [
+        response_offer(12345, "Hepsiburada", 56_999),
+        response_offer(67890, "Diğer Satıcı", 58_000),
+    ]
+    scraper, _session = scraper_with(listings, offers)
+
+    observation = scraper.fetch(listing)
+
+    assert observation.seller_name == "Hepsiburada"
+    assert offer_by_id(scraper, "12345")["selected"] is True
+    assert offer_by_id(scraper, "67890")["selected"] is False
+
+
+@pytest.mark.parametrize(
+    ("seller", "price", "reason"),
+    [
+        ("Eksik Satıcı", None, "missing_price"),
+        (None, 40_000, "missing_seller"),
+    ],
+    ids=["missing_price", "missing_seller"],
+)
+def test_price_response_offer_without_price_or_seller_is_diagnosed(
+    listing, seller, price, reason
+):
+    listings = [
+        full_listing("broken", "Eksik Satıcı", 40_000),
+        full_listing("valid", "Geçerli Satıcı", 50_000),
+    ]
+    valid_offer = response_offer("valid", "Geçerli Satıcı", 50_000)
+    scraper, _session = scraper_with(
+        listings, [response_offer("broken", seller, price), valid_offer]
+    )
+    baseline, _baseline_session = scraper_with(listings, [valid_offer])
+
+    observation = scraper.fetch(listing)
+
+    # Üretim sonucu, bozuk teklif yanıtta hiç yokmuş gibi aynı kalır.
+    expected = baseline.fetch(listing)
+    assert observation.model_dump(exclude={"timestamp"}) == expected.model_dump(
+        exclude={"timestamp"}
+    )
+    rejected = offer_by_id(scraper, "broken")
+    assert rejected["eligible"] is False
+    assert rejected["rejection_reason"] == reason
+    assert rejected["selected"] is False
+    assert offer_by_id(scraper, "valid")["selected"] is True
+
+
+def test_only_disallowed_salable_seller_is_no_eligible_offer(listing):
+    listings = [full_listing("used", "İkinci El Dünyası", 40_000)]
+    scraper, session = scraper_with(listings, [])
+
+    with pytest.raises(FetchError) as error:
+        scraper.fetch(listing)
+
+    assert error.value.code == "no_eligible_offer"
+    assert len(session.calls) == 2  # fiyat isteği gönderilmez
+    assert scraper._last_offers[0]["rejection_reason"] == "disallowed_condition"
+
+
+@pytest.mark.parametrize(
+    "missing_fields",
+    [["merchantId"], ["price", "originalPrice", "minimumPrice"]],
+    ids=["merchant_id", "all_prices"],
+)
+def test_seller_record_missing_field_is_skipped_as_invalid_offer(
+    listing, missing_fields
+):
+    broken = full_listing("broken", "Eksik Satıcı", 40_000)
+    for field in missing_fields:
+        del broken[field]
+    listings = [broken, full_listing("valid", "Geçerli Satıcı", 50_000)]
+    offers = [response_offer("valid", "Geçerli Satıcı", 50_000)]
+    scraper, session = scraper_with(listings, offers)
+
+    observation = scraper.fetch(listing)
+
+    assert observation.seller_name == "Geçerli Satıcı"
+    sent = session.calls[2][2]["json"]["product"]["otherMerchants"]
+    assert [item["listingId"] for item in sent] == ["valid"]
+    rejected = offer_by_id(scraper, "broken")
+    assert rejected["eligible"] is False
+    assert rejected["rejection_reason"] == "invalid_offer"
 
 
 def test_empty_full_listing_response_is_out_of_stock(listing):
@@ -325,6 +466,49 @@ def test_rejects_response_sku_mismatch(listing):
         scraper.fetch(listing)
 
     assert error.value.code == "identity"
+
+
+@pytest.mark.parametrize("failing_call", [2, 3], ids=["listings_api", "price_api"])
+def test_unsuccessful_api_status_code_is_api_error(listing, failing_call):
+    listings = [full_listing("hb", "Hepsiburada", 56_999)]
+    scraper, session = scraper_with(
+        listings, [response_offer("hb", "Hepsiburada", 56_999)]
+    )
+    # HTTP 200 dönse de gövdedeki statusCode başarısızlık bildiriyor.
+    session.responses[failing_call - 1] = FakeResponse(data={"statusCode": 500})
+
+    with pytest.raises(FetchError) as error:
+        scraper.fetch(listing)
+
+    assert error.value.code == "api_error"
+    assert len(session.calls) == failing_call
+
+
+def test_price_request_sends_anonymous_cookie_as_user_id(listing):
+    listings = [full_listing("hb", "Hepsiburada", 56_999)]
+    scraper, session = scraper_with(
+        listings, [response_offer("hb", "Hepsiburada", 56_999)]
+    )
+
+    scraper.fetch(listing)
+
+    assert session.calls[2][2]["json"]["userId"] == "test-user"
+
+
+def test_user_id_without_cookie_is_random_uuid_reused_across_fetches(listing):
+    listings = [full_listing("hb", "Hepsiburada", 56_999)]
+    offers = [response_offer("hb", "Hepsiburada", 56_999)]
+    scraper, session = scraper_with(listings, offers)
+    _unused, second_round = scraper_with(listings, offers)
+    session.responses.extend(second_round.responses)
+    session.cookies = {}
+
+    scraper.fetch(listing)
+    scraper.fetch(listing)
+
+    first_id = session.calls[2][2]["json"]["userId"]
+    assert str(UUID(first_id)) == first_id
+    assert session.calls[5][2]["json"]["userId"] == first_id
 
 
 @pytest.mark.parametrize("status", [403, 429])

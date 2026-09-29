@@ -64,6 +64,11 @@ class Platform(Contract):
 
 
 class Product(Contract):
+    # Üst sınır 32 bit işaretli tamsayıdır. Sınır veritabanından önce konmuştu;
+    # bugün products.product_id sütunu (001_initial.sql) da `integer` olduğundan
+    # katalogdaki her kimlik sütuna sığar. Money için üst sınır yok: sütuna
+    # sığmayan fiyat turda "storage" hatası olarak yazılır ve tur sürer
+    # (app/collection/service.py).
     product_id: int = Field(gt=0, lt=2**31)
     product_key: str = Field(min_length=1)
     brand: str = Field(min_length=1)

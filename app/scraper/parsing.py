@@ -10,12 +10,18 @@ from bs4 import BeautifulSoup
 from app.scraper.http import FetchError
 
 # Keşif ve scraper aynı kimlik kurallarını kullanır; kurallar yalnız burada tutulur.
+# Sözcükler bilerek Türkçe harfsiz yazılır (kilif, sarj, yenilenmis, yurt disi):
+# bütün eşleştirmeler normalize() çıktısı üzerinde yapılır ve normalize Türkçe
+# harfleri ASCII'ye indirir (ı→i, ş→s, ğ→g). "kılıf" diye düzeltilirse kural hiçbir
+# başlığı yakalamaz. Desenlerdeki "_" alternatifi için normalize() yorumuna bakın.
 EXCLUDED = re.compile(
     r"\b(?:kilif|kapak|koruyucu|sarj|adaptor|kablo|"
     r"kulaklik|yenilenmis|refurbished|teshir|ikinci[ _-]*el|"
     # Yurt dışı sürüm: Türkiye'de resmi servisi yok (karar, 27 Eylül 2026).
     r"international[ -]*version|global[ -]*(?:version|surum)|yurt[ -]*disi)\b"
 )
+# Ayrı model sayılan ekler (docs/teknik.md "Kimlik kuralları" ile aynı liste):
+# başlıkta hedefte olmayan bir ek varsa sayfa reddedilir (bkz. matches_model).
 MODEL_SUFFIX = re.compile(r"\b(?:pro|plus|max|ultra|fe|lite|mini|edge|air)\b")
 # Satıcı/teklif düzeyinde kapsam dışı koşullar (her iki scraper kullanır).
 DISALLOWED_CONDITIONS = (
@@ -27,6 +33,15 @@ CAPACITY = re.compile(r"(?<!\d)(\d+)\s*(gb|tb)\b")
 
 
 def money(value) -> int:
+    """Kaynaktaki fiyatı (JSON sayısı veya "57249.01" gibi metin) kuruşa çevirir.
+
+    Ondalık ayırıcı noktadır; Türkçe biçim ("57.249,01", "57.249") desteklenmez
+    ve ValueError verir, yanlış tutar olarak okunmaz; kaynaklar fiyatı sayı
+    olarak verir. "₺", "TL", "TRY" ve boşluklar atılır.
+    Sıfır/negatif, ikiden fazla ondalık, NaN/sonsuz, bool ve None ValueError
+    verir. Decimal bilimsel gösterimi kabul ettiğinden "1e3" 1000 TL sayılır;
+    kaynaklar böyle değer göndermediği için zararsızdır.
+    """
     if value is None or isinstance(value, bool):
         raise ValueError("Fiyat sayısal olmalı")
     text = str(value).strip().replace("\xa0", "").replace(" ", "")
@@ -42,7 +57,10 @@ def money(value) -> int:
 
 def normalize(text: str) -> str:
     # Satıcılar kelimeleri "_" ile ayırabiliyor ("Galaxy S25 Ultra_12GB_256GB");
-    # regex'teki \b alt çizgiyi harf saydığından boşluğa çevrilir.
+    # regex'teki \b alt çizgiyi harf saydığından boşluğa çevrilir. Desenlerdeki
+    # "[\s_-]" sınıfında "_" pratikte gereksizdir, ama bilerek kaldırılmadı:
+    # değiştirme NFKD'den önce yapıldığı için tam genişlikli "＿" (U+FF3F) gibi
+    # birkaç nadir karakter NFKD sonrası yine "_" olur.
     text = text.casefold().replace("ı", "i").replace("_", " ")
     return "".join(
         c for c in unicodedata.normalize("NFKD", text) if not unicodedata.combining(c)
@@ -85,6 +103,8 @@ def matches_model(name: str, model: str) -> bool:
         return False
     pattern = r"(?<![a-z0-9])" + r"[\s_-]*".join(map(re.escape, tokens))
     match = re.search(pattern, title)
+    # Eşleşmenin hemen ardından harf/rakam veya "+" gelemez: "S24+" S24, "16e" 16
+    # değildir. Ardından başlıkta hedefte olmayan ek (Pro, Plus…) varsa ret.
     if not match or (
         match.end() < len(title)
         and (title[match.end()].isalnum() or title[match.end()] == "+")

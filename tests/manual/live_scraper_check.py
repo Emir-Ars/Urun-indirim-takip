@@ -5,25 +5,20 @@ import json
 import sys
 from pathlib import Path
 
-from app.contracts import Catalog, ProductListing
+from app.collection.service import format_try, plan_listings
+from app.contracts import Catalog
 from app.scrape_lock import ScrapeBusy, scrape_lock
 from app.scraper.factory import create_scraper
 from app.scraper.http import FetchError
 from app.settings import Settings
 
 
-def format_try(value: int | None) -> str | None:
-    if value is None:
-        return None
-    lira, kurus = divmod(value, 100)
-    grouped = f"{lira:,}".replace(",", ".")
-    return f"{grouped},{kurus:02d} TL"
-
-
 def with_price_display(values: dict) -> dict:
     result = dict(values)
     for field in ("current_price", "original_price"):
-        result[f"{field}_display"] = format_try(result.get(field))
+        value = result.get(field)
+        # JSON'da fiyatsız alan null kalır (turun ekran çıktısındaki "-" değil).
+        result[f"{field}_display"] = None if value is None else format_try(value)
     return result
 
 
@@ -47,27 +42,16 @@ def check(prefix: str) -> None:
     settings = Settings()
     runtime = settings.runtime()
     catalog = Catalog.model_validate_json(
-        Path(settings.catalog_path).read_text(encoding="utf-8")
+        Path(settings.catalog_path).read_text(encoding="utf-8-sig")
     )
-    products = {product.product_id: product for product in catalog.products}
     platforms = {platform.key: platform for platform in catalog.platforms}
     observations = []
     platform_results = []
     errors = []
 
-    for item in catalog.listings:
-        product = products[item.product_id]
-        platform = platforms[item.platform]
-        if not (item.active and product.active and platform.active):
-            continue
-        if not product.product_key.startswith(prefix):
-            continue
-        listing = ProductListing(
-            **item.model_dump(),
-            product_name=product.name,
-            model=product.model,
-            storage_gb=product.storage_gb,
-        )
+    # Fiyat turuyla aynı sayfa seçimi: etkin sayfa + ürün + platform, ön ek.
+    for listing in plan_listings(catalog, prefix):
+        platform = platforms[listing.platform]
         scraper = create_scraper(platform.key, platform.hosts, runtime)
         try:
             observation = scraper.fetch(listing)
@@ -83,8 +67,8 @@ def check(prefix: str) -> None:
             platform_results.append(
                 {
                     "platform": platform.name,
-                    "product_id": product.product_id,
-                    "listing_id": item.listing_id,
+                    "product_id": listing.product_id,
+                    "listing_id": listing.listing_id,
                     "production_result": with_price_display(
                         observation.model_dump(mode="json")
                     ),
@@ -93,7 +77,7 @@ def check(prefix: str) -> None:
                 }
             )
         except (FetchError, ValueError) as exc:
-            errors.append({"listing_id": item.listing_id, "error": str(exc)})
+            errors.append({"listing_id": listing.listing_id, "error": str(exc)})
         finally:
             scraper.close()
 

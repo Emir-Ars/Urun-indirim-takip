@@ -14,8 +14,9 @@ class BaseScraper(ABC):
     def fetch(self, listing: ProductListing) -> PriceObservation:
         try:
             return self.get_product_data(listing)
-        except FetchError:
-            raise
+        # Beklenmeyen sayfa şekli ve sözleşmeyi bozan gözlem (Pydantic
+        # ValidationError bir ValueError'dır) `parse` hatası olur. FetchError bu
+        # türlerden türemediği için kodu değişmeden yükselir.
         except (ValueError, TypeError, KeyError, AttributeError) as exc:
             raise FetchError("parse", f"Teklif doğrulanamadı: {exc}") from exc
 

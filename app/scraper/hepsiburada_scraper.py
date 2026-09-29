@@ -1,4 +1,29 @@
-"""Hepsiburada ürün bağlamı ve otherMerchants API adaptörü."""
+"""Hepsiburada ürün sayfasındaki satıcılardan en ucuz geçerli teklifi okur.
+
+Sayfa başına üç istek yapılır (Tükendi ise iki):
+
+1. Ürün sayfası: kimlik doğrulanır (JSON-LD adları, sayfa başlığı ve seçenek
+   listesindeki kapasite).
+2. Satıcı listesi API'si (``LISTINGS_URL``): bütün satıcılar ve stok sinyali
+   (``isSalable``). Satıcı yoksa veya hepsi açıkça satılamazsa sonuç Tükendi;
+   fiyat isteği gönderilmez.
+3. Fiyat API'si (``API_URL``, ``otherMerchants`` POST): satılabilir ve kapsam
+   içi satıcıların fiyatı; güncel fiyat ``discountedPrice``, yoksa ``price``.
+   Kalanlardan en ucuzu seçilir; eşitlikte satıcı adına göre karar verilir.
+
+Fiyat isteğini sitenin kendi ön yüzü de gönderir; gövde ve başlıklar onun isteği
+örnek alınarak yeniden kurulur, bazı alanlar türetilir. Ürün bağlamı
+(``PRODUCT_FIELDS``) sayfadaki gömülü JSON'da ya hazır bulunur ya da redux
+durumundan çıkarılır (son kategori → ``rootBuyingCategoryList``;
+``_payload_context``). Satıcı kayıtları satıcı listesi API'sinden kurulur,
+``minimumPrice`` yoksa satış fiyatı konur (``_merchant_payload``). ``userId``
+için sitenin anonim çerezi kullanılır (``_user_id``).
+
+Sayfada tek bir tam ürün bağlamı bulunamazsa ``parse`` hatası verilir; bir satıcı
+kaydında alan eksikse yalnız o teklif atlanır (``invalid_offer``). Her satıcının
+durumu ve ret nedeni ``_last_offers`` içinde tutulur; bunu yalnız manuel kontrol
+aracı okur, üretim sonucu yalnız seçilen tekliftir.
+"""
 
 import json
 import re
@@ -21,6 +46,8 @@ from app.scraper.parsing import (
 
 API_URL = "https://www.hepsiburada.com/api/v1/otherMerchants"
 LISTINGS_URL = "https://www.hepsiburada.com/api/v1/product/listings/{sku}"
+# Fiyat isteğindeki "product" nesnesinin alanları (sitenin ön yüzünün gönderdiği
+# gövde); sayfadaki gömülü JSON'dan okunur veya türetilir, bkz. _payload_context.
 PRODUCT_FIELDS = (
     "productTags",
     "sku",
@@ -228,6 +255,8 @@ def _response_listings(response: dict) -> list[dict]:
 
 
 def _seller_rating(listing: dict) -> float | None:
+    # Hepsiburada satıcı puanını 10 üzerinden gösterir (ör. 9,6); çağıranlar ölçeği
+    # bu yüzden 10.0 yazar. Hiç değerlendirmesi olmayan satıcının puanı yok sayılır.
     summary = listing.get("ratingSummary") or {}
     if not isinstance(summary, dict) or not summary.get("ratingQuantity"):
         return None
@@ -259,6 +288,9 @@ class Scraper(BaseScraper):
         self._last_offers = []
 
     def _user_id(self) -> str:
+        # Fiyat isteği gövdesi bir userId taşır: site ön yüzü gibi anonim
+        # hbus_anonymousId çerezi, yoksa rastgele uuid. Oturum açma veya kimlik
+        # doğrulama değildir; bir Scraper örneği boyunca aynı kalır.
         if self._anonymous_user_id is None:
             self._anonymous_user_id = self.pages.cookie("hbus_anonymousId") or str(
                 uuid4()
@@ -295,13 +327,12 @@ class Scraper(BaseScraper):
             if original is not None and current is not None and original <= current:
                 original = None
             salable = item.get("isSalable")
+            rating = _seller_rating(item)
             diagnostic = {
                 "listing_id": str(listing_id) if listing_id else None,
                 "seller_name": item.get("merchantName"),
-                "seller_rating": _seller_rating(item),
-                "seller_rating_scale": (
-                    10.0 if _seller_rating(item) is not None else None
-                ),
+                "seller_rating": rating,
+                "seller_rating_scale": 10.0 if rating is not None else None,
                 "current_price": current,
                 "original_price": original,
                 "stock_status": "Stokta Var" if salable is True else "Tükendi",
@@ -400,10 +431,13 @@ class Scraper(BaseScraper):
             listing_id = offer.get("listingId")
             source = payload_sources.get(listing_id)
             full_listing = listing_sources.get(listing_id)
+            # Yalnız bizim gönderdiğimiz, satıcı listesinde satılabilir ve kapsam içi
+            # görülen satıcının teklifi sayılır; yanıttaki başka bir listingId seçilse
+            # stok ve durum denetimi yapılmamış bir teklif seçilmiş olurdu.
             if source is None or full_listing is None:
                 continue
+            diagnostic = diagnostic_by_id.get(listing_id)
             if not _is_allowed(offer, source):
-                diagnostic = diagnostic_by_id.get(listing_id)
                 if diagnostic is not None:
                     diagnostic["eligible"] = False
                     diagnostic["rejection_reason"] = "disallowed_condition"
@@ -412,23 +446,29 @@ class Scraper(BaseScraper):
             raw_price = price_data.get("discountedPrice")
             if raw_price is None:
                 raw_price = price_data.get("price")
+            # Fiyatı veya satıcı adı olmayan teklif seçilemez; satıcı listesi bu
+            # satıcıyı uygun göstermiş olsa da ret nedeni tanılamaya yazılır.
             if raw_price is None or not offer.get("merchantName"):
+                if diagnostic is not None:
+                    diagnostic["eligible"] = False
+                    diagnostic["rejection_reason"] = (
+                        "missing_price" if raw_price is None else "missing_seller"
+                    )
                 continue
             current = money(raw_price)
             regular = price_data.get("price")
             original = money(regular) if regular is not None else None
             if original is not None and original <= current:
                 original = None
-            diagnostic = diagnostic_by_id.get(listing_id)
+            # Puan fiyat yanıtından değil, satıcı listesindeki kayıttan okunur.
+            rating = _seller_rating(full_listing)
             if diagnostic is not None:
                 diagnostic.update(
                     current_price=current,
                     original_price=original,
                     seller_name=str(offer["merchantName"]),
-                    seller_rating=_seller_rating(full_listing),
-                    seller_rating_scale=(
-                        10.0 if _seller_rating(full_listing) is not None else None
-                    ),
+                    seller_rating=rating,
+                    seller_rating_scale=10.0 if rating is not None else None,
                     eligible=True,
                     rejection_reason=None,
                 )
@@ -438,7 +478,10 @@ class Scraper(BaseScraper):
                     "seller": str(offer["merchantName"]),
                     "listing_id": str(listing_id),
                     "original": original,
-                    "rating": _seller_rating(full_listing),
+                    "rating": rating,
+                    # Kazanan bu kayıtla işaretlenir: diagnostic_by_id ham listingId
+                    # ile anahtarlı; str(listing_id) ile arama sayı kimlikte eşleşmez.
+                    "diagnostic": diagnostic,
                 }
             )
         if not candidates:
@@ -450,9 +493,8 @@ class Scraper(BaseScraper):
             candidates,
             key=lambda item: (item["current"], item["seller"], item["listing_id"]),
         )
-        winner_diagnostic = diagnostic_by_id.get(winner["listing_id"])
-        if winner_diagnostic is not None:
-            winner_diagnostic["selected"] = True
+        if winner["diagnostic"] is not None:
+            winner["diagnostic"]["selected"] = True
         self._last_offers = diagnostics
         return self.observation(
             listing,

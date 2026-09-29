@@ -1,6 +1,6 @@
 # Akıllı Telefon İndirim Takip ve Tahmin Sistemi — Proje Planı
 
-Son güncelleme: 28 Eylül 2026.
+Son güncelleme: 29 Eylül 2026.
 
 Bu belge **kararların ve aşama durumunun** ana kaynağıdır. Sistemin genel
 tanıtımı [README.md](README.md), ayrıntılı işleyişi, komutları, kuralları ve
@@ -31,7 +31,7 @@ Kullanıcı arayüzde arama yaptığında canlı scraping veya model eğitimi
 | 3. Trendyol doğrulanmış stoksuz sayfa | ✅ Uygulandı | `e6664a3` |
 | 4. Scraper/discovery kabul kontrolü (6 adım) | ✅ Tamamlandı | `4d5613d`, Bölüm 5 |
 | 5. Katalogun 25 hedefle sıfırdan kurulumu ve kod denetimi | ✅ Tamamlandı | Bölüm 6 |
-| 6. Veritabanı ve zamanlanmış toplama | ⏳ Sürüyor: Adım 0–3 ve 5 tamamlandı (şema, katalog eşitleme, toplama turu, ilk tam tur 326/326 hatasız); sıradaki Görev Zamanlayıcı | Bölüm 9 |
+| 6. Veritabanı ve zamanlanmış toplama | ⏳ Sürüyor: Adım 0–3 ve 5 tamamlandı (şema, katalog eşitleme, toplama turu, ilk tam tur 326/326 hatasız); Görev Zamanlayıcı kuruldu (28 Eylül), 2–3 günlük gözlem sürüyor | Bölüm 9 |
 | 7. FastAPI ve Streamlit | 🔜 Planlandı, başlanmadı | Bölüm 9 |
 | 8. ML (indirim tahmini) | 🔜 Planlandı, başlanmadı | Bölüm 9 |
 | 9. Docker ve 7/24 işletim | 🔜 Planlandı, başlanmadı | Bölüm 9 |
@@ -234,6 +234,10 @@ Bu adımda alınan kararlar:
 - `exclude_terms` ve `network` keşif anında uygulanır; sonradan eklenen kural
   eski katalog kayıtlarını çıkarmaz.
 - Arka arkaya çok tarama Trendyol'da geçici engele yol açabilir.
+- Turlar bilgisayarın o anki internet bağlantısına bağlıdır. Bağlantı koparsa
+  etkilenen sayfalara `network` hatası yazılır, veri uydurulmaz ve hata aynı
+  tur içinde yeniden denenmez (tur 3, 28 Eylül: 47/326 sayfa; bilgisayar bir
+  telefonun hotspot'una bağlıydı ve bağlantı birkaç dakika koptu).
 - Fiyat ve stok iki tur arasında (12 saat) değişip geri dönebilir; bu
   değişiklikler görülmez. Geçmiş, turların anlık görüntüleridir (28 Eylül:
   bir sayfa 2 saatte Tükendi → Kritik Stok, bir başkası 71.059 → 75.524 TL).
@@ -257,13 +261,17 @@ nadir durumdur. Veritabanı aşamasında veya bir hata görüldüğünde ele al�
   `filter_unavailable` iki kez yazılabiliyor; hiç aday bulamayan Trendyol
   araması uyarısız "tam" sayılıyor; tarama sonrası yazma hatası "keşif
   başlatılamadı" (çıkış 1) diye görünüyor; rapor yolu sabit.
-- Test kapsamı: Trendyol Kritik Stok, CLI çıkış kodları, dry-run'ın katalog
-  yazmaması, birçok uyarı türü ve HTTP yönlendirme/yeniden deneme yolları
-  testsiz.
-- Küçük ölü kod: etkisiz `except FetchError: raise` blokları, erişilmez satır,
-  regex'lerde artık gereksiz `_`, tekrarlanan `_seller_rating` çağrıları.
-- Hata kodları (`parse`, `identity`, `network`, `limit`, `http_error`…) teknik rehberde
-  tablo olarak yok.
+- Kimlik kuralında Türkçe ekler: aksesuar sözcükleri ek almış hâlleriyle
+  ("Kılıfı", "Adaptörü") ve keşfin kategori süzgecinde "Kapağı" yakalanmıyor
+  ("Cep Telefonu Kapağı" telefon kategorisi sayılıyor; `xfail` testiyle
+  belgeli). Kapasite ve model doğrulaması ikinci koruma olduğu için yanlış fiyat
+  üretmez; kural canlıda hedef markada bir örnek görülünce değiştirilir.
+- 29 Eylül incelemesinde kapandı: test kapsamı maddeleri (Trendyol Kritik Stok,
+  keşif CLI çıkış kodları, dry-run'ın kataloğa yazmaması, uyarı türleri, HTTP
+  yönlendirme/yeniden deneme), ölü kod (etkisiz `except FetchError: raise`,
+  erişilmez satır, tekrarlanan `_seller_rating`) ve hata kodu tablosu
+  (docs/teknik.md "Hata kodları"). Regex'lerdeki `_` bilerek kaldı: tam
+  genişlikli "＿" gibi nadir karakterler `normalize` sonrası yine `_` olur.
 
 ## 8. Açık kararlar
 
@@ -273,6 +281,7 @@ nadir durumdur. Veritabanı aşamasında veya bir hata görüldüğünde ele al�
 | Veritabanı teknolojisi, veri modeli, çalışma ortamı | **Karar verildi (28 Eylül 2026):** PostgreSQL 17, `psycopg` + ham SQL, kullanıcının bilgisayarı, günde 2 tur; ayrıntı Bölüm 9. SQLite önerisi bırakıldı. |
 | Keşfin zamanlanması | **Karar verildi (28 Eylül 2026):** bu aşamada manuel, haftada bir; fiyat turuyla ortak kilit. Otomasyon, veritabanı birkaç hafta sorunsuz çalıştıktan sonra değerlendirilir. Kanıt: 28 Eylül kapanış taramasında tek günde 21 yeni bağlantı çıktı; Hepsiburada genel aramasının ilk 36 kartı her seferinde değişebildiği için tekrar eden keşif kapsamı artırır. |
 | Akakçe/Cimri piyasa geçmişinin ML'de kullanımı | Karar bekliyor; veri canlıda görüldükten sonra (Bölüm 9, veritabanı Adım 8). |
+| Tur sonunda yalnız `network` hatası alan sayfalara ikinci geçiş | Karar bekliyor (Adım 6 gözleminden sonra). Kanıt: tur 3'te (28 Eylül) 47 sayfa bağlantı kesintisiyle `network` hatası aldı; son hatadan sonra kalan 154 sayfa cevap verdi, yani tur bitmeden bağlantı geri gelmişti. Yalnız `network` için ve tek geçiş düşünülüyor; `blocked` yeniden denenmez. |
 | Gelecek aşama tanımları (`PricePoint`, `ProductSummary`, `MarketRecord`, `coverage_version`, zamanlama/ML ayarları, FastAPI/LightGBM/Streamlit bağımlılıkları) | Kaldırıldı (25 Eylül 2026). İlgili aşamada yeni tasarıma göre yeniden eklenecek; yerel taslaklar o zamana kadar çalışmaz. |
 
 ## 9. Sonraki aşamalar
@@ -310,11 +319,24 @@ veriyle de denenir.
 | 1. Şema, migrate komutu, CI'da PostgreSQL | ✅ Tamamlandı (28 Eylül): `001_initial.sql`, `python -m app.database migrate/status`, 32 veritabanı testi (toplam 91) |
 | 2. Katalogun veritabanına eşitlenmesi | ✅ Tamamlandı (28 Eylül): `python -m app.database sync-catalog [--dry-run]`; kimlik değişiminde hiçbir şey yazmadan durur, katalogdan düşen kayıt pasife alınır; 22 test (toplam 113) |
 | 3. Toplama turu ve ortak kilit | ✅ Tamamlandı (28 Eylül): `python -m app.collection [--prefix] [--scheduled]`; sayfa sonucu hemen ve bir kez yazılır, yarım kalan tur sonraki turda kapatılır; tur, keşif ve iki canlı kontrol aracı `data/scrape.lock` kilidini paylaşır; ayrıca veritabanı tur kilidi. Commit öncesi üç ek kontrol: (1) bağımsız kod incelemesi, 13 bulgu, 7 numara hariç hepsi düzeltildi ve testlendi (7 → Adım 4); (2) kasıtlı bozma testi: 37 bozmanın 33'ü testlerce yakalandı, kaçan 4'ü önceden tahmin edilen eşzamanlılık/güvenlik korumaları; (3) ilk canlı tur (`--prefix poco_`, 4 sayfa, 25 sn): 4/4 fiyat, çıkış 0. Testler 22 (toplam 143). |
-| 4. Karşılaştırılabilirlik görünümü (sahte düşüş kuralı) | 🔜 (6'dan sonra). Aynı migration'a bağımsız incelemeden ertelenen iki kural eklenecek: `sold_out` satırında fiyat/satıcı yasağı ve kimlik alanlarının değiştirilmesini, satır silinmesini reddeden tetikleyici (bugün yalnızca kodda korunuyor; elle SQL ile bozulabilir). |
+| 4. Karşılaştırılabilirlik görünümü (sahte düşüş kuralı) | 🔜 (6'dan sonra). Aynı migration'a (002) ertelenen üç kural eklenecek: `sold_out` satırında fiyat/satıcı yasağı; kimlik alanlarının değiştirilmesini ve satır silinmesini reddeden tetikleyici (bugün yalnızca kodda korunuyor; elle SQL ile bozulabilir); çizili fiyatın güncel fiyattan büyük olması (sözleşme + CHECK; karar 29 Eylül). **Uygulama uyarısı:** kodda yeni migration varken veritabanı güncellenmemişse tur "şema güncel değil" deyip başlamaz; `migrate` 10:00 ve 22:00 turlarının dışında, kod değişikliğiyle aynı anda çalıştırılır. |
 | 5. Canlı deneme (kullanıcı çalıştırır) | ✅ Tamamlandı (28 Eylül): ilk tam tur (tur 2, 15:48–16:19 TR saati, **30 dk 55 sn**): 326/326 sayfa okundu, **0 hata, 0 engellenme**; iki sayfa arası en uzun bekleme 9,4 sn. Hepsiburada 213: 139 fiyat, 74 Tükendi; Trendyol 113: 110 fiyat (77 Kritik Stok), 3 Tükendi. 8 ürünün bütün sayfaları Tükendi (çoğu eski iPhone'ların yüksek kapasiteleri). Tarayıcı karşılaştırması 4 sayfa: fiyat, çizili fiyat, satıcı, kuruşlu fiyat (turda 31 tane) ve Kritik Stok eşleşti; 15:49'da Tükendi okunan `trendyol_762254862` 17:47'de "Son 1 ürün" gösteriyordu, yeniden okumada da Kritik Stok çıktı (sayfa arada değişmiş). Aynı ürünün bir sayfasında fiyat 2 saatte 71.059 → 75.524 TL oldu. Bulunan tek hata: ön ek verilmeyen turda `note` NULL yerine boş yazı oluyordu (`concat_ws`); düzeltildi, test eklendi (toplam 144). Tur 2'nin kaydı elle değiştirilmedi. |
-| 6. Görev Zamanlayıcı ve 2–3 günlük gözlem | 🔜 Sıradaki |
+| 6. Görev Zamanlayıcı ve 2–3 günlük gözlem | ⏳ Kuruldu, gözlem sürüyor. Görev 28 Eylül akşamı `scripts/zamanlayici_kur.ps1` ile kuruldu; kullanıcı ilk turu `Start-ScheduledTask` ile başlattı (tur 3, `scheduled`, 23:22–23:55, 33 dk): `pythonw`, ortam değişkenleri, `pgpass.conf`, çalışma klasörü ve log dosyası Görev Zamanlayıcı ortamında çalıştı. 326 sayfanın 279'u cevap verdi (219 fiyat, 60 Tükendi), 47 sayfa `network` hatası aldı (DNS çözümlenemedi / zaman aşımı; Windows WLAN günlüğüne göre hotspot bağlantısı 23:27:38'de koptu, 23:30:52'de döndü); tur `completed`, çıkış 2, veri uydurulmadı. İlk tetikleyiciyle çalışan tur (tur 4, 29 Eylül 10:00:02, 30 dk 44 sn): 326/326 sayfa, **0 hata** (243 fiyat, 83 Tükendi), çıkış 0; aynı sabah temizlenen kodla gerçek sitelerde ilk tur, istek aralıkları önceki turlarla aynı (Hepsiburada ortalama 8,7 sn). Kararlar (28 Eylül, kullanıcıyla): görev **penceresiz** (`pythonw.exe`) çalışır, `--scheduled` çıktısı `data/logs/tur_<yerel tarih-saat>.log` dosyasına da yazılır (açık kalan bir pencere kapatılınca tur kesilirdi; Görev Zamanlayıcı çıktı saklamaz); görev repodaki `scripts/zamanlayici_kur.ps1` ile kurulur (ayarlar kodda, yeniden kurulabilir). Ayarlar: yerel saatle 10:00/22:00, kaçan tur açılınca bir kez, pilde de çalışır, uyandırmaz, 2 saat süre sınırı, kullanıcı adına yalnız oturum açıkken (docs/teknik.md "Zamanlanmış tur"). Kullanıcının dizüstünde boşta uyku kapalı (şarj ve pil). 5 yeni test (toplam 149); log kodunda 3 kasıtlı bozmanın 3'ü yakalandı; gerçek `pythonw.exe` ile siteye gitmeyen denemede log yazıldı, çıkış 1, tur açılmadı. **Commit öncesi projenin tamamı incelendi (29 Eylül):** 8 bağımsız inceleyici (scraper, keşif, veritabanı, tur, belgeler, güvenlik, okunabilirlik, test kalitesi) bütün dosyaları okudu; her bulgu ayrı bir doğrulayıcıya çürütülmek üzere verildi ve son bir denetçi kimsenin bakmadığı yerlere baktı. 168 ham bulgu → 135 tekil; 10'u çürütüldü, 125'i doğrulandı (57'si kısmen), +24 ek bulgu. Davranış değiştirmeyenler uygulandı: ölü kod temizliği, dışarıdan okuyana yönelik yorumlar (kilit numaraları, Tükendi kuralı, hata kodları, üç istekli Hepsiburada akışı…), belge düzeltmeleri ve testler **149 → 414** (116'sı PostgreSQL'de; yeni `tests/test_http.py`, `tests/test_contracts.py`). Kullanıcı davranış değiştiren bulgulardan üç grubu onayladı ve uygulandı: keşif sağlamlığı (UTF-8 çıktı, BOM'lu dosya okuma, kilit meşgulken çıkış 3, fazladan arama sayfası yok, pasif sayfalar "korunan" listesinde yok, adaptör hatası çıkış 1), migration koşucusu (yeniden adlandırılan dosya reddedilir, numara hatası bulunanları gösterir), tanılama çıktısı (boş satıcı kimliği, `missing_price`/`missing_seller`); her birinin testi önce eski kodda başarısız oldu. Çizili fiyat kuralı (sözleşme + CHECK) Adım 4'e alındı. Araç düzeni: Python `>=3.13,<3.14`, Black `>=26.1`; ortak yapay zekâ talimatları `AGENTS.md`'ye taşındı (Claude Code ve Codex aynı dosyayı okur), `.cursorrules` silindi. Testlere iki emniyet kemeri eklendi: gerçek ağ isteği ve kalıcı `DATABASE_URL` her testte kesilir. Yeni testler bellekte veya kopyada kasıtlı bozmalarla sınandı (75 bozmanın 73'ü yakalandı; kaçan 2'si eşdeğer bozma). Bir gerçek hata bulundu ve `xfail` ile belgelendi (Bölüm 7, Türkçe ekler). Davranış değiştiren bulgular kullanıcı kararına bırakıldı. |
 | 7. Kapanış belgeleri | 🔜 |
-| 8. Akakçe/Cimri piyasa geçmişi araştırması (Adım 6'nın 2–3 günlük gözlemi sırasında) | 🔜 |
+| 8. Akakçe/Cimri piyasa geçmişi araştırması (Adım 6'nın 2–3 günlük gözlemi sırasında) | 🔜 Canlı komutları kullanıcı çalıştırır; istekler yalnız `app/scraper/http.py` üzerinden. Ölçülecekler: erişim (engel/403 var mı), geçmişin biçimi (gömülü JSON, grafik verisi, tablo) ve sıklığı (günlük mü), ne kadar geriye gittiği, ürün eşleştirmenin marka + model + kapasiteyle güvenilir olup olmadığı, sitenin kullanım koşulları. Uygunsa yeni migration ile ayrı `market_history` tablosu ve içe aktarma komutu; veri "piyasa minimumu" olarak etiketlenir (başka mağazaları da kapsar), `listing_checks`'e ve takip edilen minimuma karışmaz. ML'de kullanımı veri görüldükten sonra kararlaştırılır (Bölüm 8). `_eski_taslaklar/` içindeki Cimri/Akakçe kodları canlıda doğrulanmadı; yalnız örnek. |
+
+Takvim (tahmin, 29 Eylül; kesin değil, Adım 8'in sonucuna bağlı):
+
+| Tarih | İş |
+|---|---|
+| 29–30 Eylül | Adım 8 araştırması; aynı anda Adım 6 gözlemi (turlar kendiliğinden çalışır) |
+| 1 Ekim | Gözlem sonu: 6 turun özeti, bilerek yapılan kaçan tur telafi denemesi |
+| 1–2 Ekim | Adım 4 (002 migration: görünüm ve kurallar) |
+| 2–3 Ekim | Adım 7 kapanış belgeleri; veritabanı aşaması biter |
+| +1–2 gün | Cimri/Akakçe uygun çıkarsa `market_history` tablosu ve içe aktarma |
+
+Kendi verimizle ML için gereken 30 günlük geçmiş, ilk tam turdan (28 Eylül)
+sayılırsa Ekim sonunda dolar; API/arayüz aşaması bu süre içinde ilerleyebilir.
 
 Adım 0'da görülenler:
 
