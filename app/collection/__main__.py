@@ -15,16 +15,15 @@ Zamanlayıcı'da yalnız "son sonuç 0x1" görünür.
 """
 
 import argparse
-import contextlib
 import sys
 import traceback
 from datetime import datetime
-from pathlib import Path
 
 import psycopg
 from pydantic import ValidationError
 
 from app.collection.service import CollectionError, RunInProgress, collect
+from app.console import open_log, tee_output, utf8_output
 from app.database.catalog_sync import CatalogConflict
 from app.database.connection import connect, database_url
 from app.database.migrate import MigrationError
@@ -56,7 +55,7 @@ def main(argv=None) -> int:
     if not args.scheduled:
         return run(args, settings)
     try:
-        log = open_log(settings.log_dir)
+        log = open_log(settings.log_dir, "tur")
     except OSError as exc:
         print(f"Log dosyası açılamadı: {exc}", file=sys.stderr)
         return 1
@@ -115,52 +114,6 @@ def run(args, settings: Settings) -> int:
         )
         print(f"Hata kodları: {codes}")
     return 2 if report.errors else 0
-
-
-def utf8_output() -> None:
-    # Çıktı dosyaya yönlendirildiğinde de Türkçe karakterler bozulmasın; hata
-    # çıktısı (stderr) da dahil. pythonw.exe altında akışlar hiç yoktur (None).
-    for stream in (sys.stdout, sys.stderr):
-        if hasattr(stream, "reconfigure"):
-            stream.reconfigure(encoding="utf-8", errors="backslashreplace")
-
-
-def open_log(log_dir: Path):
-    log_dir.mkdir(parents=True, exist_ok=True)
-    path = log_dir / f"tur_{datetime.now():%Y-%m-%d_%H-%M-%S}.log"
-    # Satır satır yazılır: tur ortasında bilgisayar kapanırsa o ana kadarki
-    # satırlar dosyada kalır.
-    return path.open("a", encoding="utf-8", buffering=1)
-
-
-class _Tee:
-    """Yazılanı log dosyasına ve (varsa) asıl akışa gönderir."""
-
-    def __init__(self, log, stream):
-        self.log = log
-        self.stream = stream
-
-    def write(self, text):
-        self.log.write(text)
-        if self.stream is not None:
-            self.stream.write(text)
-        return len(text)
-
-    def flush(self):
-        self.log.flush()
-        if self.stream is not None:
-            self.stream.flush()
-
-
-@contextlib.contextmanager
-def tee_output(log):
-    """stdout ve stderr'e (ilerleme, hata, traceback) yazılanı log'a da yazar."""
-    saved = sys.stdout, sys.stderr
-    sys.stdout, sys.stderr = _Tee(log, saved[0]), _Tee(log, saved[1])
-    try:
-        yield
-    finally:
-        sys.stdout, sys.stderr = saved
 
 
 if __name__ == "__main__":

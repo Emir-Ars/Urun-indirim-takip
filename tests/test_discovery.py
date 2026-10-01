@@ -3,6 +3,7 @@
 import codecs
 import io
 import json
+import re
 import sys
 import types
 from pathlib import Path
@@ -10,10 +11,12 @@ from urllib.parse import parse_qs, urlsplit
 
 import pytest
 
+from app.console import open_log
 from app.contracts import (
     Catalog,
     DiscoveryCandidate,
     DiscoveryConfig,
+    DiscoveryIssue,
     DiscoveryReport,
     DiscoveryResult,
     DiscoveryTarget,
@@ -23,11 +26,14 @@ from app.discovery.base import BaseDiscovery
 from app.discovery.hepsiburada import Discovery as HepsiburadaDiscovery
 from app.discovery.matching import phone_category
 from app.discovery.service import (
+    ReportMismatch,
     _adapter,
+    apply_report,
     merge_catalog,
     observed_colors,
     retained_unobserved_listings,
     run,
+    summarize_report,
 )
 from app.discovery.trendyol import Discovery as TrendyolDiscovery
 from app.scraper.http import FetchError
@@ -40,6 +46,7 @@ from app.scraper.parsing import (
     title_storage,
     verify_identity,
 )
+from app.scrape_lock import scrape_lock
 from app.settings import Runtime, Settings
 
 FIXTURES = Path(__file__).parent / "fixtures" / "discovery"
@@ -1215,7 +1222,10 @@ def test_discovery_cli_exits_0_when_complete_and_2_when_partial(
 
     monkeypatch.setattr("app.discovery.__main__.run", fake_run)
     assert discovery_main(["--dry-run", "--target", "apple_iphone_15"]) == code
-    assert calls == [{"dry_run": True, "target_key": "apple_iphone_15"}]
+    # Elle çalıştırmada rapor yolu verilmez: bugünkü sabit yol kullanılır.
+    assert calls == [
+        {"dry_run": True, "target_key": "apple_iphone_15", "report_path": None}
+    ]
     printed = json.loads(capsys.readouterr().out)
     assert printed["complete"] is complete and printed["dry_run"] is True
 
@@ -1281,6 +1291,348 @@ def test_catalog_merge_preserves_listings_missing_from_current_search():
     updated, products, listings, existing, _ = merge_catalog(catalog, [])
     assert updated == catalog
     assert not products and not listings and not existing
+
+
+# --- Zamanlanmış keşif ------------------------------------------------------------
+
+
+def clean_adapters():
+    """Çakışmasız tek geçerli aday: tarama tam, rapor temiz."""
+    _, valid = conflict_candidates()
+    return {
+        "trendyol": fixed_adapter("trendyol", []),
+        "hepsiburada": fixed_adapter("hepsiburada", [valid]),
+    }
+
+
+@pytest.fixture
+def scan_env(run_env, monkeypatch):
+    """Gerçek komut akışı ağsız: platform adaptörleri sabit adaylarla değiştirilir."""
+    adapters = conflict_adapters()
+    monkeypatch.setattr(
+        "app.discovery.service._adapter", lambda platform: adapters[platform]
+    )
+    return run_env
+
+
+def scheduled_files(tmp_path):
+    [log] = (tmp_path / "data" / "logs").glob("kesif_*.log")
+    [report] = (tmp_path / "data" / "discovery").glob("kesif_*.json")
+    return log, report
+
+
+def test_open_log_uses_prefix_and_utf8(tmp_path):
+    with open_log(tmp_path / "logs", "kesif") as log:
+        log.write("Tükendi · çıkış\n")
+    [path] = (tmp_path / "logs").glob("*.log")
+    assert re.fullmatch(r"kesif_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.log", path.name)
+    assert path.read_text(encoding="utf-8") == "Tükendi · çıkış\n"
+
+
+def test_scheduled_discovery_writes_log_and_dated_report(scan_env, tmp_path):
+    catalog_before = scan_env.read_bytes()
+    assert discovery_main(["--scheduled", "--dry-run"]) == 2  # çakışma: kısmi
+    log, report_file = scheduled_files(tmp_path)
+    # Log ve rapor aynı zaman damgasını taşır.
+    assert log.stem == report_file.stem
+    text = log.read_text(encoding="utf-8")
+    assert text.startswith("Zamanlanmış keşif (önizleme) · ")
+    assert "yeni sayfa 1 (hepsiburada 1)" in text and "çakışma 1" in text
+    assert f"Rapor: {Path('data') / 'discovery' / report_file.name}" in text
+    assert '"results"' not in text  # tam JSON loga değil rapor dosyasına yazılır
+    assert text.rstrip().endswith("Çıkış kodu: 2")
+    report = DiscoveryReport.model_validate_json(report_file.read_text("utf-8"))
+    assert report.dry_run is True and report.added_listings == [
+        "hepsiburada_hbcv0000test01"
+    ]
+    assert scan_env.read_bytes() == catalog_before  # önizleme kataloğa yazmaz
+    # Zamanlanmış çalışma elle çalıştırmanın sabit raporunu ezmez.
+    assert not (tmp_path / "data" / "discovery_report.json").exists()
+
+
+def test_scheduled_discovery_exits_0_when_scan_is_complete(
+    run_env, tmp_path, monkeypatch
+):
+    adapters = clean_adapters()
+    monkeypatch.setattr(
+        "app.discovery.service._adapter", lambda platform: adapters[platform]
+    )
+    assert discovery_main(["--scheduled", "--dry-run"]) == 0
+    log, _ = scheduled_files(tmp_path)
+    assert log.read_text(encoding="utf-8").rstrip().endswith("Çıkış kodu: 0")
+
+
+def test_scheduled_discovery_requires_dry_run(scan_env, tmp_path, monkeypatch):
+    started = []
+    monkeypatch.setattr(
+        "app.discovery.__main__.run", lambda **kwargs: started.append(kwargs)
+    )
+    with pytest.raises(SystemExit) as stop:
+        discovery_main(["--scheduled"])
+    assert stop.value.code == 2
+    # Ne log açıldı ne tarama başladı.
+    assert started == [] and not (tmp_path / "data").exists()
+
+
+def test_scheduled_discovery_without_console_still_logs(
+    scan_env, tmp_path, monkeypatch
+):
+    # pythonw.exe (Görev Zamanlayıcı) altında ekran akışları hiç yoktur.
+    monkeypatch.setattr(sys, "stdout", None)
+    monkeypatch.setattr(sys, "stderr", None)
+    assert discovery_main(["--scheduled", "--dry-run"]) == 2
+    log, _ = scheduled_files(tmp_path)
+    assert "Özet: " in log.read_text(encoding="utf-8")
+
+
+def test_busy_scheduled_discovery_is_logged(run_env, tmp_path, monkeypatch):
+    def must_not_run(**_):
+        raise AssertionError("Kilit meşgulken keşif başlamamalıydı")
+
+    monkeypatch.setattr("app.discovery.__main__.run", must_not_run)
+    with scrape_lock(tmp_path / "scrape.lock"):
+        assert discovery_main(["--scheduled", "--dry-run"]) == 3
+    log = next((tmp_path / "data" / "logs").glob("kesif_*.log"))
+    text = log.read_text(encoding="utf-8")
+    assert "Keşif başlatılmadı" in text
+    assert text.rstrip().endswith("Çıkış kodu: 3")
+    assert not list((tmp_path / "data" / "discovery").glob("*.json"))
+
+
+def test_scheduled_discovery_program_error_is_logged_with_exit_1(
+    run_env, tmp_path, monkeypatch
+):
+    def crash(**_):
+        raise TypeError("beklenmeyen program hatası")
+
+    monkeypatch.setattr("app.discovery.__main__.run", crash)
+    assert discovery_main(["--scheduled", "--dry-run"]) == 1
+    log = next((tmp_path / "data" / "logs").glob("kesif_*.log"))
+    text = log.read_text(encoding="utf-8")
+    assert "TypeError: beklenmeyen program hatası" in text
+    assert text.rstrip().endswith("Çıkış kodu: 1")
+
+
+def test_scheduled_discovery_does_not_start_when_log_cannot_be_opened(
+    run_env, tmp_path, monkeypatch, capsys
+):
+    # LOG_DIR bir dosyayı gösterir: klasör oluşturulamaz (OSError).
+    not_a_dir = tmp_path / "logs"
+    not_a_dir.write_text("", encoding="utf-8")
+    monkeypatch.setenv("LOG_DIR", str(not_a_dir))
+    started = []
+    monkeypatch.setattr(
+        "app.discovery.__main__.run", lambda **kwargs: started.append(kwargs)
+    )
+    assert discovery_main(["--scheduled", "--dry-run"]) == 1
+    assert "Log dosyası açılamadı" in capsys.readouterr().err
+    assert started == []
+
+
+def test_scheduled_discovery_fails_before_scanning_when_report_folder_is_unusable(
+    run_env, tmp_path, monkeypatch
+):
+    # Yazılamayan rapor klasörü ~50 dakikalık taramadan sonra değil, hemen anlaşılır.
+    not_a_dir = tmp_path / "rapor"
+    not_a_dir.write_text("", encoding="utf-8")
+    monkeypatch.setenv("DISCOVERY_REPORT_DIR", str(not_a_dir))
+    started = []
+    monkeypatch.setattr(
+        "app.discovery.__main__.run", lambda **kwargs: started.append(kwargs)
+    )
+    assert discovery_main(["--scheduled", "--dry-run"]) == 1
+    log = next((tmp_path / "data" / "logs").glob("kesif_*.log"))
+    text = log.read_text(encoding="utf-8")
+    assert "Keşif başlatılamadı" in text
+    assert text.rstrip().endswith("Çıkış kodu: 1")
+    assert started == []
+
+
+def test_report_summary_counts_warnings_by_reason():
+    def issue(reason):
+        return DiscoveryIssue(
+            platform="hepsiburada", target_key="apple_iphone_15", reason=reason
+        )
+
+    report = DiscoveryReport(
+        complete=False,
+        dry_run=True,
+        results=[
+            DiscoveryResult(
+                platform="hepsiburada", target_key="apple_iphone_15", complete=True
+            ),
+            DiscoveryResult(platform="trendyol", target_key="apple_iphone_15"),
+        ],
+        added_products=["apple_iphone_17_256gb"],
+        added_listings=["trendyol_1", "hepsiburada_hbcv1"],
+        existing_listings=["trendyol_2"],
+        retained_unobserved_listings=["trendyol_3", "trendyol_4"],
+        pending=[issue("search_api"), issue("search_api"), issue("html_partial")],
+        rejected=[issue("candidate_rejected"), issue("catalog_conflict")],
+        coverage_changes={"trendyol": 1, "hepsiburada": 1, "diger": 0},
+    )
+    assert summarize_report(report) == (
+        "Özet: yeni ürün 1 · yeni sayfa 2 (hepsiburada 1, trendyol 1) · "
+        "zaten kayıtlı 1 · görülmeyen 2 · çakışma 1 · reddedilen 1 · "
+        "tam sonuç 1/2 · uyarı html_partial 1, search_api 2"
+    )
+    empty = DiscoveryReport(complete=True, dry_run=True, results=[])
+    assert summarize_report(empty) == (
+        "Özet: yeni ürün 0 · yeni sayfa 0 · zaten kayıtlı 0 · görülmeyen 0 · "
+        "çakışma 0 · reddedilen 0 · tam sonuç 0/0"
+    )
+
+
+def test_report_time_round_trips_and_old_reports_still_parse(run_env):
+    report = run(dry_run=True, adapters=conflict_adapters())
+    # Saat dilimli olmalı: UTC'de utcoffset() sıfır süredir, None değil.
+    assert report.generated_at is not None
+    assert report.generated_at.utcoffset() is not None
+    saved = Path("data/discovery_report.json").read_text(encoding="utf-8")
+    assert DiscoveryReport.model_validate_json(saved).generated_at == (
+        report.generated_at
+    )
+    # Alan eklenmeden önce yazılmış rapor (generated_at yok) okunmaya devam eder.
+    old = json.loads(saved)
+    del old["generated_at"]
+    assert DiscoveryReport.model_validate_json(json.dumps(old)).generated_at is None
+
+
+# --- Raporun siteye gitmeden uygulanması -------------------------------------------
+
+
+def make_preview(tmp_path, adapters):
+    path = tmp_path / "onizleme.json"
+    run(dry_run=True, adapters=adapters, report_path=path)
+    return path
+
+
+def test_apply_report_adds_previewed_listings_without_going_to_the_sites(
+    run_env, tmp_path, monkeypatch, capsys
+):
+    preview = make_preview(tmp_path, conflict_adapters())
+
+    def must_not_run(*_, **__):
+        raise AssertionError("--apply-report siteye gitmemeli")
+
+    monkeypatch.setattr("app.discovery.service._adapter", must_not_run)
+    monkeypatch.setattr("app.discovery.__main__.run", must_not_run)
+    # Siteye gitmediği için fiyat turu ya da başka bir keşif sürerken de çalışır.
+    with scrape_lock(tmp_path / "scrape.lock"):
+        assert discovery_main(["--apply-report", str(preview)]) == 2  # çakışma var
+    out = capsys.readouterr().out
+    assert "önizleme zamanı: " in out
+    assert "+ sayfa hepsiburada_hbcv0000test01" in out
+    assert "yazılmadı (çakışma)" in out
+    saved = Catalog.model_validate_json(run_env.read_text(encoding="utf-8"))
+    assert "hepsiburada_hbcv0000test01" in {item.listing_id for item in saved.listings}
+    written = run_env.read_bytes()
+    assert b"\r\n" not in written and not written.startswith(codecs.BOM_UTF8)
+
+
+def test_apply_report_gives_the_same_catalog_as_a_live_run(run_env, tmp_path):
+    preview = make_preview(tmp_path, conflict_adapters())
+    assert discovery_main(["--apply-report", str(preview)]) == 2
+    applied = run_env.read_bytes()
+    # Aynı başlangıç katalogundan canlı yazma bayt bayt aynı sonucu vermeli.
+    run_env.write_bytes(CATALOG.read_bytes())
+    run(adapters=conflict_adapters(), report_path=tmp_path / "canli.json")
+    assert run_env.read_bytes() == applied
+
+
+def test_applying_a_report_twice_adds_and_writes_nothing(
+    run_env, tmp_path, monkeypatch, capsys
+):
+    preview = make_preview(tmp_path, clean_adapters())
+    assert discovery_main(["--apply-report", str(preview)]) == 0
+    first = run_env.read_bytes()
+    assert "+ sayfa hepsiburada_hbcv0000test01" in capsys.readouterr().out
+
+    def must_not_write(*_, **__):
+        raise AssertionError("Eklenecek bir şey yokken dosya yazılmamalı")
+
+    monkeypatch.setattr("app.discovery.service._atomic_catalog", must_not_write)
+    assert discovery_main(["--apply-report", str(preview)]) == 0
+    assert "Katalog değişmedi" in capsys.readouterr().out
+    assert run_env.read_bytes() == first
+
+
+def test_apply_refuses_a_report_that_is_not_a_preview(run_env, tmp_path, capsys):
+    live = tmp_path / "canli.json"
+    run(adapters=clean_adapters(), report_path=live)  # kataloğa yazan çalışma
+    after_live = run_env.read_bytes()
+    assert discovery_main(["--apply-report", str(live)]) == 1
+    assert "önizleme" in capsys.readouterr().err
+    assert run_env.read_bytes() == after_live
+
+
+def test_apply_refuses_additions_the_preview_did_not_show(run_env, tmp_path, capsys):
+    preview = make_preview(tmp_path, clean_adapters())
+    data = json.loads(preview.read_text(encoding="utf-8"))
+    # Önizleme anında sayfa katalogda varmış, sonradan çıkmış gibi: bugünkü ekleme
+    # önizlemede görünmeyen bir şey olur.
+    data["added_listings"] = []
+    preview.write_text(json.dumps(data), encoding="utf-8")
+    before = run_env.read_bytes()
+    assert discovery_main(["--apply-report", str(preview)]) == 1
+    assert "önizlemeden sonra değişmiş" in capsys.readouterr().err
+    assert run_env.read_bytes() == before
+    with pytest.raises(ReportMismatch):
+        apply_report(
+            DiscoveryReport.model_validate_json(preview.read_text("utf-8")), run_env
+        )
+
+
+def test_apply_rejects_foreign_host_and_leaves_catalog_unchanged(
+    run_env, tmp_path, capsys
+):
+    preview = make_preview(tmp_path, clean_adapters())
+    data = json.loads(preview.read_text(encoding="utf-8"))
+    for result in data["results"]:
+        for candidate in result["candidates"]:
+            candidate["url"] = "https://www.example.com/telefon-p-HBCV0000TEST01"
+    preview.write_text(json.dumps(data), encoding="utf-8")
+    before = run_env.read_bytes()
+    assert discovery_main(["--apply-report", str(preview)]) == 1
+    assert "Rapor uygulanamadı" in capsys.readouterr().err
+    assert run_env.read_bytes() == before
+
+
+@pytest.mark.parametrize("kind", ["missing", "broken", "trace_wrapper"])
+def test_apply_rejects_unreadable_reports(run_env, tmp_path, capsys, kind):
+    path = tmp_path / "rapor.json"
+    if kind == "broken":
+        path.write_text("{ bozuk", encoding="utf-8")
+    elif kind == "trace_wrapper":
+        # live_discovery_check.py --trace çıktısı: rapor bir sarmalın içindedir.
+        report = make_preview(tmp_path, clean_adapters())
+        wrapped = {"report": json.loads(report.read_text("utf-8")), "traces": []}
+        path.write_text(json.dumps(wrapped), encoding="utf-8")
+    before = run_env.read_bytes()
+    assert discovery_main(["--apply-report", str(path)]) == 1
+    error = capsys.readouterr().err
+    assert ("Rapor okunamadı" if kind == "missing" else "geçerli bir keşif raporu") in (
+        error
+    )
+    assert run_env.read_bytes() == before
+
+
+def test_apply_reads_a_report_saved_with_bom(run_env, tmp_path):
+    preview = make_preview(tmp_path, clean_adapters())
+    preview.write_bytes(codecs.BOM_UTF8 + preview.read_bytes())
+    assert discovery_main(["--apply-report", str(preview)]) == 0
+
+
+@pytest.mark.parametrize(
+    "extra", [["--dry-run"], ["--target", "apple_iphone_15"], ["--scheduled"]]
+)
+def test_apply_report_cannot_be_combined_with_scan_options(run_env, tmp_path, extra):
+    preview = make_preview(tmp_path, clean_adapters())
+    before = run_env.read_bytes()
+    with pytest.raises(SystemExit) as stop:
+        discovery_main(["--apply-report", str(preview), *extra])
+    assert stop.value.code == 2
+    assert run_env.read_bytes() == before
 
 
 def test_report_distinguishes_retained_links_from_current_discovery():

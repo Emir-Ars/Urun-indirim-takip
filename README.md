@@ -49,8 +49,12 @@ flowchart LR
     O --> DB[("PostgreSQL<br/>fiyat geçmişi")]
 ```
 
-- **Keşif** seyrek çalışır; yeni model eklerken ya da ara sıra. Sayfaları
-  kullanıcı değil sistem bulur ve her birini ayrıca açıp doğrular.
+- **Keşif** yeni model eklerken ya da haftada bir çalışır. Sayfaları kullanıcı
+  değil sistem bulur ve her birini ayrıca açıp doğrular. Görev Zamanlayıcı'ya
+  kurulunca (`scripts/kesif_zamanlayici_kur.ps1`) her Pazar 14:00'te kataloğa
+  yazmadan tarihli bir rapor bırakır; kullanıcı raporu inceler ve
+  `python -m app.discovery --apply-report <rapor>` siteye gitmeden o raporu
+  kataloğa ekler.
 - **Fiyat toplama turu** (`python -m app.collection`) her sayfanın sonucunu
   PostgreSQL'e yazar. Görev Zamanlayıcı'ya kurulunca
   (`scripts/zamanlayici_kur.ps1`) her gün 10:00 ve 22:00'de penceresiz çalışır;
@@ -85,7 +89,7 @@ modeller de ayrıdır. RAM ve garanti türü ürünü bölmez.
 | Takip edilen modeller | 24 (Apple 9 · Samsung 8 · Xiaomi 6 · POCO 1) |
 | Katalog | 59 ürün, 327 sayfa (28 Eylül 2026) |
 | Fiyat toplama | İlk tam tur 28 Eylül 2026: 326/326 sayfa, 31 dakika, hatasız. Görev Zamanlayıcı 28 Eylül'de kuruldu; günde 2 tur (10:00, 22:00) |
-| Testler | 426 otomatik test (116'sı gerçek PostgreSQL üzerinde); her push'ta GitHub Actions. Testler internete çıkamaz ve gerçek veritabanına dokunamaz (otomatik emniyet kemerleri) |
+| Testler | 450 otomatik test (116'sı gerçek PostgreSQL üzerinde); her push'ta GitHub Actions. Testler internete çıkamaz ve gerçek veritabanına dokunamaz (otomatik emniyet kemerleri) |
 
 ```mermaid
 pie title Takip edilen sayfalar
@@ -129,7 +133,18 @@ powershell -ExecutionPolicy Bypass -File scripts\zamanlayici_kur.ps1
 ```
 
 `--dry-run` kataloğa yazmaz; raporu `data/discovery_report.json` dosyasına
-yazar. Canlı komutları arka arkaya çok kez çalıştırmayın; siteler geçici olarak
+yazar. Haftalık keşfi ve incelenen raporun kataloğa eklenmesini
+[docs/teknik.md](docs/teknik.md#zamanlanmış-keşif-görev-zamanlayıcı) anlatır:
+
+```powershell
+# Haftalık keşfi Pazar 14:00 için Görev Zamanlayıcı'ya kur (yönetici izni gerekmez)
+powershell -ExecutionPolicy Bypass -File scripts\kesif_zamanlayici_kur.ps1
+
+# İncelediğiniz önizleme raporunu siteye gitmeden kataloğa ekle
+.venv\Scripts\python.exe -m app.discovery --apply-report data\discovery\kesif_<tarih-saat>.json
+```
+
+Canlı komutları arka arkaya çok kez çalıştırmayın; siteler geçici olarak
 engelleyebilir. Bütün komutlar: [docs/teknik.md](docs/teknik.md#komutların-ayrıntısı).
 PostgreSQL kurulumu (Türkçe Windows'ta locale `C` seçilmeli) ve veritabanı
 kuralları: [docs/teknik.md](docs/teknik.md#veritabanı-postgresql).
@@ -159,12 +174,14 @@ config/
 app/
   contracts.py      veri şekilleri ve doğrulama
   scraper/          fiyat okuma: tek HTTP kapısı, ortak kimlik kuralları, site okuyucuları
-  discovery/        keşif: site aramaları, katalogla birleştirme, rapor
+  discovery/        keşif: site aramaları, katalogla birleştirme, rapor, raporu uygulama
   database/         PostgreSQL: bağlantı, migration dosyaları, katalog eşitleme, tur SQL'leri
   collection/       fiyat toplama turu: sayfaları okuyup sonuçları veritabanına yazar
   scrape_lock.py    siteye giden bütün girişlerin ortak kilidi
+  console.py        zamanlanmış komutların ortak çıktı ve log yardımcıları
 scripts/
-  zamanlayici_kur.ps1  günde 2 turu Windows Görev Zamanlayıcı'ya kurar
+  zamanlayici_kur.ps1        günde 2 turu Windows Görev Zamanlayıcı'ya kurar
+  kesif_zamanlayici_kur.ps1  haftalık keşfi (Pazar 14:00, katalog yazmadan) kurar
 tests/              otomatik testler; manual/ altında canlı kontrol araçları
 docs/teknik.md      ayrıntılı teknik rehber
 ```

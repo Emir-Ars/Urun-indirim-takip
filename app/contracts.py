@@ -215,6 +215,9 @@ class DiscoveryResult(Contract):
 class DiscoveryReport(Contract):
     complete: bool
     dry_run: bool
+    # Raporun üretildiği an; --apply-report hangi taramanın uygulandığını bununla
+    # gösterir. Alan eklenmeden önce yazılmış raporlarda yoktur (None).
+    generated_at: AwareDatetime | None = None
     results: list[DiscoveryResult]
     added_products: list[str] = Field(default_factory=list)
     added_listings: list[str] = Field(default_factory=list)

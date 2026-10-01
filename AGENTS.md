@@ -75,6 +75,11 @@ eskisi düzeltilir; belge baştan yazılmaz.
   Görevi Görev Zamanlayıcı başlatır: `\FiyatTakip\FiyatToplamaTuru`, logları
   `data/logs/`. O sırada canlı komut çalıştırma. Tur kodu başlarken içe
   aktarır; o saatlerde `app/` altındaki dosyaları yarım bırakma.
+- Zamanlanmış keşif her Pazar 14:00'te başlar ve yaklaşık 50 dakika sürer
+  (`\FiyatTakip\HaftalikKesif`; logları `data/logs/kesif_*.log`, raporları
+  `data/discovery/`). Katalog yazmaz; yeni sayfalar kullanıcı raporu inceleyip
+  `python -m app.discovery --apply-report <rapor>` çalıştırınca girer. O sırada
+  canlı komut çalıştırma ve `app/discovery/` ile ortak dosyaları yarım bırakma.
 - Gerçek kaynakta bulunmayan fiyat, stok, kimlik veya kapsam bilgisini uydurma.
 - Gerçek veritabanına (`fiyat_takip`) yalnız okuma sorgusuyla bak. Testler
   yalnız adı `_test` ile biten veritabanını kullanır. Veritabanı şifresi yalnız

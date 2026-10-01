@@ -1,7 +1,7 @@
 """Ayar dosyalarını (config/runtime.json, config/discovery.json) doğrulayarak okur.
 
-Katalog, keşif ve çalışma ayarı dosyalarının, ortak tarama kilidinin ve log
-klasörünün yollarını tutar; her yol ortam değişkeniyle değiştirilebilir
+Katalog, keşif ve çalışma ayarı dosyalarının, ortak tarama kilidinin, log ve keşif
+raporu klasörlerinin yollarını tutar; her yol ortam değişkeniyle değiştirilebilir
 (Settings.__init__).
 """
 
@@ -32,6 +32,10 @@ class Settings:
         self.lock_path = Path(os.getenv("SCRAPE_LOCK_PATH", "data/scrape.lock"))
         # Zamanlanmış turların log dosyaları (python -m app.collection --scheduled).
         self.log_dir = Path(os.getenv("LOG_DIR", "data/logs"))
+        # Zamanlanmış keşfin tarihli raporları (python -m app.discovery --scheduled).
+        self.discovery_report_dir = Path(
+            os.getenv("DISCOVERY_REPORT_DIR", "data/discovery")
+        )
 
     # utf-8-sig: elle düzenlenen dosyada Windows düzenleyicilerinin koyduğu BOM da
     # okunur; BOM'suz dosyada sonuç aynıdır.

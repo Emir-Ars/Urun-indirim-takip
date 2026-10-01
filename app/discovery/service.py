@@ -6,13 +6,29 @@ import json
 import os
 import re
 import tempfile
+from collections import Counter
 from pathlib import Path
 
 from filelock import FileLock
 
-from app.contracts import Catalog, DiscoveryIssue, DiscoveryReport, Listing, Product
+from app.contracts import (
+    Catalog,
+    DiscoveryIssue,
+    DiscoveryReport,
+    Listing,
+    Product,
+    utc_now,
+)
 from app.discovery.base import BaseDiscovery
 from app.settings import Settings
+
+# Elle çalıştırmada rapor buraya yazılır ve her çalışmada üzerine yazılır;
+# zamanlanmış keşif tarihli bir yol verir (run: report_path).
+DEFAULT_REPORT_PATH = Path("data/discovery_report.json")
+
+
+class ReportMismatch(ValueError):
+    """Rapor, katalogun bugünkü hâliyle önizlemedeki eklemeleri vermiyor."""
 
 
 def _adapter(platform: str):
@@ -236,7 +252,104 @@ def retained_unobserved_listings(catalog, targets, results):
     return sorted(retained)
 
 
-def run(*, dry_run=False, target_key=None, adapters=None):
+def _report_candidates(results):
+    # Canlı yazma, önizleme ve rapor uygulama aynı aday listesini birleştirir:
+    # --apply-report'un "önizlemedeki eklemeleri verir" varsayımı buna dayanır.
+    return [candidate for result in results for candidate in result.candidates]
+
+
+def _merge_into_catalog_file(catalog_path, candidates, check=None):
+    """Kataloğu kilit altında okur, birleştirir ve yalnız değiştiyse yazar.
+
+    Bu kilit yalnız kataloğun oku-birleştir-yaz anını korur; siteye gidişi sıraya
+    koyan data/scrape.lock çağıran tarafta (__main__, canlı araç) alınır. Tarama
+    dakikalar sürdüğü için katalog kilit altında yeniden okunur: bu arada dosya
+    değişmiş olabilir. İçerik değişmediyse dosya hiç yazılmaz; tekrar çalıştırmada
+    bayt düzeyinde aynı kalır. `check`, yazmadan önce eklenecek ürün ve bağlantı
+    kimlikleriyle çağrılır; istisna atarsa hiçbir şey yazılmaz.
+    """
+    with FileLock(str(catalog_path) + ".lock", timeout=30):
+        latest = Catalog.model_validate_json(
+            catalog_path.read_text(encoding="utf-8-sig")
+        )
+        updated, products, listings, existing, conflicts = merge_catalog(
+            latest, candidates
+        )
+        if check is not None:
+            check(products, listings)
+        if updated != latest:
+            _atomic_catalog(catalog_path, updated)
+    return products, listings, existing, conflicts
+
+
+def apply_report(report: DiscoveryReport, catalog_path: Path):
+    """İncelenen önizleme raporunu siteye gitmeden kataloğa uygular.
+
+    Yeniden tarama, Hepsiburada'nın ilk 36 kartı değişebildiği için incelenenden
+    farklı sayfalar bulabilir; bu yüzden eklenecekler raporun kendi adaylarından
+    hesaplanır. Katalog önizlemeden sonra elle değiştiyse (ör. başka bir ürün
+    eklendi) bu hesap önizlemede olmayan bir ekleme üretebilir; o durumda hiçbir
+    şey yazılmaz. Önizlemede görünen ama artık katalogda olan kayıtlar sorun
+    değildir: aynı rapor ikinci kez uygulanırsa eklenecek bir şey kalmaz.
+    """
+    if not report.dry_run:
+        raise ValueError(
+            "Rapor bir önizleme (--dry-run) değil; bu çalışma kataloğu zaten yazdı"
+        )
+    preview_products = set(report.added_products)
+    preview_listings = set(report.added_listings)
+
+    def within_preview(products, listings):
+        extra = sorted(
+            (set(products) - preview_products) | (set(listings) - preview_listings)
+        )
+        if extra:
+            raise ReportMismatch(
+                "Katalog önizlemeden sonra değişmiş; önizlemede olmayan eklemeler "
+                f"çıktı ({', '.join(extra)}). Hiçbir şey yazılmadı; yeni bir "
+                "önizleme alın (--dry-run)."
+            )
+
+    return _merge_into_catalog_file(
+        catalog_path, _report_candidates(report.results), within_preview
+    )
+
+
+def summarize_report(report: DiscoveryReport) -> str:
+    """Raporun tek satırlık özeti.
+
+    Keşfin çıkış kodu Hepsiburada arama API'si engelli olduğu için bugün her zaman
+    2'dir ve tek başına bir şey söylemez; uyarılar nedene göre sayılarak beklenen
+    `search_api` ile gerçek sorunlar ayrılır.
+    """
+    conflicts = sum(issue.reason == "catalog_conflict" for issue in report.rejected)
+    platforms = ", ".join(
+        f"{platform} {count}"
+        for platform, count in sorted(report.coverage_changes.items())
+        if count
+    )
+    parts = [
+        f"yeni ürün {len(report.added_products)}",
+        f"yeni sayfa {len(report.added_listings)}"
+        + (f" ({platforms})" if platforms else ""),
+        f"zaten kayıtlı {len(report.existing_listings)}",
+        f"görülmeyen {len(report.retained_unobserved_listings)}",
+        f"çakışma {conflicts}",
+        f"reddedilen {len(report.rejected) - conflicts}",
+        f"tam sonuç {sum(r.complete for r in report.results)}/{len(report.results)}",
+    ]
+    warnings = Counter(issue.reason for issue in report.pending)
+    if warnings:
+        parts.append(
+            "uyarı "
+            + ", ".join(
+                f"{reason} {count}" for reason, count in sorted(warnings.items())
+            )
+        )
+    return "Özet: " + " · ".join(parts)
+
+
+def run(*, dry_run=False, target_key=None, adapters=None, report_path=None):
     settings = Settings()
     config = settings.discovery()
     catalog_path = settings.catalog_path
@@ -265,31 +378,21 @@ def run(*, dry_run=False, target_key=None, adapters=None):
                 results.append(discovery.discover())
             finally:
                 discovery.close()
-    candidates = [candidate for result in results for candidate in result.candidates]
+    candidates = _report_candidates(results)
     if dry_run:
         # Önizleme: birleştirme sonucu yalnız rapora girer; katalog kilidi alınmaz,
         # dosya hiç yazılmaz.
         _, products, listings, existing, conflicts = merge_catalog(catalog, candidates)
     else:
-        # Bu kilit yalnız kataloğun oku-birleştir-yaz anını korur; siteye gidişi
-        # sıraya koyan data/scrape.lock çağıran tarafta (__main__, canlı araç)
-        # alınır. Tarama dakikalar sürdüğü için katalog kilit altında yeniden
-        # okunur: bu arada dosya değişmiş olabilir. İçerik değişmediyse dosya hiç
-        # yazılmaz; tekrar çalıştırmada bayt düzeyinde aynı kalır.
-        with FileLock(str(catalog_path) + ".lock", timeout=30):
-            latest = Catalog.model_validate_json(
-                catalog_path.read_text(encoding="utf-8-sig")
-            )
-            updated, products, listings, existing, conflicts = merge_catalog(
-                latest, candidates
-            )
-            if updated != latest:
-                _atomic_catalog(catalog_path, updated)
+        products, listings, existing, conflicts = _merge_into_catalog_file(
+            catalog_path, candidates
+        )
     report = DiscoveryReport(
         complete=bool(results)
         and all(result.complete for result in results)
         and not conflicts,
         dry_run=dry_run,
+        generated_at=utc_now(),
         results=results,
         added_products=products,
         added_listings=listings,
@@ -318,7 +421,7 @@ def run(*, dry_run=False, target_key=None, adapters=None):
         },
         observed_colors=observed_colors(candidates),
     )
-    report_path = Path("data/discovery_report.json")
+    report_path = report_path if report_path is not None else DEFAULT_REPORT_PATH
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(
         json.dumps(report.model_dump(mode="json"), ensure_ascii=False, indent=2) + "\n",

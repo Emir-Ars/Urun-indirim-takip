@@ -34,8 +34,9 @@ geçmişi. Kararların ve aşama durumunun ana kaynağı
 | Dosya | Ne işe yarar |
 |---|---|
 | `contracts.py` | Verinin şekilleri ve doğrulaması (Pydantic V2 strict): `Product`, `Listing`, `Catalog`, `PriceObservation`, keşif hedefleri ve raporu. Hatalı veri içeri giremez (ör. fiyat alanına "Tükendi"). Yalnızca biten aşamanın kullandığı tanımları içerir. |
-| `settings.py` | Ayar dosyalarını okur. `CATALOG_PATH`, `DISCOVERY_PATH`, `RUNTIME_PATH`, `SCRAPE_LOCK_PATH`, `LOG_DIR` ortam değişkenleriyle başka dosya veya klasör gösterilebilir. |
+| `settings.py` | Ayar dosyalarını okur. `CATALOG_PATH`, `DISCOVERY_PATH`, `RUNTIME_PATH`, `SCRAPE_LOCK_PATH`, `LOG_DIR`, `DISCOVERY_REPORT_DIR` ortam değişkenleriyle başka dosya veya klasör gösterilebilir. |
 | `scrape_lock.py` | Siteye giden bütün girişlerin paylaştığı kilit (`data/scrape.lock`). Fiyat turu, keşif ve iki canlı kontrol aracı alır; biri sürerken diğeri beklemeden "sürüyor" deyip çıkar. Süreç çökse bile işletim sistemi kilidi bırakır. |
+| `console.py` | Zamanlanmış komutların (fiyat turu ve keşif) ortak çıktı yardımcıları: UTF-8 çıktı, `<ön ek>_<tarih-saat>.log` dosyası açma ve stdout/stderr'i log dosyasına da yazan `tee_output`. pythonw.exe altında ekran akışları yoktur (`None`); hepsi buna dayanır. |
 
 ### Fiyat okuma: `app/scraper/`
 
@@ -56,8 +57,8 @@ geçmişi. Kararların ve aşama durumunun ana kaynağı
 | `hepsiburada.py` | Hepsiburada arama/model sayfası kartları, grup sayfaları ve ürün sayfasındaki seçenek listesi. |
 | `matching.py` | "Yeni telefon kategorisi mi?" kuralı (aksesuar ve yenilenmiş kategoriler hariç). |
 | `base.py` | Ortak iskelet: istek bütçesi, uyarı listesi (`issues`), tanılama izi (`trace`) ve ağ türü kontrolü (`verify_network`). |
-| `service.py` | Platformları çalıştırır, sonuçları katalogla birleştirir, raporu yazar. |
-| `__main__.py` | Komut satırı: `python -m app.discovery`. |
+| `service.py` | Platformları çalıştırır, sonuçları katalogla birleştirir, raporu yazar (`run`); incelenmiş önizleme raporunu siteye gitmeden kataloğa uygular (`apply_report`); raporun tek satırlık özetini üretir (`summarize_report`). |
+| `__main__.py` | Komut satırı: `python -m app.discovery [--dry-run] [--target KEY]`, `--scheduled --dry-run` (Görev Zamanlayıcı) ve `--apply-report RAPOR`. |
 
 ### Veritabanı: `app/database/`
 
@@ -82,6 +83,7 @@ geçmişi. Kararların ve aşama durumunun ana kaynağı
 | Dosya | Ne işe yarar |
 |---|---|
 | `zamanlayici_kur.ps1` | Fiyat toplama turunu Windows Görev Zamanlayıcı'ya kurar (her gün 10:00 ve 22:00, penceresiz); `-Kaldir` ile siler. Ayarları [Zamanlanmış tur](#zamanlanmış-tur-görev-zamanlayıcı) bölümündedir. |
+| `kesif_zamanlayici_kur.ps1` | Haftalık keşfi Görev Zamanlayıcı'ya kurur (her Pazar 14:00, katalog yazmadan, penceresiz, kaçan çalışmayı telafi etmez); `-Kaldir` ile siler. Ayarları [Zamanlanmış keşif](#zamanlanmış-keşif-görev-zamanlayıcı) bölümündedir. |
 
 ### Testler ve CI
 
@@ -91,7 +93,7 @@ geçmişi. Kararların ve aşama durumunun ana kaynağı
 | `tests/test_http.py` | HTTP katmanı (59 test): hata kodları, 8 MB sınırı, yönlendirme kuralları, 5xx tekrarı ve bekleme süreleri, istek bütçesi, istekler arası bekleme, factory. Ayrıca mimari kural: `app/` içinde `requests`/`httpx`/`playwright`/`selenium` yok, `curl_cffi` yalnız `http.py`'de. |
 | `tests/test_contracts.py` | Pydantic sözleşmeleri (71 test): satılabilir teklif fiyat ve satıcı taşır, puan ölçeği aşamaz, katalog kimlik/referans/alan adı kuralları, `money()` kuruş çevirimi. |
 | `tests/test_trendyol_scraper.py`, `tests/test_hepsiburada_scraper.py` | Fiyat okuma (40 + 25 test): seçilen teklif, eşit fiyatta satıcı adı, çizili fiyat, Kritik Stok, Tükendi'nin yalnız açık sinyalle verilmesi, ret nedenleri, `parse` dönüşümü. Sahte sayfa ve istemci; internete çıkmaz. |
-| `tests/test_discovery.py` | Keşif (71 test): kimlik kuralları, sayfalama ve uyarı türleri, katalog birleştirme (aynı adaylar hep aynı kimlikleri alır), dry-run'ın kataloğa yazmaması, LF satır sonu, BOM'lu ayar dosyaları, UTF-8 çıktı, çıkış kodları ve gerçek `config/*.json` dosyalarının sözleşmeye uyması. |
+| `tests/test_discovery.py` | Keşif (95 test): kimlik kuralları, sayfalama ve uyarı türleri, katalog birleştirme (aynı adaylar hep aynı kimlikleri alır), dry-run'ın kataloğa yazmaması, LF satır sonu, BOM'lu ayar dosyaları, UTF-8 çıktı, çıkış kodları ve gerçek `config/*.json` dosyalarının sözleşmeye uyması. Zamanlanmış keşif (log ve tarihli rapor, `--dry-run` zorunluluğu, konsolsuz çalışma, kilit meşgul, program hatası, log açılamaması, rapor klasörünün baştan denetimi, özet satırı) ve `--apply-report` (siteye gitmez, canlı yazmayla bayt bayt aynı katalog, ikinci uygulamada yazmama, önizleme olmayan/bozuk/sarmalı/yabancı alan adlı/önizlemeyi aşan rapor reddi) ağsız sınanır. |
 | `tests/test_collection.py` | Toplama turu (40 test; 36'sı gerçek PostgreSQL'de): sahte scraper'larla her sonuç türü, Ctrl+C, tur ortasında veritabanı hatası, yarım kalan tur, başka süreçteki tur, iki kilidin her durumda bırakılması, pasif sayfa/ürün/platform, ön ek, çıkış kodları ve zamanlanmış turun log dosyası (ekran akışı yokken ve log açılamazken dahil). |
 | `tests/test_catalog_sync.py` | Katalog eşitleme (29 test; 13'ü gerçek PostgreSQL'de): kararlar veritabanısız, yazma/deneme/çakışma ve komut satırı veritabanında. |
 | `tests/test_database.py` | Migration koşucusu, şemanın bütün `CHECK`/`UNIQUE`/yabancı anahtar kuralları (her biri geçerli ve geçersiz örnekle), `migrate`/`status` komutları (yeniden adlandırılan migration dahil) ve iki emniyet kemerinin kendisi (79 test; 67'si gerçek PostgreSQL'de). |
@@ -141,6 +143,16 @@ powershell -ExecutionPolicy Bypass -File scripts\zamanlayici_kur.ps1 -Kaldir
 
 # Keşif: doğrulanan yeni sayfaları kataloğa ekle
 .venv\Scripts\python.exe -m app.discovery --target apple_iphone_15
+
+# Zamanlanmış keşfin komutu (elle de çalışır): katalog yazılmaz; log data\logs\kesif_*.log,
+# rapor data\discovery\kesif_*.json (aynı tarih-saat damgası)
+.venv\Scripts\python.exe -m app.discovery --scheduled --dry-run --target apple_iphone_15
+
+# İncelenen önizleme raporunu siteye gitmeden kataloğa ekle
+.venv\Scripts\python.exe -m app.discovery --apply-report data\discovery\kesif_2026-10-04_14-00-03.json
+
+# Haftalık keşfi Görev Zamanlayıcı'ya kur (her Pazar 14:00); -Kaldir ile siler
+powershell -ExecutionPolicy Bypass -File scripts\kesif_zamanlayici_kur.ps1
 
 # Keşif tanılaması: rapor + her kararın izi (katalog değişmez)
 .venv\Scripts\python.exe tests\manual\live_discovery_check.py apple_iphone_15 --trace
@@ -193,9 +205,12 @@ indirilmesi ve veritabanına alınması bu araştırma sonunda başlatılmadı.
 Türkçe karakterlerin terminalde doğru görünmesi için oturum başında bir kez
 `[Console]::OutputEncoding = [Text.Encoding]::UTF8` çalıştırın. Keşif hedef
 başına yaklaşık 2 dakika sürer (istekler arası 3 sn bekleme); 24 etkin hedefin
-tamamı yaklaşık 50 dakikadır. Keşif raporu her çalışmada (dry-run dahil)
-`data/discovery_report.json` dosyasının üzerine yazılır; saklamak istediğiniz
-raporu kopyalayın.
+tamamı yaklaşık 50 dakikadır. Elle çalıştırılan keşif raporu her çalışmada
+(dry-run dahil) `data/discovery_report.json` dosyasının üzerine yazılır; saklamak
+istediğiniz raporu kopyalayın. `--scheduled` ise her çalışmada tarihli yeni bir
+dosya yazar (`data/discovery/kesif_<tarih-saat>.json`) ve hiçbirinin üzerine
+yazmaz. Her iki modda da komutun sonunda stderr'e tek satırlık özet ile rapor
+yolu yazılır; stdout elle çalıştırmada yalnız rapor JSON'u kalır.
 
 `--target` verilmezse bütün etkin hedefler taranır. Eski taslaklar
 `_eski_taslaklar/` klasörüne taşındığı için Black/Flake8 CI'daki gibi bütün
@@ -335,10 +350,43 @@ tur kendi ortamında çalıştığı için etkilenmez.
 - Dosya kilit altında yeniden okunur ve atomik olarak (geçici dosya + yer
   değiştirme) yazılır. `--dry-run` kataloğa hiç yazmaz.
 
-### Rapor: `data/discovery_report.json`
+### İncelenen raporu uygulama (`--apply-report`)
+
+Yazmanın tek yolu keşfi `--dry-run` olmadan yeniden çalıştırmak olsaydı, ikinci
+tarama incelenenden farklı sayfalar bulabilirdi: Hepsiburada'nın genel
+aramasında yalnız ilk 36 kart görünür ve bu kartlar her seferinde değişebilir.
+`python -m app.discovery --apply-report RAPOR` bu yüzden siteye gitmeden **raporun
+kendi adaylarını** kataloğa birleştirir:
+
+- Rapor bir önizleme (`dry_run: true`) olmalıdır; kataloğu zaten yazmış bir
+  çalışmanın raporu reddedilir. `--trace` çıktısı gibi sarmalanmış ya da bozuk
+  dosya da rapor sayılmaz (sözleşme katıdır). Dosyanın başında BOM olabilir.
+- Birleştirme canlı yazmayla aynı koddur (`service.py`): kilit altında
+  yeniden okuma, aynı `merge_catalog`, yalnız içerik değiştiyse yazma. Önizleme
+  ve uygulama, aynı başlangıç kataloğundan canlı yazmayla bayt bayt aynı dosyayı verir.
+- **Önizlemeyi aşmama kuralı:** hesaplanan eklemeler, raporun `added_products` ve
+  `added_listings` listesinin alt kümesi olmalıdır. Katalog önizlemeden sonra
+  elle değiştiyse (ör. bir sayfa silindi) önizlemede görünmeyen bir ekleme
+  çıkabilir; o durumda hiçbir şey yazılmaz ve yeni bir önizleme istenir. Önizlemede
+  görünen ama artık katalogda olan kayıtlar sorun değildir: aynı rapor ikinci kez
+  uygulanırsa eklenecek bir şey kalmaz ve dosya yazılmaz.
+- Siteye gitmez; adaptör hiç çalışmaz. Yalnız katalog kilidini alır, `data/scrape.lock`'u
+  almaz: fiyat turu sürerken de çalışır (tur kataloğu yalnız başlarken okur, yazma
+  atomiktir).
+- Eklenen her ürün ve sayfa `+` ile listelenir; katalogla çelişen aday
+  (`catalog_conflict`) yazılmaz ve ayrıca gösterilir.
+- Tek bir sayfa istenmiyorsa ayrı seçenek yoktur: rapor uygulanır, sonra ilk fiyat
+  turundan önce `catalog.json`'da o sayfanın `"active": false` yapılır. Bu kalıcıdır;
+  sonraki raporlar o sayfayı yeniden önermez.
+- Kataloğa giren sayfa en geç bir sonraki fiyat turunda veritabanına eşitlenir;
+  `config/catalog.json` değişikliği Git'e commit edilmelidir (geri alınırsa
+  `product_id` yeniden kullanılabilir ve eşitleme `CatalogConflict` verir).
+
+### Rapor: `data/discovery_report.json` (zamanlanmışta `data/discovery/kesif_<tarih-saat>.json`)
 
 | Alan | Anlamı |
 |---|---|
+| `generated_at` | Raporun üretildiği an (UTC); `--apply-report` hangi önizlemeyi uyguladığını bununla gösterir. Alan eklenmeden önce yazılmış raporlarda yoktur (`null`). |
 | `dry_run` | Çalışma katalog yazmadan mı yapıldı. |
 | `complete` | Kullanılan kaynakların tamamı tarandı mı. Bütün pazaryerinin bulunduğunu **kanıtlamaz**. |
 | `results` | Hedef × platform başına ayrıntı: adaylar (renk, RAM, garanti yazısı), uyarılar, taranan arama/ürün sayfası sayısı. RAM ve garanti yazısını yalnız Trendyol doldurur. |
@@ -377,7 +425,24 @@ Komutun çıkış kodu: `0` tam tarama, `2` kısmi tarama (doğrulanmış kayıt
 eklenir; Hepsiburada arama API'si engelli olduğu için bugün her zaman 2), `1`
 keşif başlatılamadı (hedef yok, ayar dosyası bozuk, platform adaptörü
 yüklenemedi…), `3` kilit meşgul (tur, başka bir keşif veya canlı kontrol
-sürüyor). Çıktı UTF-8'dir; dosyaya yönlendirildiğinde de Türkçe karakterler
+sürüyor). `--apply-report` için: `0` katalog güncellendi ya da eklenecek bir şey
+kalmadı, `2` güncellendi ama katalogla çelişen aday atlandı, `1` hiçbir şey
+yazılmadı (rapor okunamadı ya da geçersiz, önizleme değil, katalog önizlemeden
+sonra değişmiş, yabancı alan adı…). `--scheduled` kodları tarama kodlarıyla aynıdır;
+ek olarak log dosyası açılamazsa `1` döner ve keşif hiç başlamaz. Argüman hatası
+(`--scheduled` `--dry-run` olmadan, `--apply-report` başka seçenekle) çıkış `2`
+verir ve hiçbir şey yazmaz.
+
+Her taramanın sonunda stderr'e tek satırlık özet yazılır, ör. `Özet: yeni ürün 1 ·
+yeni sayfa 5 (hepsiburada 2, trendyol 3) · zaten kayıtlı 310 · görülmeyen 4 ·
+çakışma 0 · reddedilen 7 · tam sonuç 24/48 · uyarı search_api 24`. Çıkış kodu
+Hepsiburada arama API'si engelli olduğu için bugün hep `2` olduğundan tek başına
+bir şey söylemez; uyarılar `pending` nedenlerine göre sayıldığı için beklenen
+`search_api` ile gerçek sorunlar (ör. `search_fetch`, `variant_fetch`) bu satırdan
+ayırt edilir. "Zaten kayıtlı", bu taramada yeniden görülen katalog sayfalarıdır;
+raporda katalogun toplam sayfa sayısı yoktur.
+
+Çıktı UTF-8'dir; dosyaya yönlendirildiğinde de Türkçe karakterler
 bozulmaz. `catalog.json`, `discovery.json` ve `runtime.json` başında BOM olsa
 da okunur (PowerShell'in `Out-File -Encoding utf8` ile yazdığı kopya gibi);
 katalog her zaman BOM'suz ve LF satır sonuyla yazılır. Trendyol'da arama sayfası
@@ -637,6 +702,68 @@ Sınırlar:
 - Tur ortasında bilgisayar uyursa (1 Ekim 09:29, kritik pil, yaklaşık 6,5 dk)
   uyanma anındaki sayfalar `network` hatası alabilir (tur 7: 1 sayfa, DNS
   çözülemedi); tur tamamlanır, çıkış kodu 2 olur.
+
+### Zamanlanmış keşif (Görev Zamanlayıcı)
+
+`scripts/kesif_zamanlayici_kur.ps1`, `\FiyatTakip\HaftalikKesif` görevini kurar
+(yönetici izni gerekmez; tekrar çalıştırmak yeniden kurar, `-Kaldir` siler;
+fiyat görevine dokunmaz). Karar (1 Ekim 2026, [proje_plani.md](../proje_plani.md)
+Bölüm 8): keşif haftada bir kendiliğinden çalışır ve kataloğa **yazmaz**;
+kullanıcı raporu inceler, sonra `--apply-report` o raporu siteye gitmeden uygular.
+
+| Ayar | Değer | Neden |
+|---|---|---|
+| Tetikleyici | Her Pazar yerel saatle 14:00 | Fiyat turları 10:00 ve 22:00'de başlayıp ~31 dk sürer; keşif (~50 dk) onlardan uzak bir saate konur. Saat yerel yazılır (UTC'ye çevrilmez). |
+| Eylem | `.venv\Scripts\pythonw.exe -m app.discovery --scheduled --dry-run`; çalışma klasörü proje klasörü | Penceresiz. `config\` ve `data\` yolları çalışma klasörüne göredir. `--dry-run` görevin kataloğa hiç yazmamasını sağlar. |
+| Kaçan çalışma | **Telafi edilmez** | Geç açılan bir bilgisayarda telafi keşfi ortak kilidi ~50 dk tutar ve o sırada gelen 22:00 fiyat turu "kilit meşgul" (kod 3) deyip atlanırdı. Kaçan fiyat turu geriye dönük toplanamaz; keşif raporu ise elle her zaman alınabilir. |
+| Pil | Pildeyken de başlar, pile geçince durmaz | Windows'un varsayılanı yalnız şarjdayken çalıştırmaktır. |
+| Uyandırma | Yok | Uykudaki bilgisayar uyandırılmaz; o hafta keşif kaçar. |
+| Aynı anda | Görev çalışıyorsa yeni kopya başlatılmaz | Ortak kilit de engeller. |
+| Süre sınırı | 2 saat | Normal çalışma ~50 dk. Görev Zamanlayıcı süreci zorla kapatırsa rapor oluşmaz ve logun son satırı `Çıkış kodu` olmaz. |
+| Kullanıcı | Kurulumu yapan kullanıcı, yalnız oturum açıkken | Windows şifresi saklanmaz. Keşif veritabanı kullanmadığı için `DATABASE_URL` gerekmez. |
+
+`--scheduled` ile bütün çıktı `data/logs/kesif_<yerel tarih-saat>.log` dosyasına da
+yazılır (başlık, ilerleme ve uyarılar, beklenmeyen hataların ayrıntısı, özet satırı,
+rapor yolu ve **çıkış kodu**); tam rapor aynı damgayla
+`data/discovery/kesif_<yerel tarih-saat>.json` dosyasına kaydedilir. Kilit meşgulken
+(kod 3) ve program hatasında (kod 1) de log bırakılır. Tek istisna: log dosyası
+açılamazsa keşif hiç başlamaz ve `pythonw` altında hiçbir yere yazı düşmez; yalnız
+Görev Zamanlayıcı sonucu `0x1` görünür. Rapor klasörü taramadan önce oluşturulur;
+yazılamıyorsa keşif hiç başlamaz (kod 1, loga yazılır), ~50 dakikalık tarama boşa gitmez.
+
+Haftalık akış:
+
+1. Pazar 14:00'te görev başlar; yaklaşık 50 dk sonra log ve rapor oluşur.
+2. Log'un sonundaki özet satırına ve rapora bakılır: yeni ürün ve sayfalar,
+   `rejected` nedenleri, `pending` içinde beklenen `search_api` dışında bir uyarı
+   (ör. `search_fetch`, `variant_fetch`) olup olmadığı.
+3. Uygunsa `python -m app.discovery --apply-report data\discovery\kesif_<tarih-saat>.json`
+   (yukarıdaki "İncelenen raporu uygulama" bölümü).
+4. `config/catalog.json` değişikliği commit edilir; sonraki fiyat turu yeni sayfaları
+   veritabanına ekler.
+5. Rapor 2–3 hafta temiz giderse tam otomatik biçime (yeni sayfaların doğrudan
+   kataloğa girmesi) geçiş yeniden değerlendirilir; yanlış bir sayfa kataloğa girerse
+   fiyatları ürünün geçmişine yazılır ve sayfa sonradan yalnız pasife alınabildiği
+   için bu şimdilik yapılmaz.
+
+Görev Zamanlayıcı "Son çalıştırma sonucu"
+(`Get-ScheduledTaskInfo -TaskPath '\FiyatTakip\' -TaskName 'HaftalikKesif'`):
+`0x0` tarama tam, `0x2` tarama kısmi (Hepsiburada arama API'si engelli olduğu için
+beklenen sonuç), `0x3` kilit meşgul (keşif atlandı, telafi edilmez), `0x1` başlayamadı
+ya da program hatası. Ayrıntı log dosyasındadır.
+
+Sınırlar:
+
+- Pazar 14:00'te bilgisayar kapalı ya da uykudaysa o hafta keşif kaçar (log oluşmaz);
+  elle çalıştırılır. Görev Zamanlayıcı geçmişi kapalıysa kaçan ya da atılan çalışma
+  Windows tarafında görünmez; kanıt, o günün log dosyasının varlığıdır.
+- Fiyat turunun telafisi 14:00'e sarkarsa ya da o sırada elle canlı komut
+  çalışıyorsa keşif kod 3 ile atlanır (loga yazılır) ve telafi edilmez.
+- Tarama sürerken (~50 dk) elle canlı komut çalıştırılmaz: ortak kilit tutulur.
+- Raporlar silinmez; klasör zamanla büyür (boyutu taranan hedef sayısına bağlıdır;
+  tam taramanın raporu henüz ölçülmedi, 28 Eylül'deki tek çalışmanınki ~10 KB).
+- Testler komut akışını kayıtlı sonuçlarla sınar; görevin gerçek sitelerle
+  çalıştığı ve raporun doğruluğu canlı kanıt ister (ilk zamanlanmış çalışma: 4 Ekim 2026).
 
 ### Katalog eşitleme (`sync-catalog`)
 
