@@ -1,6 +1,6 @@
 # Akıllı Telefon İndirim Takip ve Tahmin Sistemi — Proje Planı
 
-Son güncelleme: 29 Eylül 2026.
+Son güncelleme: 1 Ekim 2026.
 
 Bu belge **kararların ve aşama durumunun** ana kaynağıdır. Sistemin genel
 tanıtımı [README.md](README.md), ayrıntılı işleyişi, komutları, kuralları ve
@@ -31,7 +31,7 @@ Kullanıcı arayüzde arama yaptığında canlı scraping veya model eğitimi
 | 3. Trendyol doğrulanmış stoksuz sayfa | ✅ Uygulandı | `e6664a3` |
 | 4. Scraper/discovery kabul kontrolü (6 adım) | ✅ Tamamlandı | `4d5613d`, Bölüm 5 |
 | 5. Katalogun 25 hedefle sıfırdan kurulumu ve kod denetimi | ✅ Tamamlandı | Bölüm 6 |
-| 6. Veritabanı ve zamanlanmış toplama | ⏳ Sürüyor: Adım 0–3, 5 ve 8 tamamlandı (şema, katalog eşitleme, toplama turu, ilk tam tur 326/326 hatasız, tek piyasa geçmişi araştırması); Adım 8 sonucunda aktarım kaynağı seçilmedi. Görev Zamanlayıcı kuruldu (28 Eylül), 2–3 günlük gözlem sürüyor | Bölüm 9 |
+| 6. Veritabanı ve zamanlanmış toplama | ⏳ Sürüyor: Adım 0–3, 5, 6 ve 8 tamamlandı (şema, katalog eşitleme, toplama turu, ilk tam tur 326/326 hatasız, zamanlayıcı gözlemi: 7 tur, tur 4–6 hatasız, tur 7'de 1 `network` hatası; tek piyasa geçmişi araştırması). Görev Zamanlayıcı 28 Eylül'den beri çalışıyor. Kalan sıra (1 Ekim kararı): **10 → 4 → 11 → 9 → 7**; Adım 10 haftalık keşif zamanlayıcısı, Adım 11 tur sonunda `network` ikinci geçişi, Adım 9 ML eğitimi için Cimri geçmişinin bir defalık aktarımı (karar 30 Eylül) | Bölüm 9 |
 | 7. FastAPI ve Streamlit | 🔜 Planlandı, başlanmadı | Bölüm 9 |
 | 8. ML (indirim tahmini) | 🔜 Planlandı, başlanmadı | Bölüm 9 |
 | 9. Docker ve 7/24 işletim | 🔜 Planlandı, başlanmadı | Bölüm 9 |
@@ -237,7 +237,22 @@ Bu adımda alınan kararlar:
 - Turlar bilgisayarın o anki internet bağlantısına bağlıdır. Bağlantı koparsa
   etkilenen sayfalara `network` hatası yazılır, veri uydurulmaz ve hata aynı
   tur içinde yeniden denenmez (tur 3, 28 Eylül: 47/326 sayfa; bilgisayar bir
-  telefonun hotspot'una bağlıydı ve bağlantı birkaç dakika koptu).
+  telefonun hotspot'una bağlıydı ve bağlantı birkaç dakika koptu). Tur sonu
+  ikinci geçiş 1 Ekim'de karara bağlandı (Bölüm 8); Adım 11'e kadar uygulanmadı.
+- Bilgisayar Wi-Fi ve telefon hotspot'u arasında değişen bağlantılarla çalışır
+  (kullanıcı, 1 Ekim); `network` hataları bu yüzden tekrarlanabilir.
+- Görev bilgisayarı uyandırmaz. Bilgisayar uyurken gelen tur kaçar ve açılışta bir
+  kez telafi edilir (30 Eylül 22:00 turu kaçtı; bilgisayar 30 Eylül 17:57'den 1
+  Ekim 09:20'ye kadar uykudaydı, telafi turu 1 Ekim 09:26'da çalıştı). Kaçan
+  turun verisi geriye dönük toplanamaz; yalnız o saatin gözlemi kaybolur.
+- Telafi turu bir sonraki tur saatine (10:00 ya da 22:00) sarkarsa o tetikleme
+  Windows tarafından atılır (`IgnoreNew`): ayrı log, veritabanı satırı ve çıkış
+  kodu bırakmaz, sonradan telafi edilmez (1 Ekim 10:00; Görev Zamanlayıcı geçmişi
+  kapalı olduğu için atılma olayı doğrulanamadı). `LastTaskResult` o durumda
+  çalışan turun sonucunu gösterir.
+- Tur ortasında bilgisayar uyursa (1 Ekim 09:29, kritik pil, yaklaşık 6,5 dk)
+  uyanma anındaki sayfalar `network` hatası alabilir (tur 7: 1 sayfa); veri
+  uydurulmaz, tur tamamlanır.
 - Fiyat ve stok iki tur arasında (12 saat) değişip geri dönebilir; bu
   değişiklikler görülmez. Geçmiş, turların anlık görüntüleridir (28 Eylül:
   bir sayfa 2 saatte Tükendi → Kritik Stok, bir başkası 71.059 → 75.524 TL).
@@ -255,7 +270,10 @@ Bu adımda alınan kararlar:
   (2.2); site unsurlarının kopyalanması/işlenmesi (3.1) ve başka mecrada
   kullanılması (4.12) kısıtlanıyor. Bu koşullarla düzenli geçmiş indirip
   saklamak için uygun kullanım hakkı doğrulanmadı; araştırma sonunda
-  veritabanına aktarım kaynağı seçilmedi. Bu, teknik erişim sonucundan ayrı.
+  29 Eylül araştırması sonunda veritabanına aktarım kaynağı seçilmedi.
+  30 Eylül kullanıcı kararıyla Cimri'nin bir defalık aktarımı Adım 9 olarak
+  planlandı; önceki kullanım koşulu bulgusu bu kararla doğrulanmış veya
+  çözülmüş sayılmaz, aktarım adımında ele alınır.
 - İlk Akakçe teknik denemesi (29 Eylül, iPhone 16 128 GB ürün sayfası) tek
   istekte HTTP 403 `blocked` verdi (`artifacts/market_history_probe/` yerel
   raporu). Ürün eşleşmesi veya geçmiş biçimi okunamadı. Aynı adrese tekrar
@@ -335,10 +353,10 @@ nadir durumdur. Veritabanı aşamasında veya bir hata görüldüğünde ele al�
 |---|---|
 | Garanti türüne göre ayrım | **Karar verildi (27 Eylül 2026): ayrılmıyor;** yurt dışı sürümler ürün adından tanınıp kapsam dışı bırakılıyor. |
 | Veritabanı teknolojisi, veri modeli, çalışma ortamı | **Karar verildi (28 Eylül 2026):** PostgreSQL 17, `psycopg` + ham SQL, kullanıcının bilgisayarı, günde 2 tur; ayrıntı Bölüm 9. SQLite önerisi bırakıldı. |
-| Keşfin zamanlanması | **Karar verildi (28 Eylül 2026):** bu aşamada manuel, haftada bir; fiyat turuyla ortak kilit. Otomasyon, veritabanı birkaç hafta sorunsuz çalıştıktan sonra değerlendirilir. Kanıt: 28 Eylül kapanış taramasında tek günde 21 yeni bağlantı çıktı; Hepsiburada genel aramasının ilk 36 kartı her seferinde değişebildiği için tekrar eden keşif kapsamı artırır. |
-| Piyasa geçmişi kaynağı | **Karar verildi (29 Eylül 2026):** Akakçe ve Cimri serileri birleştirilmeyecek. Adım 8 araştırması sonunda Cimri üç üründe teknik olarak doğrulandı; Akakçe'nin ilk örneği 403 verdi. Cimri'nin yayımlı koşullarında düzenli kopyalama/işleme için uygun hak doğrulanmadığından **şimdilik veritabanına aktarım kaynağı seçilmedi**; veri alımı başlamaz. Uygun kullanım hakkı veya başka kaynak bulunursa ayrıca planlanır. ML'de kullanımı o zaman kararlaştırılır (Bölüm 7 ve 9). |
-| Cimri geçmişinin bir defalık kaydı | **Kullanıcı isteği (29 Eylül 2026):** katalogdaki telefonların Cimri geçmişi bir kez çekilip saklansın; Cimri'den düzenli toplama hedeflenmiyor. Üç örneğin tam serisi şimdilik yalnız Git dışındaki yerel araştırma raporlarında. Katalog geneli için eşleştirme, depolama ve veri kullanım kapsamı ayrı adımda netleştirilecek; toplu alım ve veritabanı aktarımı henüz yapılmadı. |
-| Tur sonunda yalnız `network` hatası alan sayfalara ikinci geçiş | Karar bekliyor (Adım 6 gözleminden sonra). Kanıt: tur 3'te (28 Eylül) 47 sayfa bağlantı kesintisiyle `network` hatası aldı; son hatadan sonra kalan 154 sayfa cevap verdi, yani tur bitmeden bağlantı geri gelmişti. Yalnız `network` için ve tek geçiş düşünülüyor; `blocked` yeniden denenmez. |
+| Keşfin zamanlanması | **Karar verildi (28 Eylül 2026):** bu aşamada manuel, haftada bir; fiyat turuyla ortak kilit. Otomasyon, veritabanı birkaç hafta sorunsuz çalıştıktan sonra değerlendirilir. Kanıt: 28 Eylül kapanış taramasında tek günde 21 yeni bağlantı çıktı; Hepsiburada genel aramasının ilk 36 kartı her seferinde değişebildiği için tekrar eden keşif kapsamı artırır. **29 Eylül güncellemesi (kullanıcıyla):** haftalık zamanlayıcı değerlendirildi; şimdilik elle devam, **Adım 6 gözlemi bitince (1 Ekim sonrası) otomatikleştirilecek**. Biçim o gün seçilecek: (A) önerilen, görev keşfi deneme modunda çalıştırır ve tarihli rapor bırakır, yeni sayfaları kullanıcı inceleyip tek komutla ekler; 2–3 hafta rapor temiz giderse (B)'ye geçiş değerlendirilir. (B) tam otomatik: yeni sayfalar doğrudan kataloğa girer. B'nin riski: yanlış bir sayfa kataloğa girerse tur onu birkaç saat içinde veritabanına ekler, fiyatları ürünün geçmişine yazılır ve sayfa sonradan yalnız pasife alınabilir; ayrıca `catalog.json` Git'te olduğu için her hafta commit edilmemiş değişiklik birikir. Teknik gereksinimler: keşfe `--scheduled` (log + tarihli rapor + özet satırı; bugün rapor her çalışmada üzerine yazılır); görev tur saatlerinden uzak olmalı (ör. Pazar 14:00, keşif ~50 dk); keşif görevinde kaçan çalışmayı telafi **kapalı** olmalı, yoksa geç açılan bilgisayarda telafi keşfi 22:00 turunu kilitle atlatabilir; keşif çıkış kodu Hepsiburada yüzünden hep 2'dir, özet satırı ayrıca okunmalı. **Karar verildi (1 Ekim 2026, kullanıcı): A seçildi, ekleme komutuyla (A1).** Görev her Pazar 14:00'te keşfi deneme modunda çalıştırır ve tarihli log + rapor + özet satırı bırakır; kaçan çalışmayı telafi etmez. Kullanıcı raporu inceler; yeni bir komut (`--apply-report`) siteye gitmeden **tam olarak incelenen** raporu kataloğa uygular. Gerekçe: bugün yazmanın tek yolu keşfi yeniden çalıştırmaktır ve Hepsiburada'nın ilk 36 kartı değişebildiği için ikinci tarama incelenenden farklı sonuç verebilir. Rapor 2–3 hafta temiz giderse (B)'ye geçiş yeniden değerlendirilir. Uygulama Adım 10'dur (henüz uygulanmadı). |
+| Piyasa geçmişi kaynağı | **29 Eylül araştırma sonucu:** Cimri üç üründe teknik olarak doğrulandı; Akakçe'nin ilk örneği 403 verdi. O tarihte aktarım kaynağı seçilmedi. **Güncel karar (30 Eylül 2026, kullanıcı; Codex):** ML eğitimi için geçmiş fiyat hareketinin kaynağı Cimri olacak; katalogdaki telefonların mevcut geçmişi bir defa alınacak. Akakçe ve Cimri serileri birleştirilmeyecek, düzenli Cimri toplaması yapılmayacak. Kullanım koşullarına ilişkin önceki bulgu Bölüm 7'de korunur ve aktarım adımında ele alınır. |
+| Cimri geçmişinin bir defalık kaydı ve ML amacı | **Karar verildi (30 Eylül 2026, kullanıcı; Codex):** Aşama 6'ya **Adım 9** eklenir; Adım 4'ten sonra, Adım 7 kapanışından önce yapılır. Veriler aynı PostgreSQL veritabanında ayrı `market_history` tablosunda saklanır. Amaç, erişilebilen bir yıllık geçmiş fiyat hareketini model eğitiminde kullanmaktır. **Gerekçe:** Cimri daha geniş kaynak kapsamına sahip olsa da kullanıcı küçük fiyat farklarını bu amaç için kabul ediyor; öncelik geçmişteki değişimdir. Cimri serisi kendi Hepsiburada/Trendyol gözlemlerimizle aynı ölçüm olarak etiketlenmez. Eğitimin nasıl yapılacağı, mutlak fiyatın mı değişimin mi kullanılacağı ve değerlendirme ayrıntıları ML aşamasında kararlaştırılır. Üç örneğin tam serisi hâlen yerel araştırma raporlarında; toplu alım, tablo ve aktarım henüz uygulanmadı. |
+| Tur sonunda yalnız `network` hatası alan sayfalara ikinci geçiş | **Karar verildi (1 Ekim 2026, kullanıcı): yapılacak, tek geçiş (Adım 11, henüz uygulanmadı).** Kanıt: tur 3'te (28 Eylül) 47 sayfa bağlantı kesintisiyle `network` hatası aldı; son hatadan sonra kalan 154 sayfa cevap verdi, yani tur bitmeden bağlantı geri gelmişti. Tur 7'de (1 Ekim) 1 sayfa uyku sonrası DNS hatası aldı. Yalnız `network` yeniden okunur; `blocked` yeniden denenmez. İkinci okuma, hata satırının üzerine yazılır (tur × sayfa başına tek satır kuralı korunur); ilk hata log ve tur notunda kalır. Yeniden okunamayan sayfa hata olarak kalır. |
 | Gelecek aşama tanımları (`PricePoint`, `ProductSummary`, `MarketRecord`, `coverage_version`, zamanlama/ML ayarları, FastAPI/LightGBM/Streamlit bağımlılıkları) | Kaldırıldı (25 Eylül 2026). İlgili aşamada yeni tasarıma göre yeniden eklenecek; yerel taslaklar o zamana kadar çalışmaz. |
 
 ## 9. Sonraki aşamalar
@@ -368,7 +386,12 @@ Kararlar (28 Eylül 2026, kullanıcıyla):
 Adımlar (her biri ayrı commit). Uygulama sırası 28 Eylül'de **3 → 5 → 6 → 4**
 olarak değiştirildi: canlı deneme ve zamanlayıcı öne alındı ki gerçek veri
 erken birikmeye başlasın; görünüm (4) veri toplanırken yazılır ve gerçek
-veriyle de denenir.
+veriyle de denenir. **30 Eylül kullanıcı kararı:** Cimri'nin bir defalık geçmiş
+aktarımı yeni **Adım 9** olarak eklenir; kalan sıra **6 → 4 → 9 → 7** olur.
+Adım 8 tamamlanmış araştırmadır; Adım 9 henüz uygulanmamış aktarım işidir.
+**1 Ekim kullanıcı kararı:** Adım 6 kapandı; haftalık keşif zamanlayıcısı
+(**Adım 10**, ilk zamanlanmış keşif Pazar 4 Ekim'den önce) ve tur sonu `network`
+ikinci geçişi (**Adım 11**) eklendi. Kalan sıra **10 → 4 → 11 → 9 → 7**.
 
 | Adım | Durum |
 |---|---|
@@ -376,11 +399,14 @@ veriyle de denenir.
 | 1. Şema, migrate komutu, CI'da PostgreSQL | ✅ Tamamlandı (28 Eylül): `001_initial.sql`, `python -m app.database migrate/status`, 32 veritabanı testi (toplam 91) |
 | 2. Katalogun veritabanına eşitlenmesi | ✅ Tamamlandı (28 Eylül): `python -m app.database sync-catalog [--dry-run]`; kimlik değişiminde hiçbir şey yazmadan durur, katalogdan düşen kayıt pasife alınır; 22 test (toplam 113) |
 | 3. Toplama turu ve ortak kilit | ✅ Tamamlandı (28 Eylül): `python -m app.collection [--prefix] [--scheduled]`; sayfa sonucu hemen ve bir kez yazılır, yarım kalan tur sonraki turda kapatılır; tur, keşif ve iki canlı kontrol aracı `data/scrape.lock` kilidini paylaşır; ayrıca veritabanı tur kilidi. Commit öncesi üç ek kontrol: (1) bağımsız kod incelemesi, 13 bulgu, 7 numara hariç hepsi düzeltildi ve testlendi (7 → Adım 4); (2) kasıtlı bozma testi: 37 bozmanın 33'ü testlerce yakalandı, kaçan 4'ü önceden tahmin edilen eşzamanlılık/güvenlik korumaları; (3) ilk canlı tur (`--prefix poco_`, 4 sayfa, 25 sn): 4/4 fiyat, çıkış 0. Testler 22 (toplam 143). |
-| 4. Karşılaştırılabilirlik görünümü (sahte düşüş kuralı) | 🔜 (6'dan sonra). Aynı migration'a (002) ertelenen üç kural eklenecek: `sold_out` satırında fiyat/satıcı yasağı; kimlik alanlarının değiştirilmesini ve satır silinmesini reddeden tetikleyici (bugün yalnızca kodda korunuyor; elle SQL ile bozulabilir); çizili fiyatın güncel fiyattan büyük olması (sözleşme + CHECK; karar 29 Eylül). **Uygulama uyarısı:** kodda yeni migration varken veritabanı güncellenmemişse tur "şema güncel değil" deyip başlamaz; `migrate` 10:00 ve 22:00 turlarının dışında, kod değişikliğiyle aynı anda çalıştırılır. |
+| 4. Karşılaştırılabilirlik görünümü (sahte düşüş kuralı) | 🔜 (Adım 10'dan sonra; sıra 1 Ekim kararı). Aynı migration'a (002) ertelenen üç kural eklenecek: `sold_out` satırında fiyat/satıcı yasağı; kimlik alanlarının değiştirilmesini ve satır silinmesini reddeden tetikleyici (bugün yalnızca kodda korunuyor; elle SQL ile bozulabilir; Adım 3 incelemesinin ertelenen 7 numaralı bulgusu); çizili fiyatın güncel fiyattan büyük olması (sözleşme + CHECK; karar 29 Eylül; migration'dan önce gerçek verideki ihlaller okunarak sayılır). Tetikleyici bugünkü güncellemelere (`record_result`, `finish_run`, `close_stale_runs`, eşitlemede `active=false`) ve Adım 11'in çalışan turdaki `network` satırını güncellemesine izin vermelidir. **Uygulama uyarısı:** kodda yeni migration varken veritabanı güncellenmemişse tur "şema güncel değil" deyip başlamaz; `migrate` 10:00 ve 22:00 turlarının dışında, kod değişikliğiyle aynı anda çalıştırılır. |
 | 5. Canlı deneme (kullanıcı çalıştırır) | ✅ Tamamlandı (28 Eylül): ilk tam tur (tur 2, 15:48–16:19 TR saati, **30 dk 55 sn**): 326/326 sayfa okundu, **0 hata, 0 engellenme**; iki sayfa arası en uzun bekleme 9,4 sn. Hepsiburada 213: 139 fiyat, 74 Tükendi; Trendyol 113: 110 fiyat (77 Kritik Stok), 3 Tükendi. 8 ürünün bütün sayfaları Tükendi (çoğu eski iPhone'ların yüksek kapasiteleri). Tarayıcı karşılaştırması 4 sayfa: fiyat, çizili fiyat, satıcı, kuruşlu fiyat (turda 31 tane) ve Kritik Stok eşleşti; 15:49'da Tükendi okunan `trendyol_762254862` 17:47'de "Son 1 ürün" gösteriyordu, yeniden okumada da Kritik Stok çıktı (sayfa arada değişmiş). Aynı ürünün bir sayfasında fiyat 2 saatte 71.059 → 75.524 TL oldu. Bulunan tek hata: ön ek verilmeyen turda `note` NULL yerine boş yazı oluyordu (`concat_ws`); düzeltildi, test eklendi (toplam 144). Tur 2'nin kaydı elle değiştirilmedi. |
-| 6. Görev Zamanlayıcı ve 2–3 günlük gözlem | ⏳ Kuruldu, gözlem sürüyor. Görev 28 Eylül akşamı `scripts/zamanlayici_kur.ps1` ile kuruldu; kullanıcı ilk turu `Start-ScheduledTask` ile başlattı (tur 3, `scheduled`, 23:22–23:55, 33 dk): `pythonw`, ortam değişkenleri, `pgpass.conf`, çalışma klasörü ve log dosyası Görev Zamanlayıcı ortamında çalıştı. 326 sayfanın 279'u cevap verdi (219 fiyat, 60 Tükendi), 47 sayfa `network` hatası aldı (DNS çözümlenemedi / zaman aşımı; Windows WLAN günlüğüne göre hotspot bağlantısı 23:27:38'de koptu, 23:30:52'de döndü); tur `completed`, çıkış 2, veri uydurulmadı. İlk tetikleyiciyle çalışan tur (tur 4, 29 Eylül 10:00:02, 30 dk 44 sn): 326/326 sayfa, **0 hata** (243 fiyat, 83 Tükendi), çıkış 0; aynı sabah temizlenen kodla gerçek sitelerde ilk tur, istek aralıkları önceki turlarla aynı (Hepsiburada ortalama 8,7 sn). Kararlar (28 Eylül, kullanıcıyla): görev **penceresiz** (`pythonw.exe`) çalışır, `--scheduled` çıktısı `data/logs/tur_<yerel tarih-saat>.log` dosyasına da yazılır (açık kalan bir pencere kapatılınca tur kesilirdi; Görev Zamanlayıcı çıktı saklamaz); görev repodaki `scripts/zamanlayici_kur.ps1` ile kurulur (ayarlar kodda, yeniden kurulabilir). Ayarlar: yerel saatle 10:00/22:00, kaçan tur açılınca bir kez, pilde de çalışır, uyandırmaz, 2 saat süre sınırı, kullanıcı adına yalnız oturum açıkken (docs/teknik.md "Zamanlanmış tur"). Kullanıcının dizüstünde boşta uyku kapalı (şarj ve pil). 5 yeni test (toplam 149); log kodunda 3 kasıtlı bozmanın 3'ü yakalandı; gerçek `pythonw.exe` ile siteye gitmeyen denemede log yazıldı, çıkış 1, tur açılmadı. **Commit öncesi projenin tamamı incelendi (29 Eylül):** 8 bağımsız inceleyici (scraper, keşif, veritabanı, tur, belgeler, güvenlik, okunabilirlik, test kalitesi) bütün dosyaları okudu; her bulgu ayrı bir doğrulayıcıya çürütülmek üzere verildi ve son bir denetçi kimsenin bakmadığı yerlere baktı. 168 ham bulgu → 135 tekil; 10'u çürütüldü, 125'i doğrulandı (57'si kısmen), +24 ek bulgu. Davranış değiştirmeyenler uygulandı: ölü kod temizliği, dışarıdan okuyana yönelik yorumlar (kilit numaraları, Tükendi kuralı, hata kodları, üç istekli Hepsiburada akışı…), belge düzeltmeleri ve testler **149 → 414** (116'sı PostgreSQL'de; yeni `tests/test_http.py`, `tests/test_contracts.py`). Kullanıcı davranış değiştiren bulgulardan üç grubu onayladı ve uygulandı: keşif sağlamlığı (UTF-8 çıktı, BOM'lu dosya okuma, kilit meşgulken çıkış 3, fazladan arama sayfası yok, pasif sayfalar "korunan" listesinde yok, adaptör hatası çıkış 1), migration koşucusu (yeniden adlandırılan dosya reddedilir, numara hatası bulunanları gösterir), tanılama çıktısı (boş satıcı kimliği, `missing_price`/`missing_seller`); her birinin testi önce eski kodda başarısız oldu. Çizili fiyat kuralı (sözleşme + CHECK) Adım 4'e alındı. Araç düzeni: Python `>=3.13,<3.14`, Black `>=26.1`; ortak yapay zekâ talimatları `AGENTS.md`'ye taşındı (Claude Code ve Codex aynı dosyayı okur), `.cursorrules` silindi. Testlere iki emniyet kemeri eklendi: gerçek ağ isteği ve kalıcı `DATABASE_URL` her testte kesilir. Yeni testler bellekte veya kopyada kasıtlı bozmalarla sınandı (75 bozmanın 73'ü yakalandı; kaçan 2'si eşdeğer bozma). Bir gerçek hata bulundu ve `xfail` ile belgelendi (Bölüm 7, Türkçe ekler). Davranış değiştiren bulgular kullanıcı kararına bırakıldı. |
-| 7. Kapanış belgeleri | 🔜 |
-| 8. Tek piyasa geçmişi kaynağı araştırması (Adım 6'nın 2–3 günlük gözlemi sırasında) | ✅ Araştırma tamamlandı (29 Eylül): Cimri üç üründe doğru kimlikle 365'er nokta (30 Eylül 2025–29 Eylül 2026), 0 eksik fiyat ve her üründe 90/90 tablo eşleşmesi verdi. Akakçe ilk örneği HTTP 403 verdi; diğer ürünlerine istek atılmadı. `tests/manual/market_history_probe.py` ortak HTTP katmanı/kilit ve dört istek bütçesiyle yalnız yerel rapor üretir. Cimri teknik adaydır; tarihsel satıcı kapsamı ve günlük gözlem sıklığı bilinmiyor. Yayımlı kullanım koşulları düzenli kopyalama/işleme için uygunluğu doğrulamadığından **aktarım kaynağı seçilmedi, veritabanına veri yazılmadı**. Kullanım hakkı veya alternatif kaynak netleşirse ayrı plan yapılır; iki seri birleştirilmez. |
+| 6. Görev Zamanlayıcı ve 2–3 günlük gözlem | ✅ Tamamlandı (1 Ekim; kuruldu ve gözlendi, gözlem sonucu satırın sonunda). Görev 28 Eylül akşamı `scripts/zamanlayici_kur.ps1` ile kuruldu; kullanıcı ilk turu `Start-ScheduledTask` ile başlattı (tur 3, `scheduled`, 23:22–23:55, 33 dk): `pythonw`, ortam değişkenleri, `pgpass.conf`, çalışma klasörü ve log dosyası Görev Zamanlayıcı ortamında çalıştı. 326 sayfanın 279'u cevap verdi (219 fiyat, 60 Tükendi), 47 sayfa `network` hatası aldı (DNS çözümlenemedi / zaman aşımı; Windows WLAN günlüğüne göre hotspot bağlantısı 23:27:38'de koptu, 23:30:52'de döndü); tur `completed`, çıkış 2, veri uydurulmadı. İlk tetikleyiciyle çalışan tur (tur 4, 29 Eylül 10:00:02, 30 dk 44 sn): 326/326 sayfa, **0 hata** (243 fiyat, 83 Tükendi), çıkış 0; aynı sabah temizlenen kodla gerçek sitelerde ilk tur, istek aralıkları önceki turlarla aynı (Hepsiburada ortalama 8,7 sn). Kararlar (28 Eylül, kullanıcıyla): görev **penceresiz** (`pythonw.exe`) çalışır, `--scheduled` çıktısı `data/logs/tur_<yerel tarih-saat>.log` dosyasına da yazılır (açık kalan bir pencere kapatılınca tur kesilirdi; Görev Zamanlayıcı çıktı saklamaz); görev repodaki `scripts/zamanlayici_kur.ps1` ile kurulur (ayarlar kodda, yeniden kurulabilir). Ayarlar: yerel saatle 10:00/22:00, kaçan tur açılınca bir kez, pilde de çalışır, uyandırmaz, 2 saat süre sınırı, kullanıcı adına yalnız oturum açıkken (docs/teknik.md "Zamanlanmış tur"). Kullanıcının dizüstünde boşta uyku kapalı (şarj ve pil). 5 yeni test (toplam 149); log kodunda 3 kasıtlı bozmanın 3'ü yakalandı; gerçek `pythonw.exe` ile siteye gitmeyen denemede log yazıldı, çıkış 1, tur açılmadı. **Commit öncesi projenin tamamı incelendi (29 Eylül):** 8 bağımsız inceleyici (scraper, keşif, veritabanı, tur, belgeler, güvenlik, okunabilirlik, test kalitesi) bütün dosyaları okudu; her bulgu ayrı bir doğrulayıcıya çürütülmek üzere verildi ve son bir denetçi kimsenin bakmadığı yerlere baktı. 168 ham bulgu → 135 tekil; 10'u çürütüldü, 125'i doğrulandı (57'si kısmen), +24 ek bulgu. Davranış değiştirmeyenler uygulandı: ölü kod temizliği, dışarıdan okuyana yönelik yorumlar (kilit numaraları, Tükendi kuralı, hata kodları, üç istekli Hepsiburada akışı…), belge düzeltmeleri ve testler **149 → 414** (116'sı PostgreSQL'de; yeni `tests/test_http.py`, `tests/test_contracts.py`). Kullanıcı davranış değiştiren bulgulardan üç grubu onayladı ve uygulandı: keşif sağlamlığı (UTF-8 çıktı, BOM'lu dosya okuma, kilit meşgulken çıkış 3, fazladan arama sayfası yok, pasif sayfalar "korunan" listesinde yok, adaptör hatası çıkış 1), migration koşucusu (yeniden adlandırılan dosya reddedilir, numara hatası bulunanları gösterir), tanılama çıktısı (boş satıcı kimliği, `missing_price`/`missing_seller`); her birinin testi önce eski kodda başarısız oldu. Çizili fiyat kuralı (sözleşme + CHECK) Adım 4'e alındı. Araç düzeni: Python `>=3.13,<3.14`, Black `>=26.1`; ortak yapay zekâ talimatları `AGENTS.md`'ye taşındı (Claude Code ve Codex aynı dosyayı okur), `.cursorrules` silindi. Testlere iki emniyet kemeri eklendi: gerçek ağ isteği ve kalıcı `DATABASE_URL` her testte kesilir. Yeni testler bellekte veya kopyada kasıtlı bozmalarla sınandı (75 bozmanın 73'ü yakalandı; kaçan 2'si eşdeğer bozma). Bir gerçek hata bulundu ve `xfail` ile belgelendi (Bölüm 7, Türkçe ekler). Davranış değiştiren bulgular kullanıcı kararına bırakıldı. **Gözlem sonu (1 Ekim):** gerçek veritabanı (yalnız okuma) ve loglar eşleşti: 7 tur kayıtlı, hepsi `completed`, takılı `running` tur ve boş `outcome` satırı yok. Tur 4–6 (29 Eylül 10:00 – 30 Eylül 10:00): 326/326, 0 hata, çıkış 0. **30 Eylül 22:00 turu çalışmadı:** bilgisayar 17:57'de uyudu (Windows günlüğü: uyku nedeni "Application API"; kesin tetikleyici belirlenmedi) ve 1 Ekim 09:20'de uyandı; yukarıdaki "boşta uyku kapalı" ayarı bunu önlemedi. Kaçan tur 1 Ekim 09:26'da açılışta bir kez telafi edildi (tur 7, `scheduled`, 37 dk, 234 fiyat, 91 Tükendi, 1 `network`, çıkış 2): telafi mekanizması bilerek kaçırma denemesine gerek kalmadan gerçek bir uykuda doğrulandı. Aynı turda 09:29'da kritik pil yüzünden yaklaşık 6,5 dk uyku oldu; sayfa 31 uyanma anında DNS hatası aldı, tur veri uydurmadan tamamlandı. 10:00 tetiklemesi tur 7 sürerken geldi ve `IgnoreNew` ile atıldı (ayrı log ve tur kaydı yok); `LastTaskResult = 2` tur 7'nin sonucudur. Bulgular Bölüm 7'ye sınır olarak, kararlar Bölüm 8'e işlendi. |
+| 7. Kapanış belgeleri | 🔜 Adım 9'dan sonra; kendi fiyat toplama altyapısı ve Cimri geçmiş aktarımının sonuçları birlikte belgelenir, veritabanı aşaması kapanır. |
+| 8. Tek piyasa geçmişi kaynağı araştırması (Adım 6'nın 2–3 günlük gözlemi sırasında) | ✅ Araştırma tamamlandı (29 Eylül): Cimri üç üründe doğru kimlikle 365'er nokta (30 Eylül 2025–29 Eylül 2026), 0 eksik fiyat ve her üründe 90/90 tablo eşleşmesi verdi. Akakçe ilk örneği HTTP 403 verdi; diğer ürünlerine istek atılmadı. `tests/manual/market_history_probe.py` ortak HTTP katmanı/kilit ve dört istek bütçesiyle yalnız yerel rapor üretir. Tarihsel satıcı kapsamı ve günlük gözlem sıklığı bilinmiyor. Araştırma tarihinde kullanım koşulları düzenli kopyalama/işleme için uygunluğu doğrulamadığından aktarım kaynağı seçilmedi; veritabanına veri yazılmadı. **30 Eylül kararıyla bir defalık Cimri aktarımı ayrı Adım 9 olarak planlandı**; araştırmanın tamamlanması aktarımın tamamlandığı anlamına gelmez. |
+| 9. Cimri geçmişinin bir defalık aktarımı | 🔜 Planlandı (30 Eylül); **Adım 4'ten sonra, Adım 7'den önce**. Katalogdaki telefonlar Cimri ürünleriyle doğrulanarak eşleştirilir; erişilebilen bir yıllık tarihli fiyat hareketi bir defa alınır ve aynı PostgreSQL veritabanında ayrı `market_history` tablosuna aktarılır. Ürün eşleşmesi, tarih, fiyat, kaynak ve alınma zamanı saklanır; tekrar aktarımın kayıt çoğaltmaması sağlanır. Eşleşmeyen ürünler ve eksik geçmiş raporlanır, veri uydurulmaz. Kullanım koşulu bulgusu ele alınır; tablo yeni numaralı migration ile kurulur. Kod ve ağsız/veritabanı testleri hazırlanır; canlı alım ve gerçek veritabanına yazma komutlarını kullanıcı çalıştırır. Amaç ML eğitimi için geçmiş hareketi saklamaktır; eğitim yöntemi bu adımın işi değildir. Düzenli Cimri toplaması yapılmaz; kendi tur sonuçlarıyla aynı seri gibi birleştirilmez. |
+| 10. Haftalık keşif zamanlayıcısı (A1) | 🔜 Planlandı (1 Ekim kararı, Bölüm 8); **Adım 6'dan sonra ilk iş, Pazar 4 Ekim 14:00'ten önce**. Ortak log yardımcıları `app/console.py`'ye taşınır (fiyat turunun davranışı değişmez); keşfe `--scheduled` (yalnız `--dry-run` ile; `data/logs/kesif_<ts>.log`, `data/discovery/kesif_<ts>.json`, nedene göre sayılmış tek satırlık özet) ve `--apply-report <rapor>` (siteye gitmez; yalnız önizlemede görünen sayfalar eklenir, fazlası çıkarsa hiçbir şey yazılmaz; aynı rapor ikinci kez uygulanırsa bir şey eklenmez) eklenir; `scripts/kesif_zamanlayici_kur.ps1` görevi `\FiyatTakip\HaftalikKesif` olarak kurar (Pazar 14:00, kaçan çalışmayı telafi etmez, uyandırmaz, 2 saat sınırı). Kod ve ağsız testler hazırlanır; canlı deneme ve görev kurulumunu kullanıcı çalıştırır. Uygulanmadı. |
+| 11. Tur sonunda `network` ikinci geçişi | 🔜 Planlandı (1 Ekim kararı, Bölüm 8); **Adım 4'ten sonra** (tetikleyici çalışan turdaki `network` satırının güncellenmesine izin vermeli). `app/collection/service.py` içinde döngü sonunda, tur kapatılmadan önce yalnız `network` hatalı sayfalar bir kez yeniden okunur; yeni bir `runs` fonksiyonu yalnız çalışan turun `error`/`network` satırını günceller; log ve tur notu ilk hatayı korur. Uygulanmadı. |
 
 Adım 8 canlı sonuçlar (29 Eylül 2026): Akakçe iPhone 16 128 GB sayfası 1
 istekte HTTP 403 `blocked`; Cimri'nin üç örneğinde kimlik eşleşti ve HTML
@@ -389,20 +415,27 @@ Apple, Samsung ve Xiaomi için 365'er tarihli fiyat döndürdü; her birinde 0 e
 fiyat ve 90/90 gömülü tablo eşleşmesi var (Bölüm 7). Tablo yaklaşık üç ayla
 sınırlı, grafik 30 Eylül 2025'e uzanıyor. Cimri teknik adaydır; yayımlı
 koşullarda düzenli kopyalama/işleme için uygun hak doğrulanmadığı için aktarım
-kaynağı seçilmedi. Akakçe 403 için tekrar veya engel aşma yapılmaz.
+kaynağı araştırma tarihinde seçilmedi. 30 Eylül'de Cimri'nin bir defalık
+aktarımı Adım 9'a alındı (Bölüm 8). Akakçe 403 için tekrar veya engel aşma
+yapılmaz.
 
-Takvim (tahmin, 29 Eylül; kesin değil, Adım 8'in sonucuna bağlı):
+Takvim (tahmin, 1 Ekim güncellemesi; Adım 4, 9 ve 11'in süresi henüz belirlenmedi):
 
 | Tarih | İş |
 |---|---|
-| 29 Eylül | Adım 8 araştırması tamamlandı; kaynak seçilmedi. Adım 6 gözlemi sürüyor (turlar kendiliğinden çalışır) |
-| 1 Ekim | Gözlem sonu: 6 turun özeti, bilerek yapılan kaçan tur telafi denemesi |
-| 1–2 Ekim | Adım 4 (002 migration: görünüm ve kurallar) |
-| 2–3 Ekim | Adım 7 kapanış belgeleri; veritabanı aşaması biter |
-| Tarih belirsiz | Kullanıcının istediği Cimri geçmişinin bir defalık kaydı için kullanım kapsamı, katalog eşleştirmesi ve ayrı `market_history` tablosu/içe aktarma ayrıca planlanır |
+| 29 Eylül | Adım 8 araştırması tamamlandı; kaynak seçilmedi |
+| 1 Ekim | **Adım 6 kapandı:** 7 turun özeti; kaçan turun telafisi gerçek bir uykuda doğrulandı. Keşif A1 ve `network` ikinci geçişi kararları işlendi |
+| 1–3 Ekim | **Adım 10:** keşif zamanlayıcısı (kod, test, kullanıcının kısa canlı denemesi ve görev kurulumu); ilk zamanlanmış keşif Pazar 4 Ekim 14:00 |
+| Adım 10 sonrası | **Adım 4:** `002` migration (görünüm ve kurallar); `migrate` tur saatleri dışında çalıştırılır |
+| Adım 4 sonrası | **Adım 11:** tur sonunda `network` ikinci geçişi |
+| Adım 11 sonrası | **Adım 9:** Cimri geçmişinin bir defalık alımı, katalog eşleştirmesi ve ayrı `market_history` tablosuna aktarım |
+| Adım 9 sonrası | **Adım 7:** kapanış belgeleri; veritabanı aşaması biter. Önceki 2–3 Ekim kapanış tahmini yeni adımlara göre yeniden değerlendirilecek |
 
-Kendi verimizle ML için gereken 30 günlük geçmiş, ilk tam turdan (28 Eylül)
-sayılırsa Ekim sonunda dolar; API/arayüz aşaması bu süre içinde ilerleyebilir.
+Kendi topladığımız geçmiş, ilk tam turdan (28 Eylül) sayılırsa Ekim sonunda
+30 güne ulaşır; bu süre tek başına yeterli eğitim verisi garantisi değildir.
+ML eğitimi için bir yıllık geçmiş hareket hedefi Cimri aktarımıyla (Adım 9)
+karşılanacak; katalog genelindeki gerçek tarih kapsamı aktarımda doğrulanır.
+API/arayüz aşaması kendi geçmişimiz birikirken ilerleyebilir.
 
 Adım 0'da görülenler:
 
@@ -451,11 +484,14 @@ eklenmez.
 - Kapsamı değişen pencereler eğitimde kullanılmaz; en az 30 günlük geçmiş veya
   doğrulanmış model yoksa olasılık gösterilmez. Zaman sıralı değerlendirme ve
   sabit referanstan iyi Brier skoru olmadan model yayımlanmaz.
-- Akakçe/Cimri geçmişi Adım 8'de araştırıldı; uygun aktarım kaynağı
-  seçilmedi. Kullanım hakkı veya alternatif kaynak netleşirse ayrı bir
-  tabloda "piyasa minimumu" olarak tutulması planlanabilir; takip edilen
-  tekliflerin minimumuymuş gibi etiketlenmez. ML'de kullanımı o zaman
-  kararlaştırılır.
+- **Karar (30 Eylül 2026, kullanıcı; Codex):** Cimri'nin erişilebilen bir
+  yıllık geçmiş fiyat hareketi model eğitiminde kullanılmak üzere Adım 9'da
+  bir defa alınacak ve ayrı `market_history` tablosunda saklanacak. Daha
+  geniş kaynak kapsamından doğan küçük fiyat farkları kullanıcı tarafından
+  bu amaç için kabul edildi; kendi takip edilen minimumumuzla aynı ölçüm
+  olduğu varsayılmaz. Mutlak fiyatın mı değişimin mi kullanılacağı, eğitim
+  yöntemi ve değerlendirme ayrıntıları ML aşamasında netleştirilir;
+  yukarıdaki model taslağı o aşamada bu veriyle birlikte değerlendirilir.
 
 ### İşletim
 

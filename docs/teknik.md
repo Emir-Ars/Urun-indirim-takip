@@ -588,7 +588,7 @@ içindir, sistem ayarı değişmez).
 | Kaçan tur | "Kaçırılırsa en kısa sürede çalıştır" | Bilgisayar kapalıyken kaçan tur, açılınca **bir kez** yapılır (iki tur kaçtıysa da bir kez). |
 | Pil | Pildeyken de başlar, pile geçince durmaz | Windows'un varsayılanı yalnız şarjdayken çalıştırmaktır; dizüstünde pilde tur hiç başlamazdı. |
 | Uyandırma | Yok | Uykudaki bilgisayar uyandırılmaz; kaçan tur açılınca telafi edilir. |
-| Aynı anda | Görev çalışıyorsa yeni kopya başlatılmaz | Ortak kilit de engeller. |
+| Aynı anda | Görev çalışıyorsa yeni kopya başlatılmaz (`IgnoreNew`) | Atılan tetikleme log, veritabanı satırı ve çıkış kodu bırakmaz ve sonradan telafi edilmez (aşağıdaki sınırlara bakın). Elle başlatılan keşif ve canlı kontrol araçlarını ortak kilit engeller. |
 | Süre sınırı | 2 saat | Normal tur ~31 dk. Görev Zamanlayıcı süreci zorla kapatırsa tur `running` kalır; bir sonraki tur onu `interrupted` yapar. |
 | Kullanıcı | Kurulumu yapan kullanıcı, yalnız oturum açıkken | Windows şifresi saklanmaz; `DATABASE_URL` ve `pgpass.conf` bu kullanıcınındır. Kilitli ekran "oturum açık" sayılır. |
 
@@ -624,6 +624,19 @@ Sınırlar:
   fiyat veya sahte düşüş oluşmaz.
 - Tur yarıda kesilirse (bilgisayar kapandı, süre sınırı) Görev Zamanlayıcı onu
   "çalıştı" saydığı için telafi edilmez.
+- Görev bilgisayarı uyandırmaz. Bilgisayar uyurken gelen tur kaçar ve
+  açılışta bir kez telafi edilir. 30 Eylül'de bilgisayar 17:57'den 1 Ekim
+  09:20'ye kadar uykudaydı; 22:00 turu çalışmadı ve telafi turu 1 Ekim 09:26'da
+  başladı (tur 7). Kaçan turun verisi geriye dönük toplanamaz; yalnız o saatin
+  gözlemi kaybolur.
+- Telafi turu bir sonraki tur saatine sarkarsa o tetikleme `IgnoreNew` ile
+  atılır: ayrı log, `collection_runs` satırı ve çıkış kodu oluşmaz ve sonradan
+  telafi edilmez (1 Ekim 10:00: tur 7 hâlâ sürüyordu). `LastRunTime` tetikleme
+  saatini, `LastTaskResult` ise çalışmakta olan turun sonucunu gösterir. Atılma
+  olayını Görev Zamanlayıcı geçmişi kayıt eder; geçmiş kapalıysa doğrulanamaz.
+- Tur ortasında bilgisayar uyursa (1 Ekim 09:29, kritik pil, yaklaşık 6,5 dk)
+  uyanma anındaki sayfalar `network` hatası alabilir (tur 7: 1 sayfa, DNS
+  çözülemedi); tur tamamlanır, çıkış kodu 2 olur.
 
 ### Katalog eşitleme (`sync-catalog`)
 
