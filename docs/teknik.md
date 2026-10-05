@@ -204,8 +204,8 @@ indirilmesi ve veritabanına alınması bu araştırma sonunda başlatılmadı.
 
 Türkçe karakterlerin terminalde doğru görünmesi için oturum başında bir kez
 `[Console]::OutputEncoding = [Text.Encoding]::UTF8` çalıştırın. Keşif hedef
-başına yaklaşık 2 dakika sürer (istekler arası 3 sn bekleme); 24 etkin hedefin
-tamamı yaklaşık 50 dakikadır. Elle çalıştırılan keşif raporu her çalışmada
+başına yaklaşık 1,5 dakika sürer (istekler arası 3 sn bekleme); 24 etkin hedefin
+tamamı yaklaşık 35 dakikadır (5 Ekim 2026 ölçümü: 34 dk). Elle çalıştırılan keşif raporu her çalışmada
 (dry-run dahil) `data/discovery_report.json` dosyasının üzerine yazılır; saklamak
 istediğiniz raporu kopyalayın. `--scheduled` ise her çalışmada tarihli yeni bir
 dosya yazar (`data/discovery/kesif_<tarih-saat>.json`) ve hiçbirinin üzerine
@@ -713,27 +713,30 @@ kullanıcı raporu inceler, sonra `--apply-report` o raporu siteye gitmeden uygu
 
 | Ayar | Değer | Neden |
 |---|---|---|
-| Tetikleyici | Her Pazar yerel saatle 14:00 | Fiyat turları 10:00 ve 22:00'de başlayıp ~31 dk sürer; keşif (~50 dk) onlardan uzak bir saate konur. Saat yerel yazılır (UTC'ye çevrilmez). |
+| Tetikleyici | Her Pazar yerel saatle 14:00 | Fiyat turları 10:00 ve 22:00'de başlayıp ~31 dk sürer; keşif (~35 dk) onlardan uzak bir saate konur. Saat yerel yazılır (UTC'ye çevrilmez). |
 | Eylem | `.venv\Scripts\pythonw.exe -m app.discovery --scheduled --dry-run`; çalışma klasörü proje klasörü | Penceresiz. `config\` ve `data\` yolları çalışma klasörüne göredir. `--dry-run` görevin kataloğa hiç yazmamasını sağlar. |
-| Kaçan çalışma | **Telafi edilmez** | Geç açılan bir bilgisayarda telafi keşfi ortak kilidi ~50 dk tutar ve o sırada gelen 22:00 fiyat turu "kilit meşgul" (kod 3) deyip atlanırdı. Kaçan fiyat turu geriye dönük toplanamaz; keşif raporu ise elle her zaman alınabilir. |
+| Kaçan çalışma | **Telafi edilmez** | Geç açılan bir bilgisayarda telafi keşfi ortak kilidi ~35 dk tutar ve o sırada gelen 22:00 fiyat turu "kilit meşgul" (kod 3) deyip atlanırdı. Kaçan fiyat turu geriye dönük toplanamaz; keşif raporu ise elle her zaman alınabilir. |
 | Pil | Pildeyken de başlar, pile geçince durmaz | Windows'un varsayılanı yalnız şarjdayken çalıştırmaktır. |
 | Uyandırma | Yok | Uykudaki bilgisayar uyandırılmaz; o hafta keşif kaçar. |
 | Aynı anda | Görev çalışıyorsa yeni kopya başlatılmaz | Ortak kilit de engeller. |
-| Süre sınırı | 2 saat | Normal çalışma ~50 dk. Görev Zamanlayıcı süreci zorla kapatırsa rapor oluşmaz ve logun son satırı `Çıkış kodu` olmaz. |
+| Süre sınırı | 2 saat | Normal çalışma ~35 dk (5 Ekim: 34 dk). Görev Zamanlayıcı süreci zorla kapatırsa rapor oluşmaz ve logun son satırı `Çıkış kodu` olmaz. |
 | Kullanıcı | Kurulumu yapan kullanıcı, yalnız oturum açıkken | Windows şifresi saklanmaz. Keşif veritabanı kullanmadığı için `DATABASE_URL` gerekmez. |
 
 `--scheduled` ile bütün çıktı `data/logs/kesif_<yerel tarih-saat>.log` dosyasına da
-yazılır (başlık, ilerleme ve uyarılar, beklenmeyen hataların ayrıntısı, özet satırı,
-rapor yolu ve **çıkış kodu**); tam rapor aynı damgayla
+yazılır (başlık, özet satırı (uyarılar nedene göre sayılarak orada görünür),
+beklenmeyen hataların ayrıntısı, rapor yolu ve **çıkış kodu**); tam rapor aynı damgayla
 `data/discovery/kesif_<yerel tarih-saat>.json` dosyasına kaydedilir. Kilit meşgulken
 (kod 3) ve program hatasında (kod 1) de log bırakılır. Tek istisna: log dosyası
 açılamazsa keşif hiç başlamaz ve `pythonw` altında hiçbir yere yazı düşmez; yalnız
 Görev Zamanlayıcı sonucu `0x1` görünür. Rapor klasörü taramadan önce oluşturulur;
-yazılamıyorsa keşif hiç başlamaz (kod 1, loga yazılır), ~50 dakikalık tarama boşa gitmez.
+yazılamıyorsa keşif hiç başlamaz (kod 1, loga yazılır), ~35 dakikalık tarama boşa gitmez.
+Keşif ilerleme satırı yazmaz: 4 ve 5 Ekim'deki iki zamanlanmış biçimli çalışmanın
+logu yalnız başlık, özet, rapor yolu ve çıkış kodundan oluşuyordu (4 satır); tarama
+sürerken ekran ve log sessiz kalır.
 
 Haftalık akış:
 
-1. Pazar 14:00'te görev başlar; yaklaşık 50 dk sonra log ve rapor oluşur.
+1. Pazar 14:00'te görev başlar; yaklaşık 35 dk sonra log ve rapor oluşur.
 2. Log'un sonundaki özet satırına ve rapora bakılır: yeni ürün ve sayfalar,
    `rejected` nedenleri, `pending` içinde beklenen `search_api` dışında bir uyarı
    (ör. `search_fetch`, `variant_fetch`) olup olmadığı.
@@ -759,11 +762,16 @@ Sınırlar:
   Windows tarafında görünmez; kanıt, o günün log dosyasının varlığıdır.
 - Fiyat turunun telafisi 14:00'e sarkarsa ya da o sırada elle canlı komut
   çalışıyorsa keşif kod 3 ile atlanır (loga yazılır) ve telafi edilmez.
-- Tarama sürerken (~50 dk) elle canlı komut çalıştırılmaz: ortak kilit tutulur.
-- Raporlar silinmez; klasör zamanla büyür (boyutu taranan hedef sayısına bağlıdır;
-  tam taramanın raporu henüz ölçülmedi, 28 Eylül'deki tek çalışmanınki ~10 KB).
+- Tarama sürerken (~35 dk) elle canlı komut çalıştırılmaz: ortak kilit tutulur.
+- Raporlar silinmez; klasör zamanla büyür. Tam taramanın raporu 5 Ekim'de ölçüldü:
+  305 KB (haftada bir dosya, yılda yaklaşık 16 MB). İnternet kesilince rapor küçük
+  kalır (4 Ekim: 78 KB, tarama 7 dk).
 - Testler komut akışını kayıtlı sonuçlarla sınar; görevin gerçek sitelerle
-  çalıştığı ve raporun doğruluğu canlı kanıt ister (ilk zamanlanmış çalışma: 4 Ekim 2026).
+  çalıştığı ve raporun doğruluğu canlı kanıt ister. Canlı kanıt: 4 Ekim'de görev
+  kendiliğinden çalıştı (`pythonw`, log ve rapor yazıldı) ama internet kesintisi
+  yüzünden tarama boş kaldı; 5 Ekim'de elle çalıştırılan tam tarama ve
+  `--apply-report` gerçek raporla çalıştı (7 sayfa eklendi). Tam taramanın Görev
+  Zamanlayıcı altında görülmesi Pazar 11 Ekim 14:00'i bekliyor.
 
 ### Katalog eşitleme (`sync-catalog`)
 
@@ -961,7 +969,9 @@ Kurulum sonunda 57 ürün ve 306 bağlantı; bunlardan biri (yurt dışı sürü
 28 Eylül'deki kapanış taraması (sıfır çakışma, sıfır ağ hatası) 21 bağlantı ve
 2 ürün daha ekledi: güncel katalog **59 ürün, 327 bağlantı** (Apple 29 ürün
 118/50, Samsung 18 ürün 62/41, Xiaomi 11 ürün 30/22, POCO 1 ürün 3/1;
-Hepsiburada/Trendyol). Son
+Hepsiburada/Trendyol). 5 Ekim'de ilk haftalık keşif raporu 7 sayfa ekledi (Apple
+121/50, Samsung 62/42, Xiaomi 31/24, POCO 3/1; Hepsiburada/Trendyol): katalog
+**59 ürün, 334 bağlantı**. Kurulumdaki son
 toplu fiyat kontrolünde (27 Eylül) 306 bağlantının 304'ü okundu: 163 Stokta Var,
 70 Kritik Stok, 71 Tükendi. Kalan 2 Galaxy S25 128 GB sayfası "12 GB Ram"
 başlığı yüzünden doğrulanamadı; kural düzeltildi (aşağıda).

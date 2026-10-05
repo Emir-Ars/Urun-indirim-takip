@@ -3107,6 +3107,62 @@
       "url": "https://www.trendyol.com/poco/x6-pro-5g-12-gb-ram-512-gb-gri-cep-telefonu-xiaomi-turkiye-garantili-p-794323791",
       "color": "Gri",
       "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv0000i7gp2s",
+      "product_id": 29,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-17-pro-max-2tb-gumus-p-HBCV0000I7GP2S",
+      "color": "Gümüş",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv0000i7gpun",
+      "product_id": 29,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-17-pro-max-2tb-kozmik-turuncu-p-HBCV0000I7GPUN",
+      "color": "Kozmik Turuncu",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv0000i7gr4v",
+      "product_id": 29,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-17-pro-max-2tb-abis-p-HBCV0000I7GR4V",
+      "color": "Lacivert",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_864687488",
+      "product_id": 40,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s24-fe-256-gb-8-gb-ram-mavi-p-864687488",
+      "color": "Mavi",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_859623151",
+      "product_id": 47,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/xiaomi/14t-pro-256-gb-gri-xiaomi-turkiye-garantili-p-859623151",
+      "color": "Gri",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv0000dkmd7e",
+      "product_id": 51,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/xiaomi-redmi-note-13-pro-5g-256-gb-8-gb-ram-turkiye-garantili-p-HBCV0000DKMD7E",
+      "color": "Mavi",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_1208111572",
+      "product_id": 55,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/xiaomi/redmi-note-14-pro-12gb-512gb-gold-turkiye-garantili-p-1208111572",
+      "color": "Altın",
+      "active": true
     }
   ]
 }

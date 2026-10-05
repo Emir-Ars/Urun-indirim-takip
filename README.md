@@ -15,7 +15,7 @@ telefonun yakında indirime girip girmeyeceğini tahmin etmek.
 ```mermaid
 flowchart LR
     A["✅ Fiyat okuma"] --> B["✅ Otomatik keşif"]
-    B --> C["✅ Katalog<br/>59 ürün · 327 sayfa"]
+    B --> C["✅ Katalog<br/>59 ürün · 334 sayfa"]
     C --> D["⏳ Veritabanı<br/>günde 2 toplama"]
     D --> E["🔜 API ve arayüz"]
     E --> F["🔜 İndirim tahmini"]
@@ -87,7 +87,7 @@ modeller de ayrıdır. RAM ve garanti türü ürünü bölmez.
 |---|---|
 | Siteler | Trendyol, Hepsiburada |
 | Takip edilen modeller | 24 (Apple 9 · Samsung 8 · Xiaomi 6 · POCO 1) |
-| Katalog | 59 ürün, 327 sayfa (28 Eylül 2026) |
+| Katalog | 59 ürün, 334 sayfa (5 Ekim 2026) |
 | Fiyat toplama | İlk tam tur 28 Eylül 2026: 326/326 sayfa, 31 dakika, hatasız. Görev Zamanlayıcı 28 Eylül'de kuruldu; günde 2 tur (10:00, 22:00) |
 | Testler | 450 otomatik test (116'sı gerçek PostgreSQL üzerinde); her push'ta GitHub Actions. Testler internete çıkamaz ve gerçek veritabanına dokunamaz (otomatik emniyet kemerleri) |
 
