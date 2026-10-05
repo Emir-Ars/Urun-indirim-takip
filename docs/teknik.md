@@ -67,6 +67,7 @@ geçmişi. Kararların ve aşama durumunun ana kaynağı
 | `connection.py` | PostgreSQL bağlantısı. Adres `DATABASE_URL` ortam değişkeninden okunur (şifresiz); şifre PostgreSQL'in `pgpass.conf` dosyasındadır. Oturum saati UTC; bağlanma 10 sn, tablo kilidi bekleme 30 sn ile sınırlı (yarım bırakılmış bir işlem turu sonsuza kadar bekletmez, hata verir). |
 | `migrate.py` | Migration koşucusu: `migrations/` altındaki numaralı SQL dosyalarını sırayla, her birini tek transaction'da ve yalnızca bir kez uygular; `schema_migrations` tablosuna parmak iziyle yazar. |
 | `migrations/001_initial.sql` | Katalog kopyası, toplama turları ve sayfa sonuçları tabloları; bütün kurallar (`CHECK`, `UNIQUE`, yabancı anahtarlar). |
+| `migrations/002_guards_and_comparability.sql` | İki yeni `CHECK` (Tükendi satırı fiyat taşımaz, çizili fiyat güncel fiyattan büyüktür), silmeyi ve kimlik değişimini reddeden tetikleyiciler, `product_run_prices` görünümü. |
 | `catalog_sync.py` | `catalog.json`'u veritabanındaki kopyaya eşitler: `plan_sync` farkı veritabanına dokunmadan hesaplar, `sync_catalog` tek transaction'da yazar. |
 | `runs.py` | Tur SQL'leri: veritabanı tur kilidi, yarım kalan turu kapatma, turu ve planlanan sayfaları açma, sayfa sonucunu (bir kez, yalnızca süren tura) yazma, turu kapatma, özet. |
 | `__main__.py` | Komut satırı: `python -m app.database migrate` / `status` / `sync-catalog [--dry-run]`. |
@@ -91,12 +92,13 @@ geçmişi. Kararların ve aşama durumunun ana kaynağı
 |---|---|
 | `tests/conftest.py` | Bütün testlerin emniyet kemerleri: her testte gerçek curl_cffi isteği kesilir (sahte istemci kullanmayı unutan test siteye gitmek yerine başarısız olur) ve kalıcı `DATABASE_URL` silinir. `db` fixture'ı yalnızca `TEST_DATABASE_URL`'deki, adı `_test` ile biten veritabanını kullanır ve her testten önce onu boşaltır; aynı anda iki pytest çalışırsa ikincisi en çok 30 sn bekler. Değişken yoksa veritabanı testleri yerelde atlanır, CI'da başarısız olur. |
 | `tests/test_http.py` | HTTP katmanı (59 test): hata kodları, 8 MB sınırı, yönlendirme kuralları, 5xx tekrarı ve bekleme süreleri, istek bütçesi, istekler arası bekleme, factory. Ayrıca mimari kural: `app/` içinde `requests`/`httpx`/`playwright`/`selenium` yok, `curl_cffi` yalnız `http.py`'de. |
-| `tests/test_contracts.py` | Pydantic sözleşmeleri (71 test): satılabilir teklif fiyat ve satıcı taşır, puan ölçeği aşamaz, katalog kimlik/referans/alan adı kuralları, `money()` kuruş çevirimi. |
+| `tests/test_contracts.py` | Pydantic sözleşmeleri (74 test): satılabilir teklif fiyat ve satıcı taşır, puan ölçeği aşamaz, üstü çizili fiyat güncel fiyattan büyüktür, katalog kimlik/referans/alan adı kuralları, `money()` kuruş çevirimi. |
 | `tests/test_trendyol_scraper.py`, `tests/test_hepsiburada_scraper.py` | Fiyat okuma (40 + 25 test): seçilen teklif, eşit fiyatta satıcı adı, çizili fiyat, Kritik Stok, Tükendi'nin yalnız açık sinyalle verilmesi, ret nedenleri, `parse` dönüşümü. Sahte sayfa ve istemci; internete çıkmaz. |
 | `tests/test_discovery.py` | Keşif (95 test): kimlik kuralları, sayfalama ve uyarı türleri, katalog birleştirme (aynı adaylar hep aynı kimlikleri alır), dry-run'ın kataloğa yazmaması, LF satır sonu, BOM'lu ayar dosyaları, UTF-8 çıktı, çıkış kodları ve gerçek `config/*.json` dosyalarının sözleşmeye uyması. Zamanlanmış keşif (log ve tarihli rapor, `--dry-run` zorunluluğu, konsolsuz çalışma, kilit meşgul, program hatası, log açılamaması, rapor klasörünün baştan denetimi, özet satırı) ve `--apply-report` (siteye gitmez, canlı yazmayla bayt bayt aynı katalog, ikinci uygulamada yazmama, önizleme olmayan/bozuk/sarmalı/yabancı alan adlı/önizlemeyi aşan rapor reddi) ağsız sınanır. |
 | `tests/test_collection.py` | Toplama turu (40 test; 36'sı gerçek PostgreSQL'de): sahte scraper'larla her sonuç türü, Ctrl+C, tur ortasında veritabanı hatası, yarım kalan tur, başka süreçteki tur, iki kilidin her durumda bırakılması, pasif sayfa/ürün/platform, ön ek, çıkış kodları ve zamanlanmış turun log dosyası (ekran akışı yokken ve log açılamazken dahil). |
 | `tests/test_catalog_sync.py` | Katalog eşitleme (29 test; 13'ü gerçek PostgreSQL'de): kararlar veritabanısız, yazma/deneme/çakışma ve komut satırı veritabanında. |
-| `tests/test_database.py` | Migration koşucusu, şemanın bütün `CHECK`/`UNIQUE`/yabancı anahtar kuralları (her biri geçerli ve geçersiz örnekle), `migrate`/`status` komutları (yeniden adlandırılan migration dahil) ve iki emniyet kemerinin kendisi (79 test; 67'si gerçek PostgreSQL'de). |
+| `tests/test_database.py` | Migration koşucusu, şemanın bütün `CHECK`/`UNIQUE`/yabancı anahtar kuralları (her biri geçerli ve geçersiz örnekle), `migrate`/`status` komutları (yeniden adlandırılan migration dahil) ve iki emniyet kemerinin kendisi; 002'nin iki `CHECK` kuralı, silme/kimlik değişimi/yazılmış sonucu değiştirme tetikleyicileri (her tabloda), kodun gerçek güncellemelerinin hâlâ geçtiği ve "bilerek silme" yolu da burada denenir (131 test; 119'u gerçek PostgreSQL'de). |
+| `tests/test_comparability.py` | `product_run_prices` görünümü: aynı sayfa kümesi, hata (girerken ve çıkarken), yeni sayfa, Tükendi, cevapsız ürün, ürünlerin ayrı karşılaştırılması, `--prefix` turu, süren ve yarıda kalan turların dışarıda kalması, uzun boşluk (14 test, hepsi gerçek PostgreSQL'de). |
 | `tests/test_market_history_probe.py` | Piyasa geçmişi araştırmasında aday tablo satırları, ürün kimliği, sentetik 365 günlük grafik yanıtı, eksik/bozuk fiyat ve tablo uyuşmazlığı (12 ağsız test). Gerçek fiyat dizileri Git dışındaki yerel raporlardadır. |
 | `tests/fixtures/discovery/` | Testlerin kullandığı örnek site yanıtları ve kataloğun sabit bir kopyası (`catalog.json`); testler gerçek kataloğa bağlı değildir. |
 | `tests/manual/live_scraper_check.py` | Katalogdaki sayfaları canlı okur; bütün satıcıları gösterir. İsteğe bağlı `product_key` ön eki (ör. `samsung_`) ile yalnız o ürünler; sayfa seçimi toplama turuyla aynı fonksiyondur. |
@@ -534,7 +536,8 @@ yazılır; hiçbiri fiyat veya Tükendi yerine geçmez.
 ## Veritabanı (PostgreSQL)
 
 Fiyat toplama turlarının sonuçları PostgreSQL 17'de saklanır. Bugün şema,
-`migrate`, katalog eşitleme ve toplama turu hazırdır. İlk tam tur 28 Eylül
+`migrate`, katalog eşitleme, toplama turu, koruyucu kurallar (002) ve turlar arası
+karşılaştırılabilirlik görünümü hazırdır. İlk tam tur 28 Eylül
 2026'da 326 sayfanın tamamını 31 dakikada hatasız okudu. Günde 2 turu
 Görev Zamanlayıcı başlatır ([Zamanlanmış tur](#zamanlanmış-tur-görev-zamanlayıcı);
 durum: [proje_plani.md](../proje_plani.md) Bölüm 9).
@@ -581,6 +584,7 @@ durum: [proje_plani.md](../proje_plani.md) Bölüm 9).
 | `collection_runs` | Her fiyat toplama turu: başlama şekli (`scheduled`/`manual`), durum (`running`/`completed`/`interrupted`), zamanlar, turun başındaki `catalog.json` parmak izi, planlanan sayfa sayısı. |
 | `listing_checks` | Her tur × planlanan sayfa bir satır. Tur başında sonuçsuz açılır (`outcome` boş = planlandı, bakılmadı); sayfa okununca `offer` (fiyat), `sold_out` (Tükendi) veya `error` (hata kodu) olur. Fiyat alanları `PriceObservation` ile aynıdır, para kuruş. |
 | `schema_migrations` | Uygulanan migration dosyaları ve parmak izleri. |
+| `product_run_prices` (görünüm) | Her biten tur × ürün için bir satır: en ucuz fiyat ve önceki turla karşılaştırılabilir mi ([Karşılaştırılabilirlik](#karşılaştırılabilirlik-product_run_prices)). |
 
 ### Veritabanının zorladığı kurallar
 
@@ -600,6 +604,81 @@ yazamaz (`tests/test_database.py` aşağıdakilerin her birini dener):
 - `CHECK` ifadesi NULL sonuç verirse satır kabul edilir. Bu yüzden sonuç
   kuralları `CASE` ile ve her koşul `IS NOT NULL` ile korunarak yazıldı
   (korumasız yazımda satıcısı boş bir fiyat satırı kabul ediliyordu).
+- **002 ile gelenler:** Tükendi satırı fiyat, çizili fiyat, satıcı veya puan
+  taşıyamaz (`listing_checks_sold_out_has_no_offer`). Üstü çizili fiyat yalnız
+  güncel fiyattan büyükse saklanır (`listing_checks_original_above_current`); aynı
+  kural `PriceObservation` sözleşmesinde de vardır, scraper bozulup eşit ya da
+  küçük çizili fiyat verirse sayfa hata olur. Scraper'lar bugün bu durumda zaten
+  `null` verir.
+- **002 ile gelen tetikleyiciler** (aşağıdaki tablo): hiçbir tabloda satır
+  silinemez, `TRUNCATE` reddedilir, kimlik alanları değişmez ve yazılmış sonuç
+  donar.
+
+#### Tetikleyiciler: neyin değişip neyin değişmediği
+
+Tetikleyici (trigger), bir değişiklik yapılmadan önce veritabanının araya girip
+reddedebildiği kuraldır. Hata `integrity_constraint_violation` (SQLSTATE `23000`)
+koduyla döner; kodun gerçek güncellemeleri (katalog eşitleme, `record_result`,
+`finish_run`, `close_stale_runs`) bu kurallara takılmaz ve bu `tests/test_database.py`
+ile bütün tur ve eşitleme testlerinde sınanır.
+
+| Tablo | Değişmez | Değişebilir |
+|---|---|---|
+| `platforms` | `key` | `name`, `active` |
+| `products` | `product_id`, `product_key`, `brand`, `model`, `storage_gb` | `active` |
+| `listings` | `listing_id`, `product_id`, `platform` | `url`, `color`, `active` |
+| `collection_runs` | `trigger`, `started_at`, `catalog_sha256`, `planned_count` (`run_id`'yi PostgreSQL kendisi korur: `GENERATED ALWAYS`) | `status`, `finished_at`, `note` |
+| `listing_checks` | `run_id`, `listing_id`, `product_id` | Sonuç alanları **bir kez** yazılır: sonuçsuz (planlı) satır ilk sonucunu alır, sonra satır donar |
+
+- **Tek istisna:** çalışan turdaki `network` hatası, aynı tur içinde yeniden
+  okunup yerine sonuç yazılabilir (Adım 11, tur sonu ikinci geçiş). Başka hata
+  kodları ve biten turun satırları hiçbir hâlde değişmez.
+- **Bilerek silme:** gerçekten gerekirse (örneğin yanlış eklenmiş bir sayfanın
+  geçmişi) tablonun sahibi (`fiyat_takip`) ilgili tetikleyiciyi kapatıp işini
+  yapar ve hemen açar. Önce `SELECT` ile neyin silineceğine bakılır, tur
+  saatleri dışında yapılır:
+
+  ```sql
+  ALTER TABLE listing_checks DISABLE TRIGGER listing_checks_no_delete;
+  DELETE FROM listing_checks WHERE listing_id = 'hepsiburada_ornek';
+  ALTER TABLE listing_checks ENABLE TRIGGER listing_checks_no_delete;
+  ```
+
+  Tetikleyici adları `<tablo>_no_delete`, `<tablo>_no_truncate` ve
+  `<tablo>_guard_update`'tir. Kapatıp açma yolu `tests/test_database.py`'de
+  denenir.
+
+### Karşılaştırılabilirlik (`product_run_prices`)
+
+Bir sayfa hata alınca ürünün "en ucuz fiyatı" yukarı sıçrar, sonraki turda geri
+düşer; bu sahte bir indirim gibi görünürdü. Kural: **iki tur ancak ürünün cevap
+veren sayfa kümesi aynıysa karşılaştırılır.** Cevap `offer` (fiyat) veya `sold_out`
+(Tükendi) demektir; hata cevap değildir, Tükendi gerçek cevaptır. Bir hata iki
+karşılaştırmayı bozar (hataya girerken ve hatadan çıkarken); kapsam değişince de
+(yeni eklenen ya da pasife alınan sayfa) bir kez bozulur.
+
+`product_run_prices`, biten (`completed`) her tur × ürün için bir satırdır;
+süren ve yarıda kalan turlar girmez.
+
+| Sütun | Anlam |
+|---|---|
+| `run_id`, `product_id`, `run_started_at` | Tur, ürün ve turun başlama zamanı |
+| `planned_pages`, `answered_pages`, `offer_pages`, `sold_out_pages`, `error_pages` | Ürünün o turdaki sayfaları: planlanan, cevap veren, fiyatlı, Tükendi, hatalı |
+| `best_price`, `best_listing_id` | Fiyatı olan sayfalar arasındaki en ucuz fiyat (kuruş) ve sayfası; eşitlikte kimliği küçük olan. Bütün cevaplar Tükendi ise boş: bu bir düşüş değildir |
+| `previous_run_id`, `previous_best_price` | O ürünün satırı bulunan bir önceki biten tur (`--prefix` turu başka ürünleri atladığı için ürüne göre) ve onun en ucuz fiyatı |
+| `hours_since_previous` | İki tur arası saat. **Karşılaştırmayı engellemez:** bilgisayar uyurken kaçan turlar (2–4 Ekim: yaklaşık 40 saat) yalnız bilgi olarak gösterilir, yorumu tüketen taraf (API, ML) yapar |
+| `comparable_with_previous` | Doğru ise `best_price` ile `previous_best_price` karşılaştırılabilir. İlk tur, cevapsız ürün ve küme değişen satırlarda yanlış |
+
+Karşılaştırma yalnız `comparable_with_previous = true` olan satırlarda yapılır.
+
+```sql
+SELECT run_id, run_started_at, best_price / 100.0 AS en_ucuz_tl,
+       previous_best_price / 100.0 AS onceki_tl,
+       comparable_with_previous, hours_since_previous
+FROM product_run_prices
+WHERE product_id = 1
+ORDER BY run_id;
+```
 
 ### Toplama turu (`python -m app.collection`)
 
@@ -821,6 +900,11 @@ eşitlemeyi çalıştırır; komut, keşiften sonra farkı gözle görmek içind
   `bulunan: [1, 1]`).
 - Veritabanında kodda olmayan bir sürüm varsa ("veritabanı koddan yeni") komut
   hata verir.
+- **Yeni migration'ı koymak ile `migrate` arasında tur başlamamalı.** Dosya
+  klasördeyken veritabanı güncel değilse tur "şema güncel değil" deyip başlamaz ve
+  o tur kaçar (telafisi tek turdur). Bu yüzden yeni migration projenin kopyasında
+  geliştirilir ve gerçek klasöre yalnız bitince konur; `migrate` hemen ardından,
+  10:00–10:40 ve 22:00–22:40 tur saatleri dışında çalıştırılır.
 
 ## Kimlik kuralları
 
@@ -848,7 +932,7 @@ böylece keşfin kabul ettiği sayfayı scraper aynı girdilerle reddetmez.
 
 ## Testler ne kanıtlar, ne kanıtlamaz
 
-- **Otomatik testler (426; 116'sı gerçek PostgreSQL'de):** Kuralların doğru
+- **Otomatik testler (519; 182'si gerçek PostgreSQL'de):** Kuralların doğru
   çalıştığını kayıtlı ve sahte yanıtlarla kanıtlar. Hata düzeltmelerinin her
   biri, canlıda görülen gerçek bir örneğe dayanan regresyon testiyle korunur.
   Sitelerin bugün hâlâ aynı yapıda olduğunu kanıtlamaz. Veritabanı testleri

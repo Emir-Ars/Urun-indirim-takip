@@ -179,13 +179,19 @@ def test_connection_sets_utc_and_lock_timeout(db):
 def test_cli_status_and_migrate(db, monkeypatch, capsys):
     monkeypatch.setenv("DATABASE_URL", os.environ["TEST_DATABASE_URL"])
     assert main(["status"]) == 0
-    assert "001_initial.sql  BEKLİYOR" in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert "001_initial.sql  BEKLİYOR" in out
+    assert "002_guards_and_comparability.sql  BEKLİYOR" in out
     assert main(["migrate"]) == 0
-    assert "uygulandı: 001_initial.sql" in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert "uygulandı: 001_initial.sql" in out
+    assert "uygulandı: 002_guards_and_comparability.sql" in out
     assert main(["migrate"]) == 0
     assert "Şema güncel" in capsys.readouterr().out
     assert main(["status"]) == 0
-    assert "001_initial.sql  uygulandı" in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert "001_initial.sql  uygulandı" in out
+    assert "002_guards_and_comparability.sql  uygulandı" in out
 
 
 def test_cli_without_database_url_fails(monkeypatch, capsys):
@@ -195,10 +201,14 @@ def test_cli_without_database_url_fails(monkeypatch, capsys):
 
 
 def test_migrate_applies_each_file_once(db):
-    assert [m.file_name for m in migrate(db)] == ["001_initial.sql"]
+    files = ["001_initial.sql", "002_guards_and_comparability.sql"]
+    assert [m.file_name for m in migrate(db)] == files
     assert migrate(db) == []
     assert pending(db) == []
-    assert [row[:2] for row in applied(db)] == [(1, "initial")]
+    assert [row[:2] for row in applied(db)] == [
+        (1, "initial"),
+        (2, "guards_and_comparability"),
+    ]
     assert {
         "schema_migrations",
         "platforms",
@@ -207,6 +217,8 @@ def test_migrate_applies_each_file_once(db):
         "collection_runs",
         "listing_checks",
     } <= tables(db)
+    views = db.execute("SELECT viewname FROM pg_views WHERE schemaname = 'public'")
+    assert {row[0] for row in views} == {"product_run_prices"}
 
 
 def test_changed_applied_migration_is_rejected(db, tmp_path):
@@ -502,6 +514,222 @@ def test_product_identity_ignores_letter_case(schema):
             storage_gb=128,
             active=True,
         )
+
+
+# --- 002: yeni CHECK kuralları --------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "extra, constraint",
+    [
+        pytest.param({"current_price": 5724900}, "sold_out_has_no_offer", id="fiyat"),
+        pytest.param({"seller_name": "Örnek"}, "sold_out_has_no_offer", id="satici"),
+        pytest.param({"seller_rating": 9.4}, "sold_out_has_no_offer", id="puan"),
+        pytest.param(
+            {"seller_rating_scale": 10.0}, "sold_out_has_no_offer", id="puan-olcegi"
+        ),
+        pytest.param(
+            {"original_price": 5999900}, "original_above_current", id="cizili-fiyat"
+        ),
+    ],
+)
+def test_sold_out_row_cannot_carry_price_or_seller(schema, extra, constraint):
+    conn, run_id = schema
+    with pytest.raises(errors.CheckViolation, match=f"listing_checks_{constraint}"):
+        check(conn, run_id, **{**SOLD_OUT, **extra})
+
+
+@pytest.mark.parametrize(
+    "original", [5724900, 5000000], ids=["guncel-fiyata-esit", "guncel-fiyattan-kucuk"]
+)
+def test_struck_price_must_exceed_current_price(schema, original):
+    conn, run_id = schema
+    with pytest.raises(
+        errors.CheckViolation, match="listing_checks_original_above_current"
+    ):
+        check(conn, run_id, **{**OFFER, "original_price": original})
+
+
+def test_struck_price_one_kurus_above_current_price_is_accepted(schema):
+    conn, run_id = schema
+    check(conn, run_id, **{**OFFER, "original_price": OFFER["current_price"] + 1})
+
+
+# --- 002: tetikleyiciler --------------------------------------------------------
+
+CATALOG_AND_RESULT_TABLES = [
+    "platforms",
+    "products",
+    "listings",
+    "collection_runs",
+    "listing_checks",
+]
+
+
+@pytest.fixture
+def filled(schema):
+    """schema + her tabloda satır; listing_checks'te sonuçsuz (planlı) bir satır."""
+    conn, run_id = schema
+    check(conn, run_id)
+    return conn, run_id
+
+
+def count(conn, table):
+    return conn.execute(f"SELECT count(*) FROM {table}").fetchone()[0]
+
+
+@pytest.mark.parametrize("table", CATALOG_AND_RESULT_TABLES)
+@pytest.mark.parametrize("statement", ["DELETE FROM {}", "TRUNCATE {} CASCADE"])
+def test_rows_cannot_be_deleted_or_truncated(filled, table, statement):
+    conn, _ = filled
+    before = count(conn, table)
+    with pytest.raises(errors.IntegrityConstraintViolation, match="silinemez"):
+        conn.execute(statement.format(table))
+    assert count(conn, table) == before
+
+
+@pytest.mark.parametrize(
+    "table, assignment",
+    [
+        ("platforms", "key = 'hepsiburada'"),
+        ("products", "product_id = product_id + 10"),
+        ("products", "product_key = product_key || '_x'"),
+        ("products", "brand = 'Samsung'"),
+        ("products", "model = 'iPhone 16'"),
+        ("products", "storage_gb = storage_gb + 1"),
+        ("listings", "listing_id = 'trendyol_9'"),
+        ("listings", "product_id = 2"),
+        ("listings", "platform = 'hepsiburada'"),
+        ("collection_runs", "\"trigger\" = 'scheduled'"),
+        ("collection_runs", "started_at = started_at + interval '1 hour'"),
+        ("collection_runs", "catalog_sha256 = repeat('1', 64)"),
+        ("collection_runs", "planned_count = planned_count + 1"),
+        ("listing_checks", "run_id = run_id + 100"),
+        ("listing_checks", "listing_id = 'trendyol_9'"),
+        ("listing_checks", "product_id = 2"),
+    ],
+)
+def test_identity_columns_cannot_change(filled, table, assignment):
+    # Hata sınıfı yalnızca tetikleyicinin SQLSTATE'idir (23000); yabancı anahtar
+    # veya CHECK hatası bu testi geçirmez, yani tetikleyici onlardan önce çalışır.
+    conn, _ = filled
+    with pytest.raises(errors.IntegrityConstraintViolation, match="değiştirilemez"):
+        conn.execute(f"UPDATE {table} SET {assignment}")
+
+
+def test_run_id_is_protected_by_the_identity_column(filled):
+    # Tetikleyiciye gerek yok: GENERATED ALWAYS sütunu PostgreSQL zaten korur.
+    conn, _ = filled
+    with pytest.raises(errors.GeneratedAlways):
+        conn.execute("UPDATE collection_runs SET run_id = run_id + 100")
+
+
+@pytest.mark.parametrize(
+    "table, assignment",
+    [
+        ("platforms", "name = 'Trendyol TR', active = false"),
+        ("products", "active = false"),
+        ("products", "brand = brand"),
+        (
+            "listings",
+            "url = 'https://www.trendyol.com/apple/iphone-15-p-1?v=2',"
+            " color = 'Mavi', active = false",
+        ),
+        (
+            "collection_runs",
+            "status = 'completed', finished_at = started_at, note = 'Tur bitti'",
+        ),
+        ("collection_runs", "status = 'interrupted', finished_at = started_at"),
+    ],
+)
+def test_mutable_columns_still_change(filled, table, assignment):
+    # Kodun gerçekten güncellediği sütunlar (eşitleme, finish_run, close_stale_runs).
+    conn, _ = filled
+    conn.execute(f"UPDATE {table} SET {assignment}")
+
+
+def write_first_result(conn):
+    conn.execute(
+        "UPDATE listing_checks SET outcome = 'offer', checked_at = %s,"
+        " current_price = 5724900, seller_name = 'Örnek Satıcı',"
+        " stock_status = 'Stokta Var'",
+        (NOW,),
+    )
+
+
+def touch_result(conn):
+    conn.execute("UPDATE listing_checks SET checked_at = checked_at + interval '1 s'")
+
+
+def test_first_result_is_written_once_then_the_row_is_frozen(filled):
+    conn, _ = filled
+    write_first_result(conn)
+    with pytest.raises(errors.IntegrityConstraintViolation, match="değiştirilemez"):
+        touch_result(conn)
+
+
+@pytest.mark.parametrize(
+    "fields", [OFFER, SOLD_OUT, ERROR], ids=["fiyat", "tukendi", "hata"]
+)
+def test_written_result_is_frozen(schema, fields):
+    conn, run_id = schema
+    check(conn, run_id, **fields)
+    with pytest.raises(errors.IntegrityConstraintViolation, match="değiştirilemez"):
+        touch_result(conn)
+    assert conn.execute("SELECT checked_at FROM listing_checks").fetchone()[0] == NOW
+
+
+def rewrite_as_offer(conn):
+    conn.execute(
+        "UPDATE listing_checks SET outcome = 'offer', checked_at = %s,"
+        " current_price = 5724900, seller_name = 'Örnek Satıcı',"
+        " stock_status = 'Stokta Var', error_code = NULL, error_message = NULL",
+        (NOW + timedelta(minutes=30),),
+    )
+
+
+def test_network_error_in_a_running_run_can_be_replaced_once(schema):
+    # Adım 11 (tur sonu ikinci geçiş) için tek istisna.
+    conn, run_id = schema
+    check(conn, run_id, **{**ERROR, "error_code": "network"})
+    rewrite_as_offer(conn)
+    outcome = conn.execute("SELECT outcome FROM listing_checks").fetchone()[0]
+    assert outcome == "offer"
+    with pytest.raises(errors.IntegrityConstraintViolation, match="değiştirilemez"):
+        touch_result(conn)
+
+
+@pytest.mark.parametrize("code", ["parse", "blocked", "identity"])
+def test_other_errors_are_frozen_even_in_a_running_run(schema, code):
+    conn, run_id = schema
+    check(conn, run_id, **{**ERROR, "error_code": code})
+    with pytest.raises(errors.IntegrityConstraintViolation, match="değiştirilemez"):
+        rewrite_as_offer(conn)
+
+
+@pytest.mark.parametrize("status", ["completed", "interrupted"])
+def test_network_error_in_a_finished_run_stays_frozen(schema, status):
+    conn, run_id = schema
+    check(conn, run_id, **{**ERROR, "error_code": "network"})
+    conn.execute(
+        "UPDATE collection_runs SET status = %s, finished_at = started_at"
+        " WHERE run_id = %s",
+        (status, run_id),
+    )
+    with pytest.raises(errors.IntegrityConstraintViolation, match="değiştirilemez"):
+        rewrite_as_offer(conn)
+
+
+def test_table_owner_can_disable_a_guard_deliberately(filled):
+    # docs/teknik.md'deki "bilerek silme" yolu gerçekten çalışıyor mu?
+    conn, run_id = filled
+    conn.execute("ALTER TABLE listing_checks DISABLE TRIGGER listing_checks_no_delete")
+    conn.execute("DELETE FROM listing_checks")
+    assert count(conn, "listing_checks") == 0
+    conn.execute("ALTER TABLE listing_checks ENABLE TRIGGER listing_checks_no_delete")
+    check(conn, run_id)
+    with pytest.raises(errors.IntegrityConstraintViolation, match="silinemez"):
+        conn.execute("DELETE FROM listing_checks")
 
 
 # --- Test emniyet kemerleri (conftest.py); veritabanına bağlanılmaz --------------

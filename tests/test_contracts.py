@@ -74,6 +74,31 @@ def test_purchasable_offer_needs_price_and_seller(stock, missing):
     assert errors(excinfo) == MODEL_RULE
 
 
+@pytest.mark.parametrize(
+    "original",
+    [5_724_900, 5_000_000],
+    ids=["guncel-fiyata-esit", "guncel-fiyattan-kucuk"],
+)
+def test_struck_price_must_exceed_current_price(original):
+    with pytest.raises(ValidationError) as excinfo:
+        observation(original_price=original)
+    assert errors(excinfo) == MODEL_RULE
+    # Bir kuruş büyük olması yeter.
+    assert observation(original_price=5_724_901).original_price == 5_724_901
+
+
+def test_struck_price_needs_a_current_price():
+    # Fiyatı olmayan (Tükendi) gözlemde üstü çizili fiyat da olamaz.
+    with pytest.raises(ValidationError) as excinfo:
+        observation(
+            stock_status="Tükendi",
+            current_price=None,
+            seller_name=None,
+            original_price=6_000_000,
+        )
+    assert errors(excinfo) == MODEL_RULE
+
+
 def test_seller_rating_cannot_exceed_scale():
     with pytest.raises(ValidationError) as excinfo:
         observation(seller_rating=5.5, seller_rating_scale=5.0)

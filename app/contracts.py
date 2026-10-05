@@ -153,6 +153,16 @@ class PriceObservation(Contract):
                 raise ValueError("Satıcı puanı ölçeği aşıyor")
         return self
 
+    @model_validator(mode="after")
+    def struck_price_above_current(self):
+        # Üstü çizili fiyat yalnız güncel fiyattan büyükse anlamlıdır. Scraper'lar
+        # aksi hâlde null verir; bu kural scraper bozulursa sayfayı hata yapar
+        # (veritabanındaki CHECK aynı kuralı son savunma olarak zorlar).
+        if self.original_price is not None:
+            if self.current_price is None or self.original_price <= self.current_price:
+                raise ValueError("Üstü çizili fiyat güncel fiyattan büyük olmalı")
+        return self
+
 
 class DiscoveryTarget(Contract):
     key: Key
