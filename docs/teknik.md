@@ -105,6 +105,7 @@ geçmişi. Kararların ve aşama durumunun ana kaynağı
 | `tests/manual/live_discovery_check.py` | Keşfi kataloğa yazmadan canlı çalıştırır; `--trace` ile her kararın nedenini gösterir. Raporu `data/discovery_report.json` dosyasının üzerine yazar. |
 | `tests/manual/market_history_probe.py` | Akakçe için tek örnek sayfayı, Cimri için ürün sayfası ve grafik API'sini ortak HTTP katmanı ve tarama kilidiyle okur. Cimri'nin tarihli fiyat noktalarını Git dışındaki yerel JSON raporuna yazar; ham HTML'yi ve veritabanını yazmaz. |
 | `.github/workflows/ci.yml` | Her push/pull request'te geçici bir PostgreSQL 17 açar (yereldeki gibi `C.UTF-8`) ve Black, Flake8 ile bütün testleri çalıştırır. |
+| `.github/workflows/bulut-deneme.yml` | Elle tetiklenen bulut denemesi (zamanlama, veritabanı ve gizli anahtar yok): `tests/manual/live_scraper_check.py samsung_galaxy_a55_128gb` ile 4 sayfayı (Trendyol ve Hepsiburada) GitHub'ın makinesinden okur; her iki site de hatasız okunduysa başarılı, aksi hâlde başarısız biter ve sonucu çalışmanın özet sayfasına yazar. Soru: siteler bulut adreslerini engelliyor mu ([proje_plani.md](../proje_plani.md) Bölüm 8). Tetiklemek: GitHub → Actions → "Bulut deneme (canlı okuma)" → Run workflow; bilgisayardaki tur saatlerinde (10:00–10:40, 22:00–22:40) tetiklenmez, çünkü kilit bu makineye özgüdür. |
 
 ## Komutların ayrıntısı
 

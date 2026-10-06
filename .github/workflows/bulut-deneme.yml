@@ -1,0 +1,77 @@
+name: Bulut deneme (canlı okuma)
+
+# Elle tetiklenir: GitHub -> Actions -> "Bulut deneme (canlı okuma)" -> Run workflow.
+# Soru: Trendyol ve Hepsiburada, GitHub'ın bulut makinelerinin adreslerinden
+# okunabiliyor mu? Bir deneme olduğu için zamanlama (cron) bilerek yoktur; veritabanı
+# ve gizli anahtar kullanılmaz, katalog ve repo değişmez, yalnız okunur ve ekrana
+# yazılır. Kilit bu makineye özgüdür: bilgisayardaki tur (10:00-10:40, 22:00-22:40)
+# sürerken tetiklenirse aynı siteye iki yerden gidilir; o saatlerden kaçının.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  canli-okuma:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - run: python -m pip install -e .
+      # Dört sayfa: Samsung Galaxy A55 128 GB (son turda 2 Hepsiburada ve 1 Trendyol
+      # sayfası fiyatlıydı). Üretimdeki scraper, 3 sn istek aralığı ve sayfa seçimi
+      # bilgisayardakiyle aynıdır.
+      - name: Canlı okuma
+        run: |
+          python tests/manual/live_scraper_check.py samsung_galaxy_a55_128gb > okuma.json
+          cat okuma.json
+      - name: Sonuç özeti ve denetim
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import sys
+
+          sonuc = json.load(open("okuma.json", encoding="utf-8"))
+          satirlar = []
+          for kayit in sonuc["platform_results"]:
+              gozlem = kayit["production_result"]
+              fiyat = gozlem.get("current_price_display") or "fiyat yok"
+              satici = gozlem.get("seller_name") or "-"
+              satirlar.append(
+                  f"{kayit['platform']:<12} {kayit['listing_id']:<30} "
+                  f"{fiyat:<14} {gozlem['stock_status']} ({satici})"
+              )
+          for hata in sonuc["errors"]:
+              satirlar.append(f"HATA         {hata['listing_id']:<30} {hata['error']}")
+          okunan = {kayit["platform"] for kayit in sonuc["platform_results"]}
+          fiyatli = sum(
+              1
+              for kayit in sonuc["platform_results"]
+              if kayit["production_result"].get("current_price") is not None
+          )
+          basarili = not sonuc["errors"] and {"Trendyol", "Hepsiburada"} <= okunan
+          karar = (
+              "BAŞARILI: iki site de buluttan okundu"
+              if basarili
+              else "BAŞARISIZ: hata var ya da bir site hiç okunamadı"
+          )
+          metin = "\n".join(satirlar)
+          print(metin)
+          print(f"\nOkunan sayfa: {sonuc['checked_listings']}, fiyatlı: {fiyatli}, "
+                f"hata: {len(sonuc['errors'])}")
+          print(karar)
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as ozet:
+              ozet.write(f"## {karar}\n\n```\n{metin}\n```\n\n")
+              ozet.write(
+                  "Bu deneme dört sayfadır; tam tur (yaklaşık 333 sayfa, 35 dk) "
+                  "ölçeğinde engel olup olmadığını göstermez.\n"
+              )
+          sys.exit(0 if basarili else 1)
+          PY
