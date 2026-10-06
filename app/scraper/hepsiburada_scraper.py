@@ -249,9 +249,11 @@ def _response_listings(response: dict) -> list[dict]:
         listings = response["data"]["listings"]
     except (KeyError, TypeError) as exc:
         raise FetchError("parse", "Hepsiburada tam satıcı listesi eksik") from exc
-    if not isinstance(listings, list):
+    if not isinstance(listings, list) or any(
+        not isinstance(item, dict) for item in listings
+    ):
         raise FetchError("parse", "Hepsiburada tam satıcı listesi geçersiz")
-    return [item for item in listings if isinstance(item, dict)]
+    return listings
 
 
 def _seller_rating(listing: dict) -> float | None:

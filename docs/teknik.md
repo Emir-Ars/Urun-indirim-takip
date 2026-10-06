@@ -93,7 +93,7 @@ geçmişi. Kararların ve aşama durumunun ana kaynağı
 | `tests/conftest.py` | Bütün testlerin emniyet kemerleri: her testte gerçek curl_cffi isteği kesilir (sahte istemci kullanmayı unutan test siteye gitmek yerine başarısız olur) ve kalıcı `DATABASE_URL` silinir. `db` fixture'ı yalnızca `TEST_DATABASE_URL`'deki, adı `_test` ile biten veritabanını kullanır ve her testten önce onu boşaltır; aynı anda iki pytest çalışırsa ikincisi en çok 30 sn bekler. `TEST_DATABASE_URL` yoksa veritabanı testleri yerelde atlanır; `CI` ortam değişkeni tanımlıysa (GitHub Actions tanımlar) başarısız olur. |
 | `tests/test_http.py` | HTTP katmanı (61 test): hata kodları (`invalid_host` mesajı hedef alan adını yazar, sorgu metnini yazmaz), 8 MB sınırı, yönlendirme kuralları, 5xx tekrarı ve bekleme süreleri, istek bütçesi, istekler arası bekleme, factory. Ayrıca mimari kural: `app/` içinde `requests`/`httpx`/`playwright`/`selenium` yok, `curl_cffi` yalnız `http.py`'de. |
 | `tests/test_contracts.py` | Pydantic sözleşmeleri (74 test): satılabilir teklif fiyat ve satıcı taşır, puan ölçeği aşamaz, üstü çizili fiyat güncel fiyattan büyüktür, katalog kimlik/referans/alan adı kuralları, `money()` kuruş çevirimi. |
-| `tests/test_trendyol_scraper.py`, `tests/test_hepsiburada_scraper.py` | Fiyat okuma (40 + 25 test): seçilen teklif, eşit fiyatta satıcı adı, çizili fiyat, Kritik Stok, Tükendi'nin yalnız açık sinyalle verilmesi, ret nedenleri, `parse` dönüşümü. Sahte sayfa ve istemci; internete çıkmaz. |
+| `tests/test_trendyol_scraper.py`, `tests/test_hepsiburada_scraper.py` | Fiyat okuma (40 + 32 test): seçilen teklif, eşit fiyatta satıcı adı, çizili fiyat, Kritik Stok, Tükendi'nin yalnız açık sinyalle verilmesi, bozuk satıcı kayıtlarının reddi, ret nedenleri, `parse` dönüşümü. Sahte sayfa ve istemci; internete çıkmaz. |
 | `tests/test_discovery.py` | Keşif (100 test): kimlik kuralları, sayfalama ve uyarı türleri, katalog birleştirme (aynı adaylar hep aynı kimlikleri alır), dry-run'ın kataloğa yazmaması, LF satır sonu, BOM'lu ayar dosyaları, UTF-8 çıktı, çıkış kodları ve gerçek `config/*.json` dosyalarının sözleşmeye uyması. Zamanlanmış keşif (log ve tarihli rapor, `--dry-run` zorunluluğu, konsolsuz çalışma, kilit meşgul, program hatası, log açılamaması, rapor klasörünün baştan denetimi, özet satırı) ve `--apply-report` (siteye gitmez, canlı yazmayla bayt bayt aynı katalog, ikinci uygulamada yazmama, önizleme olmayan/bozuk/sarmalı/yabancı alan adlı/önizlemeyi aşan rapor reddi) ağsız sınanır. Trendyol filtre uyarısının tek yazılması ve tarama sonrası yazma hatasının ("Tarama bitti ama sonuç yazılamadı", çıkış 1; log dahil) "başlatılamadı"dan ayrılması da burada denenir. |
 | `tests/test_collection.py` | Toplama turu (59 test; 54'ü gerçek PostgreSQL'de): sahte scraper'larla her sonuç türü, Ctrl+C, tur ortasında veritabanı hatası, yarım kalan tur, başka süreçteki tur, iki kilidin her durumda bırakılması, pasif sayfa/ürün/platform, ön ek, çıkış kodları (keşif ve `live_scraper_check` kilit meşgulken 3 verir) ve zamanlanmış turun log dosyası (ekran akışı yokken ve log açılamazken dahil). Tur sonu ikinci okuma (18 test): `network` düzelince satırın değişmesi, ikinci hatada ilk satırın (mesaj ve zaman damgasıyla) kalması, `network` dışındaki hataların hiç yeniden okunmaması, bir sayfanın en çok bir kez yeniden okunması, ardışık 5 hatada durma ve düzelmede sayaç sıfırlama, veritabanı reddi, Ctrl+C, tur notu (ön ekle birlikte), görünümde sahte "karşılaştırılamaz" oluşmaması ve `rewrite_network_result`'ın yalnız `network` satırına ve süren tura yazması. |
 | `tests/test_catalog_sync.py` | Katalog eşitleme (29 test; 13'ü gerçek PostgreSQL'de): kararlar veritabanısız, yazma/deneme/çakışma ve komut satırı veritabanında. |
@@ -478,6 +478,9 @@ yazılır.
 3. Satıcı yoksa veya her satıcı açıkça satılamaz (`isSalable: false`) ise sonuç
    `Tükendi` olur. Bir satıcıda stok alanı hiç yoksa sonuç Tükendi **değil**,
    `parse` hatasıdır; site alanı değiştirirse sayfalar sessizce Tükendi olmaz.
+   Listede sözlük olmayan bir satıcı kaydı varsa (ör. `[null]`) yanıt `parse`
+   hatasıdır; kayıt atılıp boş liste veya daha dar satıcı kapsamı üretilmez.
+   Bu denetim 6 Ekim ikinci denetiminde bulunan yanlış Tükendi ihtimalini kapatır.
 4. Aynı oturumla `otherMerchants` fiyat isteği gönderilir; yenilenmiş/teşhir
    teklifleri elenir, en ucuz geçerli teklif seçilir.
 
@@ -640,7 +643,12 @@ ile bütün tur ve eşitleme testlerinde sınanır.
 - **Tek istisna:** çalışan turdaki `network` hatası, aynı tur içinde yeniden
   okunup yerine sonuç yazılabilir ([tur sonu ikinci okuma](#tur-sonu-ikinci-okuma-adım-11),
   `runs.rewrite_network_result`). Başka hata kodları ve biten turun satırları
-  hiçbir hâlde değişmez.
+  üretim API'si üzerinden değiştirilemez. **SQL korumasındaki açıklar (6 Ekim
+  ikinci denetimi):** biten turun sonuçsuz satırı doğrudan SQL ile doldurulabiliyor;
+  ayrıca biten tur SQL ile yeniden `running` yapılıp eski `network` sonucu
+  değiştirilebiliyor. Test veritabanında doğrulandı; henüz düzeltilmedi.
+  Uygulanmış `002` değişmez, düzeltme yeni numaralı migration gerektirir
+  (`proje_plani.md`, Bölüm 7).
 - **Bilerek silme:** gerçekten gerekirse (örneğin yanlış eklenmiş bir sayfanın
   geçmişi) tablonun sahibi (`fiyat_takip`) ilgili tetikleyiciyi kapatıp işini
   yapar ve hemen açar. Önce `SELECT` ile neyin silineceğine bakılır, tur
@@ -991,7 +999,7 @@ böylece keşfin kabul ettiği sayfayı scraper aynı girdilerle reddetmez.
 
 ## Testler ne kanıtlar, ne kanıtlamaz
 
-- **Otomatik testler (545; 200'ü gerçek PostgreSQL'de):** Kuralların doğru
+- **Otomatik testler (552; 200'ü gerçek PostgreSQL'de):** Kuralların doğru
   çalıştığını kayıtlı ve sahte yanıtlarla kanıtlar. Hata düzeltmelerinin her
   biri, canlıda görülen gerçek bir örneğe dayanan regresyon testiyle korunur.
   Sitelerin bugün hâlâ aynı yapıda olduğunu kanıtlamaz. Veritabanı testleri

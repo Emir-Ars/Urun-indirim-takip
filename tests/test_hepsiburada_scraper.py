@@ -396,6 +396,33 @@ def test_empty_full_listing_response_is_out_of_stock(listing):
     assert len(session.calls) == 2
 
 
+@pytest.mark.parametrize(
+    "records",
+    [
+        [None],
+        ["bozuk kayıt"],
+        [42],
+        [False],
+        [[]],
+        [full_listing("hb", "Hepsiburada", 56_999, salable=False), None],
+        [full_listing("hb", "Hepsiburada", 56_999), None],
+    ],
+    ids=["null", "text", "number", "bool", "list", "mixed_sold_out", "mixed_salable"],
+)
+def test_malformed_seller_records_are_parse_errors(listing, records):
+    scraper, session = scraper_with(
+        records, [response_offer("hb", "Hepsiburada", 56_999)]
+    )
+    try:
+        with pytest.raises(FetchError) as error:
+            scraper.fetch(listing)
+
+        assert error.value.code == "parse"
+        assert len(session.calls) == 2
+    finally:
+        scraper.close()
+
+
 def test_sold_out_page_without_main_price_is_out_of_stock(listing):
     scraper, session = scraper_with([], [], html=redux_page_html())
 

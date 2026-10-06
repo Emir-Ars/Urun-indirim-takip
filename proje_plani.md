@@ -36,6 +36,10 @@ Kullanıcı arayüzde arama yaptığında canlı scraping veya model eğitimi
 | 8. ML (indirim tahmini) | 🔜 Planlandı, başlanmadı | Bölüm 9 |
 | 9. Docker ve 7/24 işletim | 🔜 Planlandı, başlanmadı | Bölüm 9 |
 
+**6 Ekim ikinci denetimi sonrası bakım (kullanıcı onayı):** Hepsiburada bozuk
+satıcı yanıtı düzeltildi (552 test). İki SQL koruma açığı sırada; bunlar
+tamamlandıktan sonra Aşama 6'nın Adım 9 → 7 sırasına dönülecek (Bölüm 7).
+
 Önceki aşamalardan kalan yerel taslaklar (eski `app/database`, `app/ml_model`,
 `app/api`, `app/services`, `app/worker.py`, `frontend/`, Docker dosyaları ve
 Akakçe/Cimri taslakları) 28 Eylül 2026'da `_eski_taslaklar/` klasörüne taşındı;
@@ -368,9 +372,46 @@ Bu adımda alınan kararlar:
 
 ### Bakım listesi (denetimde bulundu, ertelendi)
 
-Hiçbiri yanlış fiyat veya stok üretmez; ya güvenli tarafta hata verir ya da
-nadir durumdur. **6 Ekim 2026 denetimi:** 13 maddenin hiçbiri düzeltilmemişti;
-kodla tek tek yeniden okundu ve aşağıdaki gibi ayrıldı.
+Önceki maddeler güvenli tarafta hata veren veya nadir durumlardı. **6 Ekim
+2026 ilk denetimi:** 13 maddenin hiçbiri düzeltilmemişti; kodla tek tek yeniden
+okundu ve aşağıdaki gibi ayrıldı. Aynı gün yapılan ikinci denetim, aşağıda
+ayrıca belirtilen bir yanlış stok ihtimalini ve iki SQL koruma açığını doğruladı.
+
+İkinci denetimde doğrulandı (6 Ekim, Codex):
+- Hepsiburada `_response_listings`, sözlük olmayan satıcı kayıtlarını sessizce
+  atlıyor. Örneğin `[null]` veya `["bozuk kayıt"]` yanıtı boş listeye dönüşüp
+  `Tükendi` üretiyor; kaynak açık stok sinyali vermediği için bu ayrıştırma hatası
+  olmalı. Gerçek HTTP isteği olmadan sahte yanıtlarla yeniden üretildi; canlıda
+  böyle bir yanıt görüldüğüne dair kanıt yok. **Düzeltildi (6 Ekim, kullanıcı
+  onayıyla):** liste ve bütün kayıtlar doğrulanıyor; sözlük olmayan tek kayıt bile
+  varsa `parse` hatası veriliyor. Gerçekten boş liste ve açık stok sinyalleri
+  mevcut kurallarla işleniyor. Yedi regresyon testi eski kodda başarısız oldu;
+  düzeltmeden sonra tüm kontroller `551 passed, 1 xfailed`, 0 atlandı, Black ve
+  Flake8 temiz (toplam 552; 200 PostgreSQL testi). Kimlik kuralı değişmedi.
+- `002` içindeki `guard_listing_checks_update`, `OLD.outcome IS NULL` dalında
+  tur durumunu denetlemiyor. Kapanmış turun sonuçsuz satırı doğrudan SQL ile
+  doldurulabiliyor. Üretimdeki `record_result` bunu reddediyor; eksik olan
+  veritabanının kendi koruması. `_test` veritabanında geçici şemada doğrulandı.
+- `guard_collection_runs_update`, biten turun `status = 'running',
+  finished_at = NULL` ile yeniden açılmasını reddetmiyor. Böylece eski `network`
+  sonucu, tetikleyici kapatılmadan `rewrite_network_result` ile değiştirilebiliyor.
+  Normal tur kodu bu geçişi yapmıyor; doğrudan SQL'e karşı koruma eksik.
+  `_test` veritabanında geçici şemada doğrulandı. İki SQL açığı da uygulanmış
+  `002` değiştirilmeden, yeni numaralı migration ile ele alınmalı.
+- Denetim kanıtı: mevcut testler `544 passed, 1 xfailed`, sıfır atlandı; Black
+  ve Flake8 temiz. Git dışındaki `.scratch/test_audit_invariants.py` sekiz ek
+  sınama içerir: yukarıdaki açıkların altı varyantı başarısız, iki kontrol örneği
+  geçti; test işlemleri sonunda geri alındı. Ölü üretim kodu doğrulanmadı.
+  Gerçek veritabanı yalnız okundu: 15 tur `completed`, planlanan sayfa sayıları
+  tutarlı, sonuçsuz tamamlanmış satır ve kapanış sonrası gözlem yok;
+  `product_run_prices` görünümündeki 827 satır bağımsız Python hesabıyla eşleşti.
+
+**Düzeltme kararı (6 Ekim, kullanıcı):** önce Hepsiburada bozuk satıcı yanıtı
+(yukarıda tamamlandı), ardından iki SQL koruma açığı ele alınacak; sonra Adım 9
+ve Adım 7'ye dönülecek. SQL düzeltmesi yeni numaralı migration gerektirir ve
+henüz hazırlanmadı/uygulanmadı. Keşif → katalog → toplama → veritabanı akışı,
+tur saatleri ve scraper sözleşmesi aynı kalır. Bozuk yanıt `parse` olarak yazılır,
+tur diğer sayfalara devam eder; bu sayfa o turda cevap veren kümeye katılmaz.
 
 Düzeltildi (6 Ekim, kod ve test):
 - Trendyol keşfinde `filter_unavailable` aynı aramada iki kez yazılıyordu (filtre
@@ -484,6 +525,10 @@ Adım 8 tamamlanmış araştırmadır; Adım 9 henüz uygulanmamış aktarım i�
 ikinci geçişi (**Adım 11**) eklendi. Kalan sıra **10 → 4 → 11 → 9 → 7**.
 **5 Ekim:** Adım 10 ve Adım 4 kapandı; geriye **11 → 9 → 7** kaldı.
 **6 Ekim:** Adım 11 kapandı; geriye **9 → 7** kaldı.
+
+**6 Ekim ikinci denetimi sonrası kullanıcı kararı:** Adım 9'dan önce üç bakım
+bulgusu düzeltilecek. Hepsiburada bozuk satıcı yanıtı düzeltmesi tamamlandı;
+iki SQL koruması yeni numaralı migration ile sıradaki iştir (Bölüm 7).
 
 | Adım | Durum |
 |---|---|
