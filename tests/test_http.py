@@ -10,6 +10,7 @@ import types
 from pathlib import Path
 
 import pytest
+from curl_cffi.curl import CURL_WRITEFUNC_ERROR
 from curl_cffi.requests.exceptions import RequestException
 
 import app.scraper.http as http
@@ -66,6 +67,27 @@ class Reply:
         self.content = content
         self.headers = {} if location is None else {"location": location}
 
+    def iter_chunks(self):
+        for offset in range(0, len(self.content), 16384):
+            yield self.content[offset : offset + 16384]
+
+
+class ChunkedReply:
+    def __init__(self, chunks, status=200, location=None):
+        self.chunks = chunks
+        self.status_code = status
+        self.headers = {} if location is None else {"location": location}
+        self.delivered = 0
+
+    @property
+    def content(self):
+        raise AssertionError("Yanıtın tamamı belleğe alınmamalı")
+
+    def iter_chunks(self):
+        for chunk in self.chunks:
+            self.delivered += 1
+            yield chunk
+
 
 class Recorder:
     """Verilen yanıtları sırayla döndürür (istisnayı fırlatır), çağrıları kaydeder."""
@@ -80,6 +102,13 @@ class Recorder:
         reply = self.replies.pop(0)
         if isinstance(reply, Exception):
             raise reply
+        callback = kwargs.get("content_callback")
+        if callback is not None:
+            for chunk in reply.iter_chunks():
+                if isinstance(chunk, Exception):
+                    raise chunk
+                if callback(chunk) == CURL_WRITEFUNC_ERROR:
+                    raise RequestException("Yanıt aktarımı durduruldu", response=reply)
         return reply
 
     def close(self):
@@ -120,6 +149,8 @@ def test_request_interval_is_shared_between_clients(monkeypatch):
 
     class Quiet(Session):
         def request(self, *args, **kwargs):
+            if kwargs.get("content_callback"):
+                kwargs["content_callback"](b"ok")
             return Ok()
 
     runtime = Runtime(request_interval_seconds=3)
@@ -238,6 +269,198 @@ def test_response_at_8_mb_is_accepted():
 
 
 @pytest.mark.parametrize(
+    "method, chunks, expected",
+    [
+        ("get", [b"Mer", b"ha", b"ba"], "Merhaba"),
+        ("get_json", [b'{"ok":', b"true}"], {"ok": True}),
+        ("post_json", [b'{"ok":', b"true}"], {"ok": True}),
+    ],
+)
+def test_chunked_response_does_not_read_full_content(method, chunks, expected):
+    reply = ChunkedReply(chunks)
+    assert call(page_client(Recorder(reply)), method) == expected
+    assert reply.delivered == len(chunks)
+
+
+@pytest.mark.parametrize("method", ["get", "get_json", "post_json"])
+def test_download_stops_at_first_chunk_over_limit(monkeypatch, slept, method):
+    monkeypatch.setattr(http, "MAX_RESPONSE_BYTES", 8)
+    reply = ChunkedReply([b"1234", b"5678", b"x", b"alinmamali"])
+    session = Recorder(reply)
+    pages = page_client(session, request_attempts=3)
+    with pytest.raises(FetchError) as error:
+        call(pages, method)
+    assert error.value.code == "too_large"
+    assert reply.delivered == 3
+    assert pages.request_count == len(session.calls) == 1
+    assert slept == []
+
+
+def test_chunked_response_at_exact_limit_is_accepted(monkeypatch):
+    monkeypatch.setattr(http, "MAX_RESPONSE_BYTES", 8)
+    reply = ChunkedReply([b"1234", b"5678"])
+    assert page_client(Recorder(reply)).get(TRENDYOL) == "12345678"
+
+
+def test_single_oversized_chunk_stops_download(monkeypatch):
+    monkeypatch.setattr(http, "MAX_RESPONSE_BYTES", 8)
+    reply = ChunkedReply([b"123456789", b"alinmamali"])
+    with pytest.raises(FetchError) as error:
+        page_client(Recorder(reply)).get(TRENDYOL)
+    assert error.value.code == "too_large"
+    assert reply.delivered == 1
+
+
+def test_oversized_response_does_not_poison_next_request(monkeypatch):
+    monkeypatch.setattr(http, "MAX_RESPONSE_BYTES", 8)
+    session = Recorder(ChunkedReply([b"12345678", b"x"]), Reply(content=b"ok"))
+    pages = page_client(session)
+    with pytest.raises(FetchError) as error:
+        pages.get(TRENDYOL)
+    assert error.value.code == "too_large"
+    assert pages.get(TRENDYOL) == "ok"
+    assert pages.request_count == 2
+
+
+@pytest.mark.parametrize(
+    "status, code",
+    [
+        (401, "blocked"),
+        (403, "blocked"),
+        (418, "blocked"),
+        (429, "blocked"),
+        (404, "http_error"),
+    ],
+)
+def test_oversized_http_error_keeps_status_code(monkeypatch, slept, status, code):
+    monkeypatch.setattr(http, "MAX_RESPONSE_BYTES", 8)
+    reply = ChunkedReply([b"12345678", b"x", b"alinmamali"], status=status)
+    session = Recorder(reply)
+    with pytest.raises(FetchError) as error:
+        page_client(session, request_attempts=3).get(TRENDYOL)
+    assert error.value.code == code
+    assert reply.delivered == 2
+    assert len(session.calls) == 1
+    assert slept == []
+
+
+def test_oversized_server_error_is_retried_with_empty_buffer(monkeypatch, slept):
+    monkeypatch.setattr(http, "MAX_RESPONSE_BYTES", 8)
+    reply = ChunkedReply([b"12345678", b"x", b"alinmamali"], status=503)
+    pages = page_client(Recorder(reply, Reply(content=b"ok")), request_attempts=2)
+    assert pages.get(TRENDYOL) == "ok"
+    assert reply.delivered == 2
+    assert pages.request_count == 2
+    assert slept == [1]
+
+
+def test_oversized_server_error_still_obeys_request_budget(monkeypatch):
+    monkeypatch.setattr(http, "MAX_RESPONSE_BYTES", 8)
+    reply = ChunkedReply([b"12345678", b"x"], status=503)
+    pages = page_client(Recorder(reply), request_budget=1, request_attempts=2)
+    with pytest.raises(FetchError) as error:
+        pages.get(TRENDYOL)
+    assert error.value.code == "limit"
+    assert reply.delivered == 2
+    assert pages.request_count == 1
+
+
+def test_oversized_redirect_keeps_location_and_uses_empty_buffer(monkeypatch):
+    monkeypatch.setattr(http, "MAX_RESPONSE_BYTES", 8)
+    reply = ChunkedReply(
+        [b"12345678", b"x", b"alinmamali"], status=302, location="/yeni"
+    )
+    session = Recorder(reply, Reply(content=b"ok"))
+    pages = page_client(session)
+    assert pages.get(TRENDYOL) == "ok"
+    assert reply.delivered == 2
+    assert pages.request_count == 2
+    assert session.calls[1][1] == TRENDYOL + "yeni"
+
+
+@pytest.mark.parametrize(
+    "location, code", [(None, "redirect"), ("https://evil.example/", "invalid_host")]
+)
+def test_oversized_redirect_still_checks_destination(monkeypatch, location, code):
+    monkeypatch.setattr(http, "MAX_RESPONSE_BYTES", 8)
+    reply = ChunkedReply([b"12345678", b"x"], status=302, location=location)
+    session = Recorder(reply)
+    with pytest.raises(FetchError) as error:
+        page_client(session).get(TRENDYOL)
+    assert error.value.code == code
+    assert reply.delivered == 2
+    assert len(session.calls) == 1
+
+
+def test_partial_body_is_discarded_before_network_retry(slept):
+    reply = ChunkedReply([b"yarim", RequestException("bağlantı koptu")])
+    session = Recorder(reply, Reply(content=b"ok"))
+    pages = page_client(session, request_attempts=2)
+    assert pages.get(TRENDYOL) == "ok"
+    assert pages.request_count == 2
+    assert slept == [1]
+
+
+def test_request_exception_response_is_not_used_without_size_abort(slept):
+    session = Recorder(
+        RequestException("zaman aşımı", response=Reply()), Reply(content=b"ok")
+    )
+    assert page_client(session, request_attempts=2).get(TRENDYOL) == "ok"
+    assert len(session.calls) == 2
+    assert slept == [1]
+
+
+def test_size_abort_without_response_is_not_retried(monkeypatch, slept):
+    monkeypatch.setattr(http, "MAX_RESPONSE_BYTES", 8)
+
+    class WithoutResponse(Recorder):
+        def request(self, *args, **kwargs):
+            try:
+                return super().request(*args, **kwargs)
+            except RequestException as exc:
+                exc.response = None
+                raise
+
+    reply = ChunkedReply([b"123456789", b"alinmamali"])
+    session = WithoutResponse(reply)
+    with pytest.raises(FetchError) as error:
+        page_client(session, request_attempts=3).get(TRENDYOL)
+    assert error.value.code == "too_large"
+    assert reply.delivered == len(session.calls) == 1
+    assert slept == []
+
+
+def test_utf8_character_split_between_chunks_is_decoded_after_download():
+    reply = ChunkedReply([b"Fiyat: \xc4", b"\xb1"])
+    assert page_client(Recorder(reply)).get(TRENDYOL) == "Fiyat: ı"
+
+
+@pytest.mark.parametrize("method", ["get", "get_json", "post_json"])
+def test_empty_chunked_response_keeps_parse_behavior(method):
+    pages = page_client(Recorder(ChunkedReply([])))
+    if method == "get":
+        assert call(pages, method) == ""
+    else:
+        with pytest.raises(FetchError) as error:
+            call(pages, method)
+        assert error.value.code == "parse"
+
+
+def test_oversized_server_errors_end_as_network(monkeypatch, slept):
+    monkeypatch.setattr(http, "MAX_RESPONSE_BYTES", 8)
+    replies = [
+        ChunkedReply([b"12345678", b"x"], status=status) for status in (500, 503)
+    ]
+    pages = page_client(Recorder(*replies), request_attempts=2)
+    with pytest.raises(FetchError) as error:
+        pages.get(TRENDYOL)
+    assert error.value.code == "network"
+    assert [reply.delivered for reply in replies] == [2, 2]
+    assert pages.request_count == 2
+    assert slept == [1]
+
+
+@pytest.mark.parametrize(
     "url, code",
     [
         ("http://www.trendyol.com/", "invalid_url"),
@@ -293,6 +516,8 @@ def test_request_passes_timeout_and_disables_automatic_redirects():
     assert pages.post_json(TRENDYOL, {"a": 1}, headers={"X-Test": "1"}) == {"ok": True}
     method, url, kwargs = session.calls[0]
     assert (method, url) == ("POST", TRENDYOL)
+    callback = kwargs.pop("content_callback", None)
+    assert callable(callback)
     assert kwargs == {
         "timeout": 20.0,
         "allow_redirects": False,

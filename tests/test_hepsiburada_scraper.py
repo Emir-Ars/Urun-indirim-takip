@@ -13,7 +13,6 @@ SKU = "HBCV00004X9ZCK"
 
 
 class FakeResponse:
-    # PageClient yanıttan yalnız status_code, headers ve content okur.
     def __init__(self, *, status=200, text="", data=None):
         self.status_code = status
         self.content = text.encode() if data is None else json.dumps(data).encode()
@@ -28,7 +27,9 @@ class FakeSession:
 
     def request(self, method, url, **kwargs):
         self.calls.append((method, url, kwargs))
-        return self.responses.pop(0)
+        response = self.responses.pop(0)
+        kwargs["content_callback"](response.content)
+        return response
 
     def close(self):
         pass

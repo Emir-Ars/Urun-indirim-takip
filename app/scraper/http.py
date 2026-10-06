@@ -2,9 +2,11 @@
 
 import json
 import time
+from io import BytesIO
 from urllib.parse import urljoin, urlsplit
 
 from curl_cffi import requests as curl_requests
+from curl_cffi.curl import CURL_WRITEFUNC_ERROR
 from curl_cffi.requests.cookies import CookieConflict
 from curl_cffi.requests.exceptions import RequestException
 
@@ -63,6 +65,23 @@ class FetchError(Exception):
         super().__init__(message)
 
 
+class _ResponseBody:
+    def __init__(self):
+        self.buffer = BytesIO()
+        self.too_large = False
+
+    def write(self, chunk: bytes) -> int:
+        if self.too_large or self.buffer.tell() + len(chunk) > MAX_RESPONSE_BYTES:
+            self.too_large = True
+            return CURL_WRITEFUNC_ERROR
+        return self.buffer.write(chunk)
+
+    def getvalue(self) -> bytes:
+        if self.too_large:
+            raise FetchError("too_large", "Yanıt 8 MB sınırını aştı")
+        return self.buffer.getvalue()
+
+
 class PageClient:
     """Tek platformun alan adlarına giden istemci.
 
@@ -114,13 +133,6 @@ class PageClient:
             time.sleep(delay)
         _LAST_REQUEST[host] = time.monotonic()
 
-    @staticmethod
-    def _body(response) -> bytes:
-        body = response.content
-        if len(body) > MAX_RESPONSE_BYTES:
-            raise FetchError("too_large", "Yanıt 8 MB sınırını aştı")
-        return body
-
     def _request(self, method: str, url: str, **kwargs) -> bytes:
         """İsteği gönderir ve başarılı yanıtın gövdesini (8 MB denetimli) döndürür.
 
@@ -141,13 +153,25 @@ class PageClient:
                         raise FetchError("limit", "HTTP istek sınırı doldu")
                     self._wait_for_interval(urlsplit(target).hostname)
                     self.request_count += 1
-                    response = self.client.request(
-                        method,
-                        target,
-                        timeout=self.runtime.request_timeout_seconds,
-                        allow_redirects=False,
-                        **kwargs,
-                    )
+                    body = _ResponseBody()
+                    try:
+                        response = self.client.request(
+                            method,
+                            target,
+                            timeout=self.runtime.request_timeout_seconds,
+                            allow_redirects=False,
+                            content_callback=body.write,
+                            **kwargs,
+                        )
+                    except RequestException as exc:
+                        if not body.too_large:
+                            raise
+                        # Sınırdaki curl hatası HTTP durumunu gölgelememeli.
+                        response = exc.response
+                        if response is None:
+                            raise FetchError(
+                                "too_large", "Yanıt 8 MB sınırını aştı"
+                            ) from exc
                     if response.status_code in REDIRECT_STATUSES:
                         location = response.headers.get("location")
                         if not location:
@@ -174,7 +198,7 @@ class PageClient:
                             "http_error",
                             f"Kaynak HTTP {response.status_code} döndürdü",
                         )
-                    return self._body(response)
+                    return body.getvalue()
                 raise FetchError("redirect", "Çok fazla yönlendirme")
             # FetchError (blocked, limit, redirect, too_large…) burada
             # yakalanmaz; tekrar denenmeden olduğu gibi yükselir.

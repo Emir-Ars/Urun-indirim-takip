@@ -42,6 +42,11 @@ ile test edildi (571 test), kullanıcı 6 Ekim'de gerçek veritabanına uygulad�
 salt okunur denetimle doğrulandı. Üç bakım bulgusu kapandı; Aşama 6'nın kalan
 sırası Adım 9 → 7 (Bölüm 7).
 
+**6 Ekim ertelenmiş bakım planı (kullanıcı onayı):** yedi madde ayrı adımlarla
+kontrol edilip gerekli düzeltmeler yapılacak; eksik kanıt için hedefli canlı
+komutları kullanıcı çalıştıracak. İlk madde, HTTP indirme sınırı, tamamlandı
+(598 test); diğer altı maddeye geçilmedi. Ayrıntı ve durumlar Bölüm 7'de.
+
 Önceki aşamalardan kalan yerel taslaklar (eski `app/database`, `app/ml_model`,
 `app/api`, `app/services`, `app/worker.py`, `frontend/`, Docker dosyaları ve
 Akakçe/Cimri taslakları) 28 Eylül 2026'da `_eski_taslaklar/` klasörüne taşındı;
@@ -442,6 +447,15 @@ Düzeltildi (6 Ekim, kod ve test):
   görünüyordu; artık "Tarama bitti ama sonuç yazılamadı" der (çıkış kodu yine 1).
 - Ek: `invalid_host` hata mesajı hedef alan adını yazar (Bölüm 7, tur 14 vakası);
   `live_scraper_check.py` kilit meşgulken diğer araçlar gibi 3 döner.
+- HTTP: 8 MB sınırı artık indirme sırasında uygulanır (`content_callback`);
+  aşan parça biriktirilmeden aktarım durur. Tam eşik kabul edilir; başarılı
+  HTTP yanıtındaki taşma `too_large` kalır. Büyük engel/hata yanıtlarında HTTP
+  sınıflandırması, yönlendirme, 5xx tekrarı ve istek bütçesi korunur. Her
+  denemede boş tampon açılır; yeni bağımlılık, migration veya kimlik kuralı yok.
+  **Kanıt:** 27 yeni HTTP testi (88 HTTP, 598 toplam); yeni sınamaların ilk
+  21'inden 20'si eski kodda başarısızdı. Tüm testler `597 passed, 1 xfailed`,
+  0 atlandı (219 PostgreSQL); Black ve Flake8 temiz. Kurulu curl_cffi'nin gerçek C callback'inde
+  eşik/taşma durdurma sinyali ayrıca ağsız doğrulandı. Canlı okuma yapılmadı.
 
 Bilerek kapatıldı, kod değişmedi (gerekçeyle):
 - Tek bir satıcının bozuk fiyatı bütün sayfayı `parse` hatası yapar: teklifi
@@ -464,9 +478,6 @@ Bilerek kapatıldı, kod değişmedi (gerekçeyle):
   zamanlanmış çalışma tarihli dosya yazar (Adım 10), elle çalıştırma tek dosyadır.
 
 Açık kalanlar:
-- HTTP: 8 MB sınırı indirme sonrası denetleniyor (gövde bellekte tutulur). Küçük
-  bellekli bir cihazda (Aşama 9) anlam kazanır; akışlı okuma testlerdeki sahte
-  istemcileri de değiştirir.
 - Keşif: Trendyol varyant adresi `-p-<id>` biçimi için denetlenmiyor (kimlik sayfada
   doğrulanıyor; kayıtta kimlik yoksa scraper her turda `identity` verir, yani güvenli
   tarafta); Hepsiburada canonical SKU'su alt dizeyle karşılaştırılıyor (tam eşitlik
@@ -474,12 +485,14 @@ Açık kalanlar:
 - Kimlik kuralında Türkçe ekler: aksesuar sözcükleri ek almış hâlleriyle
   ("Kılıfı", "Adaptörü") ve keşfin kategori süzgecinde "Kapağı" yakalanmıyor
   ("Cep Telefonu Kapağı" telefon kategorisi sayılıyor; `xfail` testiyle
-  belgeli). Kapasite ve model doğrulaması ikinci koruma olduğu için yanlış fiyat
-  üretmez; kural canlıda hedef markada bir örnek görülünce değiştirilir.
+  belgeli). Model ve kapasite doğrulaması her durumda korumaz: 6 Ekim yerel
+  sınamasında "Apple iPhone 16 128 GB Kılıfı/Adaptörü/Kapağı" başlıkları iki
+  kontrolden de geçti. Bunlar yapay örneklerdir; canlıda yanlış fiyat
+  üretildiği doğrulanmadı. Kural, canlı örnekle ve regresyon testiyle değiştirilir.
 - Tur tamamlandıktan sonra özet sorgusu (`run_summary`) düşerse çıkış kodu 1 olur ama
   tur `completed` kalır (nadir; docs/teknik.md'de yazılı).
 
-Yeni (6 Ekim denetimi; davranış değiştirmez, ayrı adım olarak ele alınır):
+Yeni (6 Ekim denetimi; henüz uygulanmadı, bazı birleştirmeler davranışı değiştirir):
 - Aynı adres-kimliği düzenli ifadesi beş yerde yazılı (`discovery/service.py`
   `_url_identity`, iki scraper, iki keşif modülü); `trendyol_scraper.py` sondaki
   `(?:[/?]|$)` kısmını atlıyor, yani anlamca hafif farklı. `_url_identity` platform
@@ -490,7 +503,37 @@ Yeni (6 Ekim denetimi; davranış değiştirmez, ayrı adım olarak ele alınır
   listesini alıyor; `hepsiburada_scraper.py` `variant_capacity` SKU'yu bulduğu
   **ilk** listede duruyor. Sayfada birden çok varyant listesi olursa ikisi farklı
   listeye bakabilir (canlıda görülmedi).
-- Birleştirmek kimlik kuralına dokunduğu için canlı örnek ve regresyon testi ister.
+- Adres ve varyant yardımcılarını birleştirmek kimlik kuralına dokunduğu için
+  canlı örnek ve regresyon testi ister. Eklenti yükleyicileri farklı sözleşmeler
+  taşır: scraper nesne kurar ve hatayı `plugin` yapar; keşif sınıf döndürür ve
+  yükleme hatası komutu durdurur. Yalnız kod benzerliği hata kanıtı değildir.
+
+**6 Ekim ertelenmiş bakım kontrolü (kullanıcı isteği, Codex):** yedi bakım
+grubu kod ve kayıtlı raporlarla incelendi; Git dışındaki yerel denetimde
+14 sınama geçti (gerçek HTTP kesildi, veritabanı sınaması yalnız `_test`).
+Sınamalar mevcut davranışı doğrular, risklerin düzeltildiği anlamına gelmez.
+Üç keşif raporundaki 357 adayın adres kimliği beklenenle eşleşti; ekli aksesuar
+adlarını içeren 16 uyarıda sayfalar reddedilmişti. Yapay sayfalarda Trendyol
+kimliksiz adresi, Hepsiburada farklı SKU içeren canonical adresi ve ilk listenin
+kapasitesiyle son listenin renginin birlikte kullanılması üretildi; canlı örnek
+kanıtı bulunmadı. Özet sorgusu hata verdiğinde tamamlanmış tur, yedi sonuç ve
+kilidin bırakılması korundu. HTTP sınırının indirme sonrası uygulandığı hem
+koddan hem sahte istemciden doğrulandı. **Kullanıcı yedi maddelik kontrol ve
+gerekli düzeltme planını onayladı; ilk madde (HTTP sınırı) aynı gün tamamlandı.**
+Kimlik riskleri için gerçek kaynak kanıtı gerekir; bu maddeler henüz değiştirilmedi.
+
+Onaylanan bakım sırası ve durum (her adımdan sonra sonuç anlatılıp durulur):
+
+| Bakım maddesi | Durum |
+|---|---|
+| 1. HTTP 8 MB indirme sınırı | ✅ Kod ve test tamamlandı; kullanıcı commit/push işlemini onayladı. Gerçek turda henüz görülmedi. |
+| 2. Trendyol varyant / Hepsiburada canonical adresi | ⏳ Sıradaki kontrol; gerçek kaynak kimliği–adres–sayfa karşılaştırması, gerekirse kullanıcıyla hedefli canlı kanıt. |
+| 3. Türkçe ekli aksesuar adları | 🔜 Kayıtlı gerçek örneklerle dar kural ve regresyon testi; geçerli telefon başlıkları da kontrol edilecek. |
+| 4. Hepsiburada çoklu varyant listesi | 🔜 Aynı SKU için kaynakların kapasite/renk tutarlılığı; gerçek örnek doğrulanırsa ortak veri ve çelişkide ret. |
+| 5. Beş adres kimliği kuralı | 🔜 Aynı adreslerle davranış karşılaştırması; ortaklaştırma yalnız gerekli düzeltmeyi destekliyorsa. |
+| 6. Tur sonu özet sorgusu | 🔜 Özet/bağlantı/kapanış sonrası kesinti; tur, sonuç, kilit, çıkış kodu kontrolü. Güvenli mevcut davranış kod değişmeden belgelenebilir. |
+| 7. İki eklenti yükleyicisi | 🔜 Geçerli/eksik/yanlış/soyut/kurulamayan adaptör kontrolü; farklı sözleşmeler korunur, yalnız benzerlik için birleştirilmez. |
+
 - 29 Eylül incelemesinde kapandı: test kapsamı maddeleri (Trendyol Kritik Stok,
   keşif CLI çıkış kodları, dry-run'ın kataloğa yazmaması, uyarı türleri, HTTP
   yönlendirme/yeniden deneme), ölü kod (etkisiz `except FetchError: raise`,
@@ -552,6 +595,10 @@ bulgusu düzeltilecek. Hepsiburada bozuk satıcı yanıtı düzeltmesi tamamland
 iki SQL koruması `003` ile ayrı kopyada geliştirilip test edildi, gerçek
 veritabanına 6 Ekim 13:30'da kullanıcı tarafından uygulandı ve salt okunur doğrulandı.
 Üç bakım işi tamamlandı; sıradaki plan adımı 9 (Bölüm 7).
+Kullanıcı 22:00 turunu beklerken ertelenmiş bakımların incelenmesini istedi;
+inceleme sonrası yedi maddelik kontrol ve gerekli düzeltme planını onayladı.
+İlk madde (HTTP indirme sınırı) kod ve testle tamamlandı; kullanıcı commit/push
+işlemini onayladı, sıradaki bakım kontrolü adres kimliğidir (Bölüm 7). Adım 9'a geçilmedi.
 
 | Adım | Durum |
 |---|---|
@@ -590,6 +637,7 @@ Takvim (tahmin, 6 Ekim güncellemesi; Adım 9 ve 11'in süresi henüz belirlenme
 | 6 Ekim | Plan adımı değil: **bulut denemesi** (GitHub'dan Hepsiburada okundu, Trendyol 403; strateji kararı verilmedi, Bölüm 8) ve Adım 11'den önce **genel denetim** (ölü kod taraması, belge–kod tutarlılığı, bakım listesi): eskimiş belge ve yorumlar düzeltildi, `invalid_host` mesajı, keşif uyarısı/yazma hatası ve kilit çıkış kodu düzeltildi, S25+ sayfası pasife alındı, bakım listesi yeniden düzenlendi (Bölüm 7) |
 | 6 Ekim | **Adım 11 kapandı:** tur sonunda `network` ikinci okuması (kod ve testler; gerçek turda henüz görülmedi) |
 | 6 Ekim | İkinci denetim bakımı tamamlandı: Hepsiburada bozuk satıcı yanıtı düzeltildi (`572061c`, CI yeşil); iki SQL koruması `003` ile kopyada test edildi, kullanıcı 13:30'da uyguladı, salt okunur denetim temiz |
+| 6 Ekim | Yedi ertelenmiş bakım için kontrol ve gerekli düzeltme planı onaylandı; ilk madde (indirme sırasında 8 MB sınırı) tamamlandı: 27 yeni test, toplam 598; kullanıcı commit/push işlemini onayladı |
 | Adım 11 sonrası | **Adım 9:** Cimri geçmişinin bir defalık alımı, katalog eşleştirmesi ve ayrı `market_history` tablosuna aktarım |
 | Adım 9 sonrası | **Adım 7:** kapanış belgeleri; veritabanı aşaması biter. Önceki 2–3 Ekim kapanış tahmini yeni adımlara göre yeniden değerlendirilecek |
 

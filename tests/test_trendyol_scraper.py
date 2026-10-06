@@ -30,7 +30,9 @@ class FakeSession:
     def request(self, method, url, **kwargs):
         self.calls.append((method, url))
         assert self.responses, "Beklenmeyen HTTP isteği"
-        return self.responses.pop(0)
+        response = self.responses.pop(0)
+        kwargs["content_callback"](response.content)
+        return response
 
     def close(self):
         pass
