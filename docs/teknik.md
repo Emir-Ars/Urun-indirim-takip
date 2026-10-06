@@ -101,9 +101,10 @@ geçmişi. Kararların ve aşama durumunun ana kaynağı
 | `tests/test_database.py` | Migration koşucusu, şemanın bütün `CHECK`/`UNIQUE`/yabancı anahtar kuralları (her biri geçerli ve geçersiz örnekle), `migrate`/`status` komutları (yeniden adlandırılan migration dahil) ve iki emniyet kemerinin kendisi; 002'nin iki `CHECK` kuralı, silme/kimlik değişimi/yazılmış sonucu değiştirme tetikleyicileri (her tabloda), kodun gerçek güncellemelerinin hâlâ geçtiği ve "bilerek silme" yolu da burada denenir. 003 için kapanmış turun ilk sonuç yazımı, durum/bitiş zamanı koruması, not güncellemesi, eşzamanlı kapanış/yazım ve mevcut kayıtlarla migration geçişi sınanır (150 test; 138'i gerçek PostgreSQL'de). |
 | `tests/test_comparability.py` | `product_run_prices` görünümü: aynı sayfa kümesi, hata (girerken ve çıkarken), yeni sayfa, Tükendi, cevapsız ürün, ürünlerin ayrı karşılaştırılması, `--prefix` turu, süren ve yarıda kalan turların dışarıda kalması, uzun boşluk (14 test, hepsi gerçek PostgreSQL'de). |
 | `tests/test_market_history_probe.py` | Piyasa geçmişi araştırmasında aday tablo satırları, ürün kimliği, sentetik 365 günlük grafik yanıtı, eksik/bozuk fiyat ve tablo uyuşmazlığı (12 ağsız test). Gerçek fiyat dizileri Git dışındaki yerel raporlardadır. |
+| `tests/test_live_discovery_check.py` | Ham keşif kanıtı kaydı (12 ağsız test): HTML/JSON baytları, istek bütçesi ve tekrarlar, bozuk JSON'un korunması, tek hedef/yeni klasör zorunluluğu, kilit ve disk hatası, platformların ayrı kaydı ve eski komut çıktısının korunması. |
 | `tests/fixtures/discovery/` | Testlerin kullandığı örnek site yanıtları ve kataloğun sabit bir kopyası (`catalog.json`); testler gerçek kataloğa bağlı değildir. |
 | `tests/manual/live_scraper_check.py` | Katalogdaki sayfaları canlı okur; bütün satıcıları gösterir. İsteğe bağlı `product_key` ön eki (ör. `samsung_`) ile yalnız o ürünler; sayfa seçimi toplama turuyla aynı fonksiyondur. Başka bir tarama sürüyorsa (ortak kilit) çıkış kodu 3'tür. |
-| `tests/manual/live_discovery_check.py` | Keşfi kataloğa yazmadan canlı çalıştırır; `--trace` ile her kararın nedenini gösterir. Raporu `data/discovery_report.json` dosyasının üzerine yazar. |
+| `tests/manual/live_discovery_check.py` | Keşfi kataloğa yazmadan canlı çalıştırır; `--trace` ile her kararın nedenini gösterir. Normalde raporu `data/discovery_report.json` dosyasının üzerine yazar. `--save-responses KLASOR`, tek hedefin ham HTML/JSON yanıtlarını ve raporunu yeni klasöre kaydeder; karar izini de basar. |
 | `tests/manual/market_history_probe.py` | Akakçe için tek örnek sayfayı, Cimri için ürün sayfası ve grafik API'sini ortak HTTP katmanı ve tarama kilidiyle okur. Cimri'nin tarihli fiyat noktalarını Git dışındaki yerel JSON raporuna yazar; ham HTML'yi ve veritabanını yazmaz. |
 | `.github/workflows/ci.yml` | Her push/pull request'te geçici bir PostgreSQL 17 açar (yereldeki gibi `C.UTF-8`) ve Black, Flake8 ile bütün testleri çalıştırır. |
 | `.github/workflows/bulut-deneme.yml` | Elle tetiklenen bulut denemesi (zamanlama, veritabanı ve gizli anahtar yok): `tests/manual/live_scraper_check.py samsung_galaxy_a55_128gb` ile 4 sayfayı (Trendyol ve Hepsiburada) GitHub'ın makinesinden okur; her iki site de hatasız okunduysa başarılı, aksi hâlde başarısız biter ve sonucu çalışmanın özet sayfasına yazar. Soru: siteler bulut adreslerini engelliyor mu ([proje_plani.md](../proje_plani.md) Bölüm 8). **İlk sonuç (6 Ekim):** Hepsiburada'nın 3 sayfası okundu, Trendyol'un sayfası HTTP 403 (`blocked`) verdi; tek örnek (bkz. "Bilinen sınırlar"). Tetiklemek: GitHub → Actions → "Bulut deneme (canlı okuma)" → Run workflow. Bilgisayardaki tur saatlerinde (10:00–10:40, 22:00–22:40) tetiklenmemelidir: `data/scrape.lock` bu makineye özgüdür, GitHub'daki çalışma onu almaz ve aynı siteye iki yerden gidilir (iş tanımı bunu denetlemez, yalnız yorumda uyarır). |
@@ -161,10 +162,24 @@ powershell -ExecutionPolicy Bypass -File scripts\kesif_zamanlayici_kur.ps1
 # Keşif tanılaması: rapor + her kararın izi (katalog değişmez)
 .venv\Scripts\python.exe tests\manual\live_discovery_check.py apple_iphone_15 --trace
 
+# Adres kimliği incelemesi için tek hedefin ham yanıtları (yeni klasör gerekir)
+.venv\Scripts\python.exe tests\manual\live_discovery_check.py apple_iphone_15 --save-responses data\kimlik_iphone15_20261006
+
 # Canlı fiyat kontrolü: katalogdaki bütün sayfalar (veya yalnız bir ön ek)
 .venv\Scripts\python.exe tests\manual\live_scraper_check.py
 .venv\Scripts\python.exe tests\manual\live_scraper_check.py samsung_ | Out-File -Encoding utf8 data\scraper_samsung.json
 ```
+
+Ham keşif kaydında her platform/hedef alt klasörüne HTML/JSON dosyaları ve
+`index.json` yazılır. Index, ilk istenen adresi, zamanı, dosya adını veya okuma
+hatasını ve o ana kadarki gerçek istek sayısını tutar; yönlendirme son adresini
+tutmaz. Başarılı yanıt ayrıştırmadan önce kaydedilir, böylece bozuk JSON da
+incelenebilir. HTTP hata gövdeleri kaydedilmez. `report.json` seçilen klasörde
+olur; mevcut standart rapor korunur. `--save-responses` karar izini de basar,
+ek HTTP isteği göndermez, bütçeyi veya kilidi değiştirmez. Hedef verilmezse ya
+da klasör zaten varsa tarama başlamaz (kod 2); kilit meşgulse kod 3. Disk hatası
+çalışmayı keser. Canlı kontrolü kullanıcı tur saatleri dışında çalıştırır;
+kanıt dosyaları `data/` altında tutulur ve Git'e gönderilmez.
 
 ### Piyasa geçmişi araştırması (Adım 8)
 
@@ -341,6 +356,13 @@ tur kendi ortamında çalıştığı için etkilenmez.
    özelliklerindeki "Mobil Bağlantı Hızı" kaydı da) ve sayfadaki
    `allVariantCombinations` (bütün renk/kapasite seçenekleri) kuyruğa eklenir.
    Stoksuz olduğu için aramada görünmeyen kapasiteler de böyle bulunur.
+
+Canonical adresi aynı ürünün adresi olmayabilir: 6 Ekim iPhone 15 kontrolünde
+16 ürünün 9'u grup (`-pm-`), 7'si model/kategori adresi bildirdi. Bunlar SKU
+adresine uymadığı için keşif onları kullanmadı; doğrulanmış mevcut ürün
+adresleri korundu. Bu örnekte farklı SKU içeren bir ürün canonical adresi
+görülmedi; alt dize karşılaştırmasıyla ilgili yapay risk Bölüm 7'de açık
+duruyor ([proje_plani.md](../proje_plani.md)).
 
 ### Katalogla birleştirme (`service.py`)
 
@@ -1015,7 +1037,7 @@ böylece keşfin kabul ettiği sayfayı scraper aynı girdilerle reddetmez.
 
 ## Testler ne kanıtlar, ne kanıtlamaz
 
-- **Otomatik testler (598; 219'u gerçek PostgreSQL'de):** Kuralların doğru
+- **Otomatik testler (610; 219'u gerçek PostgreSQL'de):** Kuralların doğru
   çalıştığını kayıtlı ve sahte yanıtlarla kanıtlar. Hata düzeltmelerinin her
   biri, canlıda görülen gerçek bir örneğe dayanan regresyon testiyle korunur.
   Sitelerin bugün hâlâ aynı yapıda olduğunu kanıtlamaz. Veritabanı testleri

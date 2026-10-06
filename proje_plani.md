@@ -45,7 +45,10 @@ sırası Adım 9 → 7 (Bölüm 7).
 **6 Ekim ertelenmiş bakım planı (kullanıcı onayı):** yedi madde ayrı adımlarla
 kontrol edilip gerekli düzeltmeler yapılacak; eksik kanıt için hedefli canlı
 komutları kullanıcı çalıştıracak. İlk madde, HTTP indirme sınırı, tamamlandı
-(598 test); diğer altı maddeye geçilmedi. Ayrıntı ve durumlar Bölüm 7'de.
+(598 test). İkinci maddenin kayıt ve hedefli canlı kontrolü yapıldı; bu örnekte
+kimlik uyuşmazlığı yok, iki yapay riskin gerçek uyuşmazlık kanıtı bekleniyor.
+Ham yanıt kaydı için manuel araç hazırlandı (610 test); 3–7'ye geçilmedi.
+Ayrıntı ve durumlar Bölüm 7'de.
 
 Önceki aşamalardan kalan yerel taslaklar (eski `app/database`, `app/ml_model`,
 `app/api`, `app/services`, `app/worker.py`, `frontend/`, Docker dosyaları ve
@@ -522,12 +525,60 @@ koddan hem sahte istemciden doğrulandı. **Kullanıcı yedi maddelik kontrol ve
 gerekli düzeltme planını onayladı; ilk madde (HTTP sınırı) aynı gün tamamlandı.**
 Kimlik riskleri için gerçek kaynak kanıtı gerekir; bu maddeler henüz değiştirilmedi.
 
+**6 Ekim bakım 2, adres kimliği kontrolü:** `data/` altındaki 58 JSON dosyası
+incelendi. Bunların 50'si keşif raporu içeriyor; 951 aday kaydındaki 333 farklı
+adres (116 Trendyol, 217 Hepsiburada) ve katalogdaki 334 sayfanın adres kimliği
+beklenenle eşleşti. Bu kayıtlar Trendyol varyant yanıtındaki `pageUrl` veya
+Hepsiburada canonical alanını saklamıyor; kabul edilmiş aday adresleri iki
+riskin kaynakta hiç oluşmadığını kanıtlamaz. Önceki iki yapay sınama yeniden
+çalıştırıldı; kimliksiz Trendyol adresi ve beklenen SKU'yu alt dize olarak
+içeren farklı Hepsiburada canonical adresi hâlâ kabul ediliyor. Canlı hata
+kanıtı yok, kimlik kuralları değiştirilmedi; madde **kanıt bekliyor**.
+
+Eksik kanıtı almak için `tests/manual/live_discovery_check.py` aracına
+`--save-responses KLASOR` eklendi: tek hedef zorunlu, yeni klasör açılır,
+başarılı HTTP yanıtlarının özgün HTML/JSON baytları platforma göre saklanır.
+Her `index.json` istenen adresi, zamanı, dosyayı veya okuma hata kodunu ve gerçek
+istek sayısını kaydeder. Hata yanıtının gövdesi saklanmaz; yönlendirme sonrası
+adres HTTP katmanından çıkmadığı için index'teki adres ilk istenen adrestir.
+Rapor aynı klasörde `report.json` olur; standart raporun üzerine yazılmaz.
+Yeni istek gönderilmez; ortak HTTP sınırları, bütçe, kilit ve dry-run korunur.
+Ham dosyalar `data/` altında Git dışındadır. Araç için 12 ağsız test eklendi;
+tam çalışmada `609 passed, 1 xfailed`, 0 atlandı (219 PostgreSQL). Black
+43 dosyada ve Flake8 temiz. Canlı komut kullanıcı tarafından tur saatleri
+dışında çalıştırıldı (aşağıdaki sonuç). Bu hazırlık, adres
+kimliği düzeltmesinin tamamlandığı anlamına gelmez.
+
+**6 Ekim 16:24–16:26 hedefli canlı kontrol (kullanıcı çalıştırdı):** iPhone 15,
+Trendyol 13 ve Hepsiburada 20 gerçek istek. Çıkış kodu **2** yalnız bilinen
+Hepsiburada arama API'sinin HTTP 403 engelinden (`search_api: blocked`) geliyor;
+başka uyarı veya reddedilen aday yok. Trendyol tam sonuç, 5 aday; Hepsiburada
+kısmi sonuç, 16 aday; yeni ürün/sayfa yok, katalog/veritabanı yazılmadı.
+Ham yanıtlar `data/kimlik_iphone15_20261006/`, karar izi aynı adlı `_iz.json`
+dosyasında; salt okunur inceleme özeti `identity_analysis.json` olarak kaydedildi.
+
+- Trendyol: ham varyant API'sindeki 5 farklı `id/pageUrl` çifti, istenen
+  adreslerin kimliği ve açılan sayfalardaki `product.id` birebir eşleşti.
+  Eksik veya farklı kimlikli varyant adresi görülmedi.
+- Hepsiburada: 16 ürünün istenen SKU'su, tam ürün bağlamındaki SKU ve JSON-LD
+  SKU'su eşleşti. Canonical adreslerin **9'u `-pm-` grup adresi, 7'si model/kategori
+  adresi**; hiçbiri ürün SKU adresi değil. Mevcut kod bu adresleri kullanmadı,
+  16 doğrulanmış mevcut ürün adresini korudu. Beklenen SKU'yu alt dize olarak
+  içeren farklı SKU canonical örneği görülmedi.
+
+**Sonuç:** bu gerçek örneğin kontrolü tamamlandı; kimlik kuralları değişmedi.
+Yapay örnekte doğrulanan iki risk düzeltildi sayılmaz; gerçek uyuşmazlık
+örneği için durum **kanıt bekliyor** olarak kalır. Aynı hedefi yeniden
+çalıştırmak gerekmiyor; sonraki bakım 3'e ayrı devam talebiyle geçilir.
+Kullanıcı, sonraki bakım maddesine geçmeden ham kayıt aracı, testleri ve
+kontrol notlarının ayrı commit/push işlemini onayladı.
+
 Onaylanan bakım sırası ve durum (her adımdan sonra sonuç anlatılıp durulur):
 
 | Bakım maddesi | Durum |
 |---|---|
 | 1. HTTP 8 MB indirme sınırı | ✅ Kod ve test tamamlandı; kullanıcı commit/push işlemini onayladı. Gerçek turda henüz görülmedi. |
-| 2. Trendyol varyant / Hepsiburada canonical adresi | ⏳ Sıradaki kontrol; gerçek kaynak kimliği–adres–sayfa karşılaştırması, gerekirse kullanıcıyla hedefli canlı kanıt. |
+| 2. Trendyol varyant / Hepsiburada canonical adresi | ⏳ Gerçek uyuşmazlık kanıtı bekliyor. Kayıt kontrolü ve 6 Ekim hedefli canlı kontrol tamamlandı: TY 5 varyant/adres/sayfa kimliği eşleşti; HB 16 SKU eşleşti, 9 grup/7 kategori canonical adresi kullanılmayıp mevcut adresler korundu. İki yapay risk canlıda görülmedi; kimlik kuralları değişmedi. Ham kayıt aracı ve 12 ağsız test hazır. |
 | 3. Türkçe ekli aksesuar adları | 🔜 Kayıtlı gerçek örneklerle dar kural ve regresyon testi; geçerli telefon başlıkları da kontrol edilecek. |
 | 4. Hepsiburada çoklu varyant listesi | 🔜 Aynı SKU için kaynakların kapasite/renk tutarlılığı; gerçek örnek doğrulanırsa ortak veri ve çelişkide ret. |
 | 5. Beş adres kimliği kuralı | 🔜 Aynı adreslerle davranış karşılaştırması; ortaklaştırma yalnız gerekli düzeltmeyi destekliyorsa. |
@@ -598,7 +649,12 @@ veritabanına 6 Ekim 13:30'da kullanıcı tarafından uygulandı ve salt okunur 
 Kullanıcı 22:00 turunu beklerken ertelenmiş bakımların incelenmesini istedi;
 inceleme sonrası yedi maddelik kontrol ve gerekli düzeltme planını onayladı.
 İlk madde (HTTP indirme sınırı) kod ve testle tamamlandı; kullanıcı commit/push
-işlemini onayladı, sıradaki bakım kontrolü adres kimliğidir (Bölüm 7). Adım 9'a geçilmedi.
+işlemini onayladı ve `3388c6b` push/CI yeşil tamamlandı. Adres kimliği kontrolünde
+kayıtlar ve 6 Ekim hedefli canlı örnek eşleşti; iki risk için gerçek uyuşmazlık
+kanıtı bekleniyor (Bölüm 7).
+Manuel kayıt aracı hazırlandı; Adım 9'a geçilmedi.
+Kullanıcı, sonraki bakım kontrolünden önce bu araç ve kontrol notları için
+commit/push yapılmasını onayladı.
 
 | Adım | Durum |
 |---|---|
@@ -638,6 +694,7 @@ Takvim (tahmin, 6 Ekim güncellemesi; Adım 9 ve 11'in süresi henüz belirlenme
 | 6 Ekim | **Adım 11 kapandı:** tur sonunda `network` ikinci okuması (kod ve testler; gerçek turda henüz görülmedi) |
 | 6 Ekim | İkinci denetim bakımı tamamlandı: Hepsiburada bozuk satıcı yanıtı düzeltildi (`572061c`, CI yeşil); iki SQL koruması `003` ile kopyada test edildi, kullanıcı 13:30'da uyguladı, salt okunur denetim temiz |
 | 6 Ekim | Yedi ertelenmiş bakım için kontrol ve gerekli düzeltme planı onaylandı; ilk madde (indirme sırasında 8 MB sınırı) tamamlandı: 27 yeni test, toplam 598; kullanıcı commit/push işlemini onayladı |
+| 6 Ekim | Bakım 2: kayıtlı 333 farklı adres/334 katalog sayfası ve kullanıcının 16:24–16:26 iPhone 15 kontrolündeki TY 5/HB 16 kimliği eşleşti. HB grup/kategori canonical adresleri doğru biçimde kullanılmadı. Çıkış 2 yalnız bilinen arama API 403'ü; iki yapay risk için gerçek uyuşmazlık kanıtı bekleniyor. Manuel ham kayıt aracı ve 12 ağsız test hazır (610 toplam); kimlik kuralı değişmedi |
 | Adım 11 sonrası | **Adım 9:** Cimri geçmişinin bir defalık alımı, katalog eşleştirmesi ve ayrı `market_history` tablosuna aktarım |
 | Adım 9 sonrası | **Adım 7:** kapanış belgeleri; veritabanı aşaması biter. Önceki 2–3 Ekim kapanış tahmini yeni adımlara göre yeniden değerlendirilecek |
 
