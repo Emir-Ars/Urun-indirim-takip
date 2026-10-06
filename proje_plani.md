@@ -37,8 +37,10 @@ Kullanıcı arayüzde arama yaptığında canlı scraping veya model eğitimi
 | 9. Docker ve 7/24 işletim | 🔜 Planlandı, başlanmadı | Bölüm 9 |
 
 **6 Ekim ikinci denetimi sonrası bakım (kullanıcı onayı):** Hepsiburada bozuk
-satıcı yanıtı düzeltildi (552 test). İki SQL koruma açığı sırada; bunlar
-tamamlandıktan sonra Aşama 6'nın Adım 9 → 7 sırasına dönülecek (Bölüm 7).
+satıcı yanıtı düzeltildi (552 test). İki SQL koruması `003_closed_run_guards.sql`
+ile test edildi (571 test), kullanıcı 6 Ekim'de gerçek veritabanına uyguladı;
+salt okunur denetimle doğrulandı. Üç bakım bulgusu kapandı; Aşama 6'nın kalan
+sırası Adım 9 → 7 (Bölüm 7).
 
 Önceki aşamalardan kalan yerel taslaklar (eski `app/database`, `app/ml_model`,
 `app/api`, `app/services`, `app/worker.py`, `frontend/`, Docker dosyaları ve
@@ -407,9 +409,28 @@ ayrıca belirtilen bir yanlış stok ihtimalini ve iki SQL koruma açığını d
   `product_run_prices` görünümündeki 827 satır bağımsız Python hesabıyla eşleşti.
 
 **Düzeltme kararı (6 Ekim, kullanıcı):** önce Hepsiburada bozuk satıcı yanıtı
-(yukarıda tamamlandı), ardından iki SQL koruma açığı ele alınacak; sonra Adım 9
-ve Adım 7'ye dönülecek. SQL düzeltmesi yeni numaralı migration gerektirir ve
-henüz hazırlanmadı/uygulanmadı. Keşif → katalog → toplama → veritabanı akışı,
+(yukarıda tamamlandı), ardından iki SQL koruma açığı; sonra Adım 9 ve Adım 7'ye
+dönülecek. **SQL düzeltmesi tamamlandı ve uygulandı (6 Ekim):**
+Önce ayrı proje kopyasında geliştirilen `003_closed_run_guards.sql`, iki mevcut
+tetikleyici işlevini yeniler. İlk sonuç ve `network` yeniden yazımı yalnız
+`running` turda kabul edilir; tur satırı işlem sonuna kadar `FOR SHARE` ile
+kilitlenir, böylece aynı anda kapanış ile sonuç yazımı yarışamaz. Kapanmış turun
+durumu ve bitiş zamanı değişmez; notu güncellenebilir. `001` ve `002` baytları
+değişmedi; yeni migration veri satırlarını, görünümü veya tetikleyicileri
+yeniden kurmaz. **Kanıt:** 19 yeni PostgreSQL testi; açıkları ve eşzamanlı yazımı
+sınayan 16 test eski SQL'de başarısızdı. Kopyada tüm kontroller `570 passed,
+1 xfailed`, 0 atlandı (571 toplam, 219 PostgreSQL); Black ve Flake8 temiz.
+`002` uygulanmış ve kayıtları olan veritabanından `003`'e geçişte tur/sayfa
+satırları, görünüm sonuçları ve tetikleyici kimlikleri aynı kaldı; ikinci
+`migrate` değişiklik yapmadı. **Canlı uygulama (6 Ekim 13:30 TR):** kullanıcı
+dosyayı gerçek klasöre alıp tur saatleri dışında `migrate` çalıştırdı;
+`status` üç uygulanmış migration ve "Şema güncel" gösterdi. Sonraki salt okunur
+denetimde bütün migration parmak izleri ve iki işlevin SQL içeriği dosyayla
+eşleşti; 15 tetikleyici açık, 15 tur tamamlanmış, sonuç sayıları aynı
+(3.207 fiyat, 1.213 Tükendi, 162 hata). Görünümün 827 satırı bağımsız Python
+hesabıyla uyuştu; plan sayısı uyuşmazlığı, tamamlanmış sonuçsuz satır veya
+kapanış sonrası gözlem yok. Gerçek veritabanına denetim amacıyla yazılmadı.
+**003 de artık uygulanmış dosyadır, değiştirilemez.** Keşif → katalog → toplama → veritabanı akışı,
 tur saatleri ve scraper sözleşmesi aynı kalır. Bozuk yanıt `parse` olarak yazılır,
 tur diğer sayfalara devam eder; bu sayfa o turda cevap veren kümeye katılmaz.
 
@@ -528,7 +549,9 @@ ikinci geçişi (**Adım 11**) eklendi. Kalan sıra **10 → 4 → 11 → 9 → 
 
 **6 Ekim ikinci denetimi sonrası kullanıcı kararı:** Adım 9'dan önce üç bakım
 bulgusu düzeltilecek. Hepsiburada bozuk satıcı yanıtı düzeltmesi tamamlandı;
-iki SQL koruması yeni numaralı migration ile sıradaki iştir (Bölüm 7).
+iki SQL koruması `003` ile ayrı kopyada geliştirilip test edildi, gerçek
+veritabanına 6 Ekim 13:30'da kullanıcı tarafından uygulandı ve salt okunur doğrulandı.
+Üç bakım işi tamamlandı; sıradaki plan adımı 9 (Bölüm 7).
 
 | Adım | Durum |
 |---|---|
@@ -566,6 +589,7 @@ Takvim (tahmin, 6 Ekim güncellemesi; Adım 9 ve 11'in süresi henüz belirlenme
 | 5 Ekim | **Adım 4 kapandı:** `002` migration (koruyucu kurallar ve görünüm) projenin kopyasında geliştirildi, tur saatleri dışında uygulandı |
 | 6 Ekim | Plan adımı değil: **bulut denemesi** (GitHub'dan Hepsiburada okundu, Trendyol 403; strateji kararı verilmedi, Bölüm 8) ve Adım 11'den önce **genel denetim** (ölü kod taraması, belge–kod tutarlılığı, bakım listesi): eskimiş belge ve yorumlar düzeltildi, `invalid_host` mesajı, keşif uyarısı/yazma hatası ve kilit çıkış kodu düzeltildi, S25+ sayfası pasife alındı, bakım listesi yeniden düzenlendi (Bölüm 7) |
 | 6 Ekim | **Adım 11 kapandı:** tur sonunda `network` ikinci okuması (kod ve testler; gerçek turda henüz görülmedi) |
+| 6 Ekim | İkinci denetim bakımı tamamlandı: Hepsiburada bozuk satıcı yanıtı düzeltildi (`572061c`, CI yeşil); iki SQL koruması `003` ile kopyada test edildi, kullanıcı 13:30'da uyguladı, salt okunur denetim temiz |
 | Adım 11 sonrası | **Adım 9:** Cimri geçmişinin bir defalık alımı, katalog eşleştirmesi ve ayrı `market_history` tablosuna aktarım |
 | Adım 9 sonrası | **Adım 7:** kapanış belgeleri; veritabanı aşaması biter. Önceki 2–3 Ekim kapanış tahmini yeni adımlara göre yeniden değerlendirilecek |
 

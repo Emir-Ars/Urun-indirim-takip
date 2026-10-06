@@ -12,6 +12,7 @@ from curl_cffi import requests as curl_requests
 from psycopg import errors, sql
 
 from app.database.__main__ import main
+from app.database.connection import connect
 from app.database.migrate import (
     MigrationError,
     applied,
@@ -182,16 +183,19 @@ def test_cli_status_and_migrate(db, monkeypatch, capsys):
     out = capsys.readouterr().out
     assert "001_initial.sql  BEKLİYOR" in out
     assert "002_guards_and_comparability.sql  BEKLİYOR" in out
+    assert "003_closed_run_guards.sql  BEKLİYOR" in out
     assert main(["migrate"]) == 0
     out = capsys.readouterr().out
     assert "uygulandı: 001_initial.sql" in out
     assert "uygulandı: 002_guards_and_comparability.sql" in out
+    assert "uygulandı: 003_closed_run_guards.sql" in out
     assert main(["migrate"]) == 0
     assert "Şema güncel" in capsys.readouterr().out
     assert main(["status"]) == 0
     out = capsys.readouterr().out
     assert "001_initial.sql  uygulandı" in out
     assert "002_guards_and_comparability.sql  uygulandı" in out
+    assert "003_closed_run_guards.sql  uygulandı" in out
 
 
 def test_cli_without_database_url_fails(monkeypatch, capsys):
@@ -201,13 +205,18 @@ def test_cli_without_database_url_fails(monkeypatch, capsys):
 
 
 def test_migrate_applies_each_file_once(db):
-    files = ["001_initial.sql", "002_guards_and_comparability.sql"]
+    files = [
+        "001_initial.sql",
+        "002_guards_and_comparability.sql",
+        "003_closed_run_guards.sql",
+    ]
     assert [m.file_name for m in migrate(db)] == files
     assert migrate(db) == []
     assert pending(db) == []
     assert [row[:2] for row in applied(db)] == [
         (1, "initial"),
         (2, "guards_and_comparability"),
+        (3, "closed_run_guards"),
     ]
     assert {
         "schema_migrations",
@@ -718,6 +727,182 @@ def test_network_error_in_a_finished_run_stays_frozen(schema, status):
     )
     with pytest.raises(errors.IntegrityConstraintViolation, match="değiştirilemez"):
         rewrite_as_offer(conn)
+
+
+@pytest.mark.parametrize("status", ["completed", "interrupted"])
+@pytest.mark.parametrize(
+    "fields", [OFFER, SOLD_OUT, ERROR], ids=["offer", "sold_out", "error"]
+)
+def test_first_result_in_a_finished_run_is_rejected(filled, status, fields):
+    conn, run_id = filled
+    conn.execute(
+        "UPDATE collection_runs SET status = %s, finished_at = started_at"
+        " WHERE run_id = %s",
+        (status, run_id),
+    )
+    query = sql.SQL("UPDATE listing_checks SET {} WHERE run_id = %s").format(
+        sql.SQL(", ").join(
+            sql.SQL("{} = %s").format(sql.Identifier(column)) for column in fields
+        )
+    )
+    with pytest.raises(errors.IntegrityConstraintViolation, match="değiştirilemez"):
+        conn.execute(query, [*fields.values(), run_id])
+    assert conn.execute(
+        "SELECT outcome, checked_at FROM listing_checks WHERE run_id = %s", (run_id,)
+    ).fetchone() == (None, None)
+
+
+@pytest.mark.parametrize("status", ["completed", "interrupted"])
+@pytest.mark.parametrize("change", ["reopen", "switch_status", "finished_at"])
+def test_finished_run_status_and_time_are_frozen(schema, status, change):
+    conn, run_id = schema
+    check(conn, run_id, **{**ERROR, "error_code": "network"})
+    conn.execute(
+        "UPDATE collection_runs SET status = %s, finished_at = started_at"
+        " WHERE run_id = %s",
+        (status, run_id),
+    )
+    other_status = "interrupted" if status == "completed" else "completed"
+    assignments = {
+        "reopen": "status = 'running', finished_at = NULL",
+        "switch_status": f"status = '{other_status}'",
+        "finished_at": "finished_at = finished_at + interval '1 second'",
+    }
+    with pytest.raises(errors.IntegrityConstraintViolation, match="değiştirilemez"):
+        conn.execute(
+            f"UPDATE collection_runs SET {assignments[change]} WHERE run_id = %s",
+            (run_id,),
+        )
+    assert conn.execute(
+        "SELECT status, finished_at FROM collection_runs WHERE run_id = %s", (run_id,)
+    ).fetchone() == (status, NOW)
+    with pytest.raises(errors.IntegrityConstraintViolation, match="değiştirilemez"):
+        rewrite_as_offer(conn)
+    assert conn.execute(
+        "SELECT outcome, error_code FROM listing_checks WHERE run_id = %s", (run_id,)
+    ).fetchone() == ("error", "network")
+
+
+@pytest.mark.parametrize("status", ["completed", "interrupted"])
+def test_finished_run_note_can_still_change(filled, status):
+    conn, run_id = filled
+    conn.execute(
+        "UPDATE collection_runs SET status = %s, finished_at = started_at"
+        " WHERE run_id = %s",
+        (status, run_id),
+    )
+    conn.execute(
+        "UPDATE collection_runs SET note = 'Ek açıklama', status = status,"
+        " finished_at = finished_at WHERE run_id = %s",
+        (run_id,),
+    )
+    assert conn.execute(
+        "SELECT status, finished_at, note FROM collection_runs WHERE run_id = %s",
+        (run_id,),
+    ).fetchone() == (status, NOW, "Ek açıklama")
+
+
+@pytest.mark.parametrize("network", [False, True], ids=["first_result", "retry"])
+@pytest.mark.parametrize(
+    "closing_first", [False, True], ids=["write_first", "close_first"]
+)
+def test_result_write_and_run_closure_are_serialized(filled, network, closing_first):
+    conn, run_id = filled
+    if network:
+        conn.execute(
+            "UPDATE listing_checks SET outcome = 'error', error_code = 'network',"
+            " checked_at = %s WHERE run_id = %s",
+            (NOW, run_id),
+        )
+    close_query = (
+        "UPDATE collection_runs SET status = 'completed', finished_at = started_at"
+        " WHERE run_id = %s"
+    )
+    with connect(os.environ["TEST_DATABASE_URL"]) as other:
+        ensure_test_database(other)
+        other.execute("SET lock_timeout = '200ms'")
+        with conn.transaction():
+            if closing_first:
+                conn.execute(close_query, (run_id,))
+                with pytest.raises(errors.LockNotAvailable):
+                    rewrite_as_offer(other)
+            else:
+                rewrite_as_offer(conn)
+                with pytest.raises(errors.LockNotAvailable):
+                    other.execute(close_query, (run_id,))
+        if closing_first:
+            with pytest.raises(
+                errors.IntegrityConstraintViolation, match="değiştirilemez"
+            ):
+                rewrite_as_offer(other)
+        else:
+            other.execute(close_query, (run_id,))
+    assert (
+        conn.execute(
+            "SELECT status FROM collection_runs WHERE run_id = %s", (run_id,)
+        ).fetchone()[0]
+        == "completed"
+    )
+    outcome = conn.execute(
+        "SELECT outcome FROM listing_checks WHERE run_id = %s", (run_id,)
+    ).fetchone()[0]
+    assert outcome == (("error" if network else None) if closing_first else "offer")
+
+
+def test_guard_upgrade_preserves_existing_rows_and_triggers(db, tmp_path):
+    migrations = load()
+    for migration in migrations[:2]:
+        write(tmp_path, migration.file_name, migration.sql)
+    migrate(db, tmp_path)
+    insert(db, "platforms", key="trendyol", name="Trendyol", active=True)
+    insert(
+        db,
+        "products",
+        product_id=1,
+        product_key="apple_iphone_15_128gb",
+        brand="Apple",
+        model="iPhone 15",
+        storage_gb=128,
+        active=True,
+    )
+    insert(db, "listings", **{**CATALOG_ROWS["listings"], "listing_id": "trendyol_1"})
+    for status, fields in (
+        ("completed", {}),
+        ("interrupted", {**ERROR, "error_code": "network"}),
+    ):
+        run_id = start_run(db)
+        check(db, run_id, **fields)
+        db.execute(
+            "UPDATE collection_runs SET status = %s, finished_at = started_at"
+            " WHERE run_id = %s",
+            (status, run_id),
+        )
+    running = start_run(db)
+    check(db, running)
+    queries = [
+        "SELECT * FROM collection_runs ORDER BY run_id",
+        "SELECT * FROM listing_checks ORDER BY run_id, listing_id",
+        "SELECT * FROM product_run_prices ORDER BY run_id, product_id",
+        "SELECT oid, tgname, tgenabled FROM pg_trigger"
+        " WHERE NOT tgisinternal ORDER BY oid",
+    ]
+    before = [db.execute(query).fetchall() for query in queries]
+    upgrade = migrations[2]
+    write(tmp_path, upgrade.file_name, upgrade.sql)
+    assert [m.file_name for m in migrate(db, tmp_path)] == [upgrade.file_name]
+    assert migrate(db, tmp_path) == []
+    assert [db.execute(query).fetchall() for query in queries] == before
+    db.execute(
+        "UPDATE listing_checks SET outcome = 'sold_out', checked_at = %s,"
+        " stock_status = 'Tükendi' WHERE run_id = %s",
+        (NOW, running),
+    )
+    assert (
+        db.execute(
+            "SELECT outcome FROM listing_checks WHERE run_id = %s", (running,)
+        ).fetchone()[0]
+        == "sold_out"
+    )
 
 
 def test_table_owner_can_disable_a_guard_deliberately(filled):
