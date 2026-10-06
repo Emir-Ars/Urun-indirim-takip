@@ -47,7 +47,9 @@ kontrol edilip gerekli düzeltmeler yapılacak; eksik kanıt için hedefli canl�
 komutları kullanıcı çalıştıracak. İlk madde, HTTP indirme sınırı, tamamlandı
 (598 test). İkinci maddenin kayıt ve hedefli canlı kontrolü yapıldı; bu örnekte
 kimlik uyuşmazlığı yok, iki yapay riskin gerçek uyuşmazlık kanıtı bekleniyor.
-Ham yanıt kaydı için manuel araç hazırlandı (611 test); 3–7'ye geçilmedi.
+Ham yanıt kaydı için manuel araç hazırlandı (611 test). Üçüncü madde,
+Türkçe ekli aksesuarlar, kullanıcı onayıyla düzeltildi (652 test, 0 atlandı,
+0 beklenen başarısızlık); kullanıcı commit/push işlemini onayladı. 4–7'ye geçilmedi.
 Ayrıntı ve durumlar Bölüm 7'de.
 
 Önceki aşamalardan kalan yerel taslaklar (eski `app/database`, `app/ml_model`,
@@ -485,13 +487,6 @@ Açık kalanlar:
   doğrulanıyor; kayıtta kimlik yoksa scraper her turda `identity` verir, yani güvenli
   tarafta); Hepsiburada canonical SKU'su alt dizeyle karşılaştırılıyor (tam eşitlik
   olmalı). İkisi de kimlik kuralına dokunur: canlı örnek görülünce değiştirilir.
-- Kimlik kuralında Türkçe ekler: aksesuar sözcükleri ek almış hâlleriyle
-  ("Kılıfı", "Adaptörü") ve keşfin kategori süzgecinde "Kapağı" yakalanmıyor
-  ("Cep Telefonu Kapağı" telefon kategorisi sayılıyor; `xfail` testiyle
-  belgeli). Model ve kapasite doğrulaması her durumda korumaz: 6 Ekim yerel
-  sınamasında "Apple iPhone 16 128 GB Kılıfı/Adaptörü/Kapağı" başlıkları iki
-  kontrolden de geçti. Bunlar yapay örneklerdir; canlıda yanlış fiyat
-  üretildiği doğrulanmadı. Kural, canlı örnekle ve regresyon testiyle değiştirilir.
 - Tur tamamlandıktan sonra özet sorgusu (`run_summary`) düşerse çıkış kodu 1 olur ama
   tur `completed` kalır (nadir; docs/teknik.md'de yazılı).
 
@@ -523,7 +518,8 @@ kanıtı bulunmadı. Özet sorgusu hata verdiğinde tamamlanmış tur, yedi sonu
 kilidin bırakılması korundu. HTTP sınırının indirme sonrası uygulandığı hem
 koddan hem sahte istemciden doğrulandı. **Kullanıcı yedi maddelik kontrol ve
 gerekli düzeltme planını onayladı; ilk madde (HTTP sınırı) aynı gün tamamlandı.**
-Kimlik riskleri için gerçek kaynak kanıtı gerekir; bu maddeler henüz değiştirilmedi.
+Adres ve çoklu varyant riskleri için gerçek kaynak kanıtı gerekir; bu maddeler
+henüz değiştirilmedi. Türkçe ekli aksesuarlar sonraki bakım 3'te düzeltildi.
 
 **6 Ekim bakım 2, adres kimliği kontrolü:** `data/` altındaki 58 JSON dosyası
 incelendi. Bunların 50'si keşif raporu içeriyor; 951 aday kaydındaki 333 farklı
@@ -585,13 +581,39 @@ kapsamındadır. Düzeltme sonrası tam çalışma `610 passed, 1 xfailed`, 0 at
 (219 PostgreSQL), 45,91 sn; Black 43 dosyada ve Flake8 temiz. Sonraki bakım
 maddesine geçilmedi.
 
+**6 Ekim bakım 3, Türkçe ekli aksesuarlar (kullanıcı onayıyla düzeltildi):**
+Ortak başlık kuralına yalnız `kilifi`, `adaptoru`, `kapagi`; keşfin kategori
+süzgecine `kapagi`, `adaptoru` eklendi. "Kılıfı" kategorisi mevcut kuralla zaten
+reddediliyordu. Genel Türkçe ek tahmini yapılmadı; keşif ve scraper aynı
+model/kapasite kimlik kuralını kullanır, ret kodu `identity` olarak kalır.
+
+Gerçek sözcük kanıtları kayıtlı izlerde: `trace_s25.json`
+`/traces/1/trace/28` Hepsiburada `HBCV00007I6EKM` ("Hızlı Sarj Adaptörü");
+`trace_xiaomi_poco_x6_pro.json` `/traces/0/trace/576` Trendyol `4894840`
+("Moto G Arka Kapak Batarya Pil Kapağı Mavi");
+`trace_xiaomi_redmi_note_14_pro_4g.json` `/traces/1/trace/13` Hepsiburada
+`HBCV0000FS4I6K` ("Telefon Kılıfı"). Bu gerçek örnekler başka korumalardan
+reddedilmişti; canlıda yanlış fiyat kaydı kanıtlanmadı. Tek başına ekli sözcük
+taşıyan doğru model/kapasite başlıkları ve "Cep Telefonu Kapağı/Adaptörü"
+kategorileri yapay regresyon örnekleridir; gerçek kategori hatası diye sunulmaz.
+
+Seçili 42 sınama eski kodda **20 başarısız, 22 başarılı** idi. Düzeltme sonrası
+tam paket **652 passed**, 0 atlandı, 0 `xfail` (219 PostgreSQL), 43,79 sn;
+Black 43 dosyada, Flake8 temiz. Önceki "Kapağı" `xfail` testi normal teste
+çevrildi; toplam 41 ek sınama var. Kullanıcının iPhone 15 ham yanıtlarındaki
+21 geçerli sayfanın özgün adları ve kapasite verisi
+`tests/fixtures/discovery/phone_identity_examples.json` içine alındı;
+kalıcı testler ham `data/` dosyalarına veya internete bağımlı değil.
+Katalog, gerçek veritabanı ve migration dosyaları değişmedi. Kod/test/belge
+hazır; kullanıcı commit/push işlemini onayladı. Bakım 4'e geçilmedi.
+
 Onaylanan bakım sırası ve durum (her adımdan sonra sonuç anlatılıp durulur):
 
 | Bakım maddesi | Durum |
 |---|---|
 | 1. HTTP 8 MB indirme sınırı | ✅ Kod ve test tamamlandı; kullanıcı commit/push işlemini onayladı. Gerçek turda henüz görülmedi. |
 | 2. Trendyol varyant / Hepsiburada canonical adresi | ⏳ Gerçek uyuşmazlık kanıtı bekliyor. Kayıt kontrolü ve 6 Ekim hedefli canlı kontrol tamamlandı: TY 5 varyant/adres/sayfa kimliği eşleşti; HB 16 SKU eşleşti, 9 grup/7 kategori canonical adresi kullanılmayıp mevcut adresler korundu. İki yapay risk canlıda görülmedi; kimlik kuralları değişmedi. Ham kayıt aracı ve 13 ağsız test hazır; ilk CI'daki dosya sırası testi düzeltildi. |
-| 3. Türkçe ekli aksesuar adları | 🔜 Kayıtlı gerçek örneklerle dar kural ve regresyon testi; geçerli telefon başlıkları da kontrol edilecek. |
+| 3. Türkçe ekli aksesuar adları | ✅ Düzeltildi: üç kayıtlı yazım için dar başlık/kategori kuralı; model, başlık/yapısal kapasite ve birden çok ad sınandı, 21 kayıtlı telefonun kabulü korundu. 652 test geçti, atlanan/xfail yok. Kullanıcı commit/push işlemini onayladı. |
 | 4. Hepsiburada çoklu varyant listesi | 🔜 Aynı SKU için kaynakların kapasite/renk tutarlılığı; gerçek örnek doğrulanırsa ortak veri ve çelişkide ret. |
 | 5. Beş adres kimliği kuralı | 🔜 Aynı adreslerle davranış karşılaştırması; ortaklaştırma yalnız gerekli düzeltmeyi destekliyorsa. |
 | 6. Tur sonu özet sorgusu | 🔜 Özet/bağlantı/kapanış sonrası kesinti; tur, sonuç, kilit, çıkış kodu kontrolü. Güvenli mevcut davranış kod değişmeden belgelenebilir. |
@@ -667,6 +689,8 @@ kanıtı bekleniyor (Bölüm 7).
 Manuel kayıt aracı hazırlandı; Adım 9'a geçilmedi.
 Kullanıcı, sonraki bakım kontrolünden önce bu araç ve kontrol notları için
 commit/push yapılmasını onayladı.
+Bakım 3'ün dar kural ve regresyon planı da onaylandı ve uygulandı: 652 test,
+0 atlandı/xfail; kullanıcı commit/push işlemini onayladı. Bakım 4–7 ve Adım 9 başlamadı.
 
 | Adım | Durum |
 |---|---|
@@ -707,6 +731,7 @@ Takvim (tahmin, 6 Ekim güncellemesi; Adım 9 ve 11'in süresi henüz belirlenme
 | 6 Ekim | İkinci denetim bakımı tamamlandı: Hepsiburada bozuk satıcı yanıtı düzeltildi (`572061c`, CI yeşil); iki SQL koruması `003` ile kopyada test edildi, kullanıcı 13:30'da uyguladı, salt okunur denetim temiz |
 | 6 Ekim | Yedi ertelenmiş bakım için kontrol ve gerekli düzeltme planı onaylandı; ilk madde (indirme sırasında 8 MB sınırı) tamamlandı: 27 yeni test, toplam 598; kullanıcı commit/push işlemini onayladı |
 | 6 Ekim | Bakım 2: kayıtlı 333 farklı adres/334 katalog sayfası ve kullanıcının 16:24–16:26 iPhone 15 kontrolündeki TY 5/HB 16 kimliği eşleşti. HB grup/kategori canonical adresleri doğru biçimde kullanılmadı. Çıkış 2 yalnız bilinen arama API 403'ü; iki yapay risk için gerçek uyuşmazlık kanıtı bekleniyor. Manuel ham kayıt aracı ve 12 ağsız test hazır (610 toplam); kimlik kuralı değişmedi |
+| 6 Ekim | Bakım 3: kayıtlı Kılıfı/Adaptörü/Kapağı yazımları için dar kimlik ve kategori düzeltmesi uygulandı. 41 ek sınama ve normal teste çevrilen xfail; 21 gerçek telefonun kabulü korundu. 652 test geçti, 0 atlandı/xfail; Black/Flake8 temiz. Kullanıcı commit/push işlemini onayladı |
 | Adım 11 sonrası | **Adım 9:** Cimri geçmişinin bir defalık alımı, katalog eşleştirmesi ve ayrı `market_history` tablosuna aktarım |
 | Adım 9 sonrası | **Adım 7:** kapanış belgeleri; veritabanı aşaması biter. Önceki 2–3 Ekim kapanış tahmini yeni adımlara göre yeniden değerlendirilecek |
 

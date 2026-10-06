@@ -11,6 +11,8 @@ NOT_NEW_PHONE = (
     "kilif",
     "sarj",
     "kapak",
+    "kapagi",
+    "adaptoru",
     "yenilenmis",
     "ikinci el",
     "refurbished",

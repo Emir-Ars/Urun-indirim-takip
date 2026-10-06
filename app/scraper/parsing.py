@@ -15,7 +15,7 @@ from app.scraper.http import FetchError
 # harfleri ASCII'ye indirir (ı→i, ş→s, ğ→g). "kılıf" diye düzeltilirse kural hiçbir
 # başlığı yakalamaz. Desenlerdeki "_" alternatifi için normalize() yorumuna bakın.
 EXCLUDED = re.compile(
-    r"\b(?:kilif|kapak|koruyucu|sarj|adaptor|kablo|"
+    r"\b(?:kilif|kilifi|kapak|kapagi|koruyucu|sarj|adaptor|adaptoru|kablo|"
     r"kulaklik|yenilenmis|refurbished|teshir|ikinci[ _-]*el|"
     # Yurt dışı sürüm: Türkiye'de resmi servisi yok (karar, 27 Eylül 2026).
     r"international[ -]*version|global[ -]*(?:version|surum)|yurt[ -]*disi)\b"

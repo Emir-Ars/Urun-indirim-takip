@@ -1,0 +1,249 @@
+[
+  {
+    "platform": "trendyol",
+    "platform_product_id": "762254881",
+    "source_file": "data/kimlik_iphone15_20261006/trendyol_apple_iphone_15/0009.html",
+    "names": [
+      "iPhone 15 128 GB Mavi"
+    ],
+    "model": "iPhone 15",
+    "storage_gb": 128,
+    "structured_capacity": 128
+  },
+  {
+    "platform": "trendyol",
+    "platform_product_id": "762254878",
+    "source_file": "data/kimlik_iphone15_20261006/trendyol_apple_iphone_15/0010.html",
+    "names": [
+      "iPhone 15 128 GB Siyah"
+    ],
+    "model": "iPhone 15",
+    "storage_gb": 128,
+    "structured_capacity": 128
+  },
+  {
+    "platform": "trendyol",
+    "platform_product_id": "762254862",
+    "source_file": "data/kimlik_iphone15_20261006/trendyol_apple_iphone_15/0011.html",
+    "names": [
+      "iPhone 15 256 GB Mavi"
+    ],
+    "model": "iPhone 15",
+    "storage_gb": 256,
+    "structured_capacity": 256
+  },
+  {
+    "platform": "trendyol",
+    "platform_product_id": "762254841",
+    "source_file": "data/kimlik_iphone15_20261006/trendyol_apple_iphone_15/0012.html",
+    "names": [
+      "iPhone 15 128 GB Pembe"
+    ],
+    "model": "iPhone 15",
+    "storage_gb": 128,
+    "structured_capacity": 128
+  },
+  {
+    "platform": "trendyol",
+    "platform_product_id": "762254844",
+    "source_file": "data/kimlik_iphone15_20261006/trendyol_apple_iphone_15/0013.html",
+    "names": [
+      "iPhone 15 256 GB Siyah"
+    ],
+    "model": "iPhone 15",
+    "storage_gb": 256,
+    "structured_capacity": 256
+  },
+  {
+    "platform": "hepsiburada",
+    "platform_product_id": "HBCV0000D3AULB",
+    "source_file": "data/kimlik_iphone15_20261006/hepsiburada_apple_iphone_15/0005.html",
+    "names": [
+      "Apple iphone 15 Siyah",
+      "Apple iphone 15 Siyah 128GB"
+    ],
+    "model": "iPhone 15",
+    "storage_gb": 128,
+    "structured_capacity": null
+  },
+  {
+    "platform": "hepsiburada",
+    "platform_product_id": "HBCV00004X9ZCJ",
+    "source_file": "data/kimlik_iphone15_20261006/hepsiburada_apple_iphone_15/0006.html",
+    "names": [
+      "Apple iPhone 15 128 GB",
+      "Apple iPhone 15 128 GB Sarı"
+    ],
+    "model": "iPhone 15",
+    "storage_gb": 128,
+    "structured_capacity": 128
+  },
+  {
+    "platform": "hepsiburada",
+    "platform_product_id": "HBCV00004X9ZCX",
+    "source_file": "data/kimlik_iphone15_20261006/hepsiburada_apple_iphone_15/0007.html",
+    "names": [
+      "iPhone 15 512 GB",
+      "Apple iPhone 15 512 GB Yeşil"
+    ],
+    "model": "iPhone 15",
+    "storage_gb": 512,
+    "structured_capacity": 512
+  },
+  {
+    "platform": "hepsiburada",
+    "platform_product_id": "HBCV00004X9ZCR",
+    "source_file": "data/kimlik_iphone15_20261006/hepsiburada_apple_iphone_15/0008.html",
+    "names": [
+      "Apple iPhone 15 256",
+      "Apple iPhone 15 256 GB"
+    ],
+    "model": "iPhone 15",
+    "storage_gb": 256,
+    "structured_capacity": 256
+  },
+  {
+    "platform": "hepsiburada",
+    "platform_product_id": "HBCV00004X9ZCL",
+    "source_file": "data/kimlik_iphone15_20261006/hepsiburada_apple_iphone_15/0009.html",
+    "names": [
+      "Apple  iPhone 15 128",
+      "Apple iPhone 15 128 GB"
+    ],
+    "model": "iPhone 15",
+    "storage_gb": 128,
+    "structured_capacity": 128
+  },
+  {
+    "platform": "hepsiburada",
+    "platform_product_id": "HBCV00004X9ZCU",
+    "source_file": "data/kimlik_iphone15_20261006/hepsiburada_apple_iphone_15/0010.html",
+    "names": [
+      "Apple iPhone 15 512",
+      "Apple iPhone 15 512 GB"
+    ],
+    "model": "iPhone 15",
+    "storage_gb": 512,
+    "structured_capacity": 512
+  },
+  {
+    "platform": "hepsiburada",
+    "platform_product_id": "HBCV00004X9ZCO",
+    "source_file": "data/kimlik_iphone15_20261006/hepsiburada_apple_iphone_15/0011.html",
+    "names": [
+      "Apple iPhone 15 256 GB",
+      "Apple iPhone 15 256 GB Pembe"
+    ],
+    "model": "iPhone 15",
+    "storage_gb": 256,
+    "structured_capacity": 256
+  },
+  {
+    "platform": "hepsiburada",
+    "platform_product_id": "HBCV00004X9ZCV",
+    "source_file": "data/kimlik_iphone15_20261006/hepsiburada_apple_iphone_15/0012.html",
+    "names": [
+      "iPhone 15 512 GB",
+      "Apple iPhone 15 512 GB Sarı"
+    ],
+    "model": "iPhone 15",
+    "storage_gb": 512,
+    "structured_capacity": 512
+  },
+  {
+    "platform": "hepsiburada",
+    "platform_product_id": "HBCV00004X9ZCP",
+    "source_file": "data/kimlik_iphone15_20261006/hepsiburada_apple_iphone_15/0013.html",
+    "names": [
+      "Apple iPhone 15 256 GB",
+      "Apple iPhone 15 256 GB Sarı"
+    ],
+    "model": "iPhone 15",
+    "storage_gb": 256,
+    "structured_capacity": 256
+  },
+  {
+    "platform": "hepsiburada",
+    "platform_product_id": "HBCV00004X9ZCW",
+    "source_file": "data/kimlik_iphone15_20261006/hepsiburada_apple_iphone_15/0014.html",
+    "names": [
+      "Apple iPhone 15 512 GB",
+      "Apple iPhone 15 512 GB Mavi"
+    ],
+    "model": "iPhone 15",
+    "storage_gb": 512,
+    "structured_capacity": 512
+  },
+  {
+    "platform": "hepsiburada",
+    "platform_product_id": "HBCV00004X9ZCT",
+    "source_file": "data/kimlik_iphone15_20261006/hepsiburada_apple_iphone_15/0015.html",
+    "names": [
+      "Apple iPhone 15 512 GB",
+      "Apple iPhone 15 512 GB Siyah"
+    ],
+    "model": "iPhone 15",
+    "storage_gb": 512,
+    "structured_capacity": 512
+  },
+  {
+    "platform": "hepsiburada",
+    "platform_product_id": "HBCV00004X9ZCI",
+    "source_file": "data/kimlik_iphone15_20261006/hepsiburada_apple_iphone_15/0016.html",
+    "names": [
+      "Apple iPhone 15 128 GB",
+      "Apple iPhone 15 128 GB Pembe"
+    ],
+    "model": "iPhone 15",
+    "storage_gb": 128,
+    "structured_capacity": 128
+  },
+  {
+    "platform": "hepsiburada",
+    "platform_product_id": "HBCV00004X9ZCQ",
+    "source_file": "data/kimlik_iphone15_20261006/hepsiburada_apple_iphone_15/0017.html",
+    "names": [
+      "Apple iPhone 15 256 GB",
+      "Apple iPhone 15 256 GB Mavi"
+    ],
+    "model": "iPhone 15",
+    "storage_gb": 256,
+    "structured_capacity": 256
+  },
+  {
+    "platform": "hepsiburada",
+    "platform_product_id": "HBCV00004X9ZCN",
+    "source_file": "data/kimlik_iphone15_20261006/hepsiburada_apple_iphone_15/0018.html",
+    "names": [
+      "Apple iPhone 15 256 GB",
+      "Apple iPhone 15 256 GB Siyah"
+    ],
+    "model": "iPhone 15",
+    "storage_gb": 256,
+    "structured_capacity": 256
+  },
+  {
+    "platform": "hepsiburada",
+    "platform_product_id": "HBCV00004X9ZCH",
+    "source_file": "data/kimlik_iphone15_20261006/hepsiburada_apple_iphone_15/0019.html",
+    "names": [
+      "Apple iPhone 15 128 GB",
+      "Apple iPhone 15 128 GB Siyah"
+    ],
+    "model": "iPhone 15",
+    "storage_gb": 128,
+    "structured_capacity": 128
+  },
+  {
+    "platform": "hepsiburada",
+    "platform_product_id": "HBCV00004X9ZCK",
+    "source_file": "data/kimlik_iphone15_20261006/hepsiburada_apple_iphone_15/0020.html",
+    "names": [
+      "Apple iPhone 15 128 GB",
+      "Apple iPhone 15 128 GB Mavi"
+    ],
+    "model": "iPhone 15",
+    "storage_gb": 128,
+    "structured_capacity": 128
+  }
+]

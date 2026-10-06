@@ -95,14 +95,14 @@ geçmişi. Kararların ve aşama durumunun ana kaynağı
 | `tests/test_http.py` | HTTP katmanı (88 test): hata kodları (`invalid_host` mesajı hedef alan adını yazar, sorgu metnini yazmaz), indirme sırasında 8 MB sınırı (parçalı/tek parça taşma, tam eşik, aktarımın durması, UTF-8 parçaları, boş yanıt, yarım gövdenin tekrar öncesi atılması), büyük hata/yönlendirme yanıtlarında aynı sınıflandırma ve istek bütçesi, yönlendirme kuralları, 5xx tekrarı ve bekleme süreleri, istekler arası bekleme, factory. Ayrıca mimari kural: `app/` içinde `requests`/`httpx`/`playwright`/`selenium` yok, `curl_cffi` yalnız `http.py`'de. |
 | `tests/test_contracts.py` | Pydantic sözleşmeleri (74 test): satılabilir teklif fiyat ve satıcı taşır, puan ölçeği aşamaz, üstü çizili fiyat güncel fiyattan büyüktür, katalog kimlik/referans/alan adı kuralları, `money()` kuruş çevirimi. |
 | `tests/test_trendyol_scraper.py`, `tests/test_hepsiburada_scraper.py` | Fiyat okuma (40 + 32 test): seçilen teklif, eşit fiyatta satıcı adı, çizili fiyat, Kritik Stok, Tükendi'nin yalnız açık sinyalle verilmesi, bozuk satıcı kayıtlarının reddi, ret nedenleri, `parse` dönüşümü. Sahte sayfa ve istemci; internete çıkmaz. |
-| `tests/test_discovery.py` | Keşif (100 test): kimlik kuralları, sayfalama ve uyarı türleri, katalog birleştirme (aynı adaylar hep aynı kimlikleri alır), dry-run'ın kataloğa yazmaması, LF satır sonu, BOM'lu ayar dosyaları, UTF-8 çıktı, çıkış kodları ve gerçek `config/*.json` dosyalarının sözleşmeye uyması. Zamanlanmış keşif (log ve tarihli rapor, `--dry-run` zorunluluğu, konsolsuz çalışma, kilit meşgul, program hatası, log açılamaması, rapor klasörünün baştan denetimi, özet satırı) ve `--apply-report` (siteye gitmez, canlı yazmayla bayt bayt aynı katalog, ikinci uygulamada yazmama, önizleme olmayan/bozuk/sarmalı/yabancı alan adlı/önizlemeyi aşan rapor reddi) ağsız sınanır. Trendyol filtre uyarısının tek yazılması ve tarama sonrası yazma hatasının ("Tarama bitti ama sonuç yazılamadı", çıkış 1; log dahil) "başlatılamadı"dan ayrılması da burada denenir. |
+| `tests/test_discovery.py` | Keşif (141 test): kimlik kuralları, sayfalama ve uyarı türleri, katalog birleştirme (aynı adaylar hep aynı kimlikleri alır), dry-run'ın kataloğa yazmaması, LF satır sonu, BOM'lu ayar dosyaları, UTF-8 çıktı, çıkış kodları ve gerçek `config/*.json` dosyalarının sözleşmeye uyması. Ekli aksesuarlar model, başlık/yapısal kapasite, birden çok ürün adı ve kategori düzeyinde reddedilir; kayıtlı 21 telefonun kimlik kabulü korunur. Zamanlanmış keşif (log ve tarihli rapor, `--dry-run` zorunluluğu, konsolsuz çalışma, kilit meşgul, program hatası, log açılamaması, rapor klasörünün baştan denetimi, özet satırı) ve `--apply-report` (siteye gitmez, canlı yazmayla bayt bayt aynı katalog, ikinci uygulamada yazmama, önizleme olmayan/bozuk/sarmalı/yabancı alan adlı/önizlemeyi aşan rapor reddi) ağsız sınanır. Trendyol filtre uyarısının tek yazılması ve tarama sonrası yazma hatasının ("Tarama bitti ama sonuç yazılamadı", çıkış 1; log dahil) "başlatılamadı"dan ayrılması da burada denenir. |
 | `tests/test_collection.py` | Toplama turu (59 test; 54'ü gerçek PostgreSQL'de): sahte scraper'larla her sonuç türü, Ctrl+C, tur ortasında veritabanı hatası, yarım kalan tur, başka süreçteki tur, iki kilidin her durumda bırakılması, pasif sayfa/ürün/platform, ön ek, çıkış kodları (keşif ve `live_scraper_check` kilit meşgulken 3 verir) ve zamanlanmış turun log dosyası (ekran akışı yokken ve log açılamazken dahil). Tur sonu ikinci okuma (18 test): `network` düzelince satırın değişmesi, ikinci hatada ilk satırın (mesaj ve zaman damgasıyla) kalması, `network` dışındaki hataların hiç yeniden okunmaması, bir sayfanın en çok bir kez yeniden okunması, ardışık 5 hatada durma ve düzelmede sayaç sıfırlama, veritabanı reddi, Ctrl+C, tur notu (ön ekle birlikte), görünümde sahte "karşılaştırılamaz" oluşmaması ve `rewrite_network_result`'ın yalnız `network` satırına ve süren tura yazması. |
 | `tests/test_catalog_sync.py` | Katalog eşitleme (29 test; 13'ü gerçek PostgreSQL'de): kararlar veritabanısız, yazma/deneme/çakışma ve komut satırı veritabanında. |
 | `tests/test_database.py` | Migration koşucusu, şemanın bütün `CHECK`/`UNIQUE`/yabancı anahtar kuralları (her biri geçerli ve geçersiz örnekle), `migrate`/`status` komutları (yeniden adlandırılan migration dahil) ve iki emniyet kemerinin kendisi; 002'nin iki `CHECK` kuralı, silme/kimlik değişimi/yazılmış sonucu değiştirme tetikleyicileri (her tabloda), kodun gerçek güncellemelerinin hâlâ geçtiği ve "bilerek silme" yolu da burada denenir. 003 için kapanmış turun ilk sonuç yazımı, durum/bitiş zamanı koruması, not güncellemesi, eşzamanlı kapanış/yazım ve mevcut kayıtlarla migration geçişi sınanır (150 test; 138'i gerçek PostgreSQL'de). |
 | `tests/test_comparability.py` | `product_run_prices` görünümü: aynı sayfa kümesi, hata (girerken ve çıkarken), yeni sayfa, Tükendi, cevapsız ürün, ürünlerin ayrı karşılaştırılması, `--prefix` turu, süren ve yarıda kalan turların dışarıda kalması, uzun boşluk (14 test, hepsi gerçek PostgreSQL'de). |
 | `tests/test_market_history_probe.py` | Piyasa geçmişi araştırmasında aday tablo satırları, ürün kimliği, sentetik 365 günlük grafik yanıtı, eksik/bozuk fiyat ve tablo uyuşmazlığı (12 ağsız test). Gerçek fiyat dizileri Git dışındaki yerel raporlardadır. |
 | `tests/test_live_discovery_check.py` | Ham keşif kanıtı kaydı (13 ağsız test): HTML/JSON baytları, istek bütçesi ve tekrarlar, bozuk JSON'un korunması, tek hedef/yeni klasör zorunluluğu, kilit ve disk hatası, platformların ayrı kaydı ve eski komut çıktısının korunması. Dosyalar normal veya ters sırada listelense de kayıt denetimi aynıdır. |
-| `tests/fixtures/discovery/` | Testlerin kullandığı örnek site yanıtları ve kataloğun sabit bir kopyası (`catalog.json`); testler gerçek kataloğa bağlı değildir. |
+| `tests/fixtures/discovery/` | Testlerin kullandığı örnek site yanıtları ve kataloğun sabit bir kopyası (`catalog.json`); testler gerçek kataloğa bağlı değildir. `phone_identity_examples.json`, kullanıcının 6 Ekim iPhone 15 kontrolündeki 21 sayfanın özgün adlarını, doğrulanan kapasitesini ve kaynak dosya bilgisini taşır; testler Git dışındaki ham dosyalara ihtiyaç duymaz. |
 | `tests/manual/live_scraper_check.py` | Katalogdaki sayfaları canlı okur; bütün satıcıları gösterir. İsteğe bağlı `product_key` ön eki (ör. `samsung_`) ile yalnız o ürünler; sayfa seçimi toplama turuyla aynı fonksiyondur. Başka bir tarama sürüyorsa (ortak kilit) çıkış kodu 3'tür. |
 | `tests/manual/live_discovery_check.py` | Keşfi kataloğa yazmadan canlı çalıştırır; `--trace` ile her kararın nedenini gösterir. Normalde raporu `data/discovery_report.json` dosyasının üzerine yazar. `--save-responses KLASOR`, tek hedefin ham HTML/JSON yanıtlarını ve raporunu yeni klasöre kaydeder; karar izini de basar. |
 | `tests/manual/market_history_probe.py` | Akakçe için tek örnek sayfayı, Cimri için ürün sayfası ve grafik API'sini ortak HTTP katmanı ve tarama kilidiyle okur. Cimri'nin tarihli fiyat noktalarını Git dışındaki yerel JSON raporuna yazar; ham HTML'yi ve veritabanını yazmaz. |
@@ -1021,6 +1021,13 @@ böylece keşfin kabul ettiği sayfayı scraper aynı girdilerle reddetmez.
   başlıklarını; "iPhone 13" hedefi "13 mini" başlığını kabul etmez.
 - Yenilenmiş, ikinci el, teşhir, **yurt dışı sürüm** ("International Version",
   "Global Version", "Yurt Dışı") ve aksesuar (kılıf, şarj, koruyucu…) reddedilir.
+  Kayıtlı "Kılıfı", "Adaptörü", "Kapağı" yazımları da başlıklarda bütün sözcük
+  olarak reddedilir (`kilifi`, `adaptoru`, `kapagi`). Başlık veya yapısal veri
+  doğru kapasiteyi taşısa da ret `identity` olur. Genel Türkçe ek tahmini yoktur.
+- Keşfin kategori süzgeci "Kapağı" ve "Adaptörü" yazımlarını da reddeder;
+  "Kılıfı" mevcut `kilif` kuralıyla zaten reddediliyordu. "Cep Telefonu Kapağı"
+  ve "Cep Telefonu Adaptörü" kategori örnekleri yapay sınamadır; bu adlarla
+  gerçek bir kaynak kategorisi görüldüğü iddia edilmez.
 - Kapasite, sayfanın yapısal verisinden ve başlıktan okunur; iki kaynak
   çelişirse sayfa reddedilir, hiçbirinde yoksa da reddedilir. TB desteklenir
   (1 TB = 1024 GB). Ardından "RAM" yazan değer hafıza sayılmaz ("128 GB 12 GB
@@ -1035,17 +1042,28 @@ böylece keşfin kabul ettiği sayfayı scraper aynı girdilerle reddetmez.
 - Hedefin `exclude_terms` ifadelerini içeren başlıklar reddedilir; hedefte
   `network` varsa sayfanın yapısal ağ türü hedefle çelişemez.
 
+6 Ekim ekli aksesuar bakımının kaynak kanıtları: `data/trace_s25.json` içindeki
+Hepsiburada `HBCV00007I6EKM` başlığında "Hızlı Sarj Adaptörü";
+`data/trace_xiaomi_poco_x6_pro.json` içindeki Trendyol `4894840` başlığında
+"Moto G Arka Kapak Batarya Pil Kapağı Mavi";
+`data/trace_xiaomi_redmi_note_14_pro_4g.json` içindeki Hepsiburada
+`HBCV0000FS4I6K` başlığında "Telefon Kılıfı" var. Bu gerçek örnekler başka
+korumalardan zaten reddedilmişti. Regresyonlarda aynı sözcükler tek başına,
+doğru model ve kapasiteyle yapay başlıklarda sınanır; canlıda yanlış fiyat
+kaydedildiğine dair kanıt yoktur. 21 geçerli telefon örneği ise kullanıcının
+`data/kimlik_iphone15_20261006/` ham yanıtlarından çıkarılmış sabit test verisidir.
+
 ## Testler ne kanıtlar, ne kanıtlamaz
 
-- **Otomatik testler (611; 219'u gerçek PostgreSQL'de):** Kuralların doğru
+- **Otomatik testler (652; 219'u gerçek PostgreSQL'de):** Kuralların doğru
   çalıştığını kayıtlı ve sahte yanıtlarla kanıtlar. Hata düzeltmelerinin her
   biri, canlıda görülen gerçek bir örneğe dayanan regresyon testiyle korunur.
   Sitelerin bugün hâlâ aynı yapıda olduğunu kanıtlamaz. Veritabanı testleri
   şema kurallarının, migration koşucusunun, katalog eşitlemenin ve toplama
   turunun gerçek PostgreSQL'de doğru çalıştığını kanıtlar; tur testleri sahte
   scraper kullanır, turun gerçek sitelerle çalıştığını yalnızca canlı tur
-  gösterir. Bilinen bir hata `xfail(strict=True)` ile işaretlenir: test hatayı
-  belgeler, hata düzeltilince test "beklenmedik geçti" diye uyarır.
+  gösterir. Türkçe ekler için önceki `xfail(strict=True)` testi 6 Ekim'de
+  düzeltmeyle normal teste çevrildi; güncel pakette beklenen başarısızlık yoktur.
 - **Kasıtlı bozma (mutasyon) denetimi:** Testlerin gerçekten hata
   yakalayabildiğini sınamak için kodun kritik satırları projenin bir kopyasında
   ya da yalnız bellekte (ağ kapalıyken) tek tek bozuldu ve testlerin bozmayı

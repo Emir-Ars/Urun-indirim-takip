@@ -154,6 +154,62 @@ def test_identity_rules_shared_by_discovery_and_scraper():
         verify_identity(["Apple iPhone 15 128 GB"], "iPhone 15", 256)
 
 
+@pytest.mark.parametrize("word", ["Kılıfı", "Adaptörü", "Kapağı"])
+def test_inflected_accessories_do_not_match_phone_model(word):
+    assert not matches_model(f"Apple iPhone 16 128 GB {word}", "iPhone 16")
+
+
+@pytest.mark.parametrize("word", ["Kılıfı", "Adaptörü", "Kapağı"])
+@pytest.mark.parametrize("capacity_source", ["title", "structured"])
+def test_identify_rejects_inflected_accessories_with_valid_capacity(
+    word, capacity_source
+):
+    storage = "128 GB " if capacity_source == "title" else ""
+    capacity = 128 if capacity_source == "structured" else None
+    with pytest.raises(FetchError) as error:
+        identify([f"Apple iPhone 16 {storage}{word}"], "iPhone 16", capacity)
+    assert error.value.code == "identity"
+
+
+@pytest.mark.parametrize("word", ["Kılıfı", "Adaptörü", "Kapağı"])
+@pytest.mark.parametrize("capacity_source", ["title", "structured"])
+def test_verify_identity_rejects_inflected_accessories_with_valid_capacity(
+    word, capacity_source
+):
+    storage = "128 GB " if capacity_source == "title" else ""
+    capacity = 128 if capacity_source == "structured" else None
+    with pytest.raises(FetchError) as error:
+        verify_identity(
+            [f"Apple iPhone 16 {storage}{word}"], "iPhone 16", 128, capacity
+        )
+    assert error.value.code == "identity"
+
+
+@pytest.mark.parametrize("word", ["Kılıfı", "Adaptörü", "Kapağı"])
+def test_inflected_accessory_in_another_name_rejects_phone_identity(word):
+    names = ["Apple iPhone 16 128 GB", f"Telefon {word}"]
+    with pytest.raises(FetchError) as discovery_error:
+        identify(names, "iPhone 16")
+    with pytest.raises(FetchError) as scraper_error:
+        verify_identity(names, "iPhone 16", 128)
+    assert discovery_error.value.code == scraper_error.value.code == "identity"
+
+
+@pytest.mark.parametrize(
+    "sample",
+    fixture("phone_identity_examples.json"),
+    ids=lambda sample: f"{sample['platform']}_{sample['platform_product_id']}",
+)
+def test_recorded_phone_identity_examples_remain_accepted(sample):
+    names = sample["names"]
+    model = sample["model"]
+    capacity = sample["structured_capacity"]
+    expected = sample["storage_gb"]
+    assert any(matches_model(name, model) for name in names)
+    assert identify(names, model, capacity) == expected
+    verify_identity(names, model, expected, capacity)
+
+
 def test_target_exclude_terms_split_same_named_phones():
     # Canlı veri: Redmi Note 14 (4G) ile Note 14 5G farklı telefonlardır.
     note_4g = ["Redmi Note 14 8+256 Mavi(Xiaomi Türkiye Garantili)"]
@@ -2130,15 +2186,9 @@ def test_phone_category_rejects_accessory_used_and_other_categories(category):
     assert not phone_category(category)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "Bulgu: 'kapak' terimi Türkçe çekimli 'Kapağı'yı yakalamıyor (normalize "
-        "'kapagi' üretir); 'Cep Telefonu Kapağı' telefon kategorisi sayılıyor."
-    ),
-)
-def test_phone_category_rejects_inflected_cover_category():
-    assert not phone_category("Cep Telefonu Kapağı")
+@pytest.mark.parametrize("word", ["Kılıfı", "Adaptörü", "Kapağı"])
+def test_phone_category_rejects_inflected_accessory_categories(word):
+    assert not phone_category(f"Cep Telefonu {word}")
 
 
 def test_trendyol_search_skips_html_search_page(monkeypatch):
