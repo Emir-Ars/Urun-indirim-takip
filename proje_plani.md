@@ -1,6 +1,6 @@
 # Akıllı Telefon İndirim Takip ve Tahmin Sistemi — Proje Planı
 
-Son güncelleme: 5 Ekim 2026.
+Son güncelleme: 6 Ekim 2026.
 
 Bu belge **kararların ve aşama durumunun** ana kaynağıdır. Sistemin genel
 tanıtımı [README.md](README.md), ayrıntılı işleyişi, komutları, kuralları ve
@@ -42,16 +42,18 @@ Akakçe/Cimri taslakları) 28 Eylül 2026'da `_eski_taslaklar/` klasörüne taş
 silinmedi, `.gitignore` ile Git dışında tutulur. Tamamlanmış iş değildir,
 projeye bağlı değildir; yeni tasarımda yalnızca örnek olarak incelenebilir.
 
-Güncel katalog (5 Ekim 2026): **59 ürün, 334 bağlantı** (Hepsiburada 217,
-Trendyol 117; 1 bağlantı pasif; 28 Eylül'e göre +7 bağlantı, ilk haftalık keşif
-raporuyla eklendi, Bölüm 9 Adım 10). Keşif hedefleri 25: Apple 9, Samsung 8, Xiaomi 6, POCO 2
+Güncel katalog (6 Ekim 2026): **59 ürün, 334 bağlantı** (Hepsiburada 217,
+Trendyol 117; 2 bağlantı pasif: yurt dışı sürüm `trendyol_991304922` ve içeriği
+S25+'ya dönen `hepsiburada_hbcv00007miemh`, aşağıda Bölüm 7; 28 Eylül'e göre +7
+bağlantı, ilk haftalık keşif raporuyla eklendi, Bölüm 9 Adım 10). Keşif hedefleri 25: Apple 9, Samsung 8, Xiaomi 6, POCO 2
 (X5 Pro satılmadığı için kapalı). Tam liste docs/teknik.md'deki "Yeni telefon ekleme"
 bölümündedir.
 
 ## 3. Ürün kapsamı ve kimlik kuralları (uygulandı)
 
 - Platformlar Trendyol ve Hepsiburada; kategori yalnızca yeni akıllı telefon.
-  Başlangıç hedefi 20–30 modeldi; bugün 25 hedef kataloğa alınmıştır.
+  Başlangıç hedefi 20–30 modeldi; bugün 25 hedef tanımlıdır, 24'ünün ürünleri
+  kataloğa alınmıştır (POCO X5 Pro satılmadığı için kapalı).
 - Kullanıcı `config/discovery.json` içinde marka (sitedeki marka etiketi; POCO
   ayrı marka) ve tam model yazar; gerekirse `exclude_terms` ve `network`.
   Yeni telefon için Python kodu değişmez, renk bağlantısı elle toplanmaz.
@@ -275,15 +277,25 @@ Bu adımda alınan kararlar:
   kullanıcının tarayıcısında da sayfa S25+ (görsel, renk fiyatları 69.999–77.799
   TL, "geçici olarak temin edilememektedir") görünüyordu, adres hâlâ
   `samsung-galaxy-s25-…` diyor. Kimlik kuralı sayfayı `identity` hatası yazdı, S25+
-  fiyatı S25 geçmişine girmedi. Sayfa her turda 1 `identity` hatası verir (tur
-  çıkış kodu 2); pasife alma birkaç tur izlendikten sonra karara bağlanır.
+  fiyatı S25 geçmişine girmedi. Sayfa tur 12–15'te (4 tur) her turda 1 `identity`
+  hatası verdi (tur çıkış kodu 2). **Karar (6 Ekim, kullanıcı): sayfa pasife alındı**
+  (`config/catalog.json`'da `"active": false`; sonraki fiyat turunun katalog
+  eşitlemesi veritabanında da pasif yapar, geçmiş silinmez). Hepsiburada sayfayı S25
+  içeriğine geri çevirirse sayfa elle yeniden etkinleştirilebilir.
 - Hepsiburada sayfası `hepsiburada_hbcv00004x9zcl` (iPhone 15 128 GB Yeşil; tur
   2–13'te hep Tükendi) tur 14'te (5 Ekim 22:00) `invalid_host` hatası verdi: adres
-  veya yönlendirme hedefi platformun izinli alan adı dışında. Tek örnek; nedeni
-  bilinmiyor (bir yönlendirme olabilir, doğrulanmadı). Veri uydurulmadı; ürün 1'in
-  tur 14 satırı (ve sayfa geri gelirse tur 15 satırı) karşılaştırılamaz sayıldı.
-  Sonraki turlarda tekrarlarsa kullanıcı `tests/manual/` aracıyla sayfayı inceler;
-  o zamana kadar kod değişmez.
+  veya yönlendirme hedefi platformun izinli alan adı dışında. **Tur 15'te (6 Ekim
+  10:00) tekrarlamadı** (sayfa yine Tükendi) ve geçici sayıldı. Nedeni bilinmiyor
+  (bir yönlendirme olabilir, doğrulanmadı): hata mesajı hedef alan adını
+  yazmıyordu; 6 Ekim'den itibaren mesaj hedefin alan adını ve yolunu (sorgu metni
+  hariç) yazar, böylece tekrarlarsa neden tur kaydından görülür. Veri uydurulmadı;
+  ürün 1'in tur 14 ve 15 satırları karşılaştırılamaz sayıldı (hata, sonra hatadan
+  çıkış).
+- GitHub'ın bulut makineleri Trendyol'a erişemiyor görünüyor (ön bulgu, 6 Ekim): bulut
+  denemesinde Trendyol sayfası HTTP 403 verdi, Hepsiburada sayfaları sorunsuz okundu
+  (tek örnek; Bölüm 8, "Bulutta çalıştırma"). Bilgisayardaki turlarda Trendyol hiç
+  engellenmedi. Sonuç, toplamanın GitHub'ın makinelerine taşınmasını şimdilik
+  engeller; engel aşılmaz.
 - Fiyat ve stok iki tur arasında (12 saat) değişip geri dönebilir; bu
   değişiklikler görülmez. Geçmiş, turların anlık görüntüleridir (28 Eylül:
   bir sayfa 2 saatte Tükendi → Kritik Stok, bir başkası 71.059 → 75.524 TL).
@@ -353,25 +365,66 @@ Bu adımda alınan kararlar:
 ### Bakım listesi (denetimde bulundu, ertelendi)
 
 Hiçbiri yanlış fiyat veya stok üretmez; ya güvenli tarafta hata verir ya da
-nadir durumdur. Veritabanı aşamasında veya bir hata görüldüğünde ele alınır.
+nadir durumdur. **6 Ekim 2026 denetimi:** 13 maddenin hiçbiri düzeltilmemişti;
+kodla tek tek yeniden okundu ve aşağıdaki gibi ayrıldı.
 
-- Tek bir satıcının bozuk fiyatı bütün sayfayı `parse` hatası yapar (fiyat
-  uydurulmaz); teklif bazında atlanabilir.
-- Hepsiburada fiyat isteğine konan yedek değerler yanıtla karşılaştırılmıyor.
-- HTTP: 204/304 gibi yanıtlar başarı sayılıyor; POST yönlendirmede tekrar
-  gönderiliyor; tekrarlar sonrası 5xx `network` diye raporlanıyor; 8 MB sınırı
-  indirme sonrası denetleniyor.
-- Keşif: Trendyol varyant adresi `-p-<id>` biçimi için denetlenmiyor;
-  Hepsiburada canonical SKU'su alt dizeyle karşılaştırılıyor;
-  `filter_unavailable` iki kez yazılabiliyor; hiç aday bulamayan Trendyol
-  araması uyarısız "tam" sayılıyor; tarama sonrası yazma hatası "keşif
-  başlatılamadı" (çıkış 1) diye görünüyor; rapor yolu elle çalıştırmada hâlâ
-  sabit (zamanlanmış çalışma tarihli dosya yazar; Adım 10, 1 Ekim).
+Düzeltildi (6 Ekim, kod ve test):
+- Trendyol keşfinde `filter_unavailable` aynı aramada iki kez yazılıyordu (filtre
+  isteği hata verince ayrıca "kategori bulunamadı" da yazılıyordu); artık hata
+  kodlu ilk uyarı kalır.
+- Tarama sonrası katalog/rapor yazma hatası "keşif başlatılamadı" diye
+  görünüyordu; artık "Tarama bitti ama sonuç yazılamadı" der (çıkış kodu yine 1).
+- Ek: `invalid_host` hata mesajı hedef alan adını yazar (Bölüm 7, tur 14 vakası);
+  `live_scraper_check.py` kilit meşgulken diğer araçlar gibi 3 döner.
+
+Bilerek kapatıldı, kod değişmedi (gerekçeyle):
+- Tek bir satıcının bozuk fiyatı bütün sayfayı `parse` hatası yapar: teklifi
+  atlamak, bozuk teklif en ucuzsa daha pahalı bir "en ucuz" yazdırır; sayfa cevap
+  sayıldığı için `product_run_prices` bu sahte yükselişi karşılaştırılabilir
+  görürdü. Hata vermek güvenli taraftır; canlıda hiç görülmedi.
+- Hepsiburada fiyat isteğine konan yedek değerler yanıtla karşılaştırılmıyor:
+  yanıttaki fiyatın satıcı listesindekinden farklı olması normaldir (API'nin işi
+  bu); kaba bir karşılaştırma sahte hata üretirdi.
+- HTTP 204/304: 204 sonradan zaten `parse` olur; 304 için koşullu istek başlığı hiç
+  gönderilmediğinden gelmez. POST yönlendirmede tekrar gönderme: tek POST kullanıcısı
+  Hepsiburada fiyat API'sidir, 307/308'de bu doğrudur; 303'te tarayıcılar GET'e
+  çevirir, bu kod çevirmez ama 303 hiç görülmedi.
+- Tekrarlardan sonra 5xx `network` diye raporlanıyor: **karar (6 Ekim, kullanıcı)
+  böyle kalır.** 5xx geçicidir ve Adım 11'in ikinci geçişi yalnız `network`'ü
+  yeniden okuyacağı için 5xx'i de kapsar; ayrı kod 003 migration da gerektirirdi.
+- Hiç aday bulamayan Trendyol araması uyarısız "tam" sayılıyor: kullanıcı yapılmamasını
+  seçti; gerçekten satılmayan bir model her hafta "kısmi" görünürdü.
+- Rapor yolu elle çalıştırmada sabit (`data/discovery_report.json`): bilinçli;
+  zamanlanmış çalışma tarihli dosya yazar (Adım 10), elle çalıştırma tek dosyadır.
+
+Açık kalanlar:
+- HTTP: 8 MB sınırı indirme sonrası denetleniyor (gövde bellekte tutulur). Küçük
+  bellekli bir cihazda (Aşama 9) anlam kazanır; akışlı okuma testlerdeki sahte
+  istemcileri de değiştirir.
+- Keşif: Trendyol varyant adresi `-p-<id>` biçimi için denetlenmiyor (kimlik sayfada
+  doğrulanıyor; kayıtta kimlik yoksa scraper her turda `identity` verir, yani güvenli
+  tarafta); Hepsiburada canonical SKU'su alt dizeyle karşılaştırılıyor (tam eşitlik
+  olmalı). İkisi de kimlik kuralına dokunur: canlı örnek görülünce değiştirilir.
 - Kimlik kuralında Türkçe ekler: aksesuar sözcükleri ek almış hâlleriyle
   ("Kılıfı", "Adaptörü") ve keşfin kategori süzgecinde "Kapağı" yakalanmıyor
   ("Cep Telefonu Kapağı" telefon kategorisi sayılıyor; `xfail` testiyle
   belgeli). Kapasite ve model doğrulaması ikinci koruma olduğu için yanlış fiyat
   üretmez; kural canlıda hedef markada bir örnek görülünce değiştirilir.
+- Tur tamamlandıktan sonra özet sorgusu (`run_summary`) düşerse çıkış kodu 1 olur ama
+  tur `completed` kalır (nadir; docs/teknik.md'de yazılı).
+
+Yeni (6 Ekim denetimi; davranış değiştirmez, ayrı adım olarak ele alınır):
+- Aynı adres-kimliği düzenli ifadesi beş yerde yazılı (`discovery/service.py`
+  `_url_identity`, iki scraper, iki keşif modülü); `trendyol_scraper.py` sondaki
+  `(?:[/?]|$)` kısmını atlıyor, yani anlamca hafif farklı. `_url_identity` platform
+  adlarını koda gömüyor ("yeni site için mevcut koda koşul eklenmez" ilkesine ters).
+- İki eklenti yükleyicisi (`scraper/factory.py`, `discovery/service.py` `_adapter`)
+  aynı yapıda.
+- `discovery/hepsiburada.py` `_variants` sayfadaki **son** boş olmayan varyant
+  listesini alıyor; `hepsiburada_scraper.py` `variant_capacity` SKU'yu bulduğu
+  **ilk** listede duruyor. Sayfada birden çok varyant listesi olursa ikisi farklı
+  listeye bakabilir (canlıda görülmedi).
+- Birleştirmek kimlik kuralına dokunduğu için canlı örnek ve regresyon testi ister.
 - 29 Eylül incelemesinde kapandı: test kapsamı maddeleri (Trendyol Kritik Stok,
   keşif CLI çıkış kodları, dry-run'ın kataloğa yazmaması, uyarı türleri, HTTP
   yönlendirme/yeniden deneme), ölü kod (etkisiz `except FetchError: raise`,
@@ -389,7 +442,7 @@ nadir durumdur. Veritabanı aşamasında veya bir hata görüldüğünde ele al�
 | Piyasa geçmişi kaynağı | **29 Eylül araştırma sonucu:** Cimri üç üründe teknik olarak doğrulandı; Akakçe'nin ilk örneği 403 verdi. O tarihte aktarım kaynağı seçilmedi. **Güncel karar (30 Eylül 2026, kullanıcı; Codex):** ML eğitimi için geçmiş fiyat hareketinin kaynağı Cimri olacak; katalogdaki telefonların mevcut geçmişi bir defa alınacak. Akakçe ve Cimri serileri birleştirilmeyecek, düzenli Cimri toplaması yapılmayacak. Kullanım koşullarına ilişkin önceki bulgu Bölüm 7'de korunur ve aktarım adımında ele alınır. |
 | Cimri geçmişinin bir defalık kaydı ve ML amacı | **Karar verildi (30 Eylül 2026, kullanıcı; Codex):** Aşama 6'ya **Adım 9** eklenir; Adım 4'ten sonra, Adım 7 kapanışından önce yapılır. Veriler aynı PostgreSQL veritabanında ayrı `market_history` tablosunda saklanır. Amaç, erişilebilen bir yıllık geçmiş fiyat hareketini model eğitiminde kullanmaktır. **Gerekçe:** Cimri daha geniş kaynak kapsamına sahip olsa da kullanıcı küçük fiyat farklarını bu amaç için kabul ediyor; öncelik geçmişteki değişimdir. Cimri serisi kendi Hepsiburada/Trendyol gözlemlerimizle aynı ölçüm olarak etiketlenmez. Eğitimin nasıl yapılacağı, mutlak fiyatın mı değişimin mi kullanılacağı ve değerlendirme ayrıntıları ML aşamasında kararlaştırılır. Üç örneğin tam serisi hâlen yerel araştırma raporlarında; toplu alım, tablo ve aktarım henüz uygulanmadı. |
 | Tur sonunda yalnız `network` hatası alan sayfalara ikinci geçiş | **Karar verildi (1 Ekim 2026, kullanıcı): yapılacak, tek geçiş (Adım 11, henüz uygulanmadı).** Kanıt: tur 3'te (28 Eylül) 47 sayfa bağlantı kesintisiyle `network` hatası aldı; son hatadan sonra kalan 154 sayfa cevap verdi, yani tur bitmeden bağlantı geri gelmişti. Tur 7'de (1 Ekim) 1 sayfa uyku sonrası DNS hatası aldı. Yalnız `network` yeniden okunur; `blocked` yeniden denenmez. İkinci okuma, hata satırının üzerine yazılır (tur × sayfa başına tek satır kuralı korunur); ilk hata log ve tur notunda kalır. Yeniden okunamayan sayfa hata olarak kalır. |
-| Bulutta çalıştırma (PC açık kalmak zorunda olmasın) | **Deneme kararı (6 Ekim 2026, kullanıcı):** Görev Zamanlayıcı aynen çalışmaya devam eder; bu sürede GitHub Actions'tan canlı okuma denenir (`.github/workflows/bulut-deneme.yml`: elle tetiklenir, zamanlama yok, veritabanı ve gizli anahtar yok; Samsung Galaxy A55 128 GB'ın 4 sayfası, Trendyol ve Hepsiburada). **Gerekçe:** PC uyuyunca veya kapalıyken turlar kaçıyor (2–4 Ekim: 4 tur, ~40 saat boşluk; geri alınamaz). Kod taşınabilir (`filelock`, `psycopg`, standart PostgreSQL; `app/` içinde Windows'a bağlı kod yok, yalnız `scripts/*.ps1` kurulum betikleri ve Görev Zamanlayıcı). **Bilinmeyenler:** (1) Trendyol ve Hepsiburada GitHub'ın bulut adreslerini engelliyor mu (Hepsiburada ev adresimizde bile arama API'sinde 403 veriyor; denenmedi); (2) veritabanı nerede duracak (GitHub'daki bir iş veritabanı tutamaz: kendi sunucumuz mu, yönetilen hizmet mi; yeni mimari karar, verilmedi); (3) maliyet ve bakım (GitHub Actions limitleri teyit edilmedi). **Durum:** iş tanımı hazır, sonuç bekliyor. Dört sayfalık deneme tam tur (333 sayfa, ~35 dk, günde 2) ölçeğini kanıtlamaz; olumluysa tam tur ayrıca denenir. Sonuç olumluysa Aşama 9'un (sunucu, Docker) öne çekilmesi ayrı bir karar olarak değerlendirilir. |
+| Bulutta çalıştırma (PC açık kalmak zorunda olmasın) | **Deneme kararı (6 Ekim 2026, kullanıcı):** Görev Zamanlayıcı aynen çalışmaya devam eder; bu sürede GitHub Actions'tan canlı okuma denenir (`.github/workflows/bulut-deneme.yml`: elle tetiklenir, zamanlama yok, veritabanı ve gizli anahtar yok; Samsung Galaxy A55 128 GB'ın 4 sayfası, Trendyol ve Hepsiburada). **Gerekçe:** PC uyuyunca veya kapalıyken turlar kaçıyor (2–4 Ekim: 4 tur, ~40 saat boşluk; geri alınamaz). Kod taşınabilir (`filelock`, `psycopg`, standart PostgreSQL; `app/` içinde Windows'a bağlı kod yok, yalnız `scripts/*.ps1` kurulum betikleri ve Görev Zamanlayıcı). **Bilinmeyenler (deneme öncesi; (1) aşağıdaki sonuçla yanıtlandı):** (1) Trendyol ve Hepsiburada GitHub'ın bulut adreslerini engelliyor mu (Hepsiburada ev adresimizde bile arama API'sinde 403 veriyor); (2) veritabanı nerede duracak (GitHub'daki bir iş veritabanı tutamaz: kendi sunucumuz mu, yönetilen hizmet mi; yeni mimari karar, verilmedi); (3) maliyet ve bakım (GitHub Actions limitleri teyit edilmedi). **Sonuç (6 Ekim 2026 09:41, çalışma 37425171004, 42 sn):** Hepsiburada'nın 3 sayfası buluttan okundu ve bilgisayarın son üç turuyla birebir aynı çıktı (36.999 TL, 39.999 TL, 1 Tükendi); Trendyol'un 1 sayfası **HTTP 403** (`blocked`) verdi. Aynı kodla bilgisayarda son turda 116 Trendyol sayfasının hiçbiri engellenmedi ve bugüne kadar hiçbir turda `blocked` yok; fark kodda değil çıkış adresinde görünüyor. Ancak bulutta tek örnek var (tekrar denemesi ucuz: 1 Trendyol isteği). **İlke:** 403 `blocked` sayılır ve engel aşılmaz (proxy, adres döndürme, tarayıcı taklidi yapılmaz; Akakçe kararıyla aynı). **Durum:** GitHub'ın makineleriyle tam toplama şimdilik uygun görünmüyor (Trendyol 117 sayfa). Seçenekler (sunucu denemesi, evde 7/24 açık küçük cihaz, bilgisayarı tur için uyandırma) kullanıcıyla değerlendirilecek; karar verilmedi. |
 | Gelecek aşama tanımları (`PricePoint`, `ProductSummary`, `MarketRecord`, `coverage_version`, zamanlama/ML ayarları, FastAPI/LightGBM/Streamlit bağımlılıkları) | Kaldırıldı (25 Eylül 2026). İlgili aşamada yeni tasarıma göre yeniden eklenecek; yerel taslaklar o zamana kadar çalışmaz. |
 
 ## 9. Sonraki aşamalar
@@ -409,7 +462,7 @@ Kararlar (28 Eylül 2026, kullanıcıyla):
 |---|---|
 | Çalışma ortamı | Kullanıcının Windows bilgisayarı; Görev Zamanlayıcı ile her gün **10:00 ve 22:00**. Bilgisayar kapalıyken kaçan tur, açılınca bir kez telafi edilir. Sunucu Aşama 9'da. |
 | Saklanan veri | Her turda sayfa başına yalnızca **seçilen teklif** (`fetch()` sonucu); scraper sözleşmesi değişmez. Satıcı bazlı geçmişin toplanmaması bilerek kabul edildi (27 Eylül ölçümü: 304 sayfada 1.021 uygun teklif). |
-| Keşif | Bu aşamada manuel, haftada bir; kullanıcı çalıştırır ve raporu okur. Fiyat turu ile keşif **ortak kilit** paylaşır, aynı anda çalışmaz (3 sn bekleme süreç içinde tutulduğundan iki süreç siteye iki kat hızla gider). |
+| Keşif | Haftada bir. Bu satırın ilk hâli (28 Eylül) "kullanıcı elle çalıştırır" diyordu; **1 Ekim kararıyla (Bölüm 8, A1) görev her Pazar 14:00'te keşfi deneme modunda kendiliğinden çalıştırır ve raporu kullanıcı inceleyip `--apply-report` ile uygular** (Adım 10). Fiyat turu ile keşif **ortak kilit** paylaşır, aynı anda çalışmaz (3 sn bekleme süreç içinde tutulduğundan iki süreç siteye iki kat hızla gider). |
 | Veritabanı | **PostgreSQL 17**, Windows servisi. Gerekçe: kısmi benzersizlik ve CHECK kısıtlarıyla kuralların veritabanında garanti edilmesi, `timestamptz`, transaction içinde migration, kullanıcının önceki deneyimi. |
 | Erişim | **`psycopg` 3 + ham SQL + numaralı migration dosyaları**; ORM yok. Veri şekilleri Pydantic sözleşmelerinde kalır. |
 | Sonuç tablosu | Tek tablo `listing_checks`: her tur × planlanan sayfa bir satır; `outcome` fiyat / Tükendi / hata. CHECK kısıtları hatanın fiyat veya Tükendi olarak yazılmasını engeller. |
@@ -453,7 +506,7 @@ kaynağı araştırma tarihinde seçilmedi. 30 Eylül'de Cimri'nin bir defalık
 aktarımı Adım 9'a alındı (Bölüm 8). Akakçe 403 için tekrar veya engel aşma
 yapılmaz.
 
-Takvim (tahmin, 5 Ekim güncellemesi; Adım 4, 9 ve 11'in süresi henüz belirlenmedi):
+Takvim (tahmin, 6 Ekim güncellemesi; Adım 9 ve 11'in süresi henüz belirlenmedi):
 
 | Tarih | İş |
 |---|---|
@@ -461,6 +514,7 @@ Takvim (tahmin, 5 Ekim güncellemesi; Adım 4, 9 ve 11'in süresi henüz belirle
 | 1 Ekim | **Adım 6 kapandı:** 7 turun özeti; kaçan turun telafisi gerçek bir uykuda doğrulandı. Keşif A1 ve `network` ikinci geçişi kararları işlendi |
 | 1–5 Ekim | **Adım 10 kapandı (5 Ekim):** kod ve görev 1 Ekim'de; ilk zamanlanmış keşif 4 Ekim (internet kesintisi yüzünden boş); elle tam tarama ve `--apply-report` 5 Ekim (7 sayfa, 334 bağlantı) |
 | 5 Ekim | **Adım 4 kapandı:** `002` migration (koruyucu kurallar ve görünüm) projenin kopyasında geliştirildi, tur saatleri dışında uygulandı |
+| 6 Ekim | Plan adımı değil: **bulut denemesi** (GitHub'dan Hepsiburada okundu, Trendyol 403; strateji kararı verilmedi, Bölüm 8) ve Adım 11'den önce **genel denetim** (ölü kod taraması, belge–kod tutarlılığı, bakım listesi): eskimiş belge ve yorumlar düzeltildi, `invalid_host` mesajı, keşif uyarısı/yazma hatası ve kilit çıkış kodu düzeltildi, S25+ sayfası pasife alındı, bakım listesi yeniden düzenlendi (Bölüm 7) |
 | Adım 4 sonrası | **Adım 11:** tur sonunda `network` ikinci geçişi |
 | Adım 11 sonrası | **Adım 9:** Cimri geçmişinin bir defalık alımı, katalog eşleştirmesi ve ayrı `market_history` tablosuna aktarım |
 | Adım 9 sonrası | **Adım 7:** kapanış belgeleri; veritabanı aşaması biter. Önceki 2–3 Ekim kapanış tahmini yeni adımlara göre yeniden değerlendirilecek |
@@ -530,7 +584,11 @@ eklenmez.
 ### İşletim
 
 Docker Compose ile süreçler, veri ve model kalıcılığı; GitHub Actions ile CI
-(bugün Black, Flake8, testler çalışıyor).
+(bugün Black, Flake8, testler çalışıyor). Ayrıca elle tetiklenen bir bulut
+denemesi var (`.github/workflows/bulut-deneme.yml`, 6 Ekim; zamanlama ve
+veritabanı yok, yalnız canlı okuma dener; sonucu Bölüm 8'de). Toplamanın nerede
+çalışacağı (bilgisayar, evde 7/24 cihaz, kiralık sunucu) bu aşamanın kararıdır
+ve henüz verilmedi.
 
 ## 10. Çalışma ve Git disiplini
 

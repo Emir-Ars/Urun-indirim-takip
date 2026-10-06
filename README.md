@@ -87,15 +87,15 @@ modeller de ayrıdır. RAM ve garanti türü ürünü bölmez.
 |---|---|
 | Siteler | Trendyol, Hepsiburada |
 | Takip edilen modeller | 24 (Apple 9 · Samsung 8 · Xiaomi 6 · POCO 1) |
-| Katalog | 59 ürün, 334 sayfa (5 Ekim 2026) |
+| Katalog | 59 ürün, 334 sayfa (6 Ekim 2026; 2'si pasif) |
 | Fiyat toplama | İlk tam tur 28 Eylül 2026: 326/326 sayfa, 31 dakika, hatasız. Görev Zamanlayıcı 28 Eylül'de kuruldu; günde 2 tur (10:00, 22:00) |
-| Testler | 519 otomatik test (182'si gerçek PostgreSQL üzerinde); her push'ta GitHub Actions. Testler internete çıkamaz ve gerçek veritabanına dokunamaz (otomatik emniyet kemerleri) |
+| Testler | 527 otomatik test (182'si gerçek PostgreSQL üzerinde); her push'ta GitHub Actions. Testler internete çıkamaz ve gerçek veritabanına dokunamaz (otomatik emniyet kemerleri) |
 
 ```mermaid
-pie title Takip edilen sayfalar
-    "Apple" : 168
-    "Samsung" : 103
-    "Xiaomi" : 52
+pie title Katalogdaki sayfalar (334)
+    "Apple" : 171
+    "Samsung" : 104
+    "Xiaomi" : 55
     "POCO" : 4
 ```
 
@@ -179,11 +179,15 @@ app/
   collection/       fiyat toplama turu: sayfaları okuyup sonuçları veritabanına yazar
   scrape_lock.py    siteye giden bütün girişlerin ortak kilidi
   console.py        zamanlanmış komutların ortak çıktı ve log yardımcıları
+  settings.py       config dosyalarını okur; dosya ve klasör yolları ortam değişkeniyle değişir
 scripts/
   zamanlayici_kur.ps1        günde 2 turu Windows Görev Zamanlayıcı'ya kurar
   kesif_zamanlayici_kur.ps1  haftalık keşfi (Pazar 14:00, katalog yazmadan) kurar
 tests/              otomatik testler; manual/ altında canlı kontrol araçları
+.github/workflows/  ci.yml (her push: Black, Flake8, testler) ve bulut-deneme.yml
+                    (elle tetiklenen canlı okuma denemesi)
 docs/teknik.md      ayrıntılı teknik rehber
+pyproject.toml      bağımlılıklar ve araç ayarları
 ```
 
 ## İlkeler

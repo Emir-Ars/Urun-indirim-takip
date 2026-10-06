@@ -31,6 +31,15 @@ class ReportMismatch(ValueError):
     """Rapor, katalogun bugünkü hâliyle önizlemedeki eklemeleri vermiyor."""
 
 
+class DiscoveryWriteError(RuntimeError):
+    """Tarama tamamlandı ama sonucu kataloğa ya da rapora yazılamadı.
+
+    Nedeni disk, kilit zaman aşımı ya da taramadan sonra bozulmuş bir katalog
+    olabilir; çıkış kodu 1'dir ama "keşif başlatılamadı"dan farklıdır: tarama
+    yapılmıştır ve bu çalışmanın sonucu kaybolmuştur.
+    """
+
+
 def _adapter(platform: str):
     if not re.fullmatch(r"[a-z][a-z0-9_]*", platform):
         raise ValueError("Geçersiz platform anahtarı")
@@ -378,6 +387,16 @@ def run(*, dry_run=False, target_key=None, adapters=None, report_path=None):
                 results.append(discovery.discover())
             finally:
                 discovery.close()
+    try:
+        return _conclude(catalog, catalog_path, targets, results, dry_run, report_path)
+    except (OSError, ValueError) as exc:
+        # Tarama bitti; yazılamayan şey sonucudur. Çağıran taraf bunu "keşif
+        # başlatılamadı" (ayar/katalog okunamadı) hatasından ayırır.
+        raise DiscoveryWriteError(str(exc)) from exc
+
+
+def _conclude(catalog, catalog_path, targets, results, dry_run, report_path):
+    """Tarama sonuçlarını kataloğa birleştirir (dry-run değilse) ve raporu yazar."""
     candidates = _report_candidates(results)
     if dry_run:
         # Önizleme: birleştirme sonucu yalnız rapora girer; katalog kilidi alınmaz,

@@ -22,7 +22,7 @@ için sitenin anonim çerezi kullanılır (``_user_id``).
 Sayfada tek bir tam ürün bağlamı bulunamazsa ``parse`` hatası verilir; bir satıcı
 kaydında alan eksikse yalnız o teklif atlanır (``invalid_offer``). Her satıcının
 durumu ve ret nedeni ``_last_offers`` içinde tutulur; bunu yalnız manuel kontrol
-aracı okur, üretim sonucu yalnız seçilen tekliftir.
+aracı ve testler okur, üretim sonucu yalnız seçilen tekliftir.
 """
 
 import json

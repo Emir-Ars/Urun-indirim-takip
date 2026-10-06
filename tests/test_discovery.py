@@ -26,6 +26,7 @@ from app.discovery.base import BaseDiscovery
 from app.discovery.hepsiburada import Discovery as HepsiburadaDiscovery
 from app.discovery.matching import phone_category
 from app.discovery.service import (
+    DiscoveryWriteError,
     ReportMismatch,
     _adapter,
     apply_report,
@@ -722,6 +723,44 @@ def test_trendyol_search_skips_refurbished_category(monkeypatch):
     )
     discovery._search()
     assert [issue.reason for issue in discovery.issues] == ["category_partial"]
+    discovery.close()
+
+
+def test_trendyol_failed_aggregation_reports_filter_unavailable_once(monkeypatch):
+    # Filtre isteği hata verince kategori de bulunamaz; aynı uyarı iki kez yazılmaz
+    # ve ayrıntılı olan (hata kodu ve mesajı) kalır.
+    discovery = trendyol_discovery()
+    first = {
+        "products": [],
+        "_links": {"aggregation": "https://apigw.trendyol.com/aggregation"},
+    }
+
+    def get_json(url, headers=None):
+        if "aggregation" in url:
+            raise FetchError("network", "bağlantı koptu")
+        return first
+
+    monkeypatch.setattr(discovery, "get", lambda url, headers=None: "")
+    monkeypatch.setattr(discovery, "get_json", get_json)
+    discovery._search()
+    assert [(issue.reason, issue.detail) for issue in discovery.issues] == [
+        ("filter_unavailable", "network: bağlantı koptu")
+    ]
+    discovery.close()
+
+
+def test_trendyol_without_aggregation_link_reports_missing_category_filter(
+    monkeypatch,
+):
+    discovery = trendyol_discovery()
+    monkeypatch.setattr(discovery, "get", lambda url, headers=None: "")
+    monkeypatch.setattr(
+        discovery, "get_json", lambda url, headers=None: {"products": []}
+    )
+    discovery._search()
+    assert [(issue.reason, issue.detail) for issue in discovery.issues] == [
+        ("filter_unavailable", "Telefon kategori filtresi bulunamadı")
+    ]
     discovery.close()
 
 
@@ -1432,7 +1471,7 @@ def test_scheduled_discovery_does_not_start_when_log_cannot_be_opened(
 def test_scheduled_discovery_fails_before_scanning_when_report_folder_is_unusable(
     run_env, tmp_path, monkeypatch
 ):
-    # Yazılamayan rapor klasörü ~50 dakikalık taramadan sonra değil, hemen anlaşılır.
+    # Yazılamayan rapor klasörü ~35 dakikalık taramadan sonra değil, hemen anlaşılır.
     not_a_dir = tmp_path / "rapor"
     not_a_dir.write_text("", encoding="utf-8")
     monkeypatch.setenv("DISCOVERY_REPORT_DIR", str(not_a_dir))
@@ -1446,6 +1485,54 @@ def test_scheduled_discovery_fails_before_scanning_when_report_folder_is_unusabl
     assert "Keşif başlatılamadı" in text
     assert text.rstrip().endswith("Çıkış kodu: 1")
     assert started == []
+
+
+def test_report_write_failure_after_scan_is_not_reported_as_start_failure(
+    run_env, tmp_path, monkeypatch, capsys
+):
+    # Tarama bittikten sonra rapor yazılamazsa mesaj "başlatılamadı" demez: tarama
+    # yapılmış ve sonucu kaybolmuştur. Çıkış kodu yine 1'dir.
+    adapters = clean_adapters()
+    monkeypatch.setattr(
+        "app.discovery.service._adapter", lambda platform: adapters[platform]
+    )
+    # Rapor yolu bir klasör olduğu için dosya yazılamaz (OSError).
+    (tmp_path / "data" / "discovery_report.json").mkdir(parents=True)
+    with pytest.raises(DiscoveryWriteError):
+        run(dry_run=True)
+    assert discovery_main(["--dry-run"]) == 1
+    error = capsys.readouterr().err
+    assert "Tarama bitti ama sonuç yazılamadı" in error
+    assert "Keşif başlatılamadı" not in error
+
+
+def test_catalog_write_failure_after_scan_is_reported_and_logged(
+    scan_env, tmp_path, monkeypatch
+):
+    def refuse(*_, **__):
+        raise OSError("disk dolu")
+
+    monkeypatch.setattr("app.discovery.service._atomic_catalog", refuse)
+    catalog_before = scan_env.read_bytes()
+    with pytest.raises(DiscoveryWriteError, match="disk dolu"):
+        run()
+    assert scan_env.read_bytes() == catalog_before  # yarım katalog kalmaz
+    assert not (tmp_path / "data" / "discovery_report.json").exists()
+
+
+def test_scheduled_discovery_logs_unwritten_result_with_exit_1(
+    run_env, tmp_path, monkeypatch
+):
+    def unwritable(**_):
+        raise DiscoveryWriteError("disk dolu")
+
+    monkeypatch.setattr("app.discovery.__main__.run", unwritable)
+    assert discovery_main(["--scheduled", "--dry-run"]) == 1
+    [log] = (tmp_path / "data" / "logs").glob("kesif_*.log")
+    text = log.read_text(encoding="utf-8")
+    assert "Tarama bitti ama sonuç yazılamadı: disk dolu" in text
+    assert "Keşif başlatılamadı" not in text
+    assert text.rstrip().endswith("Çıkış kodu: 1")
 
 
 def test_report_summary_counts_warnings_by_reason():

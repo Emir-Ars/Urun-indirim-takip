@@ -129,7 +129,10 @@ class Discovery(BaseDiscovery):
                 self.issue("filter_unavailable", error_code(exc))
         if not category:
             # Kategori filtresi olmadan arama aksesuarlarla dolar; kısmi raporlanır.
-            self.issue("filter_unavailable", "Telefon kategori filtresi bulunamadı")
+            # Filtre isteği zaten hata verdiyse o uyarı (hata kodu ve mesajıyla)
+            # nedeni söylüyor; aynı uyarı ikinci kez yazılmaz.
+            if not any(item.reason == "filter_unavailable" for item in self.issues):
+                self.issue("filter_unavailable", "Telefon kategori filtresi bulunamadı")
         else:
             # Marka yoksa yalnız kategori uygulanır; marka kartta ayrıca denetlenir.
             filters = ({"wb": brand} if brand else {}) | {"lc": category}

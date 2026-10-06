@@ -8,6 +8,7 @@ import argparse
 import json
 import sys
 
+from app.console import utf8_output
 from app.contracts import Catalog
 from app.discovery.service import _adapter, run
 from app.scrape_lock import ScrapeBusy, scrape_lock
@@ -43,8 +44,7 @@ def traced_adapters(collected):
 
 
 def main():
-    if hasattr(sys.stdout, "reconfigure"):
-        sys.stdout.reconfigure(encoding="utf-8")
+    utf8_output()
     parser = argparse.ArgumentParser(description="Canlı keşif denetimi (dry-run)")
     parser.add_argument("target", nargs="?", help="Yalnızca bu hedefi çalıştır")
     parser.add_argument("--trace", action="store_true", help="Karar izini de bas")

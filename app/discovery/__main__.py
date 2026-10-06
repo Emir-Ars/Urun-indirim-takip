@@ -6,8 +6,9 @@ python -m app.discovery --apply-report RAPOR          siteye gitmeden raporu uyg
 
 Tarama çıkış kodları: 0 tarama tam; 2 tarama kısmi (Hepsiburada arama API'si
 engelli olduğu için bugün her zaman); 1 keşif başlatılamadı (ayar veya katalog
-okunamadı, hedef bulunamadı, adaptör sözleşmeye uymuyor); 3 başka bir fiyat
-turu, keşif veya canlı kontrol sürüyor (ortak kilit), keşif başlatılmadı.
+okunamadı, hedef bulunamadı, adaptör sözleşmeye uymuyor) ya da tarama bitti ama
+sonuç kataloğa/rapora yazılamadı (mesaj hangisi olduğunu söyler); 3 başka bir
+fiyat turu, keşif veya canlı kontrol sürüyor (ortak kilit), keşif başlatılmadı.
 
 --scheduled yalnız --dry-run ile kullanılır: katalog yazılmaz, bütün çıktı
 data/logs/kesif_<yerel tarih-saat>.log dosyasına da yazılır ve rapor aynı damgayla
@@ -34,6 +35,7 @@ from app.console import open_log, tee_output, utf8_output
 from app.contracts import DiscoveryReport
 from app.discovery.service import (
     DEFAULT_REPORT_PATH,
+    DiscoveryWriteError,
     apply_report,
     run,
     summarize_report,
@@ -96,7 +98,7 @@ def main(argv=None):
 def scan(dry_run, target_key, report_path=None, print_json=True):
     try:
         if report_path is not None:
-            # Yazılamayan bir klasör ~50 dakikalık taramadan sonra değil, hemen
+            # Yazılamayan bir klasör ~35 dakikalık taramadan sonra değil, hemen
             # anlaşılsın.
             report_path.parent.mkdir(parents=True, exist_ok=True)
         # Fiyat turuyla aynı anda siteye gidilmesin (ortak kilit).
@@ -108,6 +110,9 @@ def scan(dry_run, target_key, report_path=None, print_json=True):
         # Tur ve canlı kontrol araçlarıyla aynı kod: hata değil, sıra meselesi.
         print(f"Keşif başlatılmadı: {exc}", file=sys.stderr)
         return 3
+    except DiscoveryWriteError as exc:
+        print(f"Tarama bitti ama sonuç yazılamadı: {exc}", file=sys.stderr)
+        return 1
     except (OSError, ValueError, ImportError) as exc:
         print(f"Keşif başlatılamadı: {exc}", file=sys.stderr)
         return 1

@@ -20,6 +20,7 @@ from app.scrape_lock import scrape_lock
 from app.scraper.base import BaseScraper
 from app.scraper.http import FetchError
 from app.settings import Runtime
+from tests.manual import live_scraper_check
 
 PLATFORMS = [
     {"key": "trendyol", "name": "Trendyol", "hosts": ["www.trendyol.com"]},
@@ -643,6 +644,22 @@ def test_discovery_refuses_while_lock_is_held(tmp_path, monkeypatch, capsys):
         assert discovery_main(["--dry-run"]) == 3
     error = capsys.readouterr().err
     assert "Keşif başlatılmadı" in error and "sürüyor" in error
+
+
+def test_live_scraper_check_refuses_while_lock_is_held(tmp_path, monkeypatch, capsys):
+    # Kilit bu araçta da "sıra meselesi"dir ve tur, keşif ve diğer canlı araçlarla
+    # aynı kodu (3) verir; eskiden 1 dönüyordu (hata gibi görünüyordu).
+    lock = tmp_path / "scrape.lock"
+    monkeypatch.setenv("SCRAPE_LOCK_PATH", str(lock))
+
+    def must_not_run(*_, **__):
+        raise AssertionError("Kilit meşgulken canlı okuma başlamamalıydı")
+
+    monkeypatch.setattr(live_scraper_check, "check", must_not_run)
+    with scrape_lock(lock):
+        assert live_scraper_check.main([]) == 3
+    error = capsys.readouterr().err
+    assert "Başlatılmadı" in error and "sürüyor" in error
 
 
 # --- Zamanlanmış turun log dosyası -----------------------------------------------

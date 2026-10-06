@@ -4,7 +4,7 @@
 
 .DESCRIPTION
   Görev `python -m app.discovery --scheduled --dry-run` komutunu penceresiz çalıştırır:
-  siteleri tarar (yaklaşık 50 dakika), kataloğa yazmaz ve data\logs\kesif_<tarih-saat>.log
+  siteleri tarar (yaklaşık 35 dakika), kataloğa yazmaz ve data\logs\kesif_<tarih-saat>.log
   ile data\discovery\kesif_<tarih-saat>.json dosyalarını bırakır. Raporu inceledikten
   sonra kataloğa eklemek için (siteye gitmeden):
     .venv\Scripts\python.exe -m app.discovery --apply-report data\discovery\kesif_<tarih-saat>.json
@@ -51,7 +51,7 @@ $trigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Sunday -At '14:00'
 # saati değişse de keşif yerel Pazar 14:00'te başlar).
 $trigger.StartBoundary = (Get-Date '14:00').ToString('s')
 # StartWhenAvailable bilerek verilmez: kaçan keşif sonradan telafi edilmez. Geç açılan
-# bir bilgisayarda telafi keşfi (~50 dk) ortak kilidi tutup 22:00 fiyat turunu
+# bir bilgisayarda telafi keşfi (~35 dk) ortak kilidi tutup 22:00 fiyat turunu
 # atlatabilirdi; kaçan hafta elle çalıştırılır. WakeToRun da yok: bilgisayar
 # uyandırılmaz. Çalışırken gelen ikinci tetikleme atılır (IgnoreNew); takılan keşif
 # 2 saatte durdurulur ve o durumda rapor oluşmaz.

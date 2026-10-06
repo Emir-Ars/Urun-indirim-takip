@@ -97,8 +97,14 @@ class PageClient:
             public_url(url)
         except ValueError as exc:
             raise FetchError("invalid_url", str(exc)) from exc
-        if urlsplit(url).hostname not in self.hosts:
-            raise FetchError("invalid_host", "İstek platformun alan adı dışında")
+        parts = urlsplit(url)
+        if parts.hostname not in self.hosts:
+            # Hedef, blocked hatasındaki gibi yazılır (sorgu metni hariç): yönlendirme
+            # nereye gitmişti sorusu tur kaydından yanıtlanabilsin.
+            raise FetchError(
+                "invalid_host",
+                f"İstek platformun alan adı dışında ({parts.hostname}{parts.path})",
+            )
 
     def _wait_for_interval(self, host: str) -> None:
         delay = self.runtime.request_interval_seconds - (
@@ -186,8 +192,8 @@ class PageClient:
         except UnicodeDecodeError as exc:
             raise FetchError("parse", "Kaynak UTF-8 metin döndürmedi") from exc
 
-    def get_json(self, url: str, *, headers: dict | None = None) -> dict:
-        body = self._request("GET", url, headers=headers)
+    @staticmethod
+    def _json_object(body: bytes) -> dict:
         try:
             data = json.loads(body.decode("utf-8"))
         except (UnicodeDecodeError, TypeError, ValueError) as exc:
@@ -196,17 +202,15 @@ class PageClient:
             raise FetchError("parse", "Kaynak JSON nesnesi döndürmedi")
         return data
 
+    def get_json(self, url: str, *, headers: dict | None = None) -> dict:
+        return self._json_object(self._request("GET", url, headers=headers))
+
     def post_json(
         self, url: str, payload: dict, *, headers: dict | None = None
     ) -> dict:
-        body = self._request("POST", url, json=payload, headers=headers)
-        try:
-            data = json.loads(body.decode("utf-8"))
-        except (UnicodeDecodeError, TypeError, ValueError) as exc:
-            raise FetchError("parse", "Kaynak geçerli JSON döndürmedi") from exc
-        if not isinstance(data, dict):
-            raise FetchError("parse", "Kaynak JSON nesnesi döndürmedi")
-        return data
+        return self._json_object(
+            self._request("POST", url, json=payload, headers=headers)
+        )
 
     def cookie(self, name: str) -> str | None:
         try:

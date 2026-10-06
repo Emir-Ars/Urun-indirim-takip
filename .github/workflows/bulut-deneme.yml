@@ -70,7 +70,7 @@ jobs:
           with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as ozet:
               ozet.write(f"## {karar}\n\n```\n{metin}\n```\n\n")
               ozet.write(
-                  "Bu deneme dört sayfadır; tam tur (yaklaşık 333 sayfa, 35 dk) "
+                  "Bu deneme dört sayfadır; tam tur (yaklaşık 333 sayfa, ~31 dk) "
                   "ölçeğinde engel olup olmadığını göstermez.\n"
               )
           sys.exit(0 if basarili else 1)

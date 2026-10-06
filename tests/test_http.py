@@ -256,6 +256,27 @@ def test_url_outside_platform_is_rejected_before_request(url, code):
     assert session.calls == []
 
 
+@pytest.mark.parametrize(
+    "start, location",
+    [
+        # Adresin kendisi izinli alan adı dışında.
+        ("https://www.google.com/arama?gizli=1", None),
+        # Yönlendirme hedefi izinli alan adı dışında (tur 14'teki durumun biçimi).
+        (TRENDYOL, "https://evil.example/arama?gizli=1"),
+    ],
+)
+def test_invalid_host_message_names_the_target_host_and_path(start, location):
+    # Tur 14'te (5 Ekim) bir Hepsiburada sayfası invalid_host verdi ama mesaj hedef
+    # alan adını söylemediği için nedeni anlaşılamadı. Sorgu metni mesaja girmez.
+    session = Recorder(Reply(302, location=location)) if location else Recorder()
+    with pytest.raises(FetchError) as error:
+        page_client(session).get(start)
+    assert error.value.code == "invalid_host"
+    message = str(error.value)
+    assert "(www.google.com/arama)" in message or "(evil.example/arama)" in message
+    assert "gizli" not in message
+
+
 @pytest.mark.parametrize("status", [401, 403, 418, 429])
 def test_blocked_statuses_are_not_retried(slept, status):
     session = Recorder(Reply(status))

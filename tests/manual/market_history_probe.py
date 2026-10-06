@@ -10,6 +10,7 @@ from pathlib import Path
 
 from bs4 import BeautifulSoup
 
+from app.console import utf8_output
 from app.contracts import Catalog
 from app.scrape_lock import ScrapeBusy, scrape_lock
 from app.scraper.http import FetchError, PageClient
@@ -249,8 +250,7 @@ def main(argv=None) -> int:
         help="Yerel JSON rapor klasörü (Git dışında)",
     )
     args = parser.parse_args(argv)
-    if hasattr(sys.stdout, "reconfigure"):
-        sys.stdout.reconfigure(encoding="utf-8")
+    utf8_output()
     settings = Settings()
     catalog = Catalog.model_validate_json(
         settings.catalog_path.read_text(encoding="utf-8-sig")

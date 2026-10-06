@@ -7,6 +7,7 @@ import sys
 import psycopg
 from pydantic import ValidationError
 
+from app.console import utf8_output
 from app.database.catalog_sync import CatalogConflict, read_catalog, sync_catalog
 from app.database.connection import connect, database_url
 from app.database.migrate import MigrationError, applied, migrate, pending
@@ -25,9 +26,7 @@ def main(argv=None) -> int:
         "--dry-run", action="store_true", help="Değişiklikleri göster, yazma"
     )
     args = parser.parse_args(argv)
-    for stream in (sys.stdout, sys.stderr):
-        if hasattr(stream, "reconfigure"):
-            stream.reconfigure(encoding="utf-8", errors="backslashreplace")
+    utf8_output()
     try:
         with connect(database_url()) as conn:
             if args.command == "migrate":

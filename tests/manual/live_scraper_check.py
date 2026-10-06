@@ -3,9 +3,9 @@
 import argparse
 import json
 import sys
-from pathlib import Path
 
 from app.collection.service import format_try, plan_listings
+from app.console import utf8_output
 from app.contracts import Catalog
 from app.scrape_lock import ScrapeBusy, scrape_lock
 from app.scraper.factory import create_scraper
@@ -22,27 +22,29 @@ def with_price_display(values: dict) -> dict:
     return result
 
 
-def main() -> None:
+def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "prefix", nargs="?", default="", help="Yalnızca bu product_key ön eki"
     )
-    args = parser.parse_args()
-    if hasattr(sys.stdout, "reconfigure"):
-        sys.stdout.reconfigure(encoding="utf-8")
+    args = parser.parse_args(argv)
+    utf8_output()
     try:
         # Fiyat turu veya başka bir tarama sürerken siteye gidilmesin.
         with scrape_lock():
             check(args.prefix)
     except ScrapeBusy as exc:
-        sys.exit(f"Başlatılmadı: {exc}")
+        # Diğer tarama komutlarıyla aynı kod: hata değil, sıra meselesi.
+        print(f"Başlatılmadı: {exc}", file=sys.stderr)
+        return 3
+    return 0
 
 
 def check(prefix: str) -> None:
     settings = Settings()
     runtime = settings.runtime()
     catalog = Catalog.model_validate_json(
-        Path(settings.catalog_path).read_text(encoding="utf-8-sig")
+        settings.catalog_path.read_text(encoding="utf-8-sig")
     )
     platforms = {platform.key: platform for platform in catalog.platforms}
     observations = []
@@ -102,4 +104,4 @@ def check(prefix: str) -> None:
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
