@@ -45,7 +45,18 @@ def test_capture_keeps_source_bytes_and_does_not_repeat_request(
     assert (directory / index[0]["file"]).read_bytes() == body
 
 
-def test_capture_preserves_retry_budget_and_does_not_invent_error_body(tmp_path):
+@pytest.mark.parametrize("reverse_order", [False, True])
+def test_capture_preserves_retry_budget_and_does_not_invent_error_body(
+    tmp_path, monkeypatch, reverse_order
+):
+    if reverse_order:
+        original_glob = Path.glob
+
+        def reversed_glob(path, pattern):
+            return iter(reversed(list(original_glob(path, pattern))))
+
+        monkeypatch.setattr(Path, "glob", reversed_glob)
+
     client = Recorder(Reply(status=503), Reply(content=b"{}"))
     pages = page_client(client, request_budget=2)
     directory = tmp_path / "responses"
@@ -60,10 +71,10 @@ def test_capture_preserves_retry_budget_and_does_not_invent_error_body(tmp_path)
     assert len(client.calls) == pages.request_count == 2
     assert index[0]["request_count"] == index[1]["request_count"] == 2
     assert index[1]["error_code"] == "limit" and "file" not in index[1]
-    assert list(directory.glob("*.json")) == [
+    assert set(directory.glob("*.json")) == {
         directory / "0001.json",
         directory / "index.json",
-    ]
+    }
 
 
 def test_capture_retains_malformed_json_for_source_review(tmp_path):

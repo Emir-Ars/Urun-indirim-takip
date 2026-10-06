@@ -47,7 +47,7 @@ kontrol edilip gerekli düzeltmeler yapılacak; eksik kanıt için hedefli canl�
 komutları kullanıcı çalıştıracak. İlk madde, HTTP indirme sınırı, tamamlandı
 (598 test). İkinci maddenin kayıt ve hedefli canlı kontrolü yapıldı; bu örnekte
 kimlik uyuşmazlığı yok, iki yapay riskin gerçek uyuşmazlık kanıtı bekleniyor.
-Ham yanıt kaydı için manuel araç hazırlandı (610 test); 3–7'ye geçilmedi.
+Ham yanıt kaydı için manuel araç hazırlandı (611 test); 3–7'ye geçilmedi.
 Ayrıntı ve durumlar Bölüm 7'de.
 
 Önceki aşamalardan kalan yerel taslaklar (eski `app/database`, `app/ml_model`,
@@ -573,12 +573,24 @@ Yapay örnekte doğrulanan iki risk düzeltildi sayılmaz; gerçek uyuşmazlık
 Kullanıcı, sonraki bakım maddesine geçmeden ham kayıt aracı, testleri ve
 kontrol notlarının ayrı commit/push işlemini onayladı.
 
+**Bakım 2'nin Git/CI doğrulaması:** araç ve kontrol notları `feee4bd` ile
+commit/push edildi. İlk CI'da Black ve Flake8 geçti; pytest'te yeni ham kayıt
+testi başarısız oldu (`608 passed, 1 failed, 1 xfailed`). Kullanıcının paylaştığı
+günlük, Linux'ta dosyaların Windows'takinden farklı sırayla listelenmesini
+doğruladı. Test gereksiz yere sabit sıra istiyordu; dosya kümesi karşılaştırması
+ile düzeltildi, normal/ters sıra aynı testte ayrı ayrı sınanıyor (13 araç
+testi, toplam 611). Ters sıra eski kontrolde yerelde de başarısızdı. Araç ve
+kimlik kuralları değişmedi; düzeltme bu commit/push talebinin CI doğrulaması
+kapsamındadır. Düzeltme sonrası tam çalışma `610 passed, 1 xfailed`, 0 atlandı
+(219 PostgreSQL), 45,91 sn; Black 43 dosyada ve Flake8 temiz. Sonraki bakım
+maddesine geçilmedi.
+
 Onaylanan bakım sırası ve durum (her adımdan sonra sonuç anlatılıp durulur):
 
 | Bakım maddesi | Durum |
 |---|---|
 | 1. HTTP 8 MB indirme sınırı | ✅ Kod ve test tamamlandı; kullanıcı commit/push işlemini onayladı. Gerçek turda henüz görülmedi. |
-| 2. Trendyol varyant / Hepsiburada canonical adresi | ⏳ Gerçek uyuşmazlık kanıtı bekliyor. Kayıt kontrolü ve 6 Ekim hedefli canlı kontrol tamamlandı: TY 5 varyant/adres/sayfa kimliği eşleşti; HB 16 SKU eşleşti, 9 grup/7 kategori canonical adresi kullanılmayıp mevcut adresler korundu. İki yapay risk canlıda görülmedi; kimlik kuralları değişmedi. Ham kayıt aracı ve 12 ağsız test hazır. |
+| 2. Trendyol varyant / Hepsiburada canonical adresi | ⏳ Gerçek uyuşmazlık kanıtı bekliyor. Kayıt kontrolü ve 6 Ekim hedefli canlı kontrol tamamlandı: TY 5 varyant/adres/sayfa kimliği eşleşti; HB 16 SKU eşleşti, 9 grup/7 kategori canonical adresi kullanılmayıp mevcut adresler korundu. İki yapay risk canlıda görülmedi; kimlik kuralları değişmedi. Ham kayıt aracı ve 13 ağsız test hazır; ilk CI'daki dosya sırası testi düzeltildi. |
 | 3. Türkçe ekli aksesuar adları | 🔜 Kayıtlı gerçek örneklerle dar kural ve regresyon testi; geçerli telefon başlıkları da kontrol edilecek. |
 | 4. Hepsiburada çoklu varyant listesi | 🔜 Aynı SKU için kaynakların kapasite/renk tutarlılığı; gerçek örnek doğrulanırsa ortak veri ve çelişkide ret. |
 | 5. Beş adres kimliği kuralı | 🔜 Aynı adreslerle davranış karşılaştırması; ortaklaştırma yalnız gerekli düzeltmeyi destekliyorsa. |
