@@ -96,17 +96,23 @@ def start_run(
     return run_id
 
 
-def record_result(
-    conn: psycopg.Connection, run_id: int, listing_id: str, result: CheckResult
-) -> None:
-    """Sayfanın sonucunu yazar; bağlantı autocommit olduğu için hemen kalıcıdır.
+def _write_result(
+    conn: psycopg.Connection,
+    run_id: int,
+    listing_id: str,
+    result: CheckResult,
+    row_state: str,
+) -> int:
+    """Sayfa satırının sonuç sütunlarını yazar; etkilenen satır sayısını döndürür.
 
-    Yalnızca süren turun planlanmış ve henüz sonuçsuz satırına yazılır: aynı
-    sayfaya bir turda ikinci kez, kapanmış bir tura hiç sonuç yazılamaz.
+    `row_state`, satırın yazılabileceği durumu söyleyen sabit bir SQL koşuludur.
+    Satır her durumda yalnız süren turdaki bir satırdır. Sonuç sütunlarının
+    hepsi (boş olanlar dahil) yazılır: eski sonucun alanı yenisine karışmaz.
     """
     query = sql.SQL(
-        "UPDATE listing_checks SET {} WHERE run_id = %s AND listing_id = %s"
-        " AND outcome IS NULL AND EXISTS (SELECT 1 FROM collection_runs r"
+        "UPDATE listing_checks SET {} WHERE run_id = %s AND listing_id = %s AND "
+        + row_state
+        + " AND EXISTS (SELECT 1 FROM collection_runs r"
         " WHERE r.run_id = listing_checks.run_id AND r.status = 'running')"
     ).format(
         sql.SQL(", ").join(
@@ -118,10 +124,40 @@ def record_result(
         query,
         [getattr(result, column) for column in _RESULT_COLUMNS] + [run_id, listing_id],
     )
-    if cursor.rowcount != 1:
+    return cursor.rowcount
+
+
+def record_result(
+    conn: psycopg.Connection, run_id: int, listing_id: str, result: CheckResult
+) -> None:
+    """Sayfanın sonucunu yazar; bağlantı autocommit olduğu için hemen kalıcıdır.
+
+    Yalnızca süren turun planlanmış ve henüz sonuçsuz satırına yazılır: aynı
+    sayfaya bir turda ikinci kez, kapanmış bir tura hiç sonuç yazılamaz.
+    """
+    if _write_result(conn, run_id, listing_id, result, "outcome IS NULL") != 1:
         raise RuntimeError(
             f"{listing_id} tur {run_id} için yazılamadı: sayfa planlı değil, "
             "sonucu zaten yazılmış veya tur kapanmış"
+        )
+
+
+def rewrite_network_result(
+    conn: psycopg.Connection, run_id: int, listing_id: str, result: CheckResult
+) -> None:
+    """Süren turdaki `network` hatası satırını ikinci okumanın sonucuyla değiştirir.
+
+    Tur sonu ikinci geçişin (collection/service.py) kullandığı tek istisnadır:
+    yazılmış sonuç başka hiçbir durumda değişmez. Satır `network` hatası olmaktan
+    çıkınca (ya da başka kodlu bir hataya dönünce) artık bu işleve uymaz; yani bir
+    sayfa bir turda en çok bir kez yeniden yazılır. Veritabanı tetikleyicisi (002)
+    aynı kuralı ayrıca zorlar.
+    """
+    state = "outcome = 'error' AND error_code = 'network'"
+    if _write_result(conn, run_id, listing_id, result, state) != 1:
+        raise RuntimeError(
+            f"{listing_id} tur {run_id} için yeniden yazılamadı: satır network "
+            "hatası değil veya tur kapanmış"
         )
 
 

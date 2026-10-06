@@ -69,14 +69,14 @@ geçmişi. Kararların ve aşama durumunun ana kaynağı
 | `migrations/001_initial.sql` | Katalog kopyası, toplama turları ve sayfa sonuçları tabloları; bütün kurallar (`CHECK`, `UNIQUE`, yabancı anahtarlar). |
 | `migrations/002_guards_and_comparability.sql` | İki yeni `CHECK` (Tükendi satırı fiyat taşımaz, çizili fiyat güncel fiyattan büyüktür), beş tabloda 15 tetikleyici (silmeyi ve `TRUNCATE`'i reddeder, kimlik alanlarını korur, yazılmış sayfa sonucunu dondurur), `product_run_prices` görünümü. |
 | `catalog_sync.py` | `catalog.json`'u veritabanındaki kopyaya eşitler: `plan_sync` farkı veritabanına dokunmadan hesaplar, `sync_catalog` tek transaction'da yazar. |
-| `runs.py` | Tur SQL'leri: veritabanı tur kilidi, yarım kalan turu kapatma, turu ve planlanan sayfaları açma, sayfa sonucunu (bir kez, yalnızca süren tura) yazma, turu kapatma, özet. |
+| `runs.py` | Tur SQL'leri: veritabanı tur kilidi, yarım kalan turu kapatma, turu ve planlanan sayfaları açma, sayfa sonucunu (bir kez, yalnızca süren tura) yazma, süren turdaki `network` hatası satırını ikinci okumanın sonucuyla değiştirme (`rewrite_network_result`, tek istisna), turu kapatma, özet. |
 | `__main__.py` | Komut satırı: `python -m app.database migrate` / `status` / `sync-catalog [--dry-run]`. Çıkış kodları: `0` başarılı; `1` komut başarısız (şema, katalog çakışması, bağlantı, ayar; mesaj stderr'e `Veritabanı komutu başarısız: …` diye yazılır); `2` argüman hatası. |
 
 ### Fiyat toplama turu: `app/collection/`
 
 | Dosya | Ne işe yarar |
 |---|---|
-| `service.py` | Bir tur: şema kontrolü, yarım kalan turu kapatma, katalog eşitleme, planlama, her sayfayı mevcut scraper'la okuyup sonucunu hemen yazma, turu kapatma. Scraper ile veritabanını bağlayan tek yer. |
+| `service.py` | Bir tur: şema kontrolü, yarım kalan turu kapatma, katalog eşitleme, planlama, her sayfayı mevcut scraper'la okuyup sonucunu hemen yazma, `network` hatası alan sayfaları tur sonunda bir kez yeniden okuma, turu kapatma. Scraper ile veritabanını bağlayan tek yer. |
 | `__main__.py` | Komut satırı: `python -m app.collection [--prefix ÖN_EK] [--scheduled]`; ortak kilidi alır. `--scheduled` ile çıktı `data/logs/` altındaki log dosyasına da yazılır. |
 
 ### Zamanlayıcı: `scripts/`
@@ -95,7 +95,7 @@ geçmişi. Kararların ve aşama durumunun ana kaynağı
 | `tests/test_contracts.py` | Pydantic sözleşmeleri (74 test): satılabilir teklif fiyat ve satıcı taşır, puan ölçeği aşamaz, üstü çizili fiyat güncel fiyattan büyüktür, katalog kimlik/referans/alan adı kuralları, `money()` kuruş çevirimi. |
 | `tests/test_trendyol_scraper.py`, `tests/test_hepsiburada_scraper.py` | Fiyat okuma (40 + 25 test): seçilen teklif, eşit fiyatta satıcı adı, çizili fiyat, Kritik Stok, Tükendi'nin yalnız açık sinyalle verilmesi, ret nedenleri, `parse` dönüşümü. Sahte sayfa ve istemci; internete çıkmaz. |
 | `tests/test_discovery.py` | Keşif (100 test): kimlik kuralları, sayfalama ve uyarı türleri, katalog birleştirme (aynı adaylar hep aynı kimlikleri alır), dry-run'ın kataloğa yazmaması, LF satır sonu, BOM'lu ayar dosyaları, UTF-8 çıktı, çıkış kodları ve gerçek `config/*.json` dosyalarının sözleşmeye uyması. Zamanlanmış keşif (log ve tarihli rapor, `--dry-run` zorunluluğu, konsolsuz çalışma, kilit meşgul, program hatası, log açılamaması, rapor klasörünün baştan denetimi, özet satırı) ve `--apply-report` (siteye gitmez, canlı yazmayla bayt bayt aynı katalog, ikinci uygulamada yazmama, önizleme olmayan/bozuk/sarmalı/yabancı alan adlı/önizlemeyi aşan rapor reddi) ağsız sınanır. Trendyol filtre uyarısının tek yazılması ve tarama sonrası yazma hatasının ("Tarama bitti ama sonuç yazılamadı", çıkış 1; log dahil) "başlatılamadı"dan ayrılması da burada denenir. |
-| `tests/test_collection.py` | Toplama turu (41 test; 36'sı gerçek PostgreSQL'de): sahte scraper'larla her sonuç türü, Ctrl+C, tur ortasında veritabanı hatası, yarım kalan tur, başka süreçteki tur, iki kilidin her durumda bırakılması, pasif sayfa/ürün/platform, ön ek, çıkış kodları (keşif ve `live_scraper_check` kilit meşgulken 3 verir) ve zamanlanmış turun log dosyası (ekran akışı yokken ve log açılamazken dahil). |
+| `tests/test_collection.py` | Toplama turu (59 test; 54'ü gerçek PostgreSQL'de): sahte scraper'larla her sonuç türü, Ctrl+C, tur ortasında veritabanı hatası, yarım kalan tur, başka süreçteki tur, iki kilidin her durumda bırakılması, pasif sayfa/ürün/platform, ön ek, çıkış kodları (keşif ve `live_scraper_check` kilit meşgulken 3 verir) ve zamanlanmış turun log dosyası (ekran akışı yokken ve log açılamazken dahil). Tur sonu ikinci okuma (18 test): `network` düzelince satırın değişmesi, ikinci hatada ilk satırın (mesaj ve zaman damgasıyla) kalması, `network` dışındaki hataların hiç yeniden okunmaması, bir sayfanın en çok bir kez yeniden okunması, ardışık 5 hatada durma ve düzelmede sayaç sıfırlama, veritabanı reddi, Ctrl+C, tur notu (ön ekle birlikte), görünümde sahte "karşılaştırılamaz" oluşmaması ve `rewrite_network_result`'ın yalnız `network` satırına ve süren tura yazması. |
 | `tests/test_catalog_sync.py` | Katalog eşitleme (29 test; 13'ü gerçek PostgreSQL'de): kararlar veritabanısız, yazma/deneme/çakışma ve komut satırı veritabanında. |
 | `tests/test_database.py` | Migration koşucusu, şemanın bütün `CHECK`/`UNIQUE`/yabancı anahtar kuralları (her biri geçerli ve geçersiz örnekle), `migrate`/`status` komutları (yeniden adlandırılan migration dahil) ve iki emniyet kemerinin kendisi; 002'nin iki `CHECK` kuralı, silme/kimlik değişimi/yazılmış sonucu değiştirme tetikleyicileri (her tabloda), kodun gerçek güncellemelerinin hâlâ geçtiği ve "bilerek silme" yolu da burada denenir (131 test; 119'u gerçek PostgreSQL'de). |
 | `tests/test_comparability.py` | `product_run_prices` görünümü: aynı sayfa kümesi, hata (girerken ve çıkarken), yeni sayfa, Tükendi, cevapsız ürün, ürünlerin ayrı karşılaştırılması, `--prefix` turu, süren ve yarıda kalan turların dışarıda kalması, uzun boşluk (14 test, hepsi gerçek PostgreSQL'de). |
@@ -531,7 +531,7 @@ yazılır; hiçbiri fiyat veya Tükendi yerine geçmez.
 | `redirect` | HTTP | Yönlendirmenin hedefi yok ya da 3'ten fazla yönlendirme. |
 | `blocked` | HTTP | Kaynak 401/403/418/429 döndürdü (engellendi); tekrar denenmez. |
 | `http_error` | HTTP | Diğer 4xx (ör. 404); kalıcı sayılır, tekrar denenmez. |
-| `network` | HTTP | Bağlantı hatası, zaman aşımı veya 5xx; tekrarlardan sonra da sürdü. 5xx bilerek ayrı bir kod almaz (karar, 6 Ekim): geçicidir ve tur sonu ikinci geçiş (Adım 11, henüz uygulanmadı) yalnız `network`'ü yeniden okuyacağı için 5xx'i de kapsar. |
+| `network` | HTTP | Bağlantı hatası, zaman aşımı veya 5xx; tekrarlardan sonra da sürdü. 5xx bilerek ayrı bir kod almaz (karar, 6 Ekim): geçicidir ve [tur sonu ikinci okuma](#tur-sonu-ikinci-okuma-adım-11) yalnız `network`'ü yeniden okuduğu için 5xx'i de kapsar. |
 | `too_large` | HTTP | Yanıt 8 MB sınırını aştı. |
 | `parse` | HTTP, scraper | Yanıt UTF-8 metin/JSON değil ya da sayfa verisi beklenen yapıda değil; teklif sözleşme doğrulamasından geçmedi. |
 | `identity` | scraper, keşif | Sayfa hedef ürün değil: model, kapasite, dışlanan ifade, ağ türü ya da yenilenmiş/aksesuar/yurt dışı sürüm. |
@@ -638,8 +638,9 @@ ile bütün tur ve eşitleme testlerinde sınanır.
 | `listing_checks` | `run_id`, `listing_id`, `product_id` | Sonuç alanları **bir kez** yazılır: sonuçsuz (planlı) satır ilk sonucunu alır, sonra satır donar |
 
 - **Tek istisna:** çalışan turdaki `network` hatası, aynı tur içinde yeniden
-  okunup yerine sonuç yazılabilir (Adım 11, tur sonu ikinci geçiş). Başka hata
-  kodları ve biten turun satırları hiçbir hâlde değişmez.
+  okunup yerine sonuç yazılabilir ([tur sonu ikinci okuma](#tur-sonu-ikinci-okuma-adım-11),
+  `runs.rewrite_network_result`). Başka hata kodları ve biten turun satırları
+  hiçbir hâlde değişmez.
 - **Bilerek silme:** gerçekten gerekirse (örneğin yanlış eklenmiş bir sayfanın
   geçmişi) tablonun sahibi (`fiyat_takip`) ilgili tetikleyiciyi kapatıp işini
   yapar ve hemen açar. Önce `SELECT` ile neyin silineceğine bakılır, tur
@@ -703,13 +704,15 @@ ORDER BY run_id;
    tur ortasında bilgisayar kapanırsa okunanlar kaybolmaz. Ekrana
    `[12/326] listing_id  fiyat 57.249,00 TL · satıcı (Stokta Var)` biçiminde
    ilerleme yazılır.
-6. Tur `completed` yapılır ve özet basılır.
+6. Tur sonunda yalnız `network` hatası alan sayfalar **bir kez** yeniden okunur
+   (aşağıda [Tur sonu ikinci okuma](#tur-sonu-ikinci-okuma-adım-11)).
+7. Tur `completed` yapılır ve özet basılır.
 
 | `fetch()` sonucu | `listing_checks` |
 |---|---|
 | Stokta Var / Kritik Stok | `offer` + fiyat, satıcı, puan, stok |
 | Tükendi | `sold_out`; fiyat ve satıcı **yazılmaz** (satın alınamayan fiyat "en ucuz" hesabına karışmasın) |
-| `FetchError` (`blocked`, `network`, `parse`, `identity`, `no_eligible_offer`…) | `error` + aynı kod ve mesaj |
+| `FetchError` (`blocked`, `network`, `parse`, `identity`, `no_eligible_offer`…) | `error` + aynı kod ve mesaj (`network` tur sonunda bir kez yeniden okunur) |
 | Gözlem başka bir sayfaya ait ya da scraper doğrulanmamış veri döndürdü (`ValueError`) | `error`, `validation`. Gerçek scraper'larda sayfa içindeki doğrulama hatası zaten `parse` koduyla gelir |
 | Beklenmeyen hata | `error`, `unexpected`; ayrıntı ekrana yazılır, **tur sürer** |
 | Veritabanı değeri reddetti (ör. sütuna sığmayan fiyat) | `error`, `storage`; **tur sürer**. Metinlerdeki NUL (`\x00`) karakteri yazmadan önce silinir |
@@ -725,6 +728,47 @@ Ctrl+C. `--scheduled` turu `scheduled` olarak kaydeder (Görev
 Zamanlayıcı için); verilmezse `manual`. `--prefix` kullanıldıysa turun
 notuna yazılır. Sonuç yalnızca süren tura yazılabilir; kapanmış bir tur
 yeniden kapatılmaya çalışılırsa hata verir (sessiz geçmez).
+
+#### Tur sonu ikinci okuma (Adım 11)
+
+Bağlantı tur ortasında koptuysa ve tur bitmeden döndüyse (28 Eylül: 47 sayfa,
+4 Ekim: ilk 109 sayfa) `network` hatası alan sayfalar bu sırada okunabilir
+durumdadır. Tur, sayfa döngüsü bittikten sonra ve kapatılmadan önce bunları bir
+kez daha okur:
+
+- **Kapsam:** yalnız o turda `error` / `network` sonuçlu sayfalar (5xx dahil).
+  `blocked`, `parse`, `identity`, `invalid_host`, `http_error` ve diğer bütün hatalar
+  yeniden denenmez: engel aşılmaz, kalıcı hatalar tekrar denenmez. Her sayfa aynı
+  `check_listing` ile ve yeni bir scraper nesnesiyle okunur; 3 sn istek aralığı aynen
+  geçerlidir.
+- **Yazma:** yeni sonuç hata satırının **üzerine yazılır**
+  (`runs.rewrite_network_result`: yalnız süren turun `error`/`network` satırı;
+  002 tetikleyicisi aynı istisnayı tanır). Sayfa başına tek satır kuralı korunur ve
+  bir sayfa bir turda en çok bir kez yeniden okunur. Düzelen sayfanın `checked_at`
+  değeri ikinci okuma anıdır (ilk denemeden en çok tur süresi, ~30 dk sonra).
+- **İkinci okuma da `network` verirse** yeni bilgi yoktur: satır (mesaj ve zaman
+  damgası dahil) olduğu gibi kalır. Başka bir sonuç gelirse (fiyat, Tükendi ya da
+  `network` dışında bir hata) o yazılır.
+- **Veritabanı yeni sonucu reddederse** (ör. sütuna sığmayan fiyat) ilk `network`
+  satırı kalır, log'a yazılır ve tur sürer.
+- **Erken durdurma:** ardışık 5 sayfa yine `network` verirse bağlantı hâlâ yok
+  demektir ve geçiş durur; kalan sayfalar `network` olarak kalır (internet tur
+  boyunca yoksa 333 sayfayı bir de denemek 3 sn aralıkla ~17 dk boşa giderdi).
+  Birinci geçişte erken durdurma yoktur.
+- **Log ve tur notu:** `Tur sonu: network hatası alan N sayfa yeniden okunuyor`,
+  her sayfa için `[tekrar i/N] listing_id  …` ve özet satırı. Tur notuna yalnız
+  sayılar yazılır, sayfa kimlikleri logdadır: `network hatası alan 109 sayfa,
+  ikinci okuma: 104 düzeldi, 5 hâlâ hatalı` (durursa sonuna `, 2 denenmedi
+  (ardışık 5 network hatasında durdu)` eklenir; `--prefix` notunun ardından `; `
+  ile gelir). Hiç `network` hatası yoksa ikinci okuma yapılmaz ve not eklenmez.
+- **Çıkış kodu ve özet** ikinci okumadan sonraki duruma göre hesaplanır; tamamen
+  kurtarılan bir kesinti çıkış 0 verir. Kurtarılan sayfa cevap sayıldığı için
+  ürünün cevap veren sayfa kümesi değişmez ve [karşılaştırılabilirlik
+  görünümünde](#karşılaştırılabilirlik-product_run_prices) sahte bir
+  "karşılaştırılamaz" satırı oluşmaz.
+- **Sınırı:** bilgisayar uyursa ya da kesinti tur bitene kadar sürerse sayfalar
+  hatalı kalır; bu kalıcı çözüm değildir (sunucu, Aşama 9). Gerçek turda henüz
+  görülmedi: `network` hatası olmayan turlarda ikinci okuma çalışmaz.
 
 ### Zamanlanmış tur (Görev Zamanlayıcı)
 
@@ -773,11 +817,13 @@ Sınırlar:
   başlayabilir; ilk sayfalar `network` hatası alabilir.
 - Tur bilgisayarın o anki internet bağlantısına bağlıdır. Bağlantı tur
   ortasında koparsa o sıradaki sayfalar `network` hatası alır, bağlantı dönünce
-  tur kaldığı yerden sürer ve tamamlanır; hata alan sayfalar aynı turda yeniden
-  denenmez (28 Eylül, ilk zamanlanmış tur: 326 sayfanın 47'si `network`, 279'u
-  okundu, çıkış 2). İnternet hiç yoksa tur bütün sayfalara hata yazarak biter
-  (art arda hatada erken durdurma yok). Hata "cevap" sayılmadığı için sahte
-  fiyat veya sahte düşüş oluşmaz.
+  tur kaldığı yerden sürer ve tamamlanır; tur sonunda bu sayfalar bir kez yeniden
+  okunur ([Tur sonu ikinci okuma](#tur-sonu-ikinci-okuma-adım-11)). Kesinti tur
+  bitene kadar sürerse ya da bilgisayar uyursa sayfalar hatalı kalır (28 Eylül,
+  ilk zamanlanmış tur: 326 sayfanın 47'si `network`, 279'u okundu, çıkış 2; ikinci
+  okuma o tarihte yoktu). İnternet hiç yoksa tur bütün sayfalara hata yazarak biter
+  (birinci geçişte erken durdurma yok; ikinci okuma ardışık 5 hatada durur). Hata
+  "cevap" sayılmadığı için sahte fiyat veya sahte düşüş oluşmaz.
 - Tur yarıda kesilirse (bilgisayar kapandı, süre sınırı) Görev Zamanlayıcı onu
   "çalıştı" saydığı için telafi edilmez.
 - Görev bilgisayarı uyandırmaz. Bilgisayar uyurken gelen tur kaçar ve
@@ -792,7 +838,8 @@ Sınırlar:
   olayını Görev Zamanlayıcı geçmişi kayıt eder; geçmiş kapalıysa doğrulanamaz.
 - Tur ortasında bilgisayar uyursa (1 Ekim 09:29, kritik pil, yaklaşık 6,5 dk)
   uyanma anındaki sayfalar `network` hatası alabilir (tur 7: 1 sayfa, DNS
-  çözülemedi); tur tamamlanır, çıkış kodu 2 olur.
+  çözülemedi); tur tamamlanır. Tur sonu ikinci okuma bu sayfaları yeniden dener;
+  düzelmezlerse çıkış kodu 2 olur.
 
 ### Zamanlanmış keşif (Görev Zamanlayıcı)
 
@@ -944,7 +991,7 @@ böylece keşfin kabul ettiği sayfayı scraper aynı girdilerle reddetmez.
 
 ## Testler ne kanıtlar, ne kanıtlamaz
 
-- **Otomatik testler (527; 182'si gerçek PostgreSQL'de):** Kuralların doğru
+- **Otomatik testler (545; 200'ü gerçek PostgreSQL'de):** Kuralların doğru
   çalıştığını kayıtlı ve sahte yanıtlarla kanıtlar. Hata düzeltmelerinin her
   biri, canlıda görülen gerçek bir örneğe dayanan regresyon testiyle korunur.
   Sitelerin bugün hâlâ aynı yapıda olduğunu kanıtlamaz. Veritabanı testleri

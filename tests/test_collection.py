@@ -11,6 +11,7 @@ import pytest
 import app.collection.service as service
 from app.collection.__main__ import main
 from app.collection.service import CollectionError, RunInProgress, collect
+from app.contracts import utc_now
 from app.database import runs
 from app.database.catalog_sync import CatalogConflict, read_catalog, sync_catalog
 from app.database.connection import connect
@@ -541,6 +542,285 @@ def test_run_without_prefix_has_no_note(migrated, catalog_path):
     # 28 Eylül canlı turunda not NULL yerine '' yazılmıştı (concat_ws).
     report, _ = run_collect(migrated, catalog_path)
     assert run_row(migrated, report.run_id)[4] is None
+
+
+# --- Tur sonu ikinci okuma (Adım 11) ----------------------------------------------
+
+NETWORK = FetchError("network", "DNS çözülemedi")
+
+
+def fails_then(first, then):
+    """İlk okumada `first` hatasını, sonrakilerde `then` sonucunu veren davranış.
+
+    `then`, gözlem alanları (dict) ya da fırlatılacak bir istisnadır. `reads`,
+    sayfanın kaç kez okunduğunu gösterir: ikinci okumanın bir sayfayı aynı turda
+    en çok bir kez daha okuduğunu buradan sınarız.
+    """
+    reads = []
+
+    def behaviour(item):
+        reads.append(item.listing_id)
+        if len(reads) == 1:
+            raise first
+        if isinstance(then, BaseException):
+            raise then
+        return BaseScraper.observation(item, **then)
+
+    behaviour.reads = reads
+    return behaviour
+
+
+def check_row(conn, run_id, listing_id):
+    return conn.execute(
+        "SELECT outcome, error_code, error_message, current_price, checked_at"
+        " FROM listing_checks WHERE run_id = %s AND listing_id = %s",
+        (run_id, listing_id),
+    ).fetchone()
+
+
+def big_catalog(tmp_path, count=12):
+    ids = [f"trendyol_{number}" for number in range(11, 11 + count)]
+    path = write_catalog(tmp_path / "big.json", listings=[listing(i) for i in ids])
+    return path, ids
+
+
+def test_network_error_is_read_again_at_the_end_and_replaced(migrated, catalog_path):
+    page = fails_then(NETWORK, OFFER)
+    report, lines = run_collect(
+        migrated, catalog_path, {**BEHAVIOURS, "trendyol_1": page}
+    )
+    assert page.reads == ["trendyol_1", "trendyol_1"]
+    outcome, code, message, price, _ = check_row(migrated, report.run_id, "trendyol_1")
+    # Eski hatanın hiçbir alanı yeni sonuca karışmaz.
+    assert (outcome, code, message, price) == ("offer", None, None, 5724900)
+    assert run_row(migrated, report.run_id)[0] == "completed"
+    assert run_row(migrated, report.run_id)[4] == (
+        "network hatası alan 1 sayfa, ikinci okuma: 1 düzeldi, 0 hâlâ hatalı"
+    )
+    assert any(line.startswith("[tekrar 1/1] trendyol_1  fiyat") for line in lines)
+    # Özet ve çıkış kodu ikinci okumadan sonraki duruma göre hesaplanır.
+    assert report.summary.outcomes == {"error": 3, "offer": 3, "sold_out": 1}
+    assert report.errors == 3
+
+
+def test_second_network_error_leaves_the_first_row_as_it_was(migrated, catalog_path):
+    seen = {}
+    reads = []
+
+    def page(item):
+        reads.append(item.listing_id)
+        if len(reads) == 1:
+            raise FetchError("network", "ilk deneme")
+        # İkinci okuma sırasında satır henüz ilk hatayla duruyor.
+        seen["row"] = check_row(migrated, last_run_id(migrated), item.listing_id)
+        raise FetchError("network", "ikinci deneme")
+
+    report, lines = run_collect(
+        migrated, catalog_path, {**BEHAVIOURS, "trendyol_1": page}
+    )
+    assert len(reads) == 2  # bir sayfa bir turda en çok bir kez yeniden okunur
+    assert seen["row"][:3] == ("error", "network", "ilk deneme")
+    # Yeni bilgi yok: satır (mesaj ve zaman damgası dahil) olduğu gibi kaldı.
+    assert check_row(migrated, report.run_id, "trendyol_1") == seen["row"]
+    assert run_row(migrated, report.run_id)[4] == (
+        "network hatası alan 1 sayfa, ikinci okuma: 0 düzeldi, 1 hâlâ hatalı"
+    )
+    assert "[tekrar 1/1] trendyol_1  HATA network: ikinci deneme" in lines
+
+
+def test_second_read_may_replace_network_with_sold_out_or_another_error(
+    migrated, catalog_path
+):
+    behaviours = {
+        **BEHAVIOURS,
+        "trendyol_1": fails_then(NETWORK, SOLD_OUT),
+        "trendyol_2": fails_then(NETWORK, FetchError("blocked", "Kaynak HTTP 403")),
+    }
+    report, _ = run_collect(migrated, catalog_path, behaviours)
+    checked = results(migrated, report.run_id)
+    assert checked["trendyol_1"] == ("sold_out", None, None, "Tükendi", True)
+    assert checked["trendyol_2"][:2] == ("error", "blocked")
+    assert run_row(migrated, report.run_id)[4] == (
+        "network hatası alan 2 sayfa, ikinci okuma: 1 düzeldi, 1 hâlâ hatalı"
+    )
+
+
+@pytest.mark.parametrize(
+    "error, code",
+    [
+        (FetchError("blocked", "Kaynak HTTP 403"), "blocked"),
+        (FetchError("parse", "bozuk yanıt"), "parse"),
+        (FetchError("identity", "başka model"), "identity"),
+        (FetchError("http_error", "HTTP 404"), "http_error"),
+        (FetchError("invalid_host", "alan adı dışında"), "invalid_host"),
+        (ValueError("beklenmeyen biçim"), "validation"),
+        (RuntimeError("scraper içinde hata"), "unexpected"),
+    ],
+)
+def test_only_network_errors_are_read_again(migrated, catalog_path, error, code):
+    page = fails_then(error, OFFER)
+    report, _ = run_collect(migrated, catalog_path, {**BEHAVIOURS, "trendyol_1": page})
+    assert len(page.reads) == 1
+    assert results(migrated, report.run_id)["trendyol_1"][:2] == ("error", code)
+    assert run_row(migrated, report.run_id)[4] is None  # ikinci okuma hiç yapılmadı
+
+
+def test_second_pass_stops_after_five_consecutive_network_errors(migrated, tmp_path):
+    path, ids = big_catalog(tmp_path)
+    # İkinci okumada: 4 hata, 1 düzelme (ardışık sayaç sıfırlanır), sonra 5 hata
+    # ve durma; son 2 sayfa denenmez.
+    pages = {
+        item: fails_then(NETWORK, OFFER if number == 4 else NETWORK)
+        for number, item in enumerate(ids)
+    }
+    report, lines = run_collect(migrated, path, pages)
+    assert [len(pages[item].reads) for item in ids] == [2] * 10 + [1] * 2
+    checked = results(migrated, report.run_id)
+    assert checked[ids[4]][0] == "offer"
+    assert [checked[item][:2] for item in ids[:4] + ids[5:]] == [
+        ("error", "network")
+    ] * 11
+    assert run_row(migrated, report.run_id)[4] == (
+        "network hatası alan 12 sayfa, ikinci okuma: 1 düzeldi, 9 hâlâ hatalı, "
+        "2 denenmedi (ardışık 5 network hatasında durdu)"
+    )
+    assert any("2 sayfa yeniden denenmedi" in line for line in lines)
+    assert run_row(migrated, report.run_id)[0] == "completed"
+
+
+def test_second_pass_gives_up_quickly_while_the_connection_is_still_down(
+    migrated, tmp_path
+):
+    path, ids = big_catalog(tmp_path)
+    pages = {item: fails_then(NETWORK, NETWORK) for item in ids}
+    report, _ = run_collect(migrated, path, pages)
+    # İnternet tur boyunca yok: 12 sayfanın hepsini yeniden denemek yerine 5'inde durur.
+    assert [len(pages[item].reads) for item in ids] == [2] * 5 + [1] * 7
+    assert run_row(migrated, report.run_id)[4] == (
+        "network hatası alan 12 sayfa, ikinci okuma: 0 düzeldi, 5 hâlâ hatalı, "
+        "7 denenmedi (ardışık 5 network hatasında durdu)"
+    )
+
+
+def test_value_rejected_by_database_on_second_read_keeps_the_network_row(
+    migrated, catalog_path
+):
+    # Sütuna sığmayan çizili fiyat: ikinci okumanın sonucu yazılamaz, ilk satır kalır.
+    page = fails_then(NETWORK, {**OFFER, "original_price": 3_000_000_000})
+    report, lines = run_collect(
+        migrated, catalog_path, {**BEHAVIOURS, "trendyol_1": page}
+    )
+    assert check_row(migrated, report.run_id, "trendyol_1")[:3] == (
+        "error",
+        "network",
+        "DNS çözülemedi",
+    )
+    assert run_row(migrated, report.run_id)[0] == "completed"
+    assert run_row(migrated, report.run_id)[4] == (
+        "network hatası alan 1 sayfa, ikinci okuma: 0 düzeldi, 1 hâlâ hatalı"
+    )
+    assert any("veritabanı yeni sonucu reddetti" in line for line in lines)
+
+
+def test_ctrl_c_during_second_pass_interrupts_run_and_keeps_network_rows(
+    migrated, catalog_path
+):
+    page = fails_then(NETWORK, KeyboardInterrupt())
+    with pytest.raises(KeyboardInterrupt):
+        run_collect(migrated, catalog_path, {**BEHAVIOURS, "trendyol_1": page})
+    run_id = last_run_id(migrated)
+    status, _, _, finished, note = run_row(migrated, run_id)
+    assert (status, finished, note) == (
+        "interrupted",
+        True,
+        "Durduruldu: KeyboardInterrupt",
+    )
+    checked = results(migrated, run_id)
+    assert checked["trendyol_1"][:2] == ("error", "network")
+    assert checked["trendyol_2"][0] == "offer"  # ilk geçişin sonuçları yerinde
+    assert run_lock_is_free()
+
+
+def test_retry_note_is_appended_to_the_prefix_note(migrated, catalog_path):
+    report, _ = run_collect(
+        migrated,
+        catalog_path,
+        {**BEHAVIOURS, "trendyol_7": fails_then(NETWORK, OFFER)},
+        prefix="poco_",
+    )
+    assert run_row(migrated, report.run_id)[4] == (
+        "--prefix poco_; network hatası alan 1 sayfa, "
+        "ikinci okuma: 1 düzeldi, 0 hâlâ hatalı"
+    )
+
+
+def test_recovered_page_keeps_the_product_comparable_with_the_previous_run(
+    migrated, catalog_path
+):
+    # Ürün 1'in cevap veren sayfa kümesi iki turda aynı kalır: geçici kesinti
+    # sahte bir "karşılaştırılamaz" satırı üretmez (Adım 4 görünümü).
+    run_collect(migrated, catalog_path)
+    behaviours = {**BEHAVIOURS, "trendyol_1": fails_then(NETWORK, OFFER)}
+    report, _ = run_collect(migrated, catalog_path, behaviours)
+    assert migrated.execute(
+        "SELECT comparable_with_previous, answered_pages, error_pages"
+        " FROM product_run_prices WHERE run_id = %s AND product_id = 1",
+        (report.run_id,),
+    ).fetchone() == (True, 3, 3)
+
+
+def rewrite_offer():
+    return runs.CheckResult(
+        outcome="offer",
+        checked_at=utc_now(),
+        current_price=5724900,
+        seller_name="Satıcı A",
+        seller_rating=9.5,
+        seller_rating_scale=10.0,
+        stock_status="Stokta Var",
+    )
+
+
+def test_rewrite_replaces_a_network_error_exactly_once(migrated, catalog_path):
+    run_id = open_run(migrated, catalog_path)
+    runs.record_result(
+        migrated, run_id, "trendyol_1", service.error_result("network", "koptu")
+    )
+    runs.rewrite_network_result(migrated, run_id, "trendyol_1", rewrite_offer())
+    assert check_row(migrated, run_id, "trendyol_1")[:4] == (
+        "offer",
+        None,
+        None,
+        5724900,
+    )
+    # Satır artık network hatası değil: ikinci kez yeniden yazılamaz.
+    with pytest.raises(RuntimeError, match="yeniden yazılamadı"):
+        runs.rewrite_network_result(migrated, run_id, "trendyol_1", rewrite_offer())
+
+
+def test_rewrite_refuses_other_rows_and_closed_runs(migrated, catalog_path):
+    run_id = open_run(
+        migrated,
+        catalog_path,
+        [("trendyol_1", 1), ("trendyol_2", 1), ("trendyol_3", 1)],
+    )
+    runs.record_result(
+        migrated, run_id, "trendyol_1", service.error_result("blocked", "403")
+    )
+    runs.record_result(
+        migrated, run_id, "trendyol_2", service.error_result("network", "koptu")
+    )
+    # Başka kodlu hata ve henüz sonuçsuz (planlı) satır yeniden yazılamaz.
+    for listing_id in ("trendyol_1", "trendyol_3"):
+        with pytest.raises(RuntimeError, match="yeniden yazılamadı"):
+            runs.rewrite_network_result(migrated, run_id, listing_id, rewrite_offer())
+    assert check_row(migrated, run_id, "trendyol_1")[:2] == ("error", "blocked")
+    assert check_row(migrated, run_id, "trendyol_3")[0] is None
+    # Tur kapanınca network satırı da donar.
+    runs.finish_run(migrated, run_id, "completed")
+    with pytest.raises(RuntimeError, match="yeniden yazılamadı"):
+        runs.rewrite_network_result(migrated, run_id, "trendyol_2", rewrite_offer())
+    assert check_row(migrated, run_id, "trendyol_2")[:2] == ("error", "network")
 
 
 # --- Komut satırı ve ortak kilit -------------------------------------------------

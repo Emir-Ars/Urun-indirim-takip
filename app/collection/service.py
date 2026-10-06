@@ -2,8 +2,9 @@
 
 Akış: şema kontrolü → veritabanı tur kilidi → yarım kalmış turları kapatma →
 katalog eşitleme → turu ve planlanan sayfaları açma → her sayfayı mevcut
-scraper'la okuyup sonucunu hemen yazma → turu kapatma. Ortak dosya kilidini
-çağıran taraf (komut satırı) tutar.
+scraper'la okuyup sonucunu hemen yazma → `network` hatası alan sayfaları bir kez
+yeniden okuma → turu kapatma. Ortak dosya kilidini çağıran taraf (komut satırı)
+tutar.
 """
 
 import traceback
@@ -29,6 +30,10 @@ from app.scraper.http import FetchError
 from app.settings import Runtime
 
 MAX_ERROR_MESSAGE = 500
+# Tur sonu ikinci okumada ardışık bu kadar sayfa yine `network` verirse geçiş
+# durur: bağlantı hâlâ yoktur ve kalan sayfaları denemek (3 sn aralıkla ~17 dk)
+# boşa gider.
+NETWORK_RETRY_STOP = 5
 
 
 class CollectionError(Exception):
@@ -198,13 +203,23 @@ def _collect(conn, catalog_path, runtime, trigger, prefix, create, out) -> RunRe
     )
     try:
         out(f"Tur {run_id} başladı: {len(planned)} sayfa (katalog {digest[:12]}…)")
+        network_failed = []
         for index, listing in enumerate(planned, 1):
             result = check_listing(
                 listing, platforms[listing.platform], runtime, create
             )
             result = record(conn, run_id, listing.listing_id, result)
             out(f"[{index}/{len(planned)}] {listing.listing_id}  {describe(result)}")
-        runs.finish_run(conn, run_id, "completed")
+            if result.outcome == "error" and result.error_code == "network":
+                network_failed.append(listing)
+        retry_note = (
+            retry_network_errors(
+                conn, run_id, network_failed, platforms, runtime, create, out
+            )
+            if network_failed
+            else None
+        )
+        runs.finish_run(conn, run_id, "completed", note=retry_note)
     except BaseException as exc:
         # Ctrl+C veya veritabanı hatası: yazılanlar kalır, bakılmayanlar sonuçsuz.
         # Bağlantı kopmuşsa kapatma da başarısız olur; asıl hata gölgelenmesin
@@ -215,6 +230,68 @@ def _collect(conn, catalog_path, runtime, trigger, prefix, create, out) -> RunRe
             )
         raise
     return RunReport(run_id, len(planned), runs.run_summary(conn, run_id), closed_stale)
+
+
+def retry_network_errors(
+    conn: psycopg.Connection,
+    run_id: int,
+    failed: list[ProductListing],
+    platforms: dict[str, Platform],
+    runtime: Runtime,
+    create: Callable,
+    out: Callable[[str], None],
+) -> str:
+    """Tur sonunda yalnız `network` hatası alan sayfaları bir kez yeniden okur.
+
+    Bağlantı tur ortasında koptuysa ve tur bitmeden döndüyse (28 Eylül: 47 sayfa,
+    4 Ekim: 109 sayfa) bu sayfalar okunabilir durumdadır. Yeni sonuç hata satırının
+    üzerine yazılır; sayfa başına tek satır kuralı korunur. İkinci okuma da
+    `network` verirse yeni bilgi yoktur ve ilk satır olduğu gibi kalır. `blocked`
+    ve diğer hatalar yeniden denenmez (zaten bu listeye girmezler). Ardışık
+    NETWORK_RETRY_STOP sayfa yine `network` verirse bağlantı hâlâ yok demektir ve
+    kalan sayfalar denenmez. Tur notuna yazılacak sayıları döndürür.
+
+    Ctrl+C ve veritabanı bağlantı hatası çağıranda ele alınır (tur `interrupted`).
+    """
+    out(f"Tur sonu: network hatası alan {len(failed)} sayfa yeniden okunuyor")
+    fixed = still_failing = consecutive = 0
+    for index, listing in enumerate(failed, 1):
+        result = check_listing(listing, platforms[listing.platform], runtime, create)
+        label = f"[tekrar {index}/{len(failed)}] {listing.listing_id}"
+        if result.outcome == "error" and result.error_code == "network":
+            still_failing += 1
+            consecutive += 1
+            out(f"{label}  {describe(result)}")
+            if consecutive >= NETWORK_RETRY_STOP:
+                break
+            continue
+        consecutive = 0
+        try:
+            runs.rewrite_network_result(conn, run_id, listing.listing_id, result)
+        except (psycopg.DataError, psycopg.IntegrityError) as exc:
+            # İlk satır (network hatası) kalır; tur sürer.
+            still_failing += 1
+            out(f"{label}  veritabanı yeni sonucu reddetti, ilk hata kaldı: {exc}")
+            continue
+        out(f"{label}  {describe(result)}")
+        if result.outcome == "error":
+            still_failing += 1
+        else:
+            fixed += 1
+    skipped = len(failed) - fixed - still_failing
+    parts = [f"{fixed} düzeldi", f"{still_failing} hâlâ hatalı"]
+    if skipped:
+        out(
+            f"Ardışık {NETWORK_RETRY_STOP} network hatası: bağlantı hâlâ yok; "
+            f"{skipped} sayfa yeniden denenmedi"
+        )
+        parts.append(
+            f"{skipped} denenmedi "
+            f"(ardışık {NETWORK_RETRY_STOP} network hatasında durdu)"
+        )
+    note = f"network hatası alan {len(failed)} sayfa, ikinci okuma: " + ", ".join(parts)
+    out(note)
+    return note
 
 
 def describe(result: runs.CheckResult) -> str:
