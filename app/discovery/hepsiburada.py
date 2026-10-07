@@ -225,14 +225,12 @@ class Discovery(BaseDiscovery):
         canonical = soup.select_one('link[rel="canonical"][href]')
         if canonical is not None:
             canonical_url = canonical["href"]
-            if (
-                # Yalnız https://www.hepsiburada.com adresi kabul edilir; başka alan
-                # adı katalog doğrulamasını ve bütün çalışmayı bozardı.
-                canonical_url.startswith(HOME)
-                and SKU_PATTERN.search(canonical_url)
-                and expected_sku in canonical_url.upper()
-            ):
-                url = canonical_url
+            # Yalnız https://www.hepsiburada.com adresi kabul edilir; başka alan
+            # adı katalog doğrulamasını ve bütün çalışmayı bozardı.
+            if canonical_url.startswith(HOME):
+                canonical_sku = SKU_PATTERN.search(urlsplit(canonical_url).path)
+                if canonical_sku and canonical_sku.group(1).upper() == expected_sku:
+                    url = canonical_url
         candidate = DiscoveryCandidate(
             target_key=self.target.key,
             platform=self.platform,

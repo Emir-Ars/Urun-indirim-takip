@@ -340,8 +340,14 @@ tur kendi ortamında çalıştığı için etkilenmez.
    listesi (`slicing-attributes`) okunur; kardeş sayfalar eklenir. Bağlantının
    rengi bu listedeki addır (sayfanın renk seçicisinde görünen ad, ör. "Abis");
    ürün listede yoksa satıcının "Renk" özelliği kullanılır.
-7. Her aday sayfa açılır: ürün kimliği, marka, telefon kategorisi, model,
-   kapasite ve (hedefte `network` varsa) "Mobil Bağlantı Hızı" doğrulanır.
+7. Aday adresinin ürün yolundaki `-p-<id>` kimliği, arama/varyant kaynağındaki
+   ürün kimliğiyle eşleştirilir. Eksik veya farklı kimlikte istek gönderilmeden
+   `identity` hatası verilir; raporda `candidate_rejected` olur, diğer adaylarla
+   devam edilir. Sorgu parametresindeki kimlik eşleşme için kullanılmaz.
+   Reddedilen adres ürün sayfası deneme sınırından bir hak tüketir; HTTP istek
+   bütçesini tüketmez. Geçerli sayfa açılınca sayfanın kendi ürün kimliği, marka,
+   telefon kategorisi, model, kapasite ve (hedefte `network` varsa) "Mobil Bağlantı
+   Hızı" ayrıca doğrulanır; başka ürüne yönlendirme kimlik denetimini aşamaz.
 
 ### Hepsiburada
 
@@ -357,12 +363,19 @@ tur kendi ortamında çalıştığı için etkilenmez.
    `allVariantCombinations` (bütün renk/kapasite seçenekleri) kuyruğa eklenir.
    Stoksuz olduğu için aramada görünmeyen kapasiteler de böyle bulunur.
 
-Canonical adresi aynı ürünün adresi olmayabilir: 6 Ekim iPhone 15 kontrolünde
-16 ürünün 9'u grup (`-pm-`), 7'si model/kategori adresi bildirdi. Bunlar SKU
-adresine uymadığı için keşif onları kullanmadı; doğrulanmış mevcut ürün
-adresleri korundu. Bu örnekte farklı SKU içeren bir ürün canonical adresi
-görülmedi; alt dize karşılaştırmasıyla ilgili yapay risk Bölüm 7'de açık
-duruyor ([proje_plani.md](../proje_plani.md)).
+Canonical adresi aynı ürünün adresi olmayabilir. Keşif yalnız
+`https://www.hepsiburada.com/` adresinde, ürün yolundan çıkarılan SKU beklenen
+SKU'ya **tam eşitse** canonical adresini kullanır; küçük harfli SKU eşdeğerdir.
+Farklı SKU, grup/kategori adresi, başka alan adı veya yalnız sorguda geçen SKU
+canonical olarak kullanılmaz; doğrulanmış istenen ürün adresi korunur, geçerli
+aday sırf canonical farklı diye reddedilmez.
+
+6 Ekim iPhone 15 ve 7 Ekim Galaxy S24 ham kayıtlarında 36 ürün sayfasının
+canonical adresleri 13 grup (`-pm-`), 23 model/kategori adresiydi. Kabul edilen
+24 adayın özgün adresleri korundu; diğer 12 sayfa başka model olduğu için
+reddedildi. Gerçek farklı SKU canonical örneği görülmedi. Tam eşitlik koruması
+7 Ekim'de kullanıcının bakım 2'ye özel onayıyla önleyici olarak uygulandı
+([proje_plani.md](../proje_plani.md), Bölüm 7).
 
 ### Katalogla birleştirme (`service.py`)
 
@@ -1079,12 +1092,26 @@ eksik alan/başlık yedeği, başka SKU ve keşfin diğer adaylarla devamını k
 Eski kodda 31 yeni sınama başarısızdı (24 çelişki reddi dahil), 44'ü geçti;
 kayıtlı 36 sayfanın koruma sınamaları eski kodda da geçti.
 
+7 Ekim adres kimliği bakımı da **önleyici düzeltmedir**; kullanıcı bakım 2 için
+ayrı istisna verdi. Aynı iki gerçek kayıttaki 6 TY varyant/adres/sayfa kimliği ve
+36 HB ürün SKU'su eşleşti; sorunlu kaynak yanıtı veya yanlış kayıt kanıtı yok.
+`tests/fixtures/discovery/trendyol_identity_examples.json`, 6 kabul edilen
+TY adayının adresi, hedefi, varyant rengi ve sayfada kullanılan kimlik alanlarını
+saklar; fiyat/stok içermez. Bütün aday alanları gerçek raporla eşleştirilir.
+Mevcut HB fixture'ındaki 24 aday ve 12 model reddi de korunur. 31 yeni sınamada
+kimliksiz/farklı TY adresi, bozuk son ek, sorgu metninin kimlik gibi kullanılması,
+HB SKU alt dize tuzağı, geçerli sorgu/eğik çizgi/küçük harfli SKU, sayfa kimliği
+reddi ve keşfin devamı denetlendi. Eski kodda 12 yeni sınama başarısız, 19 başarılı
+oldu; kayıtlı 6 TY adayının koruma sınamaları eski kodda da geçti. Genel kimlik
+kurallarında gerçek kaynak şartı devam eder; bakım 5'te adres tüketicilerinin
+karşılaştırılması ayrıca yapılacaktır.
+
 ## Testler ne kanıtlar, ne kanıtlamaz
 
-- **Otomatik testler (727; 219'u gerçek PostgreSQL'de):** Kuralların doğru
+- **Otomatik testler (758; 219'u gerçek PostgreSQL'de):** Kuralların doğru
   çalıştığını kayıtlı ve sahte yanıtlarla kanıtlar. Kimlik değişiklikleri gerçek
-  kaynak örneği ve regresyon ister; 7 Ekim varyant bakımı kullanıcının bu maddeye
-  özel onayıyla yapay çelişkilere karşı önleyici koruma olarak uygulandı.
+  kaynak örneği ve regresyon ister; 7 Ekim varyant ve adres bakımları kullanıcının
+  her maddeye ayrı onayıyla yapay çelişkilere karşı önleyici koruma olarak uygulandı.
   Sitelerin bugün hâlâ aynı yapıda olduğunu kanıtlamaz. Veritabanı testleri
   şema kurallarının, migration koşucusunun, katalog eşitlemenin ve toplama
   turunun gerçek PostgreSQL'de doğru çalıştığını kanıtlar; tur testleri sahte

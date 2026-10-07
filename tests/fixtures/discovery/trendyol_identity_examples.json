@@ -1,0 +1,524 @@
+[
+  {
+    "source_file": "data/kimlik_iphone15_20261006/trendyol_apple_iphone_15/0009.html",
+    "target": {
+      "key": "apple_iphone_15",
+      "brand": "Apple",
+      "model": "iPhone 15",
+      "active": true
+    },
+    "url": "https://www.trendyol.com/apple/iphone-15-128-gb-mavi-p-762254881",
+    "variant_color": "Blue",
+    "product": {
+      "id": 762254881,
+      "name": "iPhone 15 128 GB Mavi",
+      "slicingAttributes": {
+        "Internal Memory": "128 GB"
+      },
+      "brand": {
+        "name": "Apple"
+      },
+      "businessUnitData": {
+        "name": "Mobile Phone"
+      },
+      "category": {
+        "name": "IOS Cep Telefonları"
+      },
+      "attributes": [
+        {
+          "key": {
+            "name": "Garanti Tipi"
+          },
+          "value": {
+            "name": "Apple Türkiye Garantili"
+          },
+          "type": "Warranty Type"
+        },
+        {
+          "key": {
+            "name": "Dahili Hafıza"
+          },
+          "value": {
+            "name": "128 GB"
+          },
+          "type": "Internal Memory"
+        },
+        {
+          "key": {
+            "name": "Mobil Bağlantı Hızı"
+          },
+          "value": {
+            "name": "5G"
+          },
+          "type": "DEFAULT"
+        },
+        {
+          "key": {
+            "name": "RAM Kapasitesi"
+          },
+          "value": {
+            "name": "6 GB"
+          },
+          "type": "Ram (System Memory)"
+        },
+        {
+          "key": {
+            "name": "Renk"
+          },
+          "value": {
+            "name": "Mavi"
+          },
+          "type": "WebColor"
+        }
+      ]
+    },
+    "expected_candidate": {
+      "target_key": "apple_iphone_15",
+      "platform": "trendyol",
+      "platform_product_id": "762254881",
+      "url": "https://www.trendyol.com/apple/iphone-15-128-gb-mavi-p-762254881",
+      "brand": "Apple",
+      "model": "iPhone 15",
+      "storage_gb": 128,
+      "color": "Blue",
+      "ram_gb": 6,
+      "warranty_text": "Apple Türkiye Garantili",
+      "warranty_source": "product.attributes"
+    }
+  },
+  {
+    "source_file": "data/kimlik_iphone15_20261006/trendyol_apple_iphone_15/0010.html",
+    "target": {
+      "key": "apple_iphone_15",
+      "brand": "Apple",
+      "model": "iPhone 15",
+      "active": true
+    },
+    "url": "https://www.trendyol.com/apple/iphone-15-128-gb-siyah-p-762254878",
+    "variant_color": "Black",
+    "product": {
+      "id": 762254878,
+      "name": "iPhone 15 128 GB Siyah",
+      "slicingAttributes": {
+        "Internal Memory": "128 GB"
+      },
+      "brand": {
+        "name": "Apple"
+      },
+      "businessUnitData": {
+        "name": "Mobile Phone"
+      },
+      "category": {
+        "name": "IOS Cep Telefonları"
+      },
+      "attributes": [
+        {
+          "key": {
+            "name": "Garanti Tipi"
+          },
+          "value": {
+            "name": "Apple Türkiye Garantili"
+          },
+          "type": "Warranty Type"
+        },
+        {
+          "key": {
+            "name": "Dahili Hafıza"
+          },
+          "value": {
+            "name": "128 GB"
+          },
+          "type": "Internal Memory"
+        },
+        {
+          "key": {
+            "name": "Mobil Bağlantı Hızı"
+          },
+          "value": {
+            "name": "5G"
+          },
+          "type": "DEFAULT"
+        },
+        {
+          "key": {
+            "name": "RAM Kapasitesi"
+          },
+          "value": {
+            "name": "6 GB"
+          },
+          "type": "Ram (System Memory)"
+        },
+        {
+          "key": {
+            "name": "Renk"
+          },
+          "value": {
+            "name": "Siyah"
+          },
+          "type": "WebColor"
+        }
+      ]
+    },
+    "expected_candidate": {
+      "target_key": "apple_iphone_15",
+      "platform": "trendyol",
+      "platform_product_id": "762254878",
+      "url": "https://www.trendyol.com/apple/iphone-15-128-gb-siyah-p-762254878",
+      "brand": "Apple",
+      "model": "iPhone 15",
+      "storage_gb": 128,
+      "color": "Black",
+      "ram_gb": 6,
+      "warranty_text": "Apple Türkiye Garantili",
+      "warranty_source": "product.attributes"
+    }
+  },
+  {
+    "source_file": "data/kimlik_iphone15_20261006/trendyol_apple_iphone_15/0011.html",
+    "target": {
+      "key": "apple_iphone_15",
+      "brand": "Apple",
+      "model": "iPhone 15",
+      "active": true
+    },
+    "url": "https://www.trendyol.com/apple/iphone-15-256-gb-mavi-p-762254862",
+    "variant_color": "Blue",
+    "product": {
+      "id": 762254862,
+      "name": "iPhone 15 256 GB Mavi",
+      "slicingAttributes": {
+        "Internal Memory": "256 GB"
+      },
+      "brand": {
+        "name": "Apple"
+      },
+      "businessUnitData": {
+        "name": "Mobile Phone"
+      },
+      "category": {
+        "name": "IOS Cep Telefonları"
+      },
+      "attributes": [
+        {
+          "key": {
+            "name": "Garanti Tipi"
+          },
+          "value": {
+            "name": "Apple Türkiye Garantili"
+          },
+          "type": "Warranty Type"
+        },
+        {
+          "key": {
+            "name": "Dahili Hafıza"
+          },
+          "value": {
+            "name": "256 GB"
+          },
+          "type": "Internal Memory"
+        },
+        {
+          "key": {
+            "name": "Mobil Bağlantı Hızı"
+          },
+          "value": {
+            "name": "5G"
+          },
+          "type": "DEFAULT"
+        },
+        {
+          "key": {
+            "name": "RAM Kapasitesi"
+          },
+          "value": {
+            "name": "6 GB"
+          },
+          "type": "Ram (System Memory)"
+        },
+        {
+          "key": {
+            "name": "Renk"
+          },
+          "value": {
+            "name": "Mavi"
+          },
+          "type": "WebColor"
+        }
+      ]
+    },
+    "expected_candidate": {
+      "target_key": "apple_iphone_15",
+      "platform": "trendyol",
+      "platform_product_id": "762254862",
+      "url": "https://www.trendyol.com/apple/iphone-15-256-gb-mavi-p-762254862",
+      "brand": "Apple",
+      "model": "iPhone 15",
+      "storage_gb": 256,
+      "color": "Blue",
+      "ram_gb": 6,
+      "warranty_text": "Apple Türkiye Garantili",
+      "warranty_source": "product.attributes"
+    }
+  },
+  {
+    "source_file": "data/kimlik_iphone15_20261006/trendyol_apple_iphone_15/0012.html",
+    "target": {
+      "key": "apple_iphone_15",
+      "brand": "Apple",
+      "model": "iPhone 15",
+      "active": true
+    },
+    "url": "https://www.trendyol.com/apple/iphone-15-128-gb-pembe-p-762254841",
+    "variant_color": "Pembe",
+    "product": {
+      "id": 762254841,
+      "name": "iPhone 15 128 GB Pembe",
+      "slicingAttributes": {
+        "Internal Memory": "128 GB"
+      },
+      "brand": {
+        "name": "Apple"
+      },
+      "businessUnitData": {
+        "name": "Mobile Phone"
+      },
+      "category": {
+        "name": "IOS Cep Telefonları"
+      },
+      "attributes": [
+        {
+          "key": {
+            "name": "Garanti Tipi"
+          },
+          "value": {
+            "name": "Apple Türkiye Garantili"
+          },
+          "type": "Warranty Type"
+        },
+        {
+          "key": {
+            "name": "Dahili Hafıza"
+          },
+          "value": {
+            "name": "128 GB"
+          },
+          "type": "Internal Memory"
+        },
+        {
+          "key": {
+            "name": "Mobil Bağlantı Hızı"
+          },
+          "value": {
+            "name": "5G"
+          },
+          "type": "DEFAULT"
+        },
+        {
+          "key": {
+            "name": "RAM Kapasitesi"
+          },
+          "value": {
+            "name": "6 GB"
+          },
+          "type": "Ram (System Memory)"
+        },
+        {
+          "key": {
+            "name": "Renk"
+          },
+          "value": {
+            "name": "Pembe"
+          },
+          "type": "WebColor"
+        }
+      ]
+    },
+    "expected_candidate": {
+      "target_key": "apple_iphone_15",
+      "platform": "trendyol",
+      "platform_product_id": "762254841",
+      "url": "https://www.trendyol.com/apple/iphone-15-128-gb-pembe-p-762254841",
+      "brand": "Apple",
+      "model": "iPhone 15",
+      "storage_gb": 128,
+      "color": "Pembe",
+      "ram_gb": 6,
+      "warranty_text": "Apple Türkiye Garantili",
+      "warranty_source": "product.attributes"
+    }
+  },
+  {
+    "source_file": "data/kimlik_iphone15_20261006/trendyol_apple_iphone_15/0013.html",
+    "target": {
+      "key": "apple_iphone_15",
+      "brand": "Apple",
+      "model": "iPhone 15",
+      "active": true
+    },
+    "url": "https://www.trendyol.com/apple/iphone-15-256-gb-siyah-p-762254844",
+    "variant_color": "Black",
+    "product": {
+      "id": 762254844,
+      "name": "iPhone 15 256 GB Siyah",
+      "slicingAttributes": {
+        "Internal Memory": "256 GB"
+      },
+      "brand": {
+        "name": "Apple"
+      },
+      "businessUnitData": {
+        "name": "Mobile Phone"
+      },
+      "category": {
+        "name": "IOS Cep Telefonları"
+      },
+      "attributes": [
+        {
+          "key": {
+            "name": "Garanti Tipi"
+          },
+          "value": {
+            "name": "Apple Türkiye Garantili"
+          },
+          "type": "Warranty Type"
+        },
+        {
+          "key": {
+            "name": "Dahili Hafıza"
+          },
+          "value": {
+            "name": "256 GB"
+          },
+          "type": "Internal Memory"
+        },
+        {
+          "key": {
+            "name": "Mobil Bağlantı Hızı"
+          },
+          "value": {
+            "name": "5G"
+          },
+          "type": "DEFAULT"
+        },
+        {
+          "key": {
+            "name": "RAM Kapasitesi"
+          },
+          "value": {
+            "name": "6 GB"
+          },
+          "type": "Ram (System Memory)"
+        },
+        {
+          "key": {
+            "name": "Renk"
+          },
+          "value": {
+            "name": "Siyah"
+          },
+          "type": "WebColor"
+        }
+      ]
+    },
+    "expected_candidate": {
+      "target_key": "apple_iphone_15",
+      "platform": "trendyol",
+      "platform_product_id": "762254844",
+      "url": "https://www.trendyol.com/apple/iphone-15-256-gb-siyah-p-762254844",
+      "brand": "Apple",
+      "model": "iPhone 15",
+      "storage_gb": 256,
+      "color": "Black",
+      "ram_gb": 6,
+      "warranty_text": "Apple Türkiye Garantili",
+      "warranty_source": "product.attributes"
+    }
+  },
+  {
+    "source_file": "data/varyant_s24_20261007_105625/trendyol_samsung_galaxy_s24/0013.html",
+    "target": {
+      "key": "samsung_galaxy_s24",
+      "brand": "Samsung",
+      "model": "Galaxy S24",
+      "active": true
+    },
+    "url": "https://www.trendyol.com/samsung/galaxy-s24-256-gb-gri-p-792775312",
+    "variant_color": null,
+    "product": {
+      "id": 792775312,
+      "name": "Galaxy S24 256 GB Gri",
+      "slicingAttributes": {
+        "Internal Memory": "256 GB"
+      },
+      "brand": {
+        "name": "Samsung"
+      },
+      "businessUnitData": {
+        "name": "Mobile Phone"
+      },
+      "category": {
+        "name": "Android Cep Telefonu"
+      },
+      "attributes": [
+        {
+          "key": {
+            "name": "Dahili Hafıza"
+          },
+          "value": {
+            "name": "256 GB"
+          },
+          "type": "Internal Memory"
+        },
+        {
+          "key": {
+            "name": "Garanti Tipi"
+          },
+          "value": {
+            "name": "Samsung TR Garantili"
+          },
+          "type": "Warranty Type"
+        },
+        {
+          "key": {
+            "name": "Mobil Bağlantı Hızı"
+          },
+          "value": {
+            "name": "5G"
+          },
+          "type": "DEFAULT"
+        },
+        {
+          "key": {
+            "name": "RAM Kapasitesi"
+          },
+          "value": {
+            "name": "Yok"
+          },
+          "type": "Ram (System Memory)"
+        },
+        {
+          "key": {
+            "name": "Renk"
+          },
+          "value": {
+            "name": "Gri"
+          },
+          "type": "WebColor"
+        }
+      ]
+    },
+    "expected_candidate": {
+      "target_key": "samsung_galaxy_s24",
+      "platform": "trendyol",
+      "platform_product_id": "792775312",
+      "url": "https://www.trendyol.com/samsung/galaxy-s24-256-gb-gri-p-792775312",
+      "brand": "Samsung",
+      "model": "Galaxy S24",
+      "storage_gb": 256,
+      "color": "Gri",
+      "ram_gb": null,
+      "warranty_text": "Samsung TR Garantili",
+      "warranty_source": "product.attributes"
+    }
+  }
+]

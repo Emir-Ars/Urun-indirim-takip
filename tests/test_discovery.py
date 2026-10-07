@@ -2501,3 +2501,217 @@ def test_hepsiburada_canonical_url_must_stay_on_platform(monkeypatch):
     candidate, _ = discovery._product(url, "HBCV00004X9ZCK")
     assert candidate.url == same_site
     discovery.close()
+
+
+TRENDYOL_IDENTITY_EXAMPLES = fixture("trendyol_identity_examples.json")
+
+
+def trendyol_identity_html(product):
+    return (
+        '<script>window["__envoy__SHARED_PROPS"] = '
+        f"{json.dumps({'product': product})};</script>"
+    )
+
+
+@pytest.mark.parametrize(
+    "example",
+    TRENDYOL_IDENTITY_EXAMPLES,
+    ids=lambda example: str(example["product"]["id"]),
+)
+def test_trendyol_saved_address_identity_preserves_candidate(monkeypatch, example):
+    discovery = TrendyolDiscovery(
+        DiscoveryTarget.model_validate(example["target"]),
+        DiscoveryConfig(targets=[]),
+        Runtime(),
+    )
+    monkeypatch.setattr(
+        discovery, "get", lambda url: trendyol_identity_html(example["product"])
+    )
+    try:
+        candidate = discovery._candidate(
+            example["url"], str(example["product"]["id"]), example["variant_color"]
+        )
+        assert candidate.model_dump(mode="json") == example["expected_candidate"]
+    finally:
+        discovery.close()
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "/apple/iphone-15",
+        "/apple/iphone-15-p-999",
+        "/apple/iphone-15-p-762254881abc",
+        "/apple/iphone-15?redirect=other-p-762254881",
+        "/apple/iphone-15-p-999?redirect=other-p-762254881",
+    ],
+)
+def test_trendyol_candidate_rejects_wrong_address_before_request(monkeypatch, path):
+    discovery = trendyol_discovery()
+    opened = []
+
+    def get(url):
+        opened.append(url)
+        return trendyol_identity_html(TRENDYOL_IDENTITY_EXAMPLES[0]["product"])
+
+    monkeypatch.setattr(discovery, "get", get)
+    try:
+        with pytest.raises(FetchError) as error:
+            discovery._candidate("https://www.trendyol.com" + path, "762254881")
+        assert error.value.code == "identity"
+        assert "adres" in str(error.value)
+        assert opened == []
+        assert discovery.product_pages == 1
+    finally:
+        discovery.close()
+
+
+@pytest.mark.parametrize("suffix", ["", "?merchantId=1", "/", "/?merchantId=1"])
+def test_trendyol_candidate_accepts_matching_address(monkeypatch, suffix):
+    discovery = trendyol_discovery()
+    example = TRENDYOL_IDENTITY_EXAMPLES[0]
+    opened = []
+
+    def get(url):
+        opened.append(url)
+        return trendyol_identity_html(example["product"])
+
+    monkeypatch.setattr(discovery, "get", get)
+    url = example["url"] + suffix
+    try:
+        candidate = discovery._candidate(url, "762254881", example["variant_color"])
+        expected = {**example["expected_candidate"], "url": url}
+        assert candidate.model_dump(mode="json") == expected
+        assert opened == [url]
+    finally:
+        discovery.close()
+
+
+def test_trendyol_matching_address_still_checks_opened_page_id(monkeypatch):
+    discovery = trendyol_discovery()
+    example = TRENDYOL_IDENTITY_EXAMPLES[0]
+    product = {**example["product"], "id": 999}
+    monkeypatch.setattr(discovery, "get", lambda url: trendyol_identity_html(product))
+    try:
+        with pytest.raises(FetchError, match="ürün kimliği uyuşmuyor") as error:
+            discovery._candidate(example["url"], "762254881")
+        assert error.value.code == "identity"
+    finally:
+        discovery.close()
+
+
+@pytest.mark.parametrize("path", ["/apple/iphone-15", "/apple/iphone-15-p-999"])
+def test_trendyol_wrong_variant_address_keeps_other_candidates(monkeypatch, path):
+    discovery = trendyol_discovery()
+    example = TRENDYOL_IDENTITY_EXAMPLES[0]
+    monkeypatch.setattr(
+        discovery,
+        "_search_candidates",
+        lambda: ({"7": "762254881"}, {"762254881": example["url"]}, True),
+    )
+    variants = {
+        "isSuccess": True,
+        "statusCode": 200,
+        "result": [{"values": [{"products": [{"id": 123, "pageUrl": path}]}]}],
+    }
+    monkeypatch.setattr(discovery, "get_json", lambda url: variants)
+    opened = []
+
+    def get(url):
+        opened.append(url)
+        product = {
+            **example["product"],
+            "id": 762254881 if url == example["url"] else 123,
+        }
+        return trendyol_identity_html(product)
+
+    monkeypatch.setattr(discovery, "get", get)
+    try:
+        result = discovery.discover()
+        assert [item.platform_product_id for item in result.candidates] == ["762254881"]
+        assert opened == [example["url"]]
+        assert [issue.reason for issue in result.issues] == ["candidate_rejected"]
+        assert (
+            result.issues[0].detail == "123: Trendyol adres kimliği kaynakla uyuşmuyor"
+        )
+        assert discovery.product_pages == 2 and not result.complete
+    finally:
+        discovery.close()
+
+
+@pytest.mark.parametrize(
+    "canonical, use_canonical",
+    [
+        ("https://www.hepsiburada.com/other-p-HBCV00004X9ZCKX", False),
+        ("https://www.hepsiburada.com/HBCV00004X9ZCK/other-p-HBCV00000000", False),
+        (
+            "https://www.hepsiburada.com/other-p-HBCV00000000?ref=HBCV00004X9ZCK",
+            False,
+        ),
+        ("https://www.hepsiburada.com/other?ref=phone-p-HBCV00004X9ZCK", False),
+        ("https://www.hepsiburada.com/other-p-HBCV00004X9ZCK", True),
+        ("https://www.hepsiburada.com/other-p-HBCV00004X9ZCK?ref=1", True),
+        ("https://www.hepsiburada.com/other-p-HBCV00004X9ZCK/", True),
+        ("https://www.hepsiburada.com/other-p-hbcv00004x9zck", True),
+        ("https://www.hepsiburada.com/other-pm-HBC000123", False),
+        ("https://www.hepsiburada.com/apple-iphone-15-cep-telefonlari", False),
+        ("https://m.hepsiburada.com/other-p-HBCV00004X9ZCK", False),
+        (None, False),
+    ],
+)
+def test_hepsiburada_canonical_requires_exact_path_sku(
+    monkeypatch, canonical, use_canonical
+):
+    discovery = HepsiburadaDiscovery(
+        target("iPhone 15"), DiscoveryConfig(targets=[]), Runtime()
+    )
+    sku = "HBCV00004X9ZCK"
+    url = "https://www.hepsiburada.com/apple-iphone-15-128-gb-mavi-p-" + sku
+    state = {
+        "sku": sku,
+        "definitionName": "Cep Telefonu",
+        "brand": "Apple",
+        "allVariantCombinations": fixture("hepsiburada_variants.json")[
+            "allVariantCombinations"
+        ],
+    }
+    html = "<h1>Apple iPhone 15 128 GB Mavi</h1>"
+    if canonical is not None:
+        html += f'<link rel="canonical" href="{escape(canonical, quote=True)}">'
+    html += f'<script type="application/json">{json.dumps(state)}</script>'
+    monkeypatch.setattr(discovery, "get", lambda link: html)
+    try:
+        candidate, _ = discovery._product(url, sku)
+        assert candidate.url == (canonical if use_canonical else url)
+        assert candidate.platform_product_id == sku
+        assert (candidate.storage_gb, candidate.color) == (128, "Mavi")
+    finally:
+        discovery.close()
+
+
+def test_hepsiburada_wrong_canonical_keeps_discovery_candidate(monkeypatch):
+    discovery = HepsiburadaDiscovery(
+        target("iPhone 15"), DiscoveryConfig(targets=[]), Runtime()
+    )
+    sku = "HBCV00004X9ZCK"
+    url = "https://www.hepsiburada.com/apple-iphone-15-128-gb-mavi-p-" + sku
+    canonical = url + "X"
+    state = {
+        "sku": sku,
+        "definitionName": "Cep Telefonu",
+        "brand": "Apple",
+        "allVariantCombinations": [{"sku": sku, "Kapasite": "128 GB", "Renk": "Mavi"}],
+    }
+    html = (
+        f'<link rel="canonical" href="{canonical}">'
+        "<h1>Apple iPhone 15 128 GB Mavi</h1>"
+        f'<script type="application/json">{json.dumps(state)}</script>'
+    )
+    monkeypatch.setattr(discovery, "_search", lambda: {sku: url})
+    monkeypatch.setattr(discovery, "get", lambda link: html)
+    try:
+        result = discovery.discover()
+        assert [item.url for item in result.candidates] == [url]
+        assert result.complete and result.issues == []
+    finally:
+        discovery.close()

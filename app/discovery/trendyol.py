@@ -237,15 +237,16 @@ class Discovery(BaseDiscovery):
 
     def _candidate(self, url, expected_id, variant_color=None):
         self.product_pages += 1
+        address_id = PRODUCT_ID.search(urlsplit(url).path)
+        if address_id is None or address_id.group(1) != expected_id:
+            raise FetchError("identity", "Trendyol adres kimliği kaynakla uyuşmuyor")
         html = self.get(url)
         state = assigned_json(
             BeautifulSoup(html, "html.parser"), "__envoy__SHARED_PROPS"
         )
         product = (state or {}).get("product")
-        # Kart adresinin yalnız biçimi (-p-<id>) denetlenir, adresteki kimlik kartla
-        # karşılaştırılmaz; varyant listesindeki adres hiç denetlenmez. HTTP katmanı
-        # izinli alan adlarında yönlendirmeyi izlediği için site başka bir ürüne
-        # götürebilir; sayfanın kendi kimliği beklenenle tutmazsa aday reddedilir.
+        # HTTP izinli alan adlarında yönlendirmeyi izleyebilir; açılan sayfanın
+        # kendi kimliği de kaynakla eşleşmelidir.
         if not isinstance(product, dict) or str(product.get("id")) != expected_id:
             raise FetchError("identity", "Trendyol ürün kimliği uyuşmuyor")
         brand = (product.get("brand") or {}).get("name", "")
