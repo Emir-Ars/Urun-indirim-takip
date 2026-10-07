@@ -96,7 +96,7 @@ geçmişi. Kararların ve aşama durumunun ana kaynağı
 | `tests/test_contracts.py` | Pydantic sözleşmeleri (74 test): satılabilir teklif fiyat ve satıcı taşır, puan ölçeği aşamaz, üstü çizili fiyat güncel fiyattan büyüktür, katalog kimlik/referans/alan adı kuralları, `money()` kuruş çevirimi. |
 | `tests/test_trendyol_scraper.py`, `tests/test_hepsiburada_scraper.py` | Fiyat okuma (40 + 32 test): seçilen teklif, eşit fiyatta satıcı adı, çizili fiyat, Kritik Stok, Tükendi'nin yalnız açık sinyalle verilmesi, bozuk satıcı kayıtlarının reddi, ret nedenleri, `parse` dönüşümü. Sahte sayfa ve istemci; internete çıkmaz. |
 | `tests/test_discovery.py` | Keşif (141 test): kimlik kuralları, sayfalama ve uyarı türleri, katalog birleştirme (aynı adaylar hep aynı kimlikleri alır), dry-run'ın kataloğa yazmaması, LF satır sonu, BOM'lu ayar dosyaları, UTF-8 çıktı, çıkış kodları ve gerçek `config/*.json` dosyalarının sözleşmeye uyması. Ekli aksesuarlar model, başlık/yapısal kapasite, birden çok ürün adı ve kategori düzeyinde reddedilir; kayıtlı 21 telefonun kimlik kabulü korunur. Zamanlanmış keşif (log ve tarihli rapor, `--dry-run` zorunluluğu, konsolsuz çalışma, kilit meşgul, program hatası, log açılamaması, rapor klasörünün baştan denetimi, özet satırı) ve `--apply-report` (siteye gitmez, canlı yazmayla bayt bayt aynı katalog, ikinci uygulamada yazmama, önizleme olmayan/bozuk/sarmalı/yabancı alan adlı/önizlemeyi aşan rapor reddi) ağsız sınanır. Trendyol filtre uyarısının tek yazılması ve tarama sonrası yazma hatasının ("Tarama bitti ama sonuç yazılamadı", çıkış 1; log dahil) "başlatılamadı"dan ayrılması da burada denenir. |
-| `tests/test_collection.py` | Toplama turu (59 test; 54'ü gerçek PostgreSQL'de): sahte scraper'larla her sonuç türü, Ctrl+C, tur ortasında veritabanı hatası, yarım kalan tur, başka süreçteki tur, iki kilidin her durumda bırakılması, pasif sayfa/ürün/platform, ön ek, çıkış kodları (keşif ve `live_scraper_check` kilit meşgulken 3 verir) ve zamanlanmış turun log dosyası (ekran akışı yokken ve log açılamazken dahil). Tur sonu ikinci okuma (18 test): `network` düzelince satırın değişmesi, ikinci hatada ilk satırın (mesaj ve zaman damgasıyla) kalması, `network` dışındaki hataların hiç yeniden okunmaması, bir sayfanın en çok bir kez yeniden okunması, ardışık 5 hatada durma ve düzelmede sayaç sıfırlama, veritabanı reddi, Ctrl+C, tur notu (ön ekle birlikte), görünümde sahte "karşılaştırılamaz" oluşmaması ve `rewrite_network_result`'ın yalnız `network` satırına ve süren tura yazması. |
+| `tests/test_collection.py` | Toplama turu (66 test; 61'i gerçek PostgreSQL'de): sahte scraper'larla her sonuç türü, Ctrl+C, tur ortasında veritabanı hatası, yarım kalan tur, başka süreçteki tur, iki kilidin her durumda bırakılması, pasif sayfa/ürün/platform, ön ek, çıkış kodları (keşif ve `live_scraper_check` kilit meşgulken 3 verir) ve zamanlanmış turun log dosyası (ekran akışı yokken ve log açılamazken dahil). Kapanış sonrası özet SQL hatası, bağlantının kapatılması ve Ctrl+C, elle/zamanlanmış girişlerde sınanır; turun ve sonuçların bütün alanları, kilitler, log ve sonraki tur korunur (7 test). Tur sonu ikinci okuma (18 test): `network` düzelince satırın değişmesi, ikinci hatada ilk satırın (mesaj ve zaman damgasıyla) kalması, `network` dışındaki hataların hiç yeniden okunmaması, bir sayfanın en çok bir kez yeniden okunması, ardışık 5 hatada durma ve düzelmede sayaç sıfırlama, veritabanı reddi, Ctrl+C, tur notu (ön ekle birlikte), görünümde sahte "karşılaştırılamaz" oluşmaması ve `rewrite_network_result`'ın yalnız `network` satırına ve süren tura yazması. |
 | `tests/test_catalog_sync.py` | Katalog eşitleme (29 test; 13'ü gerçek PostgreSQL'de): kararlar veritabanısız, yazma/deneme/çakışma ve komut satırı veritabanında. |
 | `tests/test_database.py` | Migration koşucusu, şemanın bütün `CHECK`/`UNIQUE`/yabancı anahtar kuralları (her biri geçerli ve geçersiz örnekle), `migrate`/`status` komutları (yeniden adlandırılan migration dahil) ve iki emniyet kemerinin kendisi; 002'nin iki `CHECK` kuralı, silme/kimlik değişimi/yazılmış sonucu değiştirme tetikleyicileri (her tabloda), kodun gerçek güncellemelerinin hâlâ geçtiği ve "bilerek silme" yolu da burada denenir. 003 için kapanmış turun ilk sonuç yazımı, durum/bitiş zamanı koruması, not güncellemesi, eşzamanlı kapanış/yazım ve mevcut kayıtlarla migration geçişi sınanır (150 test; 138'i gerçek PostgreSQL'de). |
 | `tests/test_comparability.py` | `product_run_prices` görünümü: aynı sayfa kümesi, hata (girerken ve çıkarken), yeni sayfa, Tükendi, cevapsız ürün, ürünlerin ayrı karşılaştırılması, `--prefix` turu, süren ve yarıda kalan turların dışarıda kalması, uzun boşluk (14 test, hepsi gerçek PostgreSQL'de). |
@@ -784,10 +784,36 @@ planlanacak etkin sayfa yok: ör. hiçbir ürünle eşleşmeyen `--prefix`)
 **ya da** tur ortasında veritabanı hatasıyla kesildi (tur `interrupted`, o ana
 kadar yazılanlar kalır) **ya da** tur tamamlandıktan sonra özeti okuyan sorgu
 düştü (tur `completed` kalır, yalnız çıkış kodu 1 olur); `3` kilit meşgul; `130`
-Ctrl+C. `--scheduled` turu `scheduled` olarak kaydeder (Görev
+Ctrl+C (tur kapandıktan sonra gelirse `completed` kalır). `--scheduled` turu
+`scheduled` olarak kaydeder (Görev
 Zamanlayıcı için); verilmezse `manual`. `--prefix` kullanıldıysa turun
 notuna yazılır. Sonuç yalnızca süren tura yazılabilir; kapanmış bir tur
 yeniden kapatılmaya çalışılırsa hata verir (sessiz geçmez).
+
+#### Kapanış sonrası hata kontrolü (bakım 6)
+
+Turun kapanışı özet sorgusundan önce, autocommit bağlantıda kalıcıdır.
+Özet SQL hatası veya özet okunurken kullanılan bağlantının kapanması, yazılmış
+sonuçları ve `completed` durumunu değiştirmez; komut çıkış kodu 1 olur.
+Kapanış sonrası Ctrl+C'de de tur `completed` kalır, çıkış kodu 130 olur.
+Tur ortasında kesilme ve bağlantı kopması kuralları yukarıdaki gibi sürer.
+
+Ctrl+C mesajı kapanmış ve yarım kalmış turu ayırır:
+
+> Komut durduruldu. Tamamlanmış tur 'completed' kalır; yarım kalan tur 'interrupted' olarak kapatılır. Kapatılamadıysa bir sonraki tur kapatır.
+
+7 Ekim kontrolünde 7 kalıcı sınama eklendi: doğrudan toplama girişindeki
+özet hatası ve elle/zamanlanmış komutta üç kapanış sonrası hata durumu.
+Gerçek SQL hatası üretilir, yalnız test bağlantısı kontrollü kapatılır veya
+Ctrl+C taklit edilir; scraper'lar sahtedir. Bağımsız bağlantıdan turun bütün
+alanları (bitiş zamanı dahil) ve yedi sonucun bütün sütunları hata öncesiyle
+karşılaştırılır. Veritabanı kilidi başka bağlantıdan, dosya kilidi tekrar
+alınarak doğrulanır; sonraki tur başlar ve eski tamamlanmış turu değiştirmez.
+Zamanlanmış çalışmada hata mesajı ve çıkış kodu logda da bulunur. Eski kodda
+5 sınama geçti; 2 Ctrl+C sınaması yalnız yanıltıcı mesaj yüzünden başarısızdı.
+**Veri koruması kontrol edildi, mevcut davranış kabul edildi; kesinti mesajı
+düzeltildi.** Toplama/kapanış/özet sırası, API, şema ve çıkış kodları değişmedi.
+Bu kontrollü testler canlı turda bu hataların görüldüğü anlamına gelmez.
 
 #### Tur sonu ikinci okuma (Adım 11)
 
@@ -1138,7 +1164,7 @@ temiz. Gerçek DB, katalog ve uygulanmış migration dosyaları değişmedi.
 
 ## Testler ne kanıtlar, ne kanıtlamaz
 
-- **Otomatik testler (797; 219'u gerçek PostgreSQL'de):** Kuralların doğru
+- **Otomatik testler (804; 226'sı gerçek PostgreSQL'de):** Kuralların doğru
   çalıştığını kayıtlı ve sahte yanıtlarla kanıtlar. Kimlik değişiklikleri gerçek
   kaynak örneği ve regresyon ister; 7 Ekim varyant ve adres bakımları kullanıcının
   her maddeye ayrı onayıyla yapay çelişkilere karşı önleyici koruma olarak uygulandı.

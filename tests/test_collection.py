@@ -164,6 +164,17 @@ def run_row(conn, run_id):
     ).fetchone()
 
 
+def run_snapshot(conn, run_id):
+    run = conn.execute(
+        "SELECT * FROM collection_runs WHERE run_id = %s", (run_id,)
+    ).fetchone()
+    checks = conn.execute(
+        "SELECT * FROM listing_checks WHERE run_id = %s ORDER BY listing_id",
+        (run_id,),
+    ).fetchall()
+    return run, checks
+
+
 def run_count(conn):
     return conn.execute("SELECT count(*) FROM collection_runs").fetchone()[0]
 
@@ -236,6 +247,37 @@ def test_each_result_is_recorded_and_run_completes(migrated, catalog_path):
         "validation": 1,
     }
     assert any("57.249,00 TL" in line for line in lines)
+
+
+def test_summary_failure_preserves_completed_run_and_all_results(
+    migrated, catalog_path, monkeypatch
+):
+    saved = {}
+
+    def broken_summary(conn, run_id):
+        assert conn is not migrated
+        assert run_row(migrated, run_id)[:4] == ("completed", "manual", 7, True)
+        assert all(row[0] is not None for row in results(migrated, run_id).values())
+        saved["run_id"] = run_id
+        saved["snapshot"] = run_snapshot(migrated, run_id)
+        raise psycopg.OperationalError("Özet sorgusu hata taklidi")
+
+    with connect(os.environ["TEST_DATABASE_URL"]) as worker:
+        with monkeypatch.context() as patch:
+            patch.setattr(runs, "run_summary", broken_summary)
+            with pytest.raises(psycopg.OperationalError, match="Özet sorgusu"):
+                run_collect(worker, catalog_path)
+        run_id = saved["run_id"]
+        assert len(saved["snapshot"][1]) == 7
+        assert run_snapshot(migrated, run_id) == saved["snapshot"]
+        assert run_lock_is_free()
+
+        report, _ = run_collect(worker, catalog_path)
+        assert report.run_id != run_id
+        assert report.closed_stale == []
+        assert run_row(migrated, report.run_id)[0] == "completed"
+        assert run_snapshot(migrated, run_id) == saved["snapshot"]
+        assert run_lock_is_free()
 
 
 def test_every_scraper_is_closed(migrated, catalog_path):
@@ -856,6 +898,78 @@ def test_cli_exit_codes_and_trigger(cli_env, monkeypatch, capsys):
     # Tur bitince kilit bırakılmıştır.
     with scrape_lock(lock):
         pass
+
+
+@pytest.mark.parametrize("scheduled", [False, True], ids=["manual", "scheduled"])
+@pytest.mark.parametrize(
+    "failure, expected_code",
+    [("sql_error", 1), ("connection_closed", 1), ("ctrl_c", 130)],
+)
+def test_cli_failure_after_completion_preserves_results_and_releases_locks(
+    cli_env, tmp_path, monkeypatch, capsys, scheduled, failure, expected_code
+):
+    observer, lock = cli_env
+    scrapers = FakeScrapers(BEHAVIOURS)
+    monkeypatch.setattr(service, "create_scraper", scrapers)
+    original_summary = runs.run_summary
+    saved = {}
+
+    def failing_summary(worker, run_id):
+        assert worker is not observer
+        trigger = "scheduled" if scheduled else "manual"
+        assert run_row(observer, run_id)[:4] == ("completed", trigger, 7, True)
+        assert all(row[0] is not None for row in results(observer, run_id).values())
+        assert not run_lock_is_free()
+        saved["run_id"] = run_id
+        saved["worker"] = worker
+        saved["snapshot"] = run_snapshot(observer, run_id)
+        if failure == "sql_error":
+            return worker.execute(
+                "SELECT maintenance6_missing_column FROM listing_checks"
+            )
+        if failure == "connection_closed":
+            worker.close()
+            return original_summary(worker, run_id)
+        raise KeyboardInterrupt()
+
+    with monkeypatch.context() as patch:
+        patch.setattr(runs, "run_summary", failing_summary)
+        assert main(["--scheduled"] if scheduled else []) == expected_code
+
+    captured = capsys.readouterr()
+    run_id = saved["run_id"]
+    assert len(saved["snapshot"][1]) == 7
+    assert run_snapshot(observer, run_id) == saved["snapshot"]
+    assert saved["worker"].closed
+    assert scrapers.created == scrapers.closed == 7
+    assert run_lock_is_free()
+    with scrape_lock(lock):
+        pass
+    assert "[7/7]" in captured.out
+    if scheduled:
+        text = log_text(tmp_path)
+        assert "[7/7]" in text
+        assert all(line in text for line in captured.err.splitlines() if line.strip())
+        assert text.rstrip().endswith(f"Çıkış kodu: {expected_code}")
+    else:
+        assert not (tmp_path / "logs").exists()
+
+    assert main([]) == 2
+    next_run = last_run_id(observer)
+    assert next_run != run_id
+    assert run_count(observer) == 2
+    assert run_row(observer, next_run)[0] == "completed"
+    assert scrapers.created == scrapers.closed == 14
+    assert run_snapshot(observer, run_id) == saved["snapshot"]
+    assert run_lock_is_free()
+    with scrape_lock(lock):
+        pass
+
+    if failure == "ctrl_c":
+        assert "Tamamlanmış tur 'completed' kalır" in captured.err
+        assert "yarım kalan tur 'interrupted' olarak kapatılır" in captured.err
+    else:
+        assert "Tur başarısız:" in captured.err
 
 
 def test_cli_refuses_while_lock_is_held(cli_env, monkeypatch, capsys):

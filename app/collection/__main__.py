@@ -87,8 +87,9 @@ def run(args, settings: Settings) -> int:
         return 3
     except KeyboardInterrupt:
         print(
-            "Tur durduruldu. Açılmış tur 'interrupted' olarak kapatıldı; "
-            "kapatılamadıysa bir sonraki tur kapatır.",
+            "Komut durduruldu. Tamamlanmış tur 'completed' kalır; "
+            "yarım kalan tur 'interrupted' olarak kapatılır. "
+            "Kapatılamadıysa bir sonraki tur kapatır.",
             file=sys.stderr,
         )
         return 130

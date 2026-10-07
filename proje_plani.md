@@ -71,7 +71,17 @@ Kullanıcı yalnız bakım 5 için gerçek uyuşmazlık örneğini bekleme şart
 istisna verip planı onayladı; yapay fiyat seçimi riski regresyonla kapandı,
 canlı yanlış kayıt kanıtı yok. 39 yeni sınama; toplam 797 geçti/0 atlandı/xfail
 (219 PostgreSQL), Black/Flake8 temiz. Gerçek katalog/veritabanı/migration
-değişmedi. Kullanıcı commit/push işlemini onayladı; bakım 6'ya geçilmedi.
+değişmedi. Kullanıcı commit/push işlemini onayladı; `ac9c6b6` gönderildi,
+aynı SHA için CI 37616987979 yeşil.
+
+**7 Ekim bakım 6 (kullanıcı onayı, tamamlandı):** veri koruması kontrol edildi,
+mevcut davranış kabul edildi; kapanış sonrası Ctrl+C'yi yanlış anlatan mesaj
+düzeltildi. Özet SQL hatası, bağlantının kontrollü kapanması ve Ctrl+C,
+elle/zamanlanmış girişlerde sınandı; completed tur ve bütün kayıtlar, iki kilit
+ve sonraki tur korundu. Çıkışlar özet/bağlantı hatasında 1, Ctrl+C'de 130.
+7 yeni sınama; 804 geçti/0 atlandı/xfail (226 PostgreSQL), Black/Flake8 temiz.
+Gerçek DB/katalog/migration/zamanlayıcı değişmedi. Kullanıcı commit/push
+işlemini onayladı; bakım 7'ye geçilmedi.
 
 Önceki aşamalardan kalan yerel taslaklar (eski `app/database`, `app/ml_model`,
 `app/api`, `app/services`, `app/worker.py`, `frontend/`, Docker dosyaları ve
@@ -507,9 +517,12 @@ Keşif adres riski 7 Ekim'de bakım 2'ye özel kullanıcı istisnasıyla kapand�
 TY adres yolu/kaynak/sayfa kimliği eşleştirilir; HB canonical SKU'su tam
 eşitlikle doğrulanır. Gerçek kaynakta uyuşmazlık görülmedi, önleyici düzeltmedir.
 
-Açık kalanlar:
+Kontrol edilip kabul edilen sınır (7 Ekim, bakım 6):
 - Tur tamamlandıktan sonra özet sorgusu (`run_summary`) düşerse çıkış kodu 1 olur ama
-  tur `completed` kalır (nadir; docs/teknik.md'de yazılı).
+  tur `completed` kalır. Özet SQL hatası, bağlantının kapatılması ve kapanış
+  sonrası Ctrl+C'de bütün kayıtlar, kilitler ve sonraki tur kalıcı testlerle
+  doğrulandı. Veri/akış değişikliği gerekmedi; yalnız Ctrl+C mesajı düzeltildi
+  (ayrıntı aşağıda ve docs/teknik.md'de).
 
 6 Ekim denetimindeki ortaklaştırma bulgularının güncel durumu:
 - Beş yerdeki ürün adresi desenleri ve davranış farkları 7 Ekim bakım 5'te
@@ -823,6 +836,31 @@ bütün alanları ve diğer modele ait 12 sayfanın reddi korundu. Son tam test
 temiz. Canlı site komutu veya gerçek DB yazımı yapılmadı. Durum **önleyici
 düzeltme uygulandı**; kullanıcı commit/push işlemini onayladı, bakım 6'ya geçilmedi.
 
+**7 Ekim bakım 6: veri koruması kontrol edildi, mevcut davranış kabul edildi;
+kesinti mesajı düzeltildi.** Kullanıcı kalıcı kontrol ve yanıltıcı Ctrl+C
+mesajının düzeltme planını onayladı. Üretimde yalnız bu mesaj değişti;
+toplama → sonuç kaydı → kapanış → özet sırası, API/şema ve çıkış kodları korundu.
+Kapanış sonrası özet/bağlantı hatasında tur `completed`, komut çıkışı 1;
+Ctrl+C'de tur yine `completed`, çıkış 130. Yeni mesaj tamamlanmış ve yarım
+kalmış turu koşullu anlatır; turun kesinlikle `interrupted` olduğunu söylemez.
+
+7 yeni kalıcı sınama eklendi. Yerel özet hatası kontrolü test paketine taşındı;
+elle ve zamanlanmış komutlarda SQL hatası, kullanılan bağlantının kontrollü
+kapatılması ve Ctrl+C sınandı. Bağımsız bağlantıyla turun bütün alanları,
+bitiş zamanı ve yedi sayfa sonucunun bütün sütunları hata öncesiyle eşleşti.
+Veritabanı kilidi başka bağlantıdan, dosya kilidi yeniden alınarak doğrulandı;
+sonraki normal tur başladı, önceki tamamlanmış turun kayıtları değişmedi.
+Zamanlanmış logda hata mesajı/çıkış kodu korundu; mevcut tur ortası kesinti
+testleri de geçti. Eski kodda **2 failed, 5 passed**: iki Ctrl+C sınaması
+yalnız yanlış mesajı yakaladı, veri koruma kontrolleri zaten güvenliydi.
+
+Son tam test **804 passed**, 0 atlandı/xfail, 41,35 sn; 226 PostgreSQL testi
+yalnız `fiyat_takip_test`. Black 44 dosyada, Flake8 tek işçiyle temiz.
+Gerçek DB'ye erişim/yazım ve canlı site komutu yapılmadı; katalog, ayarlar,
+uygulanmış migration, toplama/veritabanı servisleri ve zamanlayıcı dosyaları
+değişmedi. Canlı turda bu hataların görüldüğü iddia edilmez. Kullanıcı
+commit/push işlemini onayladı; bakım 7'ye geçilmedi.
+
 Onaylanan bakım sırası ve durum (her adımdan sonra sonuç anlatılıp durulur):
 
 | Bakım maddesi | Durum |
@@ -831,8 +869,8 @@ Onaylanan bakım sırası ve durum (her adımdan sonra sonuç anlatılıp durulu
 | 2. Trendyol varyant / Hepsiburada canonical adresi | ✅ Önleyici düzeltme uygulandı (7 Ekim, bu maddeye ayrı kullanıcı istisnası): TY adres yolu/kaynak/sayfa kimliği doğrulanıyor; HB canonical tam SKU eşitliği, farklıysa özgün adres korunuyor. Gerçek uyuşmazlık görülmedi. 31 yeni sınama; 758 passed/0 atlandı/xfail, Black/Flake8 temiz. Kayıtlı 6 TY/24 HB aday ve 12 model reddi korundu. Kullanıcı commit/push işlemini onayladı; ardından 5 → 6 → 7 ayrı ilerleyecek. |
 | 3. Türkçe ekli aksesuar adları | ✅ Düzeltildi: üç kayıtlı yazım için dar başlık/kategori kuralı; model, başlık/yapısal kapasite ve birden çok ad sınandı, 21 kayıtlı telefonun kabulü korundu. 652 test geçti, atlanan/xfail yok. Kullanıcı commit/push işlemini onayladı. |
 | 4. Hepsiburada çoklu varyant listesi | ✅ Önleyici düzeltme uygulandı (7 Ekim, yalnız bu madde için kullanıcı istisnası): ortak SKU kapasite/renk doğrulaması; çelişkide identity, eşdeğer/eksik alan ve başlık yedeği korunuyor. 75 yeni sınama, toplam 727 geçti/0 atlandı/xfail. Gerçek kaynakta çelişki görülmedi; 24 adayın bilgileri ve 12 diğer modelin reddi korundu. Kullanıcı commit/push işlemini onayladı. |
-| 5. Beş adres kimliği kuralı | ✅ Önleyici düzeltme uygulandı (7 Ekim, bu maddeye ayrı kullanıcı istisnası): beş tüketici ortak ürün yolu kimliği kullanıyor; sorunlu TY fiyat seçimi ve HB sorgu SKU'su reddi kapandı. 334 katalog/333 farklı aday kimliği korundu. 39 yeni sınama; 797 passed/0 atlandı/xfail (219 PostgreSQL), Black/Flake8 temiz. Gerçek uyuşmazlık görülmedi. Kullanıcı commit/push işlemini onayladı; bakım 6'ya geçilmedi. |
-| 6. Tur sonu özet sorgusu | 🔜 Özet/bağlantı/kapanış sonrası kesinti; tur, sonuç, kilit, çıkış kodu kontrolü. Güvenli mevcut davranış kod değişmeden belgelenebilir. |
+| 5. Beş adres kimliği kuralı | ✅ Önleyici düzeltme uygulandı (7 Ekim, bu maddeye ayrı kullanıcı istisnası): beş tüketici ortak ürün yolu kimliği kullanıyor; sorunlu TY fiyat seçimi ve HB sorgu SKU'su reddi kapandı. 334 katalog/333 farklı aday kimliği korundu. 39 yeni sınama; 797 passed/0 atlandı/xfail (219 PostgreSQL), Black/Flake8 temiz. Gerçek uyuşmazlık görülmedi. ac9c6b6 push/aynı SHA için CI 37616987979 yeşil. |
+| 6. Tur sonu özet sorgusu | ✅ Veri koruması kontrol edildi, mevcut davranış kabul edildi; kesinti mesajı düzeltildi (7 Ekim). SQL hatası/bağlantı kapanması/Ctrl+C elle-zamanlanmış girişlerde sınandı; completed tur, bütün kayıtlar, iki kilit ve sonraki tur korundu. Çıkışlar 1/130 değişmedi. 7 yeni sınama; 804 passed/0 atlandı/xfail (226 PostgreSQL), Black/Flake8 temiz. Kullanıcı commit/push işlemini onayladı; bakım 7'ye geçilmedi. |
 | 7. İki eklenti yükleyicisi | 🔜 Geçerli/eksik/yanlış/soyut/kurulamayan adaptör kontrolü; farklı sözleşmeler korunur, yalnız benzerlik için birleştirilmez. |
 
 - 29 Eylül incelemesinde kapandı: test kapsamı maddeleri (Trendyol Kritik Stok,
@@ -920,8 +958,11 @@ ayrı istisnasıyla dar önleyici düzeltme uygulandı: 31 yeni sınama, 758 tes
 `8598e3c` gönderildi, aynı SHA için CI 37609748487 yeşil. Ardından bakım 5'in
 ortak ürün adresi planı ayrı kullanıcı istisnasıyla onaylanıp uygulandı:
 39 yeni sınama, 797 test/0 atlandı/xfail (219 PostgreSQL), biçim denetimleri temiz.
-334 katalog/333 farklı aday kimliği korundu; kullanıcı commit/push işlemini onayladı.
-Bakım 6–7 ve Adım 9 başlamadı.
+334 katalog/333 farklı aday kimliği korundu; `ac9c6b6` push/aynı SHA için
+CI 37616987979 yeşil. Ardından bakım 6 planı onaylanıp uygulandı: kapanış
+sonrası hata/kesintide veri ve kilit koruması kabul edildi, yalnız Ctrl+C
+mesajı düzeltildi. 7 yeni sınama; 804 test/0 atlandı/xfail (226 PostgreSQL),
+biçim denetimleri temiz. Kullanıcı commit/push işlemini onayladı; bakım 7 ve Adım 9 başlamadı.
 
 | Adım | Durum |
 |---|---|
@@ -968,6 +1009,7 @@ Takvim (tahmin, 7 Ekim güncellemesi; Adım 9 ve 11'in süresi henüz belirlenme
 | 7 Ekim | Bakım 4 önleyici düzeltmesi kullanıcı istisnasıyla uygulandı: aynı SKU'nun bütün kapasite/renk kayıtları doğrulanıyor, çelişkide identity. 75 yeni sınama; 727 test geçti/0 atlandı/xfail, Black/Flake8 temiz. 24 geçerli adayın bilgileri ve 12 diğer modelin reddi korundu. Kullanıcı commit/push işlemini onayladı; bakım 5'e geçilmedi |
 | 7 Ekim | Kullanıcının sırası 2 → 5 → 6 → 7. Bakım 2 iki hedefle yeniden kontrol edildi: TY 6/HB 36 kimlik eşleşti, gerçek uyuşmazlık yok. Ayrı kullanıcı istisnasıyla TY adres kimliği ve HB canonical tam SKU korumaları uygulandı; 31 yeni sınama, 758 passed/0 atlandı/xfail, Black/Flake8 temiz. 6 TY/24 HB aday ve 12 model reddi korundu. Kullanıcı commit/push işlemini onayladı; bakım 5 başlamadı |
 | 7 Ekim | Bakım 5 önleyici düzeltmesi ayrı kullanıcı istisnasıyla uygulandı: beş tüketici ortak ürün yolu kimliği kullanıyor. Sorunlu TY ucuz teklifi ve HB sorgu SKU'su reddediliyor. 334 katalog/333 farklı aday kimliği korundu; gerçek DB/katalog/migration değişmedi. 39 yeni sınama; 797 passed/0 atlandı/xfail (219 PostgreSQL), Black/Flake8 temiz. Kullanıcı commit/push işlemini onayladı; bakım 6'ya geçilmedi |
+| 7 Ekim | Bakım 6 kontrolü ve mesaj düzeltmesi tamamlandı: kapanış sonrası SQL hatası/bağlantı kapanması/Ctrl+C'de completed tur, bütün kayıtlar, kilitler ve sonraki tur korundu. Yalnız Ctrl+C mesajı değişti, çıkışlar 1/130 aynı. 7 yeni sınama; 804 passed/0 atlandı/xfail (226 PostgreSQL), Black/Flake8 temiz. Kullanıcı commit/push işlemini onayladı; bakım 7'ye geçilmedi |
 | Adım 11 sonrası | **Adım 9:** Cimri geçmişinin bir defalık alımı, katalog eşleştirmesi ve ayrı `market_history` tablosuna aktarım |
 | Adım 9 sonrası | **Adım 7:** kapanış belgeleri; veritabanı aşaması biter. Önceki 2–3 Ekim kapanış tahmini yeni adımlara göre yeniden değerlendirilecek |
 
