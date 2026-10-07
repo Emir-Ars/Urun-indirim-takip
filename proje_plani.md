@@ -1,6 +1,6 @@
 # Akıllı Telefon İndirim Takip ve Tahmin Sistemi — Proje Planı
 
-Son güncelleme: 6 Ekim 2026.
+Son güncelleme: 7 Ekim 2026.
 
 Bu belge **kararların ve aşama durumunun** ana kaynağıdır. Sistemin genel
 tanıtımı [README.md](README.md), ayrıntılı işleyişi, komutları, kuralları ve
@@ -49,7 +49,12 @@ komutları kullanıcı çalıştıracak. İlk madde, HTTP indirme sınırı, tam
 kimlik uyuşmazlığı yok, iki yapay riskin gerçek uyuşmazlık kanıtı bekleniyor.
 Ham yanıt kaydı için manuel araç hazırlandı (611 test). Üçüncü madde,
 Türkçe ekli aksesuarlar, kullanıcı onayıyla düzeltildi (652 test, 0 atlandı,
-0 beklenen başarısızlık); kullanıcı commit/push işlemini onayladı. 4–7'ye geçilmedi.
+0 beklenen başarısızlık); kullanıcı commit/push işlemini onayladı.
+Dördüncü maddede iPhone 15 ve Galaxy S24 için 40 Hepsiburada HTML'de
+37 tek dolu liste, 0 çelişki görüldü. Kullanıcı bu madde için gerçek çelişkiyi
+bekleme şartına istisna verdi; önleyici kapasite/renk doğrulaması uygulandı
+(727 test, 0 atlandı/xfail; Black/Flake8 temiz). Kullanıcı commit/push işlemini onayladı;
+5–7'ye geçilmedi.
 Ayrıntı ve durumlar Bölüm 7'de.
 
 Önceki aşamalardan kalan yerel taslaklar (eski `app/database`, `app/ml_model`,
@@ -497,12 +502,10 @@ Yeni (6 Ekim denetimi; henüz uygulanmadı, bazı birleştirmeler davranışı d
   adlarını koda gömüyor ("yeni site için mevcut koda koşul eklenmez" ilkesine ters).
 - İki eklenti yükleyicisi (`scraper/factory.py`, `discovery/service.py` `_adapter`)
   aynı yapıda.
-- `discovery/hepsiburada.py` `_variants` sayfadaki **son** boş olmayan varyant
-  listesini alıyor; `hepsiburada_scraper.py` `variant_capacity` SKU'yu bulduğu
-  **ilk** listede duruyor. Sayfada birden çok varyant listesi olursa ikisi farklı
-  listeye bakabilir (canlıda görülmedi).
-- Adres ve varyant yardımcılarını birleştirmek kimlik kuralına dokunduğu için
-  canlı örnek ve regresyon testi ister. Eklenti yükleyicileri farklı sözleşmeler
+- Adres yardımcılarını birleştirmek kimlik kuralına dokunduğu için
+  canlı örnek ve regresyon testi ister. Varyant tutarlılığı riski, kullanıcının
+  yalnız bakım 4'e özel istisnasıyla 7 Ekim'de önleyici düzeltmeyle kapatıldı.
+  Eklenti yükleyicileri farklı sözleşmeler
   taşır: scraper nesne kurar ve hatayı `plugin` yapar; keşif sınıf döndürür ve
   yükleme hatası komutu durdurur. Yalnız kod benzerliği hata kanıtı değildir.
 
@@ -518,8 +521,9 @@ kanıtı bulunmadı. Özet sorgusu hata verdiğinde tamamlanmış tur, yedi sonu
 kilidin bırakılması korundu. HTTP sınırının indirme sonrası uygulandığı hem
 koddan hem sahte istemciden doğrulandı. **Kullanıcı yedi maddelik kontrol ve
 gerekli düzeltme planını onayladı; ilk madde (HTTP sınırı) aynı gün tamamlandı.**
-Adres ve çoklu varyant riskleri için gerçek kaynak kanıtı gerekir; bu maddeler
-henüz değiştirilmedi. Türkçe ekli aksesuarlar sonraki bakım 3'te düzeltildi.
+Adres riskleri gerçek kaynak kanıtı bekliyor. Çoklu varyant riski 7 Ekim'de
+kullanıcının bu maddeye özel kararıyla önleyici olarak düzeltildi. Türkçe ekli
+aksesuarlar bakım 3'te düzeltildi.
 
 **6 Ekim bakım 2, adres kimliği kontrolü:** `data/` altındaki 58 JSON dosyası
 incelendi. Bunların 50'si keşif raporu içeriyor; 951 aday kaydındaki 333 farklı
@@ -607,6 +611,88 @@ kalıcı testler ham `data/` dosyalarına veya internete bağımlı değil.
 Katalog, gerçek veritabanı ve migration dosyaları değişmedi. Kod/test/belge
 hazır; kullanıcı commit/push işlemini onayladı. Bakım 4'e geçilmedi.
 
+**6 Ekim bakım 4, Hepsiburada varyant tutarlılığı (kontrol planı onaylandı):**
+Kullanıcının iPhone 15 ham yanıtlarındaki 19 Hepsiburada HTML incelendi.
+17 sayfada birer boş olmayan `allVariantCombinations` listesi bulundu;
+hiçbirinde aynı sayfa içinde kapasite/renk çelişkisi veya çoklu dolu liste yok.
+Diğer iki HTML varyant taşımıyor. `HBCV0000D3AULB` kaydında `Kapasite`
+alanı yok; 128 GB başlıktan hâlâ doğrulanıyor. Eksik alan çelişki sayılmadı.
+Kayıttaki tek HTTP hata, bilinen Hepsiburada arama API'sinin `blocked`/403'ü;
+varyant hatası olarak sınıflandırılmadı.
+
+Git dışındaki `.scratch/check_hepsiburada_variants.py` yalnız kaydedilmiş
+Hepsiburada HTML/index dosyalarını okur; aynı SKU'nun bütün listelerdeki
+kapasite/renk bilgilerini ve kaynak JSON konumunu karşılaştırır. Kapasite GB'ye,
+renk mevcut normalizasyonla karşılaştırılır; boş alan ve eşdeğer tekrar çelişki
+sayılmaz. Altı yapay kontrol, çelişki/tekrar/eksik alan/eşdeğer birim/farklı SKU/
+tek liste içi çelişki ayrımını doğruladı; bunlar canlı hata kanıtı değildir.
+Gerçek inceleme çıktısı `data/kimlik_iphone15_20261006/variant_analysis.json`.
+Yerel inceleme aracı uygulamaya bağlı değildir ve tamamlanmış özellik sayılmaz.
+Hazırlık sonrası tam paket `652 passed`, 0 atlandı/xfail (219 PostgreSQL),
+41,99 sn; Black ve Flake8 uygulama, testler ve yerel inceleme aracında temiz.
+
+**7 Ekim ilk devam durumu:** kullanıcının önceki paylaştığı çıkış 2, mevcut ham kayıt
+klasörü nedeniyle komutun tarama başlamadan reddedilmesidir; kaynak 403'ü veya
+varyant çelişkisi değildir. `data/varyant_s24_20261006/` içinde önceki denemeden
+yalnız 3 Trendyol yanıtı ve index var; Hepsiburada klasörü ve `report.json` yok.
+Önceki denemenin neden yarım kaldığı bu dosyalardan belirlenemiyor. Kayıtlar
+korundu; yeni komut tarih-saat damgasıyla farklı klasör açtı. Kullanıcı
+7 Ekim 10:00 turunun bittiğini bildirdi; salt okunur kontrolde görev `Ready`,
+son çalışma 10:00:01, son görev sonucu 0, sıradaki tetikleme 22:00 olarak görüldü.
+Canlı kontrolü kullanıcı çalıştırdı; ajan site isteği göndermedi.
+
+**7 Ekim Galaxy S24 kaynak kontrolü tamamlandı (10:56:26–10:57:58, yerel):**
+Ham kayıt `data/varyant_s24_20261007_105625/` içinde, karar izi aynı adlı
+`_iz.json` dosyasında. Trendyol 13 gerçek istekle tam sonuç/1 aday, Hepsiburada
+22 gerçek istekle kısmi sonuç/8 aday verdi. Bu yeni çalışmanın çıkış 2 nedeni
+Hepsiburada'da `model_filter_missing` ve arama API'sinin `blocked`/403'üdür;
+klasör hatası veya varyant çelişkisi değildir. Başka modeller olan S24+, Ultra
+ve FE'ye ait 12 sayfa kimlik kontrolüyle reddedildi. Yeni ürün/sayfa yok;
+katalog ve veritabanı yazılmadı.
+
+Hepsiburada'nın 21 HTML yanıtı incelendi: 20 ürün sayfasında birer dolu
+`allVariantCombinations` listesi, arama sayfasında bir boş liste var.
+Ham metindeki liste sayıları ayrıştırılmış JSON ile eşleşti; aynı sayfa/SKU
+içinde kapasite veya renk çelişkisi ve çoklu dolu liste yok. Kabul edilen
+8 Galaxy S24 adayının kapasite ve rengi kayıtlı seçeneğiyle eşleşiyor;
+scraper ve keşfin mevcut kapasite seçimi aynı. İnceleme çıktısı aynı kökte
+`variant_analysis.json` olarak saklandı.
+
+**İlk kontrol sonucu: uyuşmazlık kanıtı bekleniyordu.** İki hedefin toplam
+40 HTML yanıtında 37 tek dolu liste ve 0 çelişki var; bu sınırlı örnekler
+pazaryerinde çoklu liste bulunmadığını kanıtlamaz. İlk kanıt toplama planı gereği
+uygulama kodu ve kimlik kuralları korunuyor; başlıktan kapasite doğrulama
+değişmedi. Gerçek çelişki görülürse kaynak örneğine dayanan kesin düzeltme
+planı ve regresyonlar ayrıca onaya sunulacaktı. Bu ilk kontrolde yalnız kayıt
+incelemesi ve belge güncellemesi yapıldı; son doğrulama 6 Ekim'deki 652 test/Black/Flake8,
+testler yeniden çalıştırılmadı. Bakım 5'e ve yeni özelliklere geçilmedi.
+
+**7 Ekim kullanıcı kararı ve uygulama: önleyici düzeltme uygulandı.** Kullanıcı,
+gerçek çelişkiyi beklemek yerine bakım 4'ün planlanıp düzeltilmesini istedi ve
+kesin uygulama planını onayladı. Bu, AGENTS.md'deki gerçek kaynak şartına yalnız
+bu madde için istisnadır; genel kural ve bakım 2'nin kanıt şartı değişmedi.
+Gerçek kaynakta çelişki görülmediği bilgisi korunur.
+
+`variant_identity(soup, sku)` aynı SKU'nun bütün seçenek kayıtlarında kapasite
+ve rengi birlikte doğrular. `variant_capacity` ve keşif bu ortak sonucu kullanır;
+ilk kapasite/son renk karışımı kaldırıldı. Farklı kapasite veya renk `identity`
+üretir; scraper satıcı/fiyat isteği yapmaz, keşif yalnız o adayı reddedip sürer.
+Eşdeğer tekrarlar (TB/GB ve mevcut renk normalizasyonu), boş/ayrıştırılamayan
+alanlar ve başka SKU'nun çelişkisi reddedilmez. Kapasite alanı bulunmazsa
+başlıktan doğrulama sürer; SKU keşifte herhangi bir listede bulunabilir.
+Grup sayfalarının bağlantı kuyruğu, adres kuralları ve sözleşmeler korundu.
+
+75 yeni sınama eklendi. Eski kodda **31 failed, 44 passed**: çelişki reddi için
+24 sınamanın tamamı başarısızdı; kalan başarısızlıklar eşdeğer renk/eksik alan/
+önceki listede SKU ve keşfin diğer adaylarla devamını kapsıyordu. 36 gerçek
+ürün sayfasından kimlik alanları sabit test verisine çıkarıldı; 24 kabul edilen
+adayın bütün alanları ve diğer modele ait 12 sayfanın reddi korundu. Kaynak
+fiyat/stok verisi eklenmedi; kalıcı testler ham `data/` kayıtlarına bağlı değil.
+Son doğrulama **727 passed**, 0 atlandı/xfail, 50,64 sn (219 PostgreSQL);
+Black 43 dosyada temiz, Flake8 tek işçiyle temiz. Gerçek DB, katalog ve migration
+değişmedi; canlı site komutu çalıştırılmadı. Kullanıcı commit/push işlemini onayladı.
+Bakım 5'e geçilmedi.
+
 Onaylanan bakım sırası ve durum (her adımdan sonra sonuç anlatılıp durulur):
 
 | Bakım maddesi | Durum |
@@ -614,7 +700,7 @@ Onaylanan bakım sırası ve durum (her adımdan sonra sonuç anlatılıp durulu
 | 1. HTTP 8 MB indirme sınırı | ✅ Kod ve test tamamlandı; kullanıcı commit/push işlemini onayladı. Gerçek turda henüz görülmedi. |
 | 2. Trendyol varyant / Hepsiburada canonical adresi | ⏳ Gerçek uyuşmazlık kanıtı bekliyor. Kayıt kontrolü ve 6 Ekim hedefli canlı kontrol tamamlandı: TY 5 varyant/adres/sayfa kimliği eşleşti; HB 16 SKU eşleşti, 9 grup/7 kategori canonical adresi kullanılmayıp mevcut adresler korundu. İki yapay risk canlıda görülmedi; kimlik kuralları değişmedi. Ham kayıt aracı ve 13 ağsız test hazır; ilk CI'daki dosya sırası testi düzeltildi. |
 | 3. Türkçe ekli aksesuar adları | ✅ Düzeltildi: üç kayıtlı yazım için dar başlık/kategori kuralı; model, başlık/yapısal kapasite ve birden çok ad sınandı, 21 kayıtlı telefonun kabulü korundu. 652 test geçti, atlanan/xfail yok. Kullanıcı commit/push işlemini onayladı. |
-| 4. Hepsiburada çoklu varyant listesi | 🔜 Aynı SKU için kaynakların kapasite/renk tutarlılığı; gerçek örnek doğrulanırsa ortak veri ve çelişkide ret. |
+| 4. Hepsiburada çoklu varyant listesi | ✅ Önleyici düzeltme uygulandı (7 Ekim, yalnız bu madde için kullanıcı istisnası): ortak SKU kapasite/renk doğrulaması; çelişkide identity, eşdeğer/eksik alan ve başlık yedeği korunuyor. 75 yeni sınama, toplam 727 geçti/0 atlandı/xfail. Gerçek kaynakta çelişki görülmedi; 24 adayın bilgileri ve 12 diğer modelin reddi korundu. Kullanıcı commit/push işlemini onayladı. |
 | 5. Beş adres kimliği kuralı | 🔜 Aynı adreslerle davranış karşılaştırması; ortaklaştırma yalnız gerekli düzeltmeyi destekliyorsa. |
 | 6. Tur sonu özet sorgusu | 🔜 Özet/bağlantı/kapanış sonrası kesinti; tur, sonuç, kilit, çıkış kodu kontrolü. Güvenli mevcut davranış kod değişmeden belgelenebilir. |
 | 7. İki eklenti yükleyicisi | 🔜 Geçerli/eksik/yanlış/soyut/kurulamayan adaptör kontrolü; farklı sözleşmeler korunur, yalnız benzerlik için birleştirilmez. |
@@ -690,7 +776,12 @@ Manuel kayıt aracı hazırlandı; Adım 9'a geçilmedi.
 Kullanıcı, sonraki bakım kontrolünden önce bu araç ve kontrol notları için
 commit/push yapılmasını onayladı.
 Bakım 3'ün dar kural ve regresyon planı da onaylandı ve uygulandı: 652 test,
-0 atlandı/xfail; kullanıcı commit/push işlemini onayladı. Bakım 4–7 ve Adım 9 başlamadı.
+0 atlandı/xfail; kullanıcı commit/push işlemini onayladı. `57595f9` push/CI yeşil
+tamamlandı. Bakım 4'ün onaylı kaynak kontrolü 7 Ekim'de tamamlandı: iPhone 15
+ve Galaxy S24 için toplam 40 HB HTML/37 tek dolu liste/0 çelişki. Kullanıcı
+bu madde için gerçek çelişki örneğini bekleme şartına istisna verip önleyici
+düzeltme planını onayladı; uygulandı, 727 test/0 atlandı/xfail, biçim denetimleri
+temiz. Kullanıcı commit/push işlemini onayladı. Bakım 5–7 ve Adım 9 başlamadı.
 
 | Adım | Durum |
 |---|---|
@@ -718,7 +809,7 @@ kaynağı araştırma tarihinde seçilmedi. 30 Eylül'de Cimri'nin bir defalık
 aktarımı Adım 9'a alındı (Bölüm 8). Akakçe 403 için tekrar veya engel aşma
 yapılmaz.
 
-Takvim (tahmin, 6 Ekim güncellemesi; Adım 9 ve 11'in süresi henüz belirlenmedi):
+Takvim (tahmin, 7 Ekim güncellemesi; Adım 9 ve 11'in süresi henüz belirlenmedi):
 
 | Tarih | İş |
 |---|---|
@@ -732,6 +823,9 @@ Takvim (tahmin, 6 Ekim güncellemesi; Adım 9 ve 11'in süresi henüz belirlenme
 | 6 Ekim | Yedi ertelenmiş bakım için kontrol ve gerekli düzeltme planı onaylandı; ilk madde (indirme sırasında 8 MB sınırı) tamamlandı: 27 yeni test, toplam 598; kullanıcı commit/push işlemini onayladı |
 | 6 Ekim | Bakım 2: kayıtlı 333 farklı adres/334 katalog sayfası ve kullanıcının 16:24–16:26 iPhone 15 kontrolündeki TY 5/HB 16 kimliği eşleşti. HB grup/kategori canonical adresleri doğru biçimde kullanılmadı. Çıkış 2 yalnız bilinen arama API 403'ü; iki yapay risk için gerçek uyuşmazlık kanıtı bekleniyor. Manuel ham kayıt aracı ve 12 ağsız test hazır (610 toplam); kimlik kuralı değişmedi |
 | 6 Ekim | Bakım 3: kayıtlı Kılıfı/Adaptörü/Kapağı yazımları için dar kimlik ve kategori düzeltmesi uygulandı. 41 ek sınama ve normal teste çevrilen xfail; 21 gerçek telefonun kabulü korundu. 652 test geçti, 0 atlandı/xfail; Black/Flake8 temiz. Kullanıcı commit/push işlemini onayladı |
+| 6 Ekim | Bakım 4 kontrol planı onaylandı; 19 kayıtlı HB HTML'de 17 tek dolu liste, 0 çelişki. Yerel analiz hazır; Galaxy S24 ham yanıtlarını kullanıcı çalıştıracak. Gerçek uyuşmazlık kanıtı bekleniyor, uygulama kodu değişmedi |
+| 7 Ekim | Bakım 4 kaynak kontrolü tamamlandı: kullanıcının Galaxy S24 kaydındaki 21 HB HTML'de 20 tek dolu liste/0 çelişki; 8 kabul edilen adayın kapasite/renk bilgisi eşleşti. Çıkış 2 model filtresi bulunamaması ve arama API 403'ünden. İki hedef toplam 40 HTML/37 tek dolu liste; kod korunuyor, gerçek uyuşmazlık kanıtı bekleniyor. Bakım 5'e geçilmedi |
+| 7 Ekim | Bakım 4 önleyici düzeltmesi kullanıcı istisnasıyla uygulandı: aynı SKU'nun bütün kapasite/renk kayıtları doğrulanıyor, çelişkide identity. 75 yeni sınama; 727 test geçti/0 atlandı/xfail, Black/Flake8 temiz. 24 geçerli adayın bilgileri ve 12 diğer modelin reddi korundu. Kullanıcı commit/push işlemini onayladı; bakım 5'e geçilmedi |
 | Adım 11 sonrası | **Adım 9:** Cimri geçmişinin bir defalık alımı, katalog eşleştirmesi ve ayrı `market_history` tablosuna aktarım |
 | Adım 9 sonrası | **Adım 7:** kapanış belgeleri; veritabanı aşaması biter. Önceki 2–3 Ekim kapanış tahmini yeni adımlara göre yeniden değerlendirilecek |
 

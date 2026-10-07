@@ -155,6 +155,136 @@ def scraper_with(listings, offers, *, html=None):
     return Scraper(["www.hepsiburada.com"], runtime, client=session), session
 
 
+def variant_page_html(variant_lists, *, name="Apple iPhone 15"):
+    html = page_html(name=name, variants=variant_lists[0])
+    for variants in variant_lists[1:]:
+        state = {"allVariantCombinations": variants}
+        html += f'<script type="application/json">{json.dumps(state)}</script>'
+    return html
+
+
+@pytest.mark.parametrize(
+    ("capacity", "color"),
+    [("256 GB", "Mavi"), ("128 GB", "Siyah"), ("256 GB", "Siyah")],
+    ids=["capacity", "color", "both"],
+)
+@pytest.mark.parametrize("reverse", [False, True])
+@pytest.mark.parametrize("same_list", [False, True])
+def test_variant_lists_reject_conflicting_identity(
+    listing, capacity, color, reverse, same_list
+):
+    variants = [
+        {"sku": SKU, "Kapasite": "128 GB", "Renk": "Mavi"},
+        {"sku": SKU, "Kapasite": capacity, "Renk": color},
+    ]
+    if reverse:
+        variants.reverse()
+    variant_lists = [variants] if same_list else [[item] for item in variants]
+    expected_capacity = int(variants[0]["Kapasite"].split()[0])
+    listing = listing.model_copy(
+        update={
+            "storage_gb": expected_capacity,
+            "product_name": f"Apple iPhone 15 {expected_capacity} GB",
+        }
+    )
+    scraper, session = scraper_with(
+        [full_listing("hb", "Hepsiburada", 50_000)],
+        [response_offer("hb", "Hepsiburada", 50_000)],
+        html=variant_page_html(variant_lists),
+    )
+
+    with pytest.raises(FetchError) as error:
+        scraper.fetch(listing)
+
+    assert error.value.code == "identity"
+    assert len(session.calls) == 1
+
+
+@pytest.mark.parametrize(
+    ("variant_lists", "capacity", "name"),
+    [
+        (
+            [[{"sku": SKU, "Kapasite": "128 GB", "Renk": "Mavi"}]] * 2,
+            128,
+            "Apple iPhone 15",
+        ),
+        (
+            [
+                [{"sku": SKU, "Kapasite": "1 TB", "Renk": "Yeşil"}],
+                [{"sku": SKU.lower(), "Kapasite": "1024 GB", "Renk": " YESIL "}],
+            ],
+            1024,
+            "Apple iPhone 15",
+        ),
+        (
+            [[{"sku": SKU}], [{"sku": SKU, "Kapasite": "128 GB", "Renk": "Mavi"}]],
+            128,
+            "Apple iPhone 15",
+        ),
+        (
+            [
+                [{"sku": SKU, "Kapasite": "belirsiz", "Renk": " "}],
+                [{"sku": SKU, "Kapasite": "128 GB", "Renk": "Mavi"}],
+            ],
+            128,
+            "Apple iPhone 15",
+        ),
+        ([[{"sku": SKU}], [{"sku": SKU, "Renk": None}]], 128, "Apple iPhone 15 128 GB"),
+        (
+            [
+                [
+                    {"sku": SKU, "Kapasite": "128 GB", "Renk": "Mavi"},
+                    {"sku": "HBCVOTHER", "Kapasite": "128 GB", "Renk": "Siyah"},
+                ],
+                [
+                    {"sku": SKU, "Kapasite": "128 GB", "Renk": "Mavi"},
+                    {"sku": "HBCVOTHER", "Kapasite": "256 GB", "Renk": "Mavi"},
+                ],
+            ],
+            128,
+            "Apple iPhone 15",
+        ),
+        (
+            [
+                [{"sku": SKU, "Kapasite": "128 GB", "Renk": "Mavi"}],
+                [{"sku": "HBCVOTHER"}],
+            ],
+            128,
+            "Apple iPhone 15",
+        ),
+    ],
+    ids=[
+        "duplicate",
+        "equivalent",
+        "missing",
+        "unreadable",
+        "title-fallback",
+        "other-sku",
+        "earlier-list",
+    ],
+)
+def test_variant_lists_accept_consistent_identity(
+    listing, variant_lists, capacity, name
+):
+    listing = listing.model_copy(
+        update={
+            "storage_gb": capacity,
+            "product_name": f"Apple iPhone 15 {capacity} GB",
+        }
+    )
+    scraper, session = scraper_with(
+        [full_listing("hb", "Hepsiburada", 50_000)],
+        [response_offer("hb", "Hepsiburada", 50_000)],
+        html=variant_page_html(variant_lists, name=name),
+    )
+
+    observation = scraper.fetch(listing)
+
+    assert observation.current_price == 5_000_000
+    assert observation.stock_status == "Stokta Var"
+    assert len(session.calls) == 3
+
+
 def test_fetches_all_listings_and_selects_cheapest(listing):
     listings = [
         full_listing("hb", "Hepsiburada", 57_249.01, rating=0),

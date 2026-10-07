@@ -506,7 +506,8 @@ kullanımı için 8 MB garantisi değildir; metin/JSON ayrıştırması ayrıca 
 ### Hepsiburada (sayfa başına 3 istek; Tükendi ise 2)
 
 1. Ürün sayfası indirilir; kimlik doğrulanır (JSON-LD adları, sayfa başlığı ve
-   seçenek listesindeki `Kapasite`).
+   aynı SKU'nun bütün seçenek listelerindeki kapasite/renk tutarlılığı).
+   Çelişki `identity` hatasıdır; satıcı/fiyat API'sine geçilmez.
 2. `/api/v1/product/listings/{sku}` ile bütün satıcılar alınır.
 3. Satıcı yoksa veya her satıcı açıkça satılamaz (`isSalable: false`) ise sonuç
    `Tükendi` olur. Bir satıcıda stok alanı hiç yoksa sonuç Tükendi **değil**,
@@ -1033,6 +1034,18 @@ böylece keşfin kabul ettiği sayfayı scraper aynı girdilerle reddetmez.
   (1 TB = 1024 GB). Ardından "RAM" yazan değer hafıza sayılmaz ("128 GB 12 GB
   Ram" → 128). Etiketsiz iki değer varsa ("12GB+512GB") başlık kullanılmaz,
   yapısal veri kullanılır.
+- Hepsiburada'da `variant_identity(soup, sku)` aynı SKU'nun bütün
+  `allVariantCombinations` kayıtlarını karşılaştırır. Keşif kapasite ve rengi
+  buradan alır; scraper'ın `variant_capacity` yardımcısı da aynı doğrulamaya
+  bağlıdır. Farklı geçerli kapasite veya normalize edilmiş renkler `identity`
+  üretir; başka SKU'nun çelişkisi açılan ürünü etkilemez. Eksik/ayrıştırılamayan
+  kapasite ve boş renk çelişki değildir. Tek geçerli kapasite kullanılır;
+  kapasite bulunamazsa başlık doğrulaması sürer. `1 TB`/`1024 GB` ve mevcut
+  normalizasyonla eşdeğer renk tekrarları kabul edilir; rengin ilk dolu kaynak
+  metni korunur. Renk çevirisi veya eş anlamlı eşleştirmesi yapılmaz.
+  Keşifte SKU herhangi bir listede bulunabilir; hiçbirinde yoksa reddedilir.
+  Scraper'da seçenek bulunmadığında başlıktan kapasite doğrulaması korunur.
+  Grup sayfalarının ve bağlantı kuyruğunun son dolu listeden ilerlemesi değişmedi.
 - Ayrı model sayılan ekler: Pro, Plus, Max, Ultra, FE, Lite, mini, **Edge, Air**.
   "Galaxy S25 Edge" S25 hedefine, "iPhone 17 Air" yazan bir sayfa iPhone 17
   hedefine girmez.
@@ -1053,11 +1066,25 @@ doğru model ve kapasiteyle yapay başlıklarda sınanır; canlıda yanlış fiy
 kaydedildiğine dair kanıt yoktur. 21 geçerli telefon örneği ise kullanıcının
 `data/kimlik_iphone15_20261006/` ham yanıtlarından çıkarılmış sabit test verisidir.
 
+7 Ekim Hepsiburada varyant bakımı **önleyici düzeltmedir**. İncelenen iPhone 15
+ve Galaxy S24 yanıtlarında (40 HTML, 37 tek dolu liste) gerçek çelişki yoktu.
+Kullanıcı yalnız bu madde için canlı çelişki örneğini bekleme şartına istisna
+verdi; yapay kapasite/renk çelişkileri canlı hata kanıtı olarak sunulmaz.
+`tests/fixtures/discovery/hepsiburada_identity_examples.json`, bu iki kayıttaki
+36 ürün sayfasının yalnız kimlik alanlarını içerir; tekrar eden altı liste
+ortak saklanır. Fiyat/stok verisi içermez, testler `data/` veya ağa bağlı değildir.
+24 kabul edilmiş adayın bütün alanları ve diğer modele ait 12 sayfanın reddi
+korundu. Yeni 75 sınama; liste sırası, tek liste içi çelişki, eşdeğer tekrar,
+eksik alan/başlık yedeği, başka SKU ve keşfin diğer adaylarla devamını kapsar.
+Eski kodda 31 yeni sınama başarısızdı (24 çelişki reddi dahil), 44'ü geçti;
+kayıtlı 36 sayfanın koruma sınamaları eski kodda da geçti.
+
 ## Testler ne kanıtlar, ne kanıtlamaz
 
-- **Otomatik testler (652; 219'u gerçek PostgreSQL'de):** Kuralların doğru
-  çalıştığını kayıtlı ve sahte yanıtlarla kanıtlar. Hata düzeltmelerinin her
-  biri, canlıda görülen gerçek bir örneğe dayanan regresyon testiyle korunur.
+- **Otomatik testler (727; 219'u gerçek PostgreSQL'de):** Kuralların doğru
+  çalıştığını kayıtlı ve sahte yanıtlarla kanıtlar. Kimlik değişiklikleri gerçek
+  kaynak örneği ve regresyon ister; 7 Ekim varyant bakımı kullanıcının bu maddeye
+  özel onayıyla yapay çelişkilere karşı önleyici koruma olarak uygulandı.
   Sitelerin bugün hâlâ aynı yapıda olduğunu kanıtlamaz. Veritabanı testleri
   şema kurallarının, migration koşucusunun, katalog eşitlemenin ve toplama
   turunun gerçek PostgreSQL'de doğru çalıştığını kanıtlar; tur testleri sahte

@@ -6,6 +6,7 @@ import json
 import re
 import sys
 import types
+from html import escape
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
@@ -1026,6 +1027,232 @@ def test_hepsiburada_variant_identity(monkeypatch):
     candidate, _ = discovery._product(candidate.url, "HBCV00004X9ZCK")
     assert candidate.color == "Mavi"
     discovery.close()
+
+
+def hepsiburada_variant_html(
+    variant_lists, *, sku="HBCV00004X9ZCK", name="Apple iPhone 15"
+):
+    state = {
+        "sku": sku,
+        "brand": "Apple",
+        "definitionName": "Cep Telefonu",
+        "allVariantCombinations": variant_lists[0],
+    }
+    html = (
+        f"<h1>{escape(name)}</h1>"
+        f'<script type="application/json">{json.dumps(state)}</script>'
+    )
+    for variants in variant_lists[1:]:
+        state = {"allVariantCombinations": variants}
+        html += f'<script type="application/json">{json.dumps(state)}</script>'
+    return html
+
+
+@pytest.mark.parametrize(
+    ("capacity", "color"),
+    [("256 GB", "Mavi"), ("128 GB", "Siyah"), ("256 GB", "Siyah")],
+    ids=["capacity", "color", "both"],
+)
+@pytest.mark.parametrize("reverse", [False, True])
+@pytest.mark.parametrize("same_list", [False, True])
+def test_hepsiburada_variant_lists_reject_conflicting_identity(
+    monkeypatch, capacity, color, reverse, same_list
+):
+    sku = "HBCV00004X9ZCK"
+    variants = [
+        {"sku": sku, "Kapasite": "128 GB", "Renk": "Mavi"},
+        {"sku": sku, "Kapasite": capacity, "Renk": color},
+    ]
+    if reverse:
+        variants.reverse()
+    variant_lists = [variants] if same_list else [[item] for item in variants]
+    discovery = HepsiburadaDiscovery(
+        target("iPhone 15"), DiscoveryConfig(targets=[]), Runtime()
+    )
+    monkeypatch.setattr(
+        discovery, "get", lambda url: hepsiburada_variant_html(variant_lists)
+    )
+    try:
+        with pytest.raises(FetchError) as error:
+            discovery._product(f"https://www.hepsiburada.com/iphone-15-p-{sku}", sku)
+        assert error.value.code == "identity"
+    finally:
+        discovery.close()
+
+
+@pytest.mark.parametrize(
+    ("variant_lists", "capacity", "color", "name"),
+    [
+        (
+            [[{"sku": "HBCV00004X9ZCK", "Kapasite": "128 GB", "Renk": "Mavi"}]] * 2,
+            128,
+            "Mavi",
+            "Apple iPhone 15",
+        ),
+        (
+            [
+                [{"sku": "HBCV00004X9ZCK", "Kapasite": "1 TB", "Renk": "Yeşil"}],
+                [{"sku": "hbcv00004x9zck", "Kapasite": "1024 GB", "Renk": " YESIL "}],
+            ],
+            1024,
+            "Yeşil",
+            "Apple iPhone 15",
+        ),
+        (
+            [
+                [{"sku": "HBCV00004X9ZCK"}],
+                [{"sku": "HBCV00004X9ZCK", "Kapasite": "128 GB", "Renk": "Mavi"}],
+            ],
+            128,
+            "Mavi",
+            "Apple iPhone 15",
+        ),
+        (
+            [
+                [{"sku": "HBCV00004X9ZCK", "Kapasite": "belirsiz", "Renk": " "}],
+                [{"sku": "HBCV00004X9ZCK", "Kapasite": "128 GB", "Renk": "Mavi"}],
+            ],
+            128,
+            "Mavi",
+            "Apple iPhone 15",
+        ),
+        (
+            [[{"sku": "HBCV00004X9ZCK"}], [{"sku": "HBCV00004X9ZCK", "Renk": None}]],
+            128,
+            "",
+            "Apple iPhone 15 128 GB",
+        ),
+        (
+            [
+                [
+                    {"sku": "HBCV00004X9ZCK", "Kapasite": "128 GB", "Renk": "Mavi"},
+                    {"sku": "HBCVOTHER", "Kapasite": "128 GB", "Renk": "Siyah"},
+                ],
+                [
+                    {"sku": "HBCV00004X9ZCK", "Kapasite": "128 GB", "Renk": "Mavi"},
+                    {"sku": "HBCVOTHER", "Kapasite": "256 GB", "Renk": "Mavi"},
+                ],
+            ],
+            128,
+            "Mavi",
+            "Apple iPhone 15",
+        ),
+        (
+            [
+                [{"sku": "HBCV00004X9ZCK", "Kapasite": "128 GB", "Renk": "Mavi"}],
+                [{"sku": "HBCVOTHER"}],
+            ],
+            128,
+            "Mavi",
+            "Apple iPhone 15",
+        ),
+    ],
+    ids=[
+        "duplicate",
+        "equivalent",
+        "missing",
+        "unreadable",
+        "title-fallback",
+        "other-sku",
+        "earlier-list",
+    ],
+)
+def test_hepsiburada_variant_lists_accept_consistent_identity(
+    monkeypatch, variant_lists, capacity, color, name
+):
+    sku = "HBCV00004X9ZCK"
+    discovery = HepsiburadaDiscovery(
+        target("iPhone 15"), DiscoveryConfig(targets=[]), Runtime()
+    )
+    monkeypatch.setattr(
+        discovery, "get", lambda url: hepsiburada_variant_html(variant_lists, name=name)
+    )
+    try:
+        candidate, found = discovery._product(
+            f"https://www.hepsiburada.com/iphone-15-p-{sku}", sku
+        )
+        assert (candidate.storage_gb, candidate.color) == (capacity, color)
+        assert found == variant_lists[-1]
+    finally:
+        discovery.close()
+
+
+def test_hepsiburada_variant_conflict_does_not_stop_other_candidates(monkeypatch):
+    bad_sku = "HBCV00004X9ZCK"
+    good_sku = "HBCV00004X9ZCN"
+    urls = {
+        sku: f"https://www.hepsiburada.com/iphone-15-p-{sku}"
+        for sku in (good_sku, bad_sku)
+    }
+    pages = {
+        urls[bad_sku]: hepsiburada_variant_html(
+            [
+                [{"sku": bad_sku, "Kapasite": "128 GB", "Renk": "Mavi"}],
+                [{"sku": bad_sku, "Kapasite": "256 GB", "Renk": "Siyah"}],
+            ]
+        ),
+        urls[good_sku]: hepsiburada_variant_html(
+            [[{"sku": good_sku, "Kapasite": "128 GB", "Renk": "Mavi"}]], sku=good_sku
+        ),
+    }
+    discovery = HepsiburadaDiscovery(
+        target("iPhone 15"), DiscoveryConfig(targets=[]), Runtime()
+    )
+    monkeypatch.setattr(discovery, "_search", lambda: urls.copy())
+    monkeypatch.setattr(discovery, "get", pages.__getitem__)
+    try:
+        result = discovery.discover()
+        assert [c.platform_product_id for c in result.candidates] == [good_sku]
+        assert [i.reason for i in result.issues] == ["candidate_rejected"]
+        assert bad_sku in result.issues[0].detail
+        assert not result.complete
+    finally:
+        discovery.close()
+
+
+HEPSIBURADA_IDENTITY_EXAMPLES = fixture("hepsiburada_identity_examples.json")
+
+
+@pytest.mark.parametrize(
+    "example",
+    HEPSIBURADA_IDENTITY_EXAMPLES["pages"],
+    ids=lambda example: example["sku"],
+)
+def test_hepsiburada_saved_variant_identity_preserves_candidate(monkeypatch, example):
+    html = (
+        f'<script type="application/ld+json">{json.dumps(example["json_ld"])}</script>'
+    )
+    if example["heading"] is not None:
+        html += f'<h1>{escape(example["heading"])}</h1>'
+    if example["canonical"] is not None:
+        html += (
+            f'<link rel="canonical" href="{escape(example["canonical"], quote=True)}">'
+        )
+    html += f'<script type="application/json">{json.dumps(example["details"])}</script>'
+    for index in example["variant_list_indexes"]:
+        state = {
+            "allVariantCombinations": HEPSIBURADA_IDENTITY_EXAMPLES["variant_lists"][
+                index
+            ]
+        }
+        html += f'<script type="application/json">{json.dumps(state)}</script>'
+    discovery = HepsiburadaDiscovery(
+        DiscoveryTarget.model_validate(example["target"]),
+        DiscoveryConfig(targets=[]),
+        Runtime(),
+    )
+    monkeypatch.setattr(discovery, "get", lambda url: html)
+    try:
+        if example["expected_error"]:
+            with pytest.raises(FetchError) as error:
+                discovery._product(example["url"], example["sku"])
+            assert error.value.code == example["expected_error"]
+            assert "Sayfadaki model hedefle eşleşmiyor" in str(error.value)
+        else:
+            candidate, _ = discovery._product(example["url"], example["sku"])
+            assert candidate.model_dump(mode="json") == example["expected_candidate"]
+    finally:
+        discovery.close()
 
 
 def test_catalog_merge_keeps_existing_ids_and_is_idempotent():

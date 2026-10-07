@@ -203,8 +203,11 @@ def product_names(soup: BeautifulSoup, sku: str) -> list[str]:
     return names
 
 
-def variant_capacity(soup: BeautifulSoup, sku: str) -> int | None:
-    """Sayfadaki varyant listesinde bu SKU'nun yapısal kapasitesi."""
+def variant_identity(soup: BeautifulSoup, sku: str) -> tuple[int | None, str] | None:
+    """Aynı SKU'nun bütün seçenek kayıtları tutarlıysa kapasite ve rengini verir."""
+    found = False
+    capacities = set()
+    colors = {}
     for root in embedded_json(soup):
         for node in nested_dicts(root):
             variants = node.get("allVariantCombinations")
@@ -212,8 +215,33 @@ def variant_capacity(soup: BeautifulSoup, sku: str) -> int | None:
                 continue
             for item in variants:
                 if isinstance(item, dict) and str(item.get("sku", "")).upper() == sku:
-                    return storage_gb(item.get("Kapasite") or "")
-    return None
+                    found = True
+                    capacity = storage_gb(item.get("Kapasite") or "")
+                    if capacity is not None:
+                        capacities.add(capacity)
+                    color = str(item.get("Renk") or "")
+                    normalized_color = normalize(color).strip()
+                    if normalized_color:
+                        colors.setdefault(normalized_color, color)
+    if not found:
+        return None
+    conflicts = []
+    if len(capacities) > 1:
+        conflicts.append("kapasite")
+    if len(colors) > 1:
+        conflicts.append("renk")
+    if conflicts:
+        raise FetchError(
+            "identity",
+            f"Hepsiburada {sku} varyantlarında {'/'.join(conflicts)} çelişkisi",
+        )
+    return next(iter(capacities), None), next(iter(colors.values()), "")
+
+
+def variant_capacity(soup: BeautifulSoup, sku: str) -> int | None:
+    """Bütün seçenek kayıtları tutarlıysa SKU'nun kapasitesini verir."""
+    identity = variant_identity(soup, sku)
+    return identity[0] if identity is not None else None
 
 
 def _verify_product(soup: BeautifulSoup, listing, sku: str) -> None:

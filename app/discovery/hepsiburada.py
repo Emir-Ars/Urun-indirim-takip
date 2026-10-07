@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 from app.contracts import DiscoveryCandidate, DiscoveryResult
 from app.discovery.base import RECOVERABLE, BaseDiscovery, error_code
 from app.discovery.matching import phone_category
-from app.scraper.hepsiburada_scraper import product_names, variant_capacity
+from app.scraper.hepsiburada_scraper import product_names, variant_identity
 from app.scraper.http import FetchError
 from app.scraper.parsing import (
     embedded_json,
@@ -210,21 +210,14 @@ class Discovery(BaseDiscovery):
                 "identity",
                 f"Hepsiburada telefon/marka doğrulanamadı: {' | '.join(names)[:160]}",
             )
-        selected = next(
-            (
-                item
-                for item in variants
-                if isinstance(item, dict)
-                and str(item.get("sku") or "").upper() == expected_sku
-            ),
-            None,
-        )
+        selected = variant_identity(soup, expected_sku)
         if selected is None:
             raise FetchError("identity", "Hepsiburada SKU seçeneklerde bulunamadı")
+        structured_capacity, color = selected
         capacity = identify(
             names,
             self.target.model,
-            variant_capacity(soup, expected_sku),
+            structured_capacity,
             exclude=self.target.exclude_terms,
         )
         if self.target.network:
@@ -248,7 +241,7 @@ class Discovery(BaseDiscovery):
             brand=self.target.brand,
             model=self.target.model,
             storage_gb=capacity,
-            color=str(selected.get("Renk") or ""),
+            color=color,
         )
         return candidate, variants
 
