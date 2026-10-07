@@ -14,6 +14,7 @@ from curl_cffi.curl import CURL_WRITEFUNC_ERROR
 from curl_cffi.requests.exceptions import RequestException
 
 import app.scraper.http as http
+import app.scraper.factory as factory
 from app.contracts import DiscoveryConfig, DiscoveryTarget
 from app.discovery.base import error_code
 from app.discovery.trendyol import Discovery as TrendyolDiscovery
@@ -669,6 +670,8 @@ def test_factory_rejects_invalid_or_missing_platform(key):
     with pytest.raises(FetchError) as error:
         create_scraper(key, ["www.trendyol.com"], Runtime())
     assert error.value.code == "plugin"
+    if key == "olmayan":
+        assert isinstance(error.value.__cause__, ModuleNotFoundError)
 
 
 def test_factory_checks_key_before_import(monkeypatch, no_curl_session):
@@ -676,10 +679,19 @@ def test_factory_checks_key_before_import(monkeypatch, no_curl_session):
     valid = types.SimpleNamespace(Scraper=TrendyolScraper)
     monkeypatch.setitem(sys.modules, "app.scraper.Trendyol_scraper", valid)
     monkeypatch.setitem(sys.modules, "app.scraper.alt.trendyol_scraper", valid)
-    for key in ("Trendyol", "alt.trendyol"):
+    imports = []
+
+    def load(name):
+        imports.append(name)
+        return valid
+
+    monkeypatch.setattr(factory.importlib, "import_module", load)
+    for key in ("Trendyol", "alt.trendyol", "../x", "", "1trendyol"):
         with pytest.raises(FetchError) as error:
             create_scraper(key, ["www.trendyol.com"], Runtime())
         assert error.value.code == "plugin"
+        assert error.value.__cause__ is None
+    assert imports == []
 
 
 class NotAScraper:
@@ -695,20 +707,79 @@ class BrokenScraper(BaseScraper):
 
 
 @pytest.mark.parametrize(
-    "module",
+    "module, cause_type",
     [
-        types.SimpleNamespace(),  # Scraper sınıfı yok
-        types.SimpleNamespace(Scraper="Scraper"),  # sınıf değil
-        types.SimpleNamespace(Scraper=NotAScraper),  # BaseScraper değil
-        types.SimpleNamespace(Scraper=BaseScraper),  # soyut
-        types.SimpleNamespace(Scraper=BrokenScraper),  # kurucu hata veriyor
+        (types.SimpleNamespace(), AttributeError),  # Scraper sınıfı yok
+        (types.SimpleNamespace(Scraper="Scraper"), TypeError),  # sınıf değil
+        (types.SimpleNamespace(Scraper=NotAScraper), TypeError),  # BaseScraper değil
+        (types.SimpleNamespace(Scraper=BaseScraper), TypeError),  # soyut
+        (types.SimpleNamespace(Scraper=BrokenScraper), RuntimeError),
     ],
 )
-def test_factory_rejects_module_without_valid_scraper(monkeypatch, module):
+def test_factory_rejects_module_without_valid_scraper(monkeypatch, module, cause_type):
     monkeypatch.setitem(sys.modules, "app.scraper.sahte_scraper", module)
     with pytest.raises(FetchError) as error:
         create_scraper("sahte", ["www.trendyol.com"], Runtime())
     assert error.value.code == "plugin"
+    assert isinstance(error.value.__cause__, cause_type)
+    assert "sahte adaptörü yüklenemedi" in str(error.value)
+
+
+def test_factory_builds_instance_with_original_constructor_arguments(monkeypatch):
+    calls = []
+
+    class ValidScraper(BaseScraper):
+        def __init__(self, hosts, runtime):
+            calls.append((hosts, runtime))
+
+        def get_product_data(self, listing):
+            raise AssertionError("Yükleme sırasında sayfa okunmamalı")
+
+    monkeypatch.setitem(
+        sys.modules,
+        "app.scraper.sahte_scraper",
+        types.SimpleNamespace(Scraper=ValidScraper),
+    )
+    hosts = ["www.trendyol.com"]
+    runtime = Runtime()
+    scraper = create_scraper("sahte", hosts, runtime)
+    assert type(scraper) is ValidScraper
+    assert len(calls) == 1
+    assert calls[0][0] is hosts and calls[0][1] is runtime
+
+
+@pytest.mark.parametrize("stage", ["import", "constructor"])
+@pytest.mark.parametrize("error_type", [ImportError, RuntimeError, KeyboardInterrupt])
+def test_factory_preserves_error_cause_and_does_not_wrap_ctrl_c(
+    monkeypatch, stage, error_type
+):
+    failure = error_type("Yerel adaptör hata taklidi")
+    imports = []
+
+    class FailingScraper(BaseScraper):
+        def __init__(self, hosts, runtime):
+            raise failure
+
+        def get_product_data(self, listing):
+            raise AssertionError("Kurulamayan scraper sayfa okumamalı")
+
+    def load(name):
+        imports.append(name)
+        if stage == "import":
+            raise failure
+        return types.SimpleNamespace(Scraper=FailingScraper)
+
+    monkeypatch.setattr(factory.importlib, "import_module", load)
+    expected = KeyboardInterrupt if error_type is KeyboardInterrupt else FetchError
+    with pytest.raises(expected) as error:
+        create_scraper("sahte", ["www.trendyol.com"], Runtime())
+    assert imports == ["app.scraper.sahte_scraper"]
+    if error_type is KeyboardInterrupt:
+        assert error.value is failure
+    else:
+        assert error.value.code == "plugin"
+        assert error.value.__cause__ is failure
+        assert "sahte adaptörü yüklenemedi" in str(error.value)
 
 
 # --- Mimari kural: HTTP yalnız app/scraper/http.py ve curl_cffi ile ------------

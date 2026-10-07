@@ -4,6 +4,7 @@ import contextlib
 import json
 import os
 import sys
+import types
 
 import psycopg
 import pytest
@@ -896,6 +897,99 @@ def test_cli_exit_codes_and_trigger(cli_env, monkeypatch, capsys):
     ).fetchall()
     assert triggers == [("manual",), ("scheduled",)]
     # Tur bitince kilit bırakılmıştır.
+    with scrape_lock(lock):
+        pass
+
+
+@pytest.mark.parametrize("scheduled", [False, True], ids=["manual", "scheduled"])
+def test_cli_factory_failure_records_plugin_and_continues_the_run(
+    cli_env, catalog_path, tmp_path, monkeypatch, capsys, scheduled
+):
+    conn, lock = cli_env
+    catalog_before = catalog_path.read_bytes()
+    created = []
+    fetched = []
+    failures = []
+
+    class HealthyScraper(BaseScraper):
+        def __init__(self, hosts, runtime):
+            self.closed = False
+            created.append(self)
+
+        def get_product_data(self, item):
+            fetched.append(item.listing_id)
+            return self.observation(item, **OFFER)
+
+        def close(self):
+            self.closed = True
+
+    class FailingScraper(HealthyScraper):
+        def __init__(self, hosts, runtime):
+            failures.append(hosts)
+            raise RuntimeError("Yerel scraper kurulum hata taklidi")
+
+    monkeypatch.setitem(
+        sys.modules,
+        "app.scraper.trendyol_scraper",
+        types.SimpleNamespace(Scraper=HealthyScraper),
+    )
+    monkeypatch.setitem(
+        sys.modules,
+        "app.scraper.hepsiburada_scraper",
+        types.SimpleNamespace(Scraper=FailingScraper),
+    )
+    assert main(["--scheduled"] if scheduled else []) == 2
+    run_id = last_run_id(conn)
+    assert run_row(conn, run_id)[:4] == (
+        "completed",
+        "scheduled" if scheduled else "manual",
+        7,
+        True,
+    )
+    assert results(conn, run_id) == {
+        key: (
+            ("error", "plugin", None, None, True)
+            if key.startswith("hepsiburada_")
+            else ("offer", None, OFFER["current_price"], "Stokta Var", True)
+        )
+        for key in BEHAVIOURS
+    }
+    messages = conn.execute(
+        "SELECT error_message FROM listing_checks WHERE run_id = %s "
+        "AND error_code = 'plugin'",
+        (run_id,),
+    ).fetchall()
+    assert len(messages) == 3
+    assert all("hepsiburada adaptörü yüklenemedi" in message for (message,) in messages)
+    assert failures == [["www.hepsiburada.com"]] * 3
+    assert len(created) == 4 and all(scraper.closed for scraper in created)
+    assert set(fetched) == {key for key in BEHAVIOURS if key.startswith("trendyol_")}
+    output = capsys.readouterr()
+    assert "[7/7]" in output.out and "plugin 3" in output.out
+    assert output.err == ""
+    if scheduled:
+        text = log_text(tmp_path)
+        assert "[7/7]" in text and "plugin 3" in text
+        assert text.rstrip().endswith("Çıkış kodu: 2")
+    else:
+        assert not (tmp_path / "logs").exists()
+    assert run_lock_is_free()
+    with scrape_lock(lock):
+        pass
+    snapshot = run_snapshot(conn, run_id)
+
+    monkeypatch.setitem(
+        sys.modules,
+        "app.scraper.hepsiburada_scraper",
+        types.SimpleNamespace(Scraper=HealthyScraper),
+    )
+    assert main([]) == 0
+    assert run_count(conn) == 2
+    assert run_row(conn, last_run_id(conn))[:4] == ("completed", "manual", 7, True)
+    assert len(created) == 11 and all(scraper.closed for scraper in created)
+    assert run_snapshot(conn, run_id) == snapshot
+    assert catalog_path.read_bytes() == catalog_before
+    assert run_lock_is_free()
     with scrape_lock(lock):
         pass
 

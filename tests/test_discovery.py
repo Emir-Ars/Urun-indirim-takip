@@ -12,6 +12,7 @@ from urllib.parse import parse_qs, urlsplit
 
 import pytest
 
+import app.discovery.service as discovery_service
 from app.console import open_log
 from app.contracts import (
     Catalog,
@@ -1522,7 +1523,7 @@ def test_adapter_loads_only_valid_platform_modules(monkeypatch):
         with pytest.raises(ValueError, match="sözleşmeye uymuyor"):
             _adapter(key)
     # Discovery adı olan ama sözleşmeye uymayan (sınıf değil / soyut) modül.
-    for implementation in (object(), BaseDiscovery):
+    for implementation in (object(), object, BaseDiscovery):
         monkeypatch.setitem(
             sys.modules,
             "app.discovery.sahte",
@@ -1530,6 +1531,213 @@ def test_adapter_loads_only_valid_platform_modules(monkeypatch):
         )
         with pytest.raises(ValueError, match="sözleşmeye uymuyor"):
             _adapter("sahte")
+
+
+def test_adapter_checks_key_before_import(monkeypatch):
+    imports = []
+
+    def load(name):
+        imports.append(name)
+        return types.SimpleNamespace(Discovery=TrendyolDiscovery)
+
+    monkeypatch.setattr(discovery_service.importlib, "import_module", load)
+    for key in ("../x", "Trendyol", "app.discovery.trendyol", "", "1trendyol"):
+        with pytest.raises(ValueError, match="Geçersiz"):
+            _adapter(key)
+    assert imports == []
+
+
+def test_adapter_returns_class_without_calling_constructor(monkeypatch):
+    calls = []
+
+    class FailingDiscovery(BaseDiscovery):
+        def __init__(self, target, config, runtime):
+            calls.append((target, config, runtime))
+            raise RuntimeError("Yerel keşif kurulum hata taklidi")
+
+        def discover(self):
+            raise AssertionError("Yükleme sırasında keşif başlamamalı")
+
+    monkeypatch.setitem(
+        sys.modules,
+        "app.discovery.sahte",
+        types.SimpleNamespace(Discovery=FailingDiscovery),
+    )
+    implementation = _adapter("sahte")
+    assert implementation is FailingDiscovery
+    assert calls == []
+    arguments = (target(), DiscoveryConfig(targets=[]), Runtime())
+    with pytest.raises(RuntimeError, match="kurulum hata taklidi"):
+        implementation(*arguments)
+    assert len(calls) == 1
+    assert all(actual is expected for actual, expected in zip(calls[0], arguments))
+
+
+@pytest.mark.parametrize("error_type", [ImportError, RuntimeError, KeyboardInterrupt])
+def test_adapter_preserves_import_error_and_ctrl_c(monkeypatch, error_type):
+    failure = error_type("Yerel keşif yükleme hata taklidi")
+    imports = []
+
+    def load(name):
+        imports.append(name)
+        raise failure
+
+    monkeypatch.setattr(discovery_service.importlib, "import_module", load)
+    with pytest.raises(error_type) as error:
+        _adapter("sahte")
+    assert error.value is failure
+    assert imports == ["app.discovery.sahte"]
+
+
+@pytest.mark.parametrize("scheduled", [False, True], ids=["manual", "scheduled"])
+@pytest.mark.parametrize(
+    "failure",
+    [
+        "missing_module",
+        "invalid_class",
+        "import_runtime_error",
+        "constructor_value_error",
+        "constructor_runtime_error",
+        "constructor_type_error",
+        "constructor_interrupt",
+    ],
+)
+def test_discovery_loader_failure_preserves_files_and_releases_lock(
+    run_env, tmp_path, monkeypatch, capsys, scheduled, failure
+):
+    catalog_before = run_env.read_bytes()
+    config_path = tmp_path / "discovery.json"
+    config = json.loads(config_path.read_text(encoding="utf-8"))
+    config["targets"][1]["active"] = True
+    config_path.write_text(json.dumps(config), encoding="utf-8")
+    previous_report = tmp_path / "data" / "discovery_report.json"
+    previous_report.parent.mkdir(parents=True)
+    previous_report.write_bytes(b"previous report")
+    report_dir = tmp_path / "data" / "discovery"
+    log_dir = tmp_path / "data" / "logs"
+    monkeypatch.setenv("DISCOVERY_REPORT_DIR", str(report_dir))
+    monkeypatch.setenv("LOG_DIR", str(log_dir))
+    events = []
+    error_types = {
+        "missing_module": ModuleNotFoundError,
+        "import_runtime_error": RuntimeError,
+        "constructor_value_error": ValueError,
+        "constructor_runtime_error": RuntimeError,
+        "constructor_type_error": TypeError,
+        "constructor_interrupt": KeyboardInterrupt,
+    }
+    failure_error = error_types.get(failure, ValueError)(
+        "Yerel hepsiburada adaptör hata taklidi"
+    )
+
+    class HealthyDiscovery(BaseDiscovery):
+        platform = "trendyol"
+
+        def __init__(self, target, config, runtime):
+            self.target = target
+            events.append(("create", self.platform, target.key))
+
+        def discover(self):
+            events.append(("discover", self.platform, self.target.key))
+            return DiscoveryResult(
+                platform=self.platform,
+                target_key=self.target.key,
+                candidates=[],
+                complete=True,
+            )
+
+        def close(self):
+            events.append(("close", self.platform, self.target.key))
+
+    class HealthyHepsiburada(HealthyDiscovery):
+        platform = "hepsiburada"
+
+    class FailingDiscovery(HealthyHepsiburada):
+        def __init__(self, target, config, runtime):
+            events.append(("create", self.platform, target.key))
+            raise failure_error
+
+    real_import = discovery_service.importlib.import_module
+    failing = True
+
+    def load(name):
+        if name == "app.discovery.trendyol":
+            events.append(("load", "trendyol"))
+            return types.SimpleNamespace(Discovery=HealthyDiscovery)
+        if name == "app.discovery.hepsiburada":
+            events.append(("load", "hepsiburada"))
+            if failing and failure in ("missing_module", "import_runtime_error"):
+                raise failure_error
+            implementation = HealthyHepsiburada
+            if failing:
+                implementation = (
+                    object if failure == "invalid_class" else FailingDiscovery
+                )
+            return types.SimpleNamespace(Discovery=implementation)
+        return real_import(name)
+
+    monkeypatch.setattr(discovery_service.importlib, "import_module", load)
+    known_error = failure in (
+        "missing_module",
+        "invalid_class",
+        "constructor_value_error",
+    )
+    argv = ["--scheduled", "--dry-run"] if scheduled else []
+    if failure == "constructor_interrupt" or (not scheduled and not known_error):
+        with pytest.raises(type(failure_error)) as error:
+            discovery_main(argv)
+        assert error.value is failure_error
+    else:
+        assert discovery_main(argv) == 1
+    output = capsys.readouterr()
+    if known_error:
+        assert "Keşif başlatılamadı" in output.err and "Traceback" not in output.err
+    elif scheduled and failure != "constructor_interrupt":
+        assert "Traceback" in output.err
+        assert f"{type(failure_error).__name__}: {failure_error}" in output.err
+    else:
+        assert "Keşif başlatılamadı" not in output.err
+    expected_events = [
+        ("load", "trendyol"),
+        ("create", "trendyol", "apple_iphone_15"),
+        ("discover", "trendyol", "apple_iphone_15"),
+        ("close", "trendyol", "apple_iphone_15"),
+        ("load", "hepsiburada"),
+    ]
+    if failure.startswith("constructor_"):
+        expected_events.append(("create", "hepsiburada", "apple_iphone_15"))
+    assert events == expected_events
+    assert run_env.read_bytes() == catalog_before
+    assert previous_report.read_bytes() == b"previous report"
+    assert not list(report_dir.glob("*.json"))
+    if scheduled:
+        [log] = log_dir.glob("kesif_*.log")
+        text = log.read_text(encoding="utf-8")
+        assert text.startswith("Zamanlanmış keşif (önizleme)")
+        assert all(line in text for line in output.err.splitlines())
+        if failure == "constructor_interrupt":
+            assert "Çıkış kodu:" not in text
+        else:
+            assert text.rstrip().endswith("Çıkış kodu: 1")
+    else:
+        assert not log_dir.exists()
+    with scrape_lock(tmp_path / "scrape.lock"):
+        pass
+
+    failing = False
+    events.clear()
+    assert discovery_main(["--dry-run"]) == 0
+    assert [event for event in events if event[0] == "close"] == [
+        ("close", "trendyol", "apple_iphone_15"),
+        ("close", "hepsiburada", "apple_iphone_15"),
+        ("close", "trendyol", "poco_x5_pro"),
+        ("close", "hepsiburada", "poco_x5_pro"),
+    ]
+    report = DiscoveryReport.model_validate_json(previous_report.read_text("utf-8"))
+    assert report.complete and len(report.results) == 4
+    assert run_env.read_bytes() == catalog_before
+    with scrape_lock(tmp_path / "scrape.lock"):
+        pass
 
 
 @pytest.mark.parametrize("complete, code", [(True, 0), (False, 2)])

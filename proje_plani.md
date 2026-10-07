@@ -81,7 +81,15 @@ elle/zamanlanmış girişlerde sınandı; completed tur ve bütün kayıtlar, ik
 ve sonraki tur korundu. Çıkışlar özet/bağlantı hatasında 1, Ctrl+C'de 130.
 7 yeni sınama; 804 geçti/0 atlandı/xfail (226 PostgreSQL), Black/Flake8 temiz.
 Gerçek DB/katalog/migration/zamanlayıcı değişmedi. Kullanıcı commit/push
-işlemini onayladı; bakım 7'ye geçilmedi.
+işlemini onayladı; `ea4248e` gönderildi, aynı SHA için CI 37625155724 yeşil.
+
+**7 Ekim bakım 7 (kullanıcı onayı, kontrol edildi ve mevcut davranış kabul edildi):**
+iki eklenti yükleyicisinin farklı sözleşmeleri korundu; üretim kodu değişmedi.
+Yükleme/kurma hatası, Ctrl+C, tur/keşif devam-durma davranışı, kayıt ve dosya
+koruması, kapanışlar, loglar ve kilitler kalıcı testlerle doğrulandı. 28 yeni
+sınama; hedefli 43 geçti, son tam paket 832 geçti/0 atlandı/xfail (228 PostgreSQL),
+Black/Flake8 temiz. Yedi bakım maddesinin kontrol/düzeltmesi tamamlandı;
+kullanıcı bakım 7'nin commit/push işlemini onayladı, yeni özellik aşamasına geçilmedi.
 
 Önceki aşamalardan kalan yerel taslaklar (eski `app/database`, `app/ml_model`,
 `app/api`, `app/services`, `app/worker.py`, `frontend/`, Docker dosyaları ve
@@ -530,7 +538,7 @@ Kontrol edilip kabul edilen sınır (7 Ekim, bakım 6):
   `_url_identity` mevcut iki platformu seçmeye devam eder; bilinmeyen platform
   `None` döndürür. Yeni site/eklenti mimarisi bu bakımın kapsamında değildir.
 - İki eklenti yükleyicisi (`scraper/factory.py`, `discovery/service.py` `_adapter`)
-  aynı yapıda; bakım 7'de ayrı kontrol edilecek.
+  bakım 7'de ayrı kontrol edildi; farklı sözleşmeleri kabul edildi, birleştirilmedi.
 - Kimlik değişikliklerinde canlı örnek ve regresyon şartı sürer. Bakım 2, 4
   ve 5'in önleyici düzeltmeleri için kullanıcı her maddeye ayrı istisna verdi.
   Varyant tutarlılığı riski bakım 4'te, adres farkları bakım 2 ve 5'te kapandı.
@@ -859,7 +867,42 @@ yalnız `fiyat_takip_test`. Black 44 dosyada, Flake8 tek işçiyle temiz.
 Gerçek DB'ye erişim/yazım ve canlı site komutu yapılmadı; katalog, ayarlar,
 uygulanmış migration, toplama/veritabanı servisleri ve zamanlayıcı dosyaları
 değişmedi. Canlı turda bu hataların görüldüğü iddia edilmez. Kullanıcı
-commit/push işlemini onayladı; bakım 7'ye geçilmedi.
+commit/push işlemini onayladı; `ea4248e` gönderildi, aynı SHA için
+CI 37625155724 yeşil.
+
+**7 Ekim bakım 7: kontrol edildi ve mevcut davranış kabul edildi.** Kullanıcı
+kontrol/kalıcı test planını onayladı; üretim davranışının ve hata çıktılarının
+korunmasını seçti. Scraper nesne kurup olağan yükleme/kurma hatasını `plugin`
+yapar, asıl hata nedenini korur; keşif sınıf döndürür, nesne keşif akışında
+kurulur ve yükleme/kurma hatası taramayı durdurur. Geçersiz anahtar içe
+aktarmadan reddedilir; eksik modül/sınıf, yanlış taban sınıfı, soyut sınıf,
+yükleme ve kurucu hataları ile Ctrl+C kontrol edildi. Ctrl+C normal eklenti
+hatasına çevrilmez.
+
+28 yeni kalıcı sınama eklendi; mevcut sınıf ve hata nedeni kontrolleri de
+güçlendirildi. Scraper tarafında gerçek factory ve sahte sınıflarla elle ve
+zamanlanmış turda 3 `error/plugin`, 4 fiyat kaydı, `completed`, çıkış 2,
+kurulan nesnelerin kapanışı ve iki kilit doğrulandı. Sonraki normal tur
+başladı, önceki turun bütün alanları/sonuçları aynı kaldı. Keşifte ilk adaptör
+tamamlanıp kapandıktan sonra ikinci adaptörün yükleme/kurulum hataları
+elle/zamanlanmış girişlerde sınandı; diğer hedeflere geçilmedi, katalog ve
+önceki rapor korundu, yeni sonuç raporu yazılmadı. Dosya kilidi bırakıldı;
+ardından iki hedef/iki platformun normal sahte keşfi tamamlandı.
+
+Keşifte bilinen hatalar açıklamalı çıkış 1; beklenmeyen `RuntimeError`/`TypeError`
+elle yukarı iletilir, zamanlanmış girişte ayrıntı loga yazılıp çıkış 1 olur.
+Keşif kurulumundaki Ctrl+C iki girişte de yukarı iletilir; zamanlanmış logda
+başlangıç kalır, normal çıkış satırı yazılmaz. Bu mevcut davranış kabul edildi,
+yeni mesaj veya ortak yükleyici eklenmedi; teknik belgede açıklandı.
+
+Hedefli **43 passed**, 0 atlandı, 367 seçilmedi (2,17 sn). Son tam test
+**832 passed**, 0 atlandı/xfail, 44,56 sn; 228 PostgreSQL testi yalnız
+`fiyat_takip_test`. Black 44 dosyada ve Flake8 tek işçiyle temiz. Testler
+mevcut üretim kodunda geçti; hata düzeltmesi iddiası veya başarısız eski-kod
+regresyonu yok. Üretim/ayar/zamanlayıcıya ait 36 takip edilen dosyanın bayt
+parmak izleri başlangıçla eşleşti; gerçek DB'ye erişim/yazım ve canlı site
+komutu yapılmadı. Yedi bakım maddesinin kontrol/düzeltmesi tamamlandı;
+Kullanıcı bakım 7'nin commit/push işlemini onayladı. Cimri Adım 9 ve yeni özellikler başlamadı.
 
 Onaylanan bakım sırası ve durum (her adımdan sonra sonuç anlatılıp durulur):
 
@@ -870,8 +913,8 @@ Onaylanan bakım sırası ve durum (her adımdan sonra sonuç anlatılıp durulu
 | 3. Türkçe ekli aksesuar adları | ✅ Düzeltildi: üç kayıtlı yazım için dar başlık/kategori kuralı; model, başlık/yapısal kapasite ve birden çok ad sınandı, 21 kayıtlı telefonun kabulü korundu. 652 test geçti, atlanan/xfail yok. Kullanıcı commit/push işlemini onayladı. |
 | 4. Hepsiburada çoklu varyant listesi | ✅ Önleyici düzeltme uygulandı (7 Ekim, yalnız bu madde için kullanıcı istisnası): ortak SKU kapasite/renk doğrulaması; çelişkide identity, eşdeğer/eksik alan ve başlık yedeği korunuyor. 75 yeni sınama, toplam 727 geçti/0 atlandı/xfail. Gerçek kaynakta çelişki görülmedi; 24 adayın bilgileri ve 12 diğer modelin reddi korundu. Kullanıcı commit/push işlemini onayladı. |
 | 5. Beş adres kimliği kuralı | ✅ Önleyici düzeltme uygulandı (7 Ekim, bu maddeye ayrı kullanıcı istisnası): beş tüketici ortak ürün yolu kimliği kullanıyor; sorunlu TY fiyat seçimi ve HB sorgu SKU'su reddi kapandı. 334 katalog/333 farklı aday kimliği korundu. 39 yeni sınama; 797 passed/0 atlandı/xfail (219 PostgreSQL), Black/Flake8 temiz. Gerçek uyuşmazlık görülmedi. ac9c6b6 push/aynı SHA için CI 37616987979 yeşil. |
-| 6. Tur sonu özet sorgusu | ✅ Veri koruması kontrol edildi, mevcut davranış kabul edildi; kesinti mesajı düzeltildi (7 Ekim). SQL hatası/bağlantı kapanması/Ctrl+C elle-zamanlanmış girişlerde sınandı; completed tur, bütün kayıtlar, iki kilit ve sonraki tur korundu. Çıkışlar 1/130 değişmedi. 7 yeni sınama; 804 passed/0 atlandı/xfail (226 PostgreSQL), Black/Flake8 temiz. Kullanıcı commit/push işlemini onayladı; bakım 7'ye geçilmedi. |
-| 7. İki eklenti yükleyicisi | 🔜 Geçerli/eksik/yanlış/soyut/kurulamayan adaptör kontrolü; farklı sözleşmeler korunur, yalnız benzerlik için birleştirilmez. |
+| 6. Tur sonu özet sorgusu | ✅ Veri koruması kontrol edildi, mevcut davranış kabul edildi; kesinti mesajı düzeltildi (7 Ekim). SQL hatası/bağlantı kapanması/Ctrl+C elle-zamanlanmış girişlerde sınandı; completed tur, bütün kayıtlar, iki kilit ve sonraki tur korundu. Çıkışlar 1/130 değişmedi. 7 yeni sınama; 804 passed/0 atlandı/xfail (226 PostgreSQL), Black/Flake8 temiz. ea4248e push/aynı SHA için CI 37625155724 yeşil. |
+| 7. İki eklenti yükleyicisi | ✅ Kontrol edildi ve mevcut davranış kabul edildi (7 Ekim, kullanıcı onayı). Geçerli/eksik/yanlış/soyut sınıf, içe aktarma/kurulum hatası ve Ctrl+C; elle/zamanlanmış toplama-keşif kayıtları, dosyalar, loglar, kapanışlar, kilitler ve sonraki normal çalışma doğrulandı. Farklı sözleşmeler korundu; üretim kodu değişmedi. 28 yeni sınama; 832 passed/0 atlandı/xfail (228 PostgreSQL), Black/Flake8 temiz. Kullanıcı commit/push işlemini onayladı. |
 
 - 29 Eylül incelemesinde kapandı: test kapsamı maddeleri (Trendyol Kritik Stok,
   keşif CLI çıkış kodları, dry-run'ın kataloğa yazmaması, uyarı türleri, HTTP
@@ -962,7 +1005,11 @@ ortak ürün adresi planı ayrı kullanıcı istisnasıyla onaylanıp uygulandı
 CI 37616987979 yeşil. Ardından bakım 6 planı onaylanıp uygulandı: kapanış
 sonrası hata/kesintide veri ve kilit koruması kabul edildi, yalnız Ctrl+C
 mesajı düzeltildi. 7 yeni sınama; 804 test/0 atlandı/xfail (226 PostgreSQL),
-biçim denetimleri temiz. Kullanıcı commit/push işlemini onayladı; bakım 7 ve Adım 9 başlamadı.
+biçim denetimleri temiz. `ea4248e` gönderildi, aynı SHA için CI 37625155724 yeşil.
+Ardından kullanıcı bakım 7 kontrol/kalıcı test planını onayladı: mevcut eklenti
+sözleşmeleri ve hata akışı üretim değişmeden doğrulandı; 28 yeni sınama,
+832 test/0 atlandı/xfail (228 PostgreSQL), biçim denetimleri temiz. Yedi bakım
+maddesi tamamlandı; kullanıcı bakım 7'nin commit/push işlemini onayladı, Adım 9 başlamadı.
 
 | Adım | Durum |
 |---|---|
@@ -1009,7 +1056,8 @@ Takvim (tahmin, 7 Ekim güncellemesi; Adım 9 ve 11'in süresi henüz belirlenme
 | 7 Ekim | Bakım 4 önleyici düzeltmesi kullanıcı istisnasıyla uygulandı: aynı SKU'nun bütün kapasite/renk kayıtları doğrulanıyor, çelişkide identity. 75 yeni sınama; 727 test geçti/0 atlandı/xfail, Black/Flake8 temiz. 24 geçerli adayın bilgileri ve 12 diğer modelin reddi korundu. Kullanıcı commit/push işlemini onayladı; bakım 5'e geçilmedi |
 | 7 Ekim | Kullanıcının sırası 2 → 5 → 6 → 7. Bakım 2 iki hedefle yeniden kontrol edildi: TY 6/HB 36 kimlik eşleşti, gerçek uyuşmazlık yok. Ayrı kullanıcı istisnasıyla TY adres kimliği ve HB canonical tam SKU korumaları uygulandı; 31 yeni sınama, 758 passed/0 atlandı/xfail, Black/Flake8 temiz. 6 TY/24 HB aday ve 12 model reddi korundu. Kullanıcı commit/push işlemini onayladı; bakım 5 başlamadı |
 | 7 Ekim | Bakım 5 önleyici düzeltmesi ayrı kullanıcı istisnasıyla uygulandı: beş tüketici ortak ürün yolu kimliği kullanıyor. Sorunlu TY ucuz teklifi ve HB sorgu SKU'su reddediliyor. 334 katalog/333 farklı aday kimliği korundu; gerçek DB/katalog/migration değişmedi. 39 yeni sınama; 797 passed/0 atlandı/xfail (219 PostgreSQL), Black/Flake8 temiz. Kullanıcı commit/push işlemini onayladı; bakım 6'ya geçilmedi |
-| 7 Ekim | Bakım 6 kontrolü ve mesaj düzeltmesi tamamlandı: kapanış sonrası SQL hatası/bağlantı kapanması/Ctrl+C'de completed tur, bütün kayıtlar, kilitler ve sonraki tur korundu. Yalnız Ctrl+C mesajı değişti, çıkışlar 1/130 aynı. 7 yeni sınama; 804 passed/0 atlandı/xfail (226 PostgreSQL), Black/Flake8 temiz. Kullanıcı commit/push işlemini onayladı; bakım 7'ye geçilmedi |
+| 7 Ekim | Bakım 6 kontrolü ve mesaj düzeltmesi tamamlandı: kapanış sonrası SQL hatası/bağlantı kapanması/Ctrl+C'de completed tur, bütün kayıtlar, kilitler ve sonraki tur korundu. Yalnız Ctrl+C mesajı değişti, çıkışlar 1/130 aynı. 7 yeni sınama; 804 passed/0 atlandı/xfail (226 PostgreSQL), Black/Flake8 temiz. Kullanıcı onayıyla ea4248e push/aynı SHA için CI 37625155724 yeşil |
+| 7 Ekim | Bakım 7 kontrol/kalıcı test planı uygulandı: yükleyicilerin farklı sözleşmeleri kabul edildi; hata/Ctrl+C, kayıt/dosya koruması, log, kapanış, kilitler ve sonraki normal çalışma doğrulandı. Üretim kodu değişmedi. 28 yeni sınama; 832 passed/0 atlandı/xfail (228 PostgreSQL), Black/Flake8 temiz. Yedi bakım maddesi tamamlandı; kullanıcı bakım 7'nin commit/push işlemini onayladı, yeni özelliklere geçilmedi |
 | Adım 11 sonrası | **Adım 9:** Cimri geçmişinin bir defalık alımı, katalog eşleştirmesi ve ayrı `market_history` tablosuna aktarım |
 | Adım 9 sonrası | **Adım 7:** kapanış belgeleri; veritabanı aşaması biter. Önceki 2–3 Ekim kapanış tahmini yeni adımlara göre yeniden değerlendirilecek |
 
