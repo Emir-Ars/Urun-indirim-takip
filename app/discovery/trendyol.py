@@ -1,6 +1,5 @@
 """Trendyol aramasından ürün gruplarını ve doğrulanmış seçenekleri bulur."""
 
-import re
 from urllib.parse import parse_qsl, urlencode, urljoin, urlsplit, urlunsplit
 
 from bs4 import BeautifulSoup
@@ -18,6 +17,7 @@ from app.scraper.parsing import (
     matches_model,
     normalize,
     storage_gb,
+    trendyol_product_id,
 )
 from app.scraper.trendyol_scraper import product_capacity
 
@@ -27,7 +27,6 @@ VARIANTS = (
     "https://apigw.trendyol.com/discovery-storefront-trproductgw-service/"
     "api/slicing-attributes/product-group/{group}/slicing-attributes"
 )
-PRODUCT_ID = re.compile(r"-p-(\d+)(?:[/?]|$)")
 
 
 def _axes(response: dict) -> list[dict]:
@@ -204,7 +203,7 @@ class Discovery(BaseDiscovery):
                 if group and item.get("id"):
                     groups.setdefault(str(group), str(item["id"]))
                 relative_url = item.get("url", "").split("?", 1)[0]
-                if item.get("id") and PRODUCT_ID.search(relative_url):
+                if item.get("id") and trendyol_product_id(relative_url) is not None:
                     cards[str(item["id"])] = urljoin(HOME, relative_url)
             next_url = (page.get("_links") or {}).get("next")
             if not products or not next_url:
@@ -237,8 +236,7 @@ class Discovery(BaseDiscovery):
 
     def _candidate(self, url, expected_id, variant_color=None):
         self.product_pages += 1
-        address_id = PRODUCT_ID.search(urlsplit(url).path)
-        if address_id is None or address_id.group(1) != expected_id:
+        if trendyol_product_id(url) != expected_id:
             raise FetchError("identity", "Trendyol adres kimliği kaynakla uyuşmuyor")
         html = self.get(url)
         state = assigned_json(

@@ -155,6 +155,45 @@ def scraper_with(listings, offers, *, html=None):
     return Scraper(["www.hepsiburada.com"], runtime, client=session), session
 
 
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://www.hepsiburada.com/phone",
+        "https://www.hepsiburada.com/phone-p-HBCV00004X9ZCK-bad",
+        "https://www.hepsiburada.com/phone?ref=other-p-HBCV00004X9ZCK",
+    ],
+)
+def test_url_identity_rejects_invalid_listing_before_request(listing, url):
+    scraper, session = scraper_with(
+        [full_listing("hb", "Hepsiburada", 50_000)],
+        [response_offer("hb", "Hepsiburada", 50_000)],
+    )
+    try:
+        with pytest.raises(FetchError) as error:
+            scraper.fetch(listing.model_copy(update={"url": url}))
+        assert error.value.code == "identity"
+        assert session.calls == []
+    finally:
+        scraper.close()
+
+
+@pytest.mark.parametrize("suffix", ["", "?ref=1", "/", "/?ref=1"])
+def test_url_identity_preserves_lowercase_sku_fetch(listing, suffix):
+    scraper, session = scraper_with(
+        [full_listing("hb", "Hepsiburada", 50_000)],
+        [response_offer("hb", "Hepsiburada", 50_000)],
+    )
+    url = URL.replace(SKU, SKU.lower()) + suffix
+    try:
+        observation = scraper.fetch(listing.model_copy(update={"url": url}))
+        assert observation.current_price == 5_000_000
+        assert observation.product_url == url
+        assert len(session.calls) == 3
+        assert session.calls[1][1] == LISTINGS_URL.format(sku=SKU)
+    finally:
+        scraper.close()
+
+
 def variant_page_html(variant_lists, *, name="Apple iPhone 15"):
     html = page_html(name=name, variants=variant_lists[0])
     for variants in variant_lists[1:]:

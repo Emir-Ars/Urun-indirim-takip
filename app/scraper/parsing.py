@@ -4,6 +4,7 @@ import json
 import re
 import unicodedata
 from decimal import Decimal, InvalidOperation
+from urllib.parse import urlsplit
 
 from bs4 import BeautifulSoup
 
@@ -30,6 +31,27 @@ DISALLOWED_CONDITIONS = (
     re.compile(r"\bteshir\b"),
 )
 CAPACITY = re.compile(r"(?<!\d)(\d+)\s*(gb|tb)\b")
+_TRENDYOL_PRODUCT_ID = re.compile(r"-p-(\d+)(?:/|$)")
+_HEPSIBURADA_SKU = re.compile(r"-p-(HBCV[A-Z0-9]+)(?:/|$)", re.IGNORECASE)
+
+
+def _path_identity(url: str, pattern: re.Pattern[str]) -> str | None:
+    try:
+        path = urlsplit(url).path
+    except ValueError:
+        return None
+    match = pattern.search(path)
+    return match.group(1).upper() if match else None
+
+
+def trendyol_product_id(url: str) -> str | None:
+    """Kimliği yalnız ürün yolundan okur; sorgu ve alan adı ürün kimliği değildir."""
+    return _path_identity(url, _TRENDYOL_PRODUCT_ID)
+
+
+def hepsiburada_sku(url: str) -> str | None:
+    """Ürün yolundaki SKU'yu büyük harfe çevirir; grup adresi SKU değildir."""
+    return _path_identity(url, _HEPSIBURADA_SKU)
 
 
 def money(value) -> int:

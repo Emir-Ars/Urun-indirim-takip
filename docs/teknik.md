@@ -1030,6 +1030,23 @@ eşitlemeyi çalıştırır; komut, keşiften sonra farkı gözle görmek içind
 Keşif ve scraper aynı fonksiyonu (`app/scraper/parsing.py → identify`) kullanır;
 böylece keşfin kabul ettiği sayfayı scraper aynı girdilerle reddetmez.
 
+- Ürün adresi kimliği de `app/scraper/parsing.py` içindeki
+  `trendyol_product_id(url)` ve `hepsiburada_sku(url)` ile ortak okunur. İki
+  scraper, iki keşif modülü ve katalog eşleştirme bu yardımcıları kullanır.
+  Kimlik yalnız ürün yolundan çıkarılır; sorgu veya alan adındaki metin kimlik
+  sayılmaz. Geçerli sorgu parametreleri, son eğik çizgi ve göreli ürün yolları
+  kabul edilir; yardımcılar adresi yeniden yazmaz.
+- Trendyol kimliği küçük harfli `-p-` ardından rakamlardır; rakama yapışık harf
+  reddedilir. Kimlik metin olarak kalır, baştaki sıfırlar korunur. Hepsiburada
+  ürün kodu `-p-HBCV…` içindeki harf/rakam SKU'sudur ve büyük harfe çevrilir.
+  Kimlik bulunamazsa ortak yardımcılar `None` döndürür. Mevcut scraper
+  doğrulaması geçersiz ürün adresinde `identity` verir; Trendyol'da sorunlu
+  satıcı teklifi fiyat seçiminden `different_product_page` gerekçesiyle elenir.
+  Hepsiburada SKU reddi ürün isteğinden önce, Trendyol scraper doğrulaması
+  mevcut ürün isteğinden sonra çalışır; istek sırası korunur.
+- Hepsiburada grup (`-pm-HBC…`) kimliği keşfe özgü ayrı kuraldır; ürün SKU'su
+  sayılmaz. Katalog eşleştirmede bilinmeyen platform `None` döndürür. Bakım 2'nin
+  kaynak/adres/sayfa karşılaştırması ve canonical tam SKU koruması sürer.
 - Başlık tam modeli içermeli: "iPhone 16" hedefi "iPhone 16e", "16 Plus",
   "16 Pro" başlıklarını; "Galaxy S24" hedefi "S24+", "S24 FE", "S24 Ultra"
   başlıklarını; "iPhone 13" hedefi "13 mini" başlığını kabul etmez.
@@ -1102,13 +1119,26 @@ Mevcut HB fixture'ındaki 24 aday ve 12 model reddi de korunur. 31 yeni sınamad
 kimliksiz/farklı TY adresi, bozuk son ek, sorgu metninin kimlik gibi kullanılması,
 HB SKU alt dize tuzağı, geçerli sorgu/eğik çizgi/küçük harfli SKU, sayfa kimliği
 reddi ve keşfin devamı denetlendi. Eski kodda 12 yeni sınama başarısız, 19 başarılı
-oldu; kayıtlı 6 TY adayının koruma sınamaları eski kodda da geçti. Genel kimlik
-kurallarında gerçek kaynak şartı devam eder; bakım 5'te adres tüketicilerinin
-karşılaştırılması ayrıca yapılacaktır.
+oldu; kayıtlı 6 TY adayının koruma sınamaları eski kodda da geçti.
+
+7 Ekim bakım 5'te beş tüketicinin ürün adresi kuralları ortaklaştırıldı.
+Önce/sonra karşılaştırmasında 334 katalog adresinin ve kayıtlardaki 333 farklı
+aday adresinin kimliği değişmedi; katalog kayıt kimlikleri ve dosya içeriği
+korundu. Yapay sınamada eski Trendyol scraper'ı bozuk son ekli veya yalnız
+sorguda kimlik taşıyan ucuz teklifi seçebiliyordu; Hepsiburada scraper'ı da
+sorgudaki SKU'yu ürün kodu sayabiliyordu. Canlı yanlış fiyat/kayıt kanıtı yoktur.
+Kullanıcı yalnız bakım 5 için de gerçek uyuşmazlık örneğini bekleme şartına ayrı
+istisna verip önleyici düzeltme planını onayladı; genel gerçek kaynak şartı sürer.
+39 yeni sınama, tüketicilerin aynı adreslerdeki sonucu ve scraper girişlerindeki
+fiyat seçimi/kimlik reddini kapsar. Eski kodda 13'ü başarısız, 26'sı başarılıydı.
+Mevcut sabit katalog testleri, 6 TY/24 HB adayın bütün alanları ve diğer modele
+ait 12 sayfanın reddi korundu. Son tam paket 797 geçti, atlanan/xfail yok;
+219 veritabanı testi yalnız `fiyat_takip_test` üzerinde çalıştı. Black/Flake8
+temiz. Gerçek DB, katalog ve uygulanmış migration dosyaları değişmedi.
 
 ## Testler ne kanıtlar, ne kanıtlamaz
 
-- **Otomatik testler (758; 219'u gerçek PostgreSQL'de):** Kuralların doğru
+- **Otomatik testler (797; 219'u gerçek PostgreSQL'de):** Kuralların doğru
   çalıştığını kayıtlı ve sahte yanıtlarla kanıtlar. Kimlik değişiklikleri gerçek
   kaynak örneği ve regresyon ister; 7 Ekim varyant ve adres bakımları kullanıcının
   her maddeye ayrı onayıyla yapay çelişkilere karşı önleyici koruma olarak uygulandı.

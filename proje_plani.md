@@ -63,6 +63,16 @@ verdi; iki dar adres koruması önleyici olarak uygulandı. 31 yeni sınama, top
 commit/push işlemini onayladı; bakım 5'e geçilmedi.
 Ayrıntı ve durumlar Bölüm 7'de.
 
+**7 Ekim bakım 5 (kullanıcı onayı, önleyici düzeltme uygulandı):** beş tüketicide
+ürün adresi kimliği yalnız ürün yolundan ortak kuralla okunuyor; iki yardımcı
+mevcut `app/scraper/parsing.py` içinde, eski dönüş/hata sözleşmeleri korundu.
+334 katalog ve 333 farklı kayıtlı aday adresinde önce/sonra kimlik farkı yok.
+Kullanıcı yalnız bakım 5 için gerçek uyuşmazlık örneğini bekleme şartına ayrı
+istisna verip planı onayladı; yapay fiyat seçimi riski regresyonla kapandı,
+canlı yanlış kayıt kanıtı yok. 39 yeni sınama; toplam 797 geçti/0 atlandı/xfail
+(219 PostgreSQL), Black/Flake8 temiz. Gerçek katalog/veritabanı/migration
+değişmedi. Kullanıcı commit/push işlemini onayladı; bakım 6'ya geçilmedi.
+
 Önceki aşamalardan kalan yerel taslaklar (eski `app/database`, `app/ml_model`,
 `app/api`, `app/services`, `app/worker.py`, `frontend/`, Docker dosyaları ve
 Akakçe/Cimri taslakları) 28 Eylül 2026'da `_eski_taslaklar/` klasörüne taşındı;
@@ -501,16 +511,16 @@ Açık kalanlar:
 - Tur tamamlandıktan sonra özet sorgusu (`run_summary`) düşerse çıkış kodu 1 olur ama
   tur `completed` kalır (nadir; docs/teknik.md'de yazılı).
 
-Yeni (6 Ekim denetimi; henüz uygulanmadı, bazı birleştirmeler davranışı değiştirir):
-- Aynı adres-kimliği düzenli ifadesi beş yerde yazılı (`discovery/service.py`
-  `_url_identity`, iki scraper, iki keşif modülü); `trendyol_scraper.py` sondaki
-  `(?:[/?]|$)` kısmını atlıyor, yani anlamca hafif farklı. `_url_identity` platform
-  adlarını koda gömüyor ("yeni site için mevcut koda koşul eklenmez" ilkesine ters).
+6 Ekim denetimindeki ortaklaştırma bulgularının güncel durumu:
+- Beş yerdeki ürün adresi desenleri ve davranış farkları 7 Ekim bakım 5'te
+  ortak iki yardımcıyla kapatıldı; kimlik yalnız ürün yolundan okunur.
+  `_url_identity` mevcut iki platformu seçmeye devam eder; bilinmeyen platform
+  `None` döndürür. Yeni site/eklenti mimarisi bu bakımın kapsamında değildir.
 - İki eklenti yükleyicisi (`scraper/factory.py`, `discovery/service.py` `_adapter`)
-  aynı yapıda.
-- Adres yardımcılarını birleştirmek kimlik kuralına dokunduğu için
-  canlı örnek ve regresyon testi ister. Varyant tutarlılığı riski, kullanıcının
-  yalnız bakım 4'e özel istisnasıyla 7 Ekim'de önleyici düzeltmeyle kapatıldı.
+  aynı yapıda; bakım 7'de ayrı kontrol edilecek.
+- Kimlik değişikliklerinde canlı örnek ve regresyon şartı sürer. Bakım 2, 4
+  ve 5'in önleyici düzeltmeleri için kullanıcı her maddeye ayrı istisna verdi.
+  Varyant tutarlılığı riski bakım 4'te, adres farkları bakım 2 ve 5'te kapandı.
   Eklenti yükleyicileri farklı sözleşmeler
   taşır: scraper nesne kurar ve hatayı `plugin` yapar; keşif sınıf döndürür ve
   yükleme hatası komutu durdurur. Yalnız kod benzerliği hata kanıtı değildir.
@@ -643,13 +653,15 @@ Yeniden kontrol sırasında yalnız iki yerel risk sınaması çalıştırıldı
 bu aşamada kod değişmediği için tam 727 test tekrar çalıştırılmadı.
 
 **Bakım 2 uygulaması tamamlandı (7 Ekim):** `app/discovery/trendyol.py`
-adayın ürün yolunu mevcut `PRODUCT_ID` kuralıyla kaynak kimliğine eşitler;
+adayın ürün yolunu o adımda kullanılan `PRODUCT_ID` kuralıyla kaynak kimliğine
+eşitler (bakım 5'te bu desen ortak yardımcıya taşındı);
 eksik/farklı kimlikte istek göndermez, `identity` hatası raporda aday reddi olur.
 Ürün sayfası deneme sınırı ve diğer adaylara devam korunur; sayfanın kendi
 kimliği ayrıca doğrulanır. `app/discovery/hepsiburada.py` aynı alan adındaki
 canonical ürün yolundan SKU çıkarıp tam eşitlikle karşılaştırır; farklı SKU,
 grup/kategori veya yalnız sorguda geçen kimlik varsa doğrulanmış istenen adres
-korunur. Beş adres tüketicisi ortaklaştırılmadı; bakım 5 ayrı kalır.
+korunur. Bu adımda beş adres tüketicisi ortaklaştırılmadı; sonraki bakım 5'te
+ayrı plan ve kullanıcı onayıyla ortaklaştırıldı.
 
 31 kalıcı sınama eklendi: eski kodda **12 başarısız, 19 başarılı**. Kimliksiz,
 farklı/bozuk son ekli TY adresleri ve sorguda kimlik bulunması; HB alt dize
@@ -780,6 +792,37 @@ Black 43 dosyada temiz, Flake8 tek işçiyle temiz. Gerçek DB, katalog ve migra
 değişmedi; canlı site komutu çalıştırılmadı. Kullanıcı commit/push işlemini onayladı.
 Bakım 5'e geçilmedi.
 
+**7 Ekim bakım 5: ürün adresi kimliği kuralları ortaklaştırıldı.** Kullanıcı
+yalnız bu bakım için gerçek uyuşmazlık örneğini bekleme şartına ayrı istisna
+verdi ve uygulama planını onayladı. Çalışma önleyici düzeltmedir; gerçek
+kaynaklarda sorunlu son ek/sorgu kimliği veya yanlış fiyat kaydı görülmedi.
+
+`app/scraper/parsing.py` içindeki `trendyol_product_id(url)` ve
+`hepsiburada_sku(url)` kimliği yalnız ürün yolundan metin olarak okur,
+bulunamazsa `None` döndürür. Trendyol küçük harfli `-p-`/rakam kuralını,
+Hepsiburada harf/rakam SKU'sunu büyük harfe çevirme kuralını kullanır.
+Sorgu/alan adı metni kimlik sayılmaz; bozuk son ek reddedilir. Geçerli sorgu,
+son eğik çizgi, göreli yol ve baştaki sıfırlar korunur. İki scraper, iki keşif
+modülü ve katalog eşleştirme bu yardımcıları kullanır; yinelenen ürün desenleri
+kaldırıldı. `_product_id`, `_sku_from_url`, `_url_identity` dönüş/hata
+sözleşmeleri, HB keşif grup kuralı ve bakım 2'nin adres/sayfa/canonical
+korumaları değişmedi. Adres yeniden yazımı veya yeni eklenti mimarisi yoktur.
+
+39 yeni sınama eklendi. Eski kodda **13 failed, 26 passed**: tüketicilerin
+adres farkları, iki sorunlu ucuz TY teklifinin fiyat seçiminden elenmesi,
+iki geçersiz TY ürün adresinin reddi ve HB'nin sorgudaki SKU'yu reddi açığı
+yakaladı. Grup adresleri, bilinmeyen platform, geçerli sorgu/eğik çizgi/küçük
+harfli SKU ve mevcut istek sırası ayrıca korundu.
+
+334 katalog adresi ve kayıtlı 333 farklı aday adresinin önce/sonra kimlikleri
+aynı; katalog kayıt kimlikleri, katalog ve uygulanmış migration dosyalarının
+bayt parmak izleri değişmedi. Sabit katalog testleri, kayıtlı 6 TY/24 HB adayın
+bütün alanları ve diğer modele ait 12 sayfanın reddi korundu. Son tam test
+**797 passed**, 0 atlandı/xfail, 40,18 sn; 219 PostgreSQL testi yalnız
+`fiyat_takip_test` üzerinde çalıştı. Black 44 dosyada temiz, Flake8 tek işçiyle
+temiz. Canlı site komutu veya gerçek DB yazımı yapılmadı. Durum **önleyici
+düzeltme uygulandı**; kullanıcı commit/push işlemini onayladı, bakım 6'ya geçilmedi.
+
 Onaylanan bakım sırası ve durum (her adımdan sonra sonuç anlatılıp durulur):
 
 | Bakım maddesi | Durum |
@@ -788,7 +831,7 @@ Onaylanan bakım sırası ve durum (her adımdan sonra sonuç anlatılıp durulu
 | 2. Trendyol varyant / Hepsiburada canonical adresi | ✅ Önleyici düzeltme uygulandı (7 Ekim, bu maddeye ayrı kullanıcı istisnası): TY adres yolu/kaynak/sayfa kimliği doğrulanıyor; HB canonical tam SKU eşitliği, farklıysa özgün adres korunuyor. Gerçek uyuşmazlık görülmedi. 31 yeni sınama; 758 passed/0 atlandı/xfail, Black/Flake8 temiz. Kayıtlı 6 TY/24 HB aday ve 12 model reddi korundu. Kullanıcı commit/push işlemini onayladı; ardından 5 → 6 → 7 ayrı ilerleyecek. |
 | 3. Türkçe ekli aksesuar adları | ✅ Düzeltildi: üç kayıtlı yazım için dar başlık/kategori kuralı; model, başlık/yapısal kapasite ve birden çok ad sınandı, 21 kayıtlı telefonun kabulü korundu. 652 test geçti, atlanan/xfail yok. Kullanıcı commit/push işlemini onayladı. |
 | 4. Hepsiburada çoklu varyant listesi | ✅ Önleyici düzeltme uygulandı (7 Ekim, yalnız bu madde için kullanıcı istisnası): ortak SKU kapasite/renk doğrulaması; çelişkide identity, eşdeğer/eksik alan ve başlık yedeği korunuyor. 75 yeni sınama, toplam 727 geçti/0 atlandı/xfail. Gerçek kaynakta çelişki görülmedi; 24 adayın bilgileri ve 12 diğer modelin reddi korundu. Kullanıcı commit/push işlemini onayladı. |
-| 5. Beş adres kimliği kuralı | 🔜 Aynı adreslerle davranış karşılaştırması; ortaklaştırma yalnız gerekli düzeltmeyi destekliyorsa. |
+| 5. Beş adres kimliği kuralı | ✅ Önleyici düzeltme uygulandı (7 Ekim, bu maddeye ayrı kullanıcı istisnası): beş tüketici ortak ürün yolu kimliği kullanıyor; sorunlu TY fiyat seçimi ve HB sorgu SKU'su reddi kapandı. 334 katalog/333 farklı aday kimliği korundu. 39 yeni sınama; 797 passed/0 atlandı/xfail (219 PostgreSQL), Black/Flake8 temiz. Gerçek uyuşmazlık görülmedi. Kullanıcı commit/push işlemini onayladı; bakım 6'ya geçilmedi. |
 | 6. Tur sonu özet sorgusu | 🔜 Özet/bağlantı/kapanış sonrası kesinti; tur, sonuç, kilit, çıkış kodu kontrolü. Güvenli mevcut davranış kod değişmeden belgelenebilir. |
 | 7. İki eklenti yükleyicisi | 🔜 Geçerli/eksik/yanlış/soyut/kurulamayan adaptör kontrolü; farklı sözleşmeler korunur, yalnız benzerlik için birleştirilmez. |
 
@@ -874,7 +917,11 @@ ardından 5 → 6 → 7 sırasını istedi. Yeniden kontrol tamamlandı: iki hed
 TY 6/HB 36 sayfa kimliği eşleşti, iki yapay risk sürdü. Kullanıcının bakım 2'ye
 ayrı istisnasıyla dar önleyici düzeltme uygulandı: 31 yeni sınama, 758 test/
 0 atlandı/xfail, biçim denetimleri temiz. Kullanıcı commit/push işlemini onayladı (Bölüm 7);
-bakım 5–7 ve Adım 9 başlamadı.
+`8598e3c` gönderildi, aynı SHA için CI 37609748487 yeşil. Ardından bakım 5'in
+ortak ürün adresi planı ayrı kullanıcı istisnasıyla onaylanıp uygulandı:
+39 yeni sınama, 797 test/0 atlandı/xfail (219 PostgreSQL), biçim denetimleri temiz.
+334 katalog/333 farklı aday kimliği korundu; kullanıcı commit/push işlemini onayladı.
+Bakım 6–7 ve Adım 9 başlamadı.
 
 | Adım | Durum |
 |---|---|
@@ -920,6 +967,7 @@ Takvim (tahmin, 7 Ekim güncellemesi; Adım 9 ve 11'in süresi henüz belirlenme
 | 7 Ekim | Bakım 4 kaynak kontrolü tamamlandı: kullanıcının Galaxy S24 kaydındaki 21 HB HTML'de 20 tek dolu liste/0 çelişki; 8 kabul edilen adayın kapasite/renk bilgisi eşleşti. Çıkış 2 model filtresi bulunamaması ve arama API 403'ünden. İki hedef toplam 40 HTML/37 tek dolu liste; kod korunuyor, gerçek uyuşmazlık kanıtı bekleniyor. Bakım 5'e geçilmedi |
 | 7 Ekim | Bakım 4 önleyici düzeltmesi kullanıcı istisnasıyla uygulandı: aynı SKU'nun bütün kapasite/renk kayıtları doğrulanıyor, çelişkide identity. 75 yeni sınama; 727 test geçti/0 atlandı/xfail, Black/Flake8 temiz. 24 geçerli adayın bilgileri ve 12 diğer modelin reddi korundu. Kullanıcı commit/push işlemini onayladı; bakım 5'e geçilmedi |
 | 7 Ekim | Kullanıcının sırası 2 → 5 → 6 → 7. Bakım 2 iki hedefle yeniden kontrol edildi: TY 6/HB 36 kimlik eşleşti, gerçek uyuşmazlık yok. Ayrı kullanıcı istisnasıyla TY adres kimliği ve HB canonical tam SKU korumaları uygulandı; 31 yeni sınama, 758 passed/0 atlandı/xfail, Black/Flake8 temiz. 6 TY/24 HB aday ve 12 model reddi korundu. Kullanıcı commit/push işlemini onayladı; bakım 5 başlamadı |
+| 7 Ekim | Bakım 5 önleyici düzeltmesi ayrı kullanıcı istisnasıyla uygulandı: beş tüketici ortak ürün yolu kimliği kullanıyor. Sorunlu TY ucuz teklifi ve HB sorgu SKU'su reddediliyor. 334 katalog/333 farklı aday kimliği korundu; gerçek DB/katalog/migration değişmedi. 39 yeni sınama; 797 passed/0 atlandı/xfail (219 PostgreSQL), Black/Flake8 temiz. Kullanıcı commit/push işlemini onayladı; bakım 6'ya geçilmedi |
 | Adım 11 sonrası | **Adım 9:** Cimri geçmişinin bir defalık alımı, katalog eşleştirmesi ve ayrı `market_history` tablosuna aktarım |
 | Adım 9 sonrası | **Adım 7:** kapanış belgeleri; veritabanı aşaması biter. Önceki 2–3 Ekim kapanış tahmini yeni adımlara göre yeniden değerlendirilecek |
 

@@ -1,6 +1,5 @@
 """Trendyol satıcı tekliflerini doğrular ve en ucuz geçerli teklifi döndürür."""
 
-import re
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
@@ -14,6 +13,7 @@ from app.scraper.parsing import (
     money,
     normalize,
     storage_gb,
+    trendyol_product_id,
     verify_identity,
 )
 
@@ -29,8 +29,7 @@ def product_capacity(product: dict) -> int | None:
 
 
 def _product_id(url: str) -> str | None:
-    match = re.search(r"-p-(\d+)", url)
-    return match.group(1) if match else None
+    return trendyol_product_id(url)
 
 
 def _price(price: dict) -> tuple[int | None, int | None, str | None]:

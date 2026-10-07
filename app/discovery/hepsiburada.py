@@ -13,6 +13,7 @@ from app.scraper.http import FetchError
 from app.scraper.parsing import (
     embedded_json,
     excluded_term,
+    hepsiburada_sku,
     identify,
     matches_model,
     nested_dicts,
@@ -21,14 +22,16 @@ from app.scraper.parsing import (
 
 HOME = "https://www.hepsiburada.com/"
 SEARCH_API = "https://blackgate.hepsiburada.com/moriaapi/api/product"
-SKU_PATTERN = re.compile(r"-p-(HBCV[A-Z0-9]+)(?:[/?]|$)", re.IGNORECASE)
 # Grup (-pm-) sayfası aday değildir; yalnız gerçek varyant SKU'larına çözülür.
 GROUP_PATTERN = re.compile(r"-pm-(HBC[A-Z0-9]+)(?:[/?]|$)", re.IGNORECASE)
 
 
 def _card_id(href: str) -> str | None:
     """Kart bağlantısındaki ürün SKU'su veya grup kimliği."""
-    match = SKU_PATTERN.search(href) or GROUP_PATTERN.search(href)
+    sku = hepsiburada_sku(href)
+    if sku is not None:
+        return sku
+    match = GROUP_PATTERN.search(href)
     return match.group(1).upper() if match else None
 
 
@@ -161,7 +164,7 @@ class Discovery(BaseDiscovery):
                     seen_ids.add(sku)
                     fresh += 1
                     relative = url.split("?", 1)[0]
-                    if SKU_PATTERN.search(relative):
+                    if hepsiburada_sku(relative) is not None:
                         cards[sku] = urljoin(HOME, relative)
                     elif GROUP_PATTERN.search(relative):
                         cards[_card_id(relative)] = urljoin(HOME, relative)
@@ -228,8 +231,7 @@ class Discovery(BaseDiscovery):
             # Yalnız https://www.hepsiburada.com adresi kabul edilir; başka alan
             # adı katalog doğrulamasını ve bütün çalışmayı bozardı.
             if canonical_url.startswith(HOME):
-                canonical_sku = SKU_PATTERN.search(urlsplit(canonical_url).path)
-                if canonical_sku and canonical_sku.group(1).upper() == expected_sku:
+                if hepsiburada_sku(canonical_url) == expected_sku:
                     url = canonical_url
         candidate = DiscoveryCandidate(
             target_key=self.target.key,

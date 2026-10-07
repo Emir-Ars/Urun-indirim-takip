@@ -20,6 +20,7 @@ from app.contracts import (
     utc_now,
 )
 from app.discovery.base import BaseDiscovery
+from app.scraper.parsing import hepsiburada_sku, trendyol_product_id
 from app.settings import Settings
 
 # Elle çalıştırmada rapor buraya yazılır ve her çalışmada üzerine yazılır;
@@ -64,16 +65,12 @@ def _url_identity(platform, url):
     adlandırılmış eski kayıtlar da (ör. trendyol_iphone_15_128gb_mavi) "zaten var"
     sayılır. .upper(), adreste küçük harfle yazılmış SKU'yu adayın kimliğiyle eşitler.
     """
-    patterns = {
-        "trendyol": r"-p-(\d+)(?:[/?]|$)",
-        "hepsiburada": r"-p-(HBCV[A-Z0-9]+)(?:[/?]|$)",
+    readers = {
+        "trendyol": trendyol_product_id,
+        "hepsiburada": hepsiburada_sku,
     }
-    pattern = patterns.get(platform)
-    if pattern:
-        match = re.search(pattern, url, re.IGNORECASE)
-        if match:
-            return match.group(1).upper()
-    return None
+    reader = readers.get(platform)
+    return reader(url) if reader else None
 
 
 def _conflict(candidate, detail: str) -> DiscoveryIssue:

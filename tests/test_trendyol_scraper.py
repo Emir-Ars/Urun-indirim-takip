@@ -151,6 +151,44 @@ def test_fetch_downloads_listing_page_once(scraper, session, listing):
 
 
 @pytest.mark.parametrize(
+    "url",
+    [
+        "/apple/phone-p-762254881abc",
+        "/apple/phone?ref=other-p-762254881",
+    ],
+)
+def test_url_identity_rejects_invalid_cheaper_offer(scraper, listing, url):
+    merchant = other_merchant("Ucuz satıcı", "invalid", price=1_000, inStock=True)
+    merchant["url"] = url
+    observation = scraper.parse(product_html(others=[merchant]), listing)
+
+    assert observation.seller_name == "Trendyol"
+    assert observation.current_price == 5_724_900
+    rejected = next(
+        offer for offer in scraper._last_offers if offer["listing_id"] == "invalid"
+    )
+    assert rejected["rejection_reason"] == "different_product_page"
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://www.trendyol.com/apple/phone-p-762254881abc",
+        "https://www.trendyol.com/apple/phone?ref=other-p-762254881",
+    ],
+)
+def test_url_identity_rejects_invalid_listing_address(scraper, session, listing, url):
+    session.responses.append(FakeResponse(product_html()))
+    invalid = listing.model_copy(update={"url": url})
+
+    with pytest.raises(FetchError) as error:
+        scraper.fetch(invalid)
+
+    assert error.value.code == "identity"
+    assert session.calls == [("GET", url)]
+
+
+@pytest.mark.parametrize(
     ("page", "cause"),
     [
         (product_html(name=None), KeyError),

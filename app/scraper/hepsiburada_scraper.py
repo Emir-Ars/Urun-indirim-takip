@@ -26,7 +26,6 @@ aracı ve testler okur, üretim sonucu yalnız seçilen tekliftir.
 """
 
 import json
-import re
 from uuid import uuid4
 
 from bs4 import BeautifulSoup
@@ -36,6 +35,7 @@ from app.scraper.http import FetchError
 from app.scraper.parsing import (
     DISALLOWED_CONDITIONS,
     embedded_json,
+    hepsiburada_sku,
     money,
     nested_dicts,
     normalize,
@@ -64,10 +64,10 @@ PRODUCT_FIELDS = (
 
 
 def _sku_from_url(url: str) -> str:
-    match = re.search(r"-p-(HBCV[A-Z0-9]+)(?:[/?]|$)", url, re.IGNORECASE)
-    if not match:
+    sku = hepsiburada_sku(url)
+    if sku is None:
         raise FetchError("identity", "Hepsiburada SKU kodu URL'de bulunamadı")
-    return match.group(1).upper()
+    return sku
 
 
 def _product_context(soup: BeautifulSoup, sku: str) -> dict:
