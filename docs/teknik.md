@@ -29,7 +29,7 @@ geçmişi. Kararların ve aşama durumunun ana kaynağı
 | `discovery.json` | Takip edilecek telefonlar ve tarama sınırları | Kullanıcı |
 | `catalog.json` | Keşfin doğruladığı ürünler ve sayfalar | Keşif (elle yazılmaz) |
 | `runtime.json` | Zaman aşımı, tekrar deneme, istekler arası bekleme (3 sn) | Kullanıcı, nadiren |
-| `market_history.json` | Bir defalık Cimri alımı: `product_key`, URL ve beklenen Cimri kimliği. 59 ürünün 57 ana adresi araştırıldı; iki eşleştirme açık. Katalog alımında 53 geçmiş kabul edildi, dört ürünün tablo/grafik fiyatı çelişti. | Araştırma ve gerçek çıktı kontrolüyle |
+| `market_history.json` | Bir defalık Cimri alımı: `product_key`, URL ve beklenen Cimri kimliği. 59 ürünün 57 ana adresi doğrulandı ve geçmişleri 9.3’te aktarıldı; iki eşleştirme açık. İlk alımdaki dört fiyat farkı kaynakta doğrulanan ilk teklif dönüşümüyle çözüldü. | Araştırma ve gerçek çıktı kontrolüyle |
 
 ### Ortak parçalar: `app/`
 
@@ -1499,8 +1499,9 @@ iddia edilmez. Tablo karşılaştırması ve gözlem sıklığı sınırları ko
 Kapanış raporu bütün ürünlerin durumunu ve önceki kanıtların dosya/hash
 referanslarını içerir; tekrar çıktısı ve karşılaştırma da içindedir:
 `data/market_history/kapanis_9_3_20261008_141239_175902.json`.
-Kullanıcı kapanış belgelerinin commit/push işlemini onayladı; aynı commit’in
-CI sonucu GitHub Actions kaydından izlenir. Adım 7’ye geçilmedi.
+9.3 belgeleri `2c78af2` ile gönderildi;
+[aynı SHA için CI 37795271692 başarılı](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/37795271692).
+Ardından aşağıdaki Adım 7 kapanışı da tamamlandı.
 
 Her alım ayrı klasörde saklanır. Raporlar birleştirilmez/değiştirilmez; ek
 alım yalnız başarısız/denenmemiş ürünleri tamamlar. Her kabul edilen ürünün
@@ -1516,6 +1517,44 @@ korunması beklenir; atlanan ürünler nedeniyle çıkış 2 sürebilir.
 59 ürünün durumu, alım klasörleri/hash’leri ve karşılaştırma sonuçları yukarıdaki
 tarihli yerel kapanış raporunda kayıtlıdır. Önceki hazırlık/doğrulama raporları
 kanıt olarak korunur; alım dosyaları veya gerçek DB asistan tarafından değiştirilmedi.
+
+### Veritabanı aşamasının kapanışı (Adım 7)
+
+**8 Ekim’de tamamlandı.** 19:55 bağımsız denetimi gerçek DB’ye baştan
+READ ONLY / REPEATABLE READ bağlantıyla yapıldı; hiçbir yazma veya canlı
+site isteği çalıştırılmadı. 001–004 dosya adları/parmak izleri kayıtla uyumlu;
+59 ürün ve 334 sayfanın (332 etkin) bütün alanları katalogla aynı.
+
+Son zamanlanmış tur 19: 8 Ekim 10:00:01–10:31:03 yerel saat, completed;
+332 sayfa → 237 fiyat/95 Tükendi/0 hata. Logların kimlik, sonuç, fiyat,
+satıcı ve stok alanları DB ile birebir aynı. Süren tur veya tamamlanmış
+turda sonuçsuz/zamansız satır yok. `product_run_prices` görünümünün son turdaki
+59 ürününde sayılar, minimum fiyat/seçilen sayfa ve önceki cevap kümeleri
+bağımsız hesapla eşleşti; tümü önceki turla karşılaştırılabilir.
+
+Cimri kaynakları güncel okuyucuyla ağsız yeniden doğrulandı: 57 ürünün
+20.805 satırının 10 alanı aynı, 553 NULL korunmuş; bütün tablo hash’i 9.3
+kapanışıyla aynı. 115 girdi dosyası değişmedi; ilk kaynak bilgileri ve üç
+koruma tetikleyicisi korunmuş. Denetim kaydı yerel/Git dışındadır:
+`data/adim7_kapanis_20261008_165558_563093.json`.
+
+Kod/test değişmedi. Önceki yerel 1190 passed/0 skipped/xfail sonucu ile mevcut
+`2c78af2` için başarılı pytest/Black/Flake8 CI ayrı kanıtlardır; bu kapanışta
+pytest yeniden çalıştırılmadı. Kapanış belgesinin yeni commit’i gönderilince
+aynı SHA için CI ayrıca kontrol edilecek.
+
+Kabul edilen sınırlar sürer: Hepsiburada arama kapsamı kısmi, bilgisayarın
+uyku/ağ kesintilerinde gözlem kaybı olabilir. Tur sonu network ikinci okuması
+incelenen canlı loglarda henüz görülmedi; test kanıtı vardır. Haftalık keşfin
+sağlıklı ağla kendiliğinden tam çalışması henüz görülmedi; sonraki fırsat
+Pazar 11 Ekim 14:00. İki Cimri eşleştirmesi ve çapraz karşılaştırma yapılamayan
+günler kayıtlıdır; eksik fiyatlar doldurulmaz ve Cimri serisi kendi toplama
+serisiyle aynı ölçüm sayılmaz.
+
+**Aşama 6 kapandı; API/arayüz başlamadı.** README’nin tanıtım amaçlı
+kapsamlı düzenlenmesi ve teknik belgeyle görev paylaşımı kullanıcı kararıyla
+kapanıştan sonraki ayrı iş olarak bekliyor. Bu adımda yalnız durum ve
+tutarlılık düzeltmeleri yapıldı; komutlar ve çalışma akışı korundu.
 
 ### Migration kuralları
 

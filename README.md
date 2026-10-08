@@ -16,21 +16,21 @@ telefonun yakında indirime girip girmeyeceğini tahmin etmek.
 flowchart LR
     A["✅ Fiyat okuma"] --> B["✅ Otomatik keşif"]
     B --> C["✅ Katalog<br/>59 ürün · 334 sayfa"]
-    C --> D["⏳ Veritabanı<br/>günde 2 toplama"]
+    C --> D["✅ Veritabanı<br/>günde 2 toplama"]
     D --> E["🔜 API ve arayüz"]
     E --> F["🔜 İndirim tahmini"]
     classDef done fill:#d8f3dc,stroke:#2d6a4f,color:#1b4332
     classDef next fill:#fff3bf,stroke:#b08900,color:#5c4400
     classDef todo fill:#e9ecef,stroke:#868e96,color:#343a40
-    class A,B,C done
-    class D next
-    class E,F todo
+    class A,B,C,D done
+    class E next
+    class F todo
 ```
 
 Keşif, fiyat okuma, PostgreSQL kaydı ve zamanlanmış toplama hazır.
 Cimri’nin 57 ürün için geçmişi ayrı tabloya aktarıldı ve tekrar aktarımda
-kayıt çoğalmadığı doğrulandı. Veritabanı aşamasında **Adım 7 kapanış belgeleri**
-kaldı; bu adıma henüz geçilmedi.
+kayıt çoğalmadığı doğrulandı. **Veritabanı ve zamanlanmış toplama aşaması
+8 Ekim’de Adım 7 kapanışıyla tamamlandı.** API ve arayüz henüz başlamadı.
 
 ## Nasıl çalışır
 
@@ -180,7 +180,8 @@ kaynağı rapora eklendi. Yeni kodla 57 ürünün kayıtlı tam yanıtı ağsız
 S24 Ultra 1 TB'nin 71 eksik günü önceki kayıttakiyle aynı.
 9.1 tamamlandı; `79a3f77` gönderildi ve aynı commit'in
 [CI sonucu başarılı](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/37767276279).
-Eski raporlar ve ham kayıtlar korunuyor; veritabanına aktarım başlamadı.
+Eski raporlar ve ham kayıtlar korunuyor. 9.1 kapanışında aktarım henüz
+başlamamıştı; aşağıdaki 9.3 bölümünde tamamlanmış gerçek aktarım anlatılıyor.
 
 Zamanlanmış tur bittikten sonra, yeni bir klasöre katalog alımı için:
 
@@ -249,8 +250,12 @@ Girdi `data/market_history/aktarim_20261008_155952_339` klasörüdür.
 kaynaklanıyor. İlk kaynak bilgileri korundu. 59 ürünün tamamının sonucu
 raporlandı: 57 aktarılmış, iki gerekçeli eşleştirme eksik. Yerel kapanış raporu:
 `data/market_history/kapanis_9_3_20261008_141239_175902.json`.
-Kullanıcı kapanış belgelerinin commit/push işlemini onayladı; aynı commit’in
-CI sonucu GitHub Actions kaydından izlenir. Adım 7’ye geçilmedi.
+9.3 belgeleri `2c78af2` ile gönderildi;
+[aynı commit’in CI sonucu başarılı](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/37795271692).
+Ardından Adım 7 kapanışında son turun 332 log satırı DB ile eşleşti; şema,
+katalog, 59 ürünün karşılaştırma görünümü ve Cimri geçmişi yeniden teyit edildi.
+Veritabanı aşaması tamamlandı; kullanıcı kapanış belge commit/push işlemini
+onayladı. Aynı yeni commit’in CI sonucu GitHub Actions kaydından izlenir.
 
 ## Yeni telefon ekleme
 
