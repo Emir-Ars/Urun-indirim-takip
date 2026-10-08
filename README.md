@@ -89,7 +89,7 @@ modeller de ayrıdır. RAM ve garanti türü ürünü bölmez.
 | Takip edilen modeller | 24 (Apple 9 · Samsung 8 · Xiaomi 6 · POCO 1) |
 | Katalog | 59 ürün, 334 sayfa (6 Ekim 2026; 2'si pasif) |
 | Fiyat toplama | İlk tam tur 28 Eylül 2026: 326/326 sayfa, 31 dakika, hatasız. Görev Zamanlayıcı 28 Eylül'de kuruldu; günde 2 tur (10:00, 22:00) |
-| Testler | 1029 otomatik test (228'i gerçek PostgreSQL üzerinde); her push'ta GitHub Actions. Testler internete çıkamaz ve gerçek veritabanına dokunamaz (otomatik emniyet kemerleri) |
+| Testler | 1190 otomatik test (276'sı gerçek PostgreSQL üzerinde); her push'ta GitHub Actions. Testler internete çıkamaz ve gerçek veritabanına dokunamaz (otomatik emniyet kemerleri) |
 
 ```mermaid
 pie title Katalogdaki sayfalar (334)
@@ -172,13 +172,12 @@ kaynağı rapora eklendi. Yeni kodla 57 ürünün kayıtlı tam yanıtı ağsız
 20.805 nokta, 20.252 fiyat, 553 eksik değer, 4.773 tablo eşleşmesi. Önceki
 52 ürünün bütün noktaları aynı; S24 Ultra 1 TB'nin yalnız 8 Ekim fiyatı
 85.680 → 86.220 TL oluyor. Son günün tablo satırı yoksa komut bunu bildirir.
-Son tam kontrol: **1029 test geçti, 0 atlandı**, Black/Flake8 temiz.
+9.1 kapanış kontrolü: **1029 test geçti, 0 atlandı**, Black/Flake8 temiz.
 13:51–13:52 canlı teyidinde beş ürünün tamamı kaydedildi; çıkış 0.
 1.825 noktada 1.754 fiyat ve 71 eksik değer var; 450 tablo satırı eşleşti.
 S24 Ultra 1 TB'nin 71 eksik günü önceki kayıttakiyle aynı.
-9.1'in uygulama ve canlı doğrulaması tamamlandı; kullanıcı commit/push
-işlemini onayladı. CI sonucu gönderilen commit için GitHub Actions
-kaydından doğrulanır.
+9.1 tamamlandı; `79a3f77` gönderildi ve aynı commit'in
+[CI sonucu başarılı](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/37767276279).
 Eski raporlar ve ham kayıtlar korunuyor; veritabanına aktarım başlamadı.
 
 Zamanlanmış tur bittikten sonra, yeni bir klasöre katalog alımı için:
@@ -196,8 +195,32 @@ yazmaz. Şu an iki eşleştirme eksik olduğundan 57 alım başarılı olsa da �
 Tek ürün için `--product-key <anahtar>` eklenebilir.
 Çıkış 0 seçilen ürünler kaydedildi, 2 kısmi sonuç, 1 başlatma/dosya
 hatası, 3 ortak kilit meşgul, 130 Ctrl+C demektir. Grafik fiyatları raporda
-kuruştur; eksik fiyat `null` kalır. Aktarım komutu ve `004` migration **9.2'de
-hazırlanacak**, şu anda yoktur. Ayrıntılar: [teknik rehber](docs/teknik.md#cimri-geçmişinin-yerel-alımı-adım-91).
+kuruştur; eksik fiyat `null` kalır. Ayrıntılar: [teknik rehber](docs/teknik.md#cimri-geçmişinin-yerel-alımı-adım-91).
+
+### Cimri geçmişinin aktarımı (Adım 9.2)
+
+Aktarım komutu ve `004_market_history.sql` izole kopyada hazırlandı ve test edildi.
+Kullanıcı commit/push, aynı commit için CI kontrolü ve ardından ana klasöre
+geçişi onayladı. Devreye alma, kullanıcının gerçek migration teyidiyle tamamlanacak.
+Bu paket devreye alınıp kullanıcı `migrate`/`status` ile şemayı doğruladıktan
+sonra komutlar kullanılabilir:
+
+```powershell
+.venv\Scripts\python.exe -m app.market_history import <alım_klasörü> --dry-run
+.venv\Scripts\python.exe -m app.market_history import <alım_klasörü>
+```
+
+`--dry-run` veritabanında yalnız okuma yapar. Aktarım internete çıkmaz;
+raporu, kaynak dosyalarının parmak izlerini, ürün kimliğini ve hesaplanmış
+fiyatları yeniden doğrular. Her ürün birlikte yazılır; aynı kayıt çoğalmaz,
+fiyat/kimlik çelişkisinde o ürünün hiçbir yeni günü yazılmaz. `NULL` korunur.
+İlk kaydın zamanı ve kaynak bilgileri değişmez. Çıkışlar: 0 başarılı/aynı,
+2 atlanan veya çelişkili ürün, 1 durduran hata, 3 kilit meşgul, 130 Ctrl+C.
+
+Kullanıcının 8 Ekim kararıyla **9.3'te güncel araçla yeni toplu alım** yapılacak.
+Önceki raporlardaki eksik alanlar tahmin edilmez; eski dosyalar korunur.
+Henüz gerçek fiyat geçmişi aktarılmadı. Ayrıntılar:
+[ağsız aktarım](docs/teknik.md#cimri-geçmişinin-ağsız-aktarımı-adım-92).
 
 ## Yeni telefon ekleme
 
@@ -228,7 +251,7 @@ app/
   discovery/        keşif: site aramaları, katalogla birleştirme, rapor, raporu uygulama
   database/         PostgreSQL: bağlantı, migration dosyaları, katalog eşitleme, tur SQL'leri
   collection/       fiyat toplama turu: sayfaları okuyup sonuçları veritabanına yazar
-  market_history/   Cimri geçmişi: eşleştirme, ağsız doğrulama ve yerel alım
+  market_history/   Cimri geçmişi: yerel alım, dosya doğrulama ve aktarım komutu
   scrape_lock.py    siteye giden bütün girişlerin ortak kilidi
   console.py        zamanlanmış komutların ortak çıktı ve log yardımcıları
   settings.py       config dosyalarını okur; dosya ve klasör yolları ortam değişkeniyle değişir

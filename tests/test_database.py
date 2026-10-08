@@ -184,11 +184,13 @@ def test_cli_status_and_migrate(db, monkeypatch, capsys):
     assert "001_initial.sql  BEKLİYOR" in out
     assert "002_guards_and_comparability.sql  BEKLİYOR" in out
     assert "003_closed_run_guards.sql  BEKLİYOR" in out
+    assert "004_market_history.sql  BEKLİYOR" in out
     assert main(["migrate"]) == 0
     out = capsys.readouterr().out
     assert "uygulandı: 001_initial.sql" in out
     assert "uygulandı: 002_guards_and_comparability.sql" in out
     assert "uygulandı: 003_closed_run_guards.sql" in out
+    assert "uygulandı: 004_market_history.sql" in out
     assert main(["migrate"]) == 0
     assert "Şema güncel" in capsys.readouterr().out
     assert main(["status"]) == 0
@@ -196,6 +198,7 @@ def test_cli_status_and_migrate(db, monkeypatch, capsys):
     assert "001_initial.sql  uygulandı" in out
     assert "002_guards_and_comparability.sql  uygulandı" in out
     assert "003_closed_run_guards.sql  uygulandı" in out
+    assert "004_market_history.sql  uygulandı" in out
 
 
 def test_cli_without_database_url_fails(monkeypatch, capsys):
@@ -209,6 +212,7 @@ def test_migrate_applies_each_file_once(db):
         "001_initial.sql",
         "002_guards_and_comparability.sql",
         "003_closed_run_guards.sql",
+        "004_market_history.sql",
     ]
     assert [m.file_name for m in migrate(db)] == files
     assert migrate(db) == []
@@ -217,6 +221,7 @@ def test_migrate_applies_each_file_once(db):
         (1, "initial"),
         (2, "guards_and_comparability"),
         (3, "closed_run_guards"),
+        (4, "market_history"),
     ]
     assert {
         "schema_migrations",
@@ -225,6 +230,7 @@ def test_migrate_applies_each_file_once(db):
         "listings",
         "collection_runs",
         "listing_checks",
+        "market_history",
     } <= tables(db)
     views = db.execute("SELECT viewname FROM pg_views WHERE schemaname = 'public'")
     assert {row[0] for row in views} == {"product_run_prices"}

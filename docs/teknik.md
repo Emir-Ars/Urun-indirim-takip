@@ -37,7 +37,7 @@ geçmişi. Kararların ve aşama durumunun ana kaynağı
 |---|---|
 | `contracts.py` | Verinin şekilleri ve doğrulaması (Pydantic V2 strict): `Product`, `Listing`, `Catalog`, `PriceObservation`, keşif hedefleri ve raporu. Hatalı veri içeri giremez (ör. fiyat alanına "Tükendi"). Yalnızca biten aşamanın kullandığı tanımları içerir. |
 | `settings.py` | Ayar dosyalarını okur. `CATALOG_PATH`, `DISCOVERY_PATH`, `RUNTIME_PATH`, `SCRAPE_LOCK_PATH`, `LOG_DIR`, `DISCOVERY_REPORT_DIR` ortam değişkenleriyle başka dosya veya klasör gösterilebilir. |
-| `scrape_lock.py` | Siteye giden bütün girişlerin paylaştığı kilit (`data/scrape.lock`). Fiyat turu, keşif, Cimri yerel alımı ve üç canlı kontrol aracı (`live_scraper_check`, `live_discovery_check`, `market_history_probe`) alır; biri sürerken diğeri beklemeden "sürüyor" deyip çıkar. Süreç çökse bile işletim sistemi kilidi bırakır. |
+| `scrape_lock.py` | Siteye giden bütün girişlerin paylaştığı kilit (`data/scrape.lock`). Fiyat turu, keşif, Cimri yerel alımı/ağsız aktarımı ve üç canlı kontrol aracı (`live_scraper_check`, `live_discovery_check`, `market_history_probe`) alır; biri sürerken diğeri beklemeden "sürüyor" deyip çıkar. Süreç çökse bile işletim sistemi kilidi bırakır. |
 | `console.py` | Komut satırı araçlarının ortak çıktı yardımcıları: UTF-8 çıktı (`utf8_output`; fiyat turu, keşif, `app.database` ve canlı kontrol araçları kullanır), `<ön ek>_<tarih-saat>.log` dosyası açma ve stdout/stderr'i log dosyasına da yazan `tee_output` (yalnız zamanlanmış tur ve keşif). pythonw.exe altında ekran akışları yoktur (`None`); hepsi buna dayanır. |
 
 ### Cimri geçmişi: `app/market_history/`
@@ -46,7 +46,8 @@ geçmişi. Kararların ve aşama durumunun ana kaynağı
 |---|---|
 | `cimri.py` | Gömülü ürün ve grafik yanıtını ağsız okur; marka/model/kapasite, kategori ve kimlik doğrulaması yapar. Adım 8 araştırma aracı da aynı grafik ayrıştırıcısını kullanır; araştırmanın TL çıktısı korunur. Yeni alım ayrıca fiyatı mevcut `money` ile kuruşa doğrular. |
 | `capture.py` | Eşleştirmeleri doğrular; seçilen ürünlerin HTML ve API JSON yanıtlarını yeni klasöre, parmak izlerini ve sonucu rapora yazar. Veritabanına bağlanmaz. |
-| `__main__.py` | `capture` komutunun girişidir; ortak kilidi alır, Türkçe sonucu basar, çıkış kodlarını yönetir. Aktarım komutu henüz yoktur. |
+| `importer.py` | Sonlandırılmış alım raporunu ve kaynak parmak izlerini doğrular; aynı baytlardan kimlik/geçmişi yeniden hesaplar. Katalog kimliği ve rapor eşitliği zorunludur. Dosya/veritabanı yazmaz, ağa çıkmaz. |
+| `__main__.py` | `capture` ve ağsız `import`/`--dry-run` girişidir; ortak kilidi alır, Türkçe sonucu basar, çıkış kodlarını yönetir. `capture` veritabanına bağlanmaz; `import` HTTP çalışma ayarlarını okumaz. |
 
 ### Fiyat okuma: `app/scraper/`
 
@@ -79,6 +80,8 @@ geçmişi. Kararların ve aşama durumunun ana kaynağı
 | `migrations/001_initial.sql` | Katalog kopyası, toplama turları ve sayfa sonuçları tabloları; bütün kurallar (`CHECK`, `UNIQUE`, yabancı anahtarlar). |
 | `migrations/002_guards_and_comparability.sql` | İki yeni `CHECK` (Tükendi satırı fiyat taşımaz, çizili fiyat güncel fiyattan büyüktür), beş tabloda 15 tetikleyici (silmeyi ve `TRUNCATE`'i reddeder, kimlik alanlarını korur, yazılmış sayfa sonucunu dondurur), `product_run_prices` görünümü. |
 | `migrations/003_closed_run_guards.sql` | İki tetikleyici işlevini yeniler: kapanmış turun sonuçsuz satırına yazımı ve kapanmış turun durum/bitiş zamanı değişimini reddeder; ilk sonuç ve `network` yeniden yazımını tur kapanışıyla sıraya alır. Veri satırlarını ve görünümü değiştirmez. |
+| `migrations/004_market_history.sql` | Ayrı Cimri geçmişi tablosu; ürün/kaynak/gün tekilliği, pozitif kuruş/NULL ve ilk kaydın güncelleme/silme korumaları. |
+| `market_history.py` | Ağsız aktarımın SQL işlemleri: kimlik ön kontrolü, salt okunur önizleme, ürün başına transaction, tekrar/çelişki koruması ve tur kilidi. |
 | `catalog_sync.py` | `catalog.json`'u veritabanındaki kopyaya eşitler: `plan_sync` farkı veritabanına dokunmadan hesaplar, `sync_catalog` tek transaction'da yazar. |
 | `runs.py` | Tur SQL'leri: veritabanı tur kilidi, yarım kalan turu kapatma, turu ve planlanan sayfaları açma, sayfa sonucunu (bir kez, yalnızca süren tura) yazma, süren turdaki `network` hatası satırını ikinci okumanın sonucuyla değiştirme (`rewrite_network_result`, tek istisna), turu kapatma, özet. |
 | `__main__.py` | Komut satırı: `python -m app.database migrate` / `status` / `sync-catalog [--dry-run]`. Çıkış kodları: `0` başarılı; `1` komut başarısız (şema, katalog çakışması, bağlantı, ayar; mesaj stderr'e `Veritabanı komutu başarısız: …` diye yazılır); `2` argüman hatası. |
@@ -113,6 +116,7 @@ geçmişi. Kararların ve aşama durumunun ana kaynağı
 | `tests/test_url_identity.py` | Ortak ürün adresi kimliği (28 ağsız test): ürün yolu, sorgu, son eğik çizgi, küçük harfli SKU, eksik/bozuk kimlik ve bütün tüketicilerin aynı kimliği okuması. |
 | `tests/test_market_history_probe.py` | Piyasa geçmişi araştırmasında aday tablo satırları, ürün kimliği, sentetik 365 günlük grafik yanıtı, eksik/bozuk fiyat ve tablo uyuşmazlığı (12 ağsız test). Gerçek fiyat dizileri Git dışındaki yerel raporlardadır. |
 | `tests/test_market_history.py` | Yerel Cimri alımı (197 ağsız test): seçilmiş gerçek başlık/fiyat örnekleri, marka/model/kapasite/kategori/kimlik, tarih/fiyat/eksik veri, sıfır fiyatın eksik değer olarak okunması ve eski araştırma davranışının korunması, ham kanıt ve parmak izi, dört istek bütçesi, engelde durma, Ctrl+C, disk/klasör hatası, komut çıktıları ve kilit. |
+| `tests/test_market_history_import.py` | 161 test, 48 PostgreSQL: dosya/rapor kimliği ve bütünlüğü; ilk/tekrar aktarım, NULL/kimlik/fiyat çelişkisi, READ ONLY önizleme, eşzamanlılık, kesinti/COMMIT belirsizliği, kilitler, sonraki toplama ve 001–003 → 004 geçişi. |
 | `tests/fixtures/cimri_recorded_samples.json` | 29 Eylül raporlarından üç başlık ve üçer fiyat noktası; kayıtlı Xiaomi HTML'sinden küçük ürün kimliği bölümü. 8 Ekim gerçek Xiaomi yanıtından son sekiz grafik değeri ve bunlarla kesişen dört tablo satırı. Tam fiyat serisi veya tam ham yanıt değildir; testlerin API zarfları yeniden kurulur. |
 | `tests/test_live_discovery_check.py` | Ham keşif kanıtı kaydı (13 ağsız test): HTML/JSON baytları, istek bütçesi ve tekrarlar, bozuk JSON'un korunması, tek hedef/yeni klasör zorunluluğu, kilit ve disk hatası, platformların ayrı kaydı ve eski komut çıktısının korunması. Dosyalar normal veya ters sırada listelense de kayıt denetimi aynıdır. |
 | `tests/fixtures/discovery/` | Testlerin kullandığı örnek site yanıtları ve kataloğun sabit bir kopyası (`catalog.json`); testler gerçek kataloğa bağlı değildir. `phone_identity_examples.json`, kullanıcının 6 Ekim iPhone 15 kontrolündeki 21 sayfanın özgün adlarını, doğrulanan kapasitesini ve kaynak dosya bilgisini taşır; testler Git dışındaki ham dosyalara ihtiyaç duymaz. |
@@ -434,12 +438,16 @@ doğrulandı. Yerel kontrol izi aynı klasörde `verification.json`.
 9.1'in uygulama ve canlı doğrulaması tamam; kullanıcı commit/push işlemini
 onayladı. Aynı commit için CI doğrulaması gönderim akışının parçasıdır. Gerçek DB, katalog, migration ve zamanlayıcı
 değişmedi. Eşleştirmesi açık iki ürün raporlandı; kapsam/gerçek aktarım
-9.3'te ele alınacak. 9.2/004/import henüz başlamadı.
+9.3'te ele alınacak. 9.1 daha sonra `79a3f77` ile gönderildi; aynı SHA için
+CI 37767276279 başarılı. 9.2 altyapısı izole kopyada hazırlandı; gerçek
+migration ve fiyat geçmişi aktarımı henüz yapılmadı.
 
 Kullanıcı Adım 9 planını onayladı: önce yerel rapor, sonra ayrı ağsız aktarım;
 tekrar aktarımda farklı fiyat çıkarsa eski kayıt korunacak; ilk aktarımda yeni
 alım esas alınacak. 29 Eylül'deki üç rapor araştırma/test kanıtı olarak kalır.
-Aktarım ve `004_market_history.sql` **9.2'nin işidir; henüz uygulanmadı**.
+Aktarım ve `004_market_history.sql` **9.2 kapsamında hazırlandı; gerçek
+veritabanına uygulanmadı**. 8 Ekim kararıyla 9.3'te güncel araçla yeni toplu
+alım yapılacak; eski raporlara eksik doğrulama alanı eklenmeyecek.
 
 Eşleştirme dosyası `version: 1`, `source: "cimri"`, `entries` taşır. Her girdi
 `product_key`, `url`, `cimri_product_id` içerir; anahtar, URL ve Cimri kimliği
@@ -991,6 +999,7 @@ durum: [proje_plani.md](../proje_plani.md) Bölüm 9).
 | `collection_runs` | Her fiyat toplama turu: başlama şekli (`scheduled`/`manual`), durum (`running`/`completed`/`interrupted`), zamanlar, turun başındaki `catalog.json` parmak izi, planlanan sayfa sayısı. |
 | `listing_checks` | Her tur × planlanan sayfa bir satır. Tur başında sonuçsuz açılır (`outcome` boş = planlandı, bakılmadı); sayfa okununca `offer` (fiyat), `sold_out` (Tükendi) veya `error` (hata kodu) olur. Fiyat alanları `PriceObservation` ile aynıdır, para kuruş. |
 | `schema_migrations` | Uygulanan migration dosyaları ve parmak izleri. |
+| `market_history` | 004 ile ayrı Cimri geçmişi: ürün/kaynak/gün tekil, fiyat kuruş veya NULL; Cimri kimliği/adresi, alım zamanı ve üç kaynak parmak izi. Kendi turlarımızın görünümüne katılmaz. |
 | `product_run_prices` (görünüm) | Her biten tur × ürün için bir satır: en ucuz fiyat ve önceki turla karşılaştırılabilir mi ([Karşılaştırılabilirlik](#karşılaştırılabilirlik-product_run_prices)). |
 
 ### Veritabanının zorladığı kurallar
@@ -1376,6 +1385,73 @@ eşitlemeyi çalıştırır; komut, keşiften sonra farkı gözle görmek içind
   bağımsız); toplama turları hangi katalogla yapıldığını
   `collection_runs.catalog_sha256` alanında bununla kaydeder.
 
+### Cimri geçmişinin ağsız aktarımı (Adım 9.2)
+
+8 Ekim: kod ve 004 izole proje kopyasında hazırlandı ve test edildi. Kullanıcı
+commit/push → aynı SHA CI kontrolü → ana klasöre geçiş sırasını onayladı.
+Devreye alma, kullanıcının gerçek `migrate`/`status` teyidiyle tamamlanacak.
+Gerçek geçmiş aktarımı 9.3'ün işidir. 161 yeni testin 48'i PostgreSQL'de;
+tam paket **1190 geçti, 0 atlandı/xfail**, 73,10 sn (276 PostgreSQL). Black/Flake8 temiz. Kayıtlı son beş ürün yeni dosya okuyucuyla
+ağsız kabul edildi: 10 kaynak dosyası, 1825 nokta, 71 eksik değer. Eski toplu
+raporun 53 başarılı kaydı yeni zaman/özet alanlarını taşımadığından kabul
+edilmedi; dört hata ve iki eşleştirmesiz kayıt da atlandı. Kaynaklar değişmedi.
+
+Komutlar: `python -m app.market_history import <alım_klasörü> --dry-run`
+ve `python -m app.market_history import <alım_klasörü>`.
+Girdi `report.json` ve onun gösterdiği HTML/API dosyalarıdır. Raporun
+`version: 1`, `source: cimri`, sonlandırılmış sonuç ve UTC zamanları gerekir;
+`running`, bozuk zarf ve tekrarlanan kimlikler bütün girdiyi reddettirir.
+`completed`, `partial`, `interrupted`, `failed` raporlarından yalnız `captured`
+kayıtlar doğrulanır; hatalı kayıtlar başarıya çevrilmez. Güncel ürün başlangıç
+zamanı ve `latest_price` alanları zorunludur; eski raporlara uyumluluk yoktur.
+
+Okuyucu rapor/katalogdaki ürün ID'si, anahtar, marka, model ve kapasiteyi
+karşılaştırır. Kaydedilmiş eşleştirme kullanılır; güncel eşleştirme dosyasından
+adres değiştirilmez. Kaynak yolları çözülünce alım klasörü içinde kalmalıdır.
+HTML/API'nin doğrulanan baytları bir kez okunup ayrıştırılır; SHA-256 değişimi,
+eksik kaynak, zaman aralığı, kaynak kimliği veya yeniden hesaplanan
+kimlik/geçmiş/özet uyuşmazlığı ilgili ürünü reddettirir. Fiyatlar bigint'e
+sığmalıdır. Tabloyla karşılaştırılamayan günler tarih aralıklarıyla yazılır.
+
+`app/database/market_history.py` yazma başlamadan bütün rapor ürünlerinin
+kimliğini veritabanıyla karşılaştırır; uyuşmazlıkta hiçbir ürün yazılmaz.
+Katalog eşitlemez, ürün oluşturmaz, tur açmaz veya eski turu kapatmaz.
+Ortak dosya kilidi ve mevcut veritabanı tur kilidi kullanılır; kilit meşgulse
+beklenmez. Normal aktarımda ürün başına READ COMMITTED transaction açılır.
+Önce mevcut günler karşılaştırılır; `ON CONFLICT DO NOTHING` ile eklenir;
+aynı transaction içinde tekrar okunup karşılaştırılmadan commit edilmez.
+Böylece ilk kontrolden sonra eşzamanlı eklenen farklı fiyat da bütün ürünün
+geri alınmasına yol açar. [PostgreSQL eşzamanlılık belgeleri](https://www.postgresql.org/docs/17/transaction-iso.html)
+
+Anahtar `(product_id, source, day)`; `source` yalnız `cimri`, Cimri kimliği
+pozitif rakam dizisi, adres HTTPS Cimri telefon yolu, fiyat pozitif bigint
+veya NULL'dır. Tarih ve alım zamanı sonlu olmalıdır. Üç SHA-256 alanı HTML,
+API ve alım raporunun **yerel dosya baytlarına** aittir. Bunlar kaynak
+imzası değildir; raporun kendisi güvenilir bir dijital imzayla doğrulanmaz.
+004, yalnız yeni tablo ve onun korumalarını ekler: UPDATE reddedilir;
+DELETE/TRUNCATE mevcut `reject_delete` işleviyle engellenir. 001–003 değişmez.
+
+Aynı günün fiyatı ve Cimri kimliği aynıysa ilk satır bütün alanlarıyla
+korunur; adres/zaman/parmak izi değişimi tek başına çelişki değildir.
+NULL–NULL aynı, NULL–fiyat farklıdır. Bir gündeki fiyat veya Cimri kimliği
+farklıysa o üründe hiç yeni gün yazılmaz; diğer doğrulanmış ürünler devam
+eder. SQL/bağlantı hatasında komut durur, tamamlanan ürünler kalır. COMMIT
+yanıtı kaybolduğunda son ürünün sonucu belirsiz olarak bildirilir; yeniden
+çalıştırma aynı kaydı çoğaltmadan sonucu netleştirir.
+
+`--dry-run` tek REPEATABLE READ, READ ONLY transaction'da çalışır; INSERT
+deneyip geri almaz. Önizleme yazma yetkisi veya sonuç rezervasyonu değildir;
+normal komut bütün kontrolleri yeniden yapar. Çıktı her ürünü, eklenecek/aynı
+kayıtları, çelişkili tarihleri ve eski/yeni kuruş fiyatı ile Cimri kimliğini
+gösterir. Kaynak dosyalarına veya giriş raporuna yazılmaz; çıktı terminaldedir.
+[PostgreSQL READ ONLY belgeleri](https://www.postgresql.org/docs/17/sql-set-transaction.html)
+
+Çıkışlar: **0** girdideki ürünler aktarıldı/zaten aynı; **2** atlanan veya
+çelişkili ürün var; **1** yapı/kimlik/şema/veritabanı hatası; **3** kilit
+meşgul; **130** Ctrl+C. Kesintide son ürün ya tamamen yazılır ya hiç yazılmaz;
+önceki ürünler korunur. Global katalogdaki eşleştirmesiz ürünler seçili
+girdide yoksa komutun başarısını değiştirmez; katalog kapsamı 9.3'te raporlanır.
+
 ### Migration kuralları
 
 - Dosya adı `NNN_ad.sql`; numaralar 001'den boşluksuz artar. Uzantı büyük harfle
@@ -1514,7 +1590,7 @@ temiz. Gerçek DB, katalog ve uygulanmış migration dosyaları değişmedi.
 
 ## Testler ne kanıtlar, ne kanıtlamaz
 
-- **Otomatik testler (832; 228'i gerçek PostgreSQL'de):** Kuralların doğru
+- **Otomatik testler (1190; 276'sı gerçek PostgreSQL'de):** Kuralların doğru
   çalıştığını kayıtlı ve sahte yanıtlarla kanıtlar. Kimlik değişiklikleri gerçek
   kaynak örneği ve regresyon ister; 7 Ekim varyant ve adres bakımları kullanıcının
   her maddeye ayrı onayıyla yapay çelişkilere karşı önleyici koruma olarak uygulandı.
