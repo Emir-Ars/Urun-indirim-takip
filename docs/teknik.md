@@ -1,9 +1,9 @@
 # Teknik rehber
 
-Bu belge, [README](../README.md)'de özetlenen sistemin **nasıl** çalıştığını
-ayrıntısıyla anlatır: dosyaların görevleri, komutlar, keşif ve fiyat okuma
-adımları, kimlik kuralları, rapor alanları, bilinen sınırlar ve geliştirme
-geçmişi. Kararların ve aşama durumunun ana kaynağı
+Bu belge, [README](../README.md)’de tanıtılan sistemin kurulum, çalıştırma
+ve bakım rehberidir. Dosyaların görevlerini, komutları, keşif ve fiyat okuma
+adımlarını, kimlik kurallarını, rapor alanlarını, bilinen sınırları ve
+geliştirme geçmişini açıklar. Kararların ve aşama durumunun ana kaynağı
 [proje_plani.md](../proje_plani.md) dosyasıdır.
 
 ## İçindekiler
@@ -21,6 +21,19 @@ geçmişi. Kararların ve aşama durumunun ana kaynağı
 - [Geliştirme geçmişi](#geliştirme-geçmişi)
 
 ## Dosyalar ve sorumlulukları
+
+### Proje kökü ve belgeler
+
+| Dosya | Görevi |
+|---|---|
+| `README.md` | Projenin amacı, tamamlanan özellikler, teknolojiler, doğrulanmış kapsam ve yol haritası. |
+| `proje_plani.md` | Kararların ve aşama durumlarının ana kaynağı; geliştirme tarihçesi. |
+| `docs/teknik.md` | Kurulum, komutlar, veri kuralları, bakım ve kaynak sınırları. |
+| `pyproject.toml` | Bağımlılıklar, Python sürümü, paketleme ve test/biçim araçlarının ayarları. |
+
+Eski veritabanı, API, ML, arayüz ve Docker taslakları yerel
+`_eski_taslaklar/` klasöründedir. Git’e gönderilmez, güncel uygulamanın
+parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak korunur.
 
 ### Ayarlar: `config/` (kod değil, veri)
 
@@ -132,6 +145,7 @@ Windows ve PowerShell, Python sanal ortamı `.venv`:
 
 ```powershell
 # Kurulum: yalnız biten aşamanın bağımlılıkları + test/biçim araçları
+python -m venv .venv
 .venv\Scripts\python.exe -m pip install -e ".[dev]"
 
 # Otomatik testler (internete çıkmaz; veritabanı testleri TEST_DATABASE_URL ister)
@@ -171,7 +185,7 @@ powershell -ExecutionPolicy Bypass -File scripts\zamanlayici_kur.ps1 -Kaldir
 .venv\Scripts\python.exe -m app.discovery --scheduled --dry-run --target apple_iphone_15
 
 # İncelenen önizleme raporunu siteye gitmeden kataloğa ekle
-.venv\Scripts\python.exe -m app.discovery --apply-report data\discovery\kesif_2026-10-04_14-00-03.json
+.venv\Scripts\python.exe -m app.discovery --apply-report data\discovery\kesif_<tarih-saat>.json
 
 # Haftalık keşfi Görev Zamanlayıcı'ya kur (her Pazar 14:00); -Kaldir ile siler
 powershell -ExecutionPolicy Bypass -File scripts\kesif_zamanlayici_kur.ps1
@@ -184,6 +198,7 @@ powershell -ExecutionPolicy Bypass -File scripts\kesif_zamanlayici_kur.ps1
 
 # Canlı fiyat kontrolü: katalogdaki bütün sayfalar (veya yalnız bir ön ek)
 .venv\Scripts\python.exe tests\manual\live_scraper_check.py
+.venv\Scripts\python.exe tests\manual\live_scraper_check.py apple_iphone_15_128
 .venv\Scripts\python.exe tests\manual\live_scraper_check.py samsung_ | Out-File -Encoding utf8 data\scraper_samsung.json
 ```
 
@@ -1402,8 +1417,13 @@ ağsız kabul edildi: 10 kaynak dosyası, 1825 nokta, 71 eksik değer. Eski topl
 raporun 53 başarılı kaydı yeni zaman/özet alanlarını taşımadığından kabul
 edilmedi; dört hata ve iki eşleştirmesiz kayıt da atlandı. Kaynaklar değişmedi.
 
-Komutlar: `python -m app.market_history import <alım_klasörü> --dry-run`
-ve `python -m app.market_history import <alım_klasörü>`.
+Komutlar:
+
+```powershell
+.venv\Scripts\python.exe -m app.market_history import <alım_klasörü> --dry-run
+.venv\Scripts\python.exe -m app.market_history import <alım_klasörü>
+```
+
 Girdi `report.json` ve onun gösterdiği HTML/API dosyalarıdır. Raporun
 `version: 1`, `source: cimri`, sonlandırılmış sonuç ve UTC zamanları gerekir;
 `running`, bozuk zarf ve tekrarlanan kimlikler bütün girdiyi reddettirir.
@@ -1540,8 +1560,8 @@ koruma tetikleyicisi korunmuş. Denetim kaydı yerel/Git dışındadır:
 
 Kod/test değişmedi. Önceki yerel 1190 passed/0 skipped/xfail sonucu ile mevcut
 `2c78af2` için başarılı pytest/Black/Flake8 CI ayrı kanıtlardır; bu kapanışta
-pytest yeniden çalıştırılmadı. Kapanış belgesinin yeni commit’i gönderilince
-aynı SHA için CI ayrıca kontrol edilecek.
+pytest yeniden çalıştırılmadı. Kapanış belgeleri `3c4d030` ile gönderildi;
+[aynı SHA CI 37813840435 başarılı](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/37813840435).
 
 Kabul edilen sınırlar sürer: Hepsiburada arama kapsamı kısmi, bilgisayarın
 uyku/ağ kesintilerinde gözlem kaybı olabilir. Tur sonu network ikinci okuması
@@ -1551,10 +1571,10 @@ Pazar 11 Ekim 14:00. İki Cimri eşleştirmesi ve çapraz karşılaştırma yap�
 günler kayıtlıdır; eksik fiyatlar doldurulmaz ve Cimri serisi kendi toplama
 serisiyle aynı ölçüm sayılmaz.
 
-**Aşama 6 kapandı; API/arayüz başlamadı.** README’nin tanıtım amaçlı
-kapsamlı düzenlenmesi ve teknik belgeyle görev paylaşımı kullanıcı kararıyla
-kapanıştan sonraki ayrı iş olarak bekliyor. Bu adımda yalnız durum ve
-tutarlılık düzeltmeleri yapıldı; komutlar ve çalışma akışı korundu.
+**Aşama 6 kapandı; API/arayüz başlamadı.** Bu kapanışta yalnız durum ve
+tutarlılık düzeltmeleri yapıldı; komutlar ve çalışma akışı korundu. Ardından
+kullanıcının onayladığı ayrı belge planıyla README proje tanıtımına odaklandı;
+kurulum/çalıştırma ayrıntıları bu rehberde korunup eksikleri tamamlandı.
 
 ### Migration kuralları
 

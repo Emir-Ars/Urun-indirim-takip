@@ -3,316 +3,104 @@
 [![CI](https://github.com/Emir-Ars/Urun-indirim-takip/actions/workflows/ci.yml/badge.svg)](https://github.com/Emir-Ars/Urun-indirim-takip/actions/workflows/ci.yml)
 ![Python 3.13](https://img.shields.io/badge/python-3.13-blue)
 
-Trendyol ve Hepsiburada'daki akıllı telefonları takip eder ve her telefon için
-**şu anki en ucuz teklifi** bulur. Hedef, fiyat geçmişini biriktirip bir
-telefonun yakında indirime girip girmeyeceğini tahmin etmek.
+Trendyol ve Hepsiburada’daki akıllı telefonları keşfeden, fiyat ve stok
+bilgilerini düzenli toplayıp PostgreSQL’de saklayan bir proje. Takip edilen
+sayfalardan son toplanan teklifleri karşılaştırır ve fiyat geçmişi oluşturur.
+Uzun vadeli hedef, bu geçmişten telefonun yakında indirime girme olasılığını
+hesaplamaktır.
 
-> 📘 Ayrıntılı işleyiş, kurallar ve bilinen sınırlar: [docs/teknik.md](docs/teknik.md)
-> · 🧭 Kararlar ve aşamalar: [proje_plani.md](proje_plani.md)
+> ✅ **Keşif, fiyat toplama ve veritabanı aşamaları tamamlandı.**
+> API, kullanıcı arayüzü ve tahmin modeli henüz geliştirilmedi.
 
-## Yol haritası
+## ✨ Tamamlanan özellikler
 
-```mermaid
-flowchart LR
-    A["✅ Fiyat okuma"] --> B["✅ Otomatik keşif"]
-    B --> C["✅ Katalog<br/>59 ürün · 334 sayfa"]
-    C --> D["✅ Veritabanı<br/>günde 2 toplama"]
-    D --> E["🔜 API ve arayüz"]
-    E --> F["🔜 İndirim tahmini"]
-    classDef done fill:#d8f3dc,stroke:#2d6a4f,color:#1b4332
-    classDef next fill:#fff3bf,stroke:#b08900,color:#5c4400
-    classDef todo fill:#e9ecef,stroke:#868e96,color:#343a40
-    class A,B,C,D done
-    class E next
-    class F todo
-```
+- 🔎 **Otomatik keşif:** model, kapasite ve renk seçeneklerinin bağlantılarını
+  bulur; başka model, aksesuar ve kapsam dışı ürünleri kimlik kontrolünden geçirir.
+- 🏷️ **Teklif seçimi:** ürün sayfasındaki uygun satıcı tekliflerini karşılaştırır;
+  seçilen fiyatı, satıcıyı ve stok durumunu kaydeder.
+- ⏰ **Düzenli toplama:** Windows Görev Zamanlayıcı ile günde iki fiyat turu ve
+  haftalık keşif raporu üretir. Yeni bağlantılar incelenen rapordan kataloğa alınır.
+- 🗄️ **Kalıcı kayıt:** sonuçları tur ve sayfa düzeyinde saklar; tekrar kayıtları
+  ve kapanmış sonuçların değiştirilmesini veritabanı kurallarıyla engeller.
+- ⚖️ **Güvenli karşılaştırma:** cevap veren sayfa kümesi değişen turları fiyat
+  düşüşü karşılaştırmasından ayırır. Okuma hatası stoksuzluk olarak kaydedilmez.
+- 📅 **Bir defalık geçmiş aktarımı:** doğrulanmış Cimri geçmişini ayrı tabloda
+  saklar; tekrar aktarımda kayıt çoğaltmadan ilk kaynak bilgilerini korur.
 
-Keşif, fiyat okuma, PostgreSQL kaydı ve zamanlanmış toplama hazır.
-Cimri’nin 57 ürün için geçmişi ayrı tabloya aktarıldı ve tekrar aktarımda
-kayıt çoğalmadığı doğrulandı. **Veritabanı ve zamanlanmış toplama aşaması
-8 Ekim’de Adım 7 kapanışıyla tamamlandı.** API ve arayüz henüz başlamadı.
-
-## Nasıl çalışır
+## 🔄 Çalışma akışı
 
 ```mermaid
 flowchart LR
-    U(["discovery.json<br/>marka + model"]) --> K
-    subgraph S1["1 · Keşif: hangi sayfaları izleyelim?"]
-        K["Sitede ara,<br/>renk ve kapasiteleri topla"] --> V{"Doğru telefon mu?"}
-    end
-    V -- evet --> C[("catalog.json<br/>doğrulanmış sayfalar")]
-    V -- "hayır" --> R["Rapor: neden reddedildi<br/>başka model, aksesuar,<br/>yenilenmiş, yurt dışı…"]
-    C --> P
-    subgraph S2["2 · Fiyat okuma: şu an en ucuz kim?"]
-        P["Her sayfadaki<br/>satıcıları karşılaştır"] --> E["En ucuz<br/>uygun teklif"]
-    end
-    E --> O["Fiyat · satıcı · stok"]
-    O --> DB[("PostgreSQL<br/>fiyat geçmişi")]
+    A["Telefon hedefleri"] --> B["Keşif ve kimlik doğrulama"]
+    B --> C["Doğrulanmış katalog"]
+    C --> D["Fiyat ve stok toplama"]
+    D --> E[("PostgreSQL fiyat geçmişi")]
+    classDef targets fill:#fff3bf,stroke:#b08900,color:#1b4332
+    classDef processing fill:#d8f3dc,stroke:#2d6a4f,color:#1b4332
+    classDef records fill:#dbeafe,stroke:#2563eb,color:#172554
+    class A targets
+    class B,D processing
+    class C,E records
 ```
 
-- **Keşif** yeni model eklerken ya da haftada bir çalışır. Sayfaları kullanıcı
-  değil sistem bulur ve her birini ayrıca açıp doğrular. Görev Zamanlayıcı'ya
-  kurulunca (`scripts/kesif_zamanlayici_kur.ps1`) her Pazar 14:00'te kataloğa
-  yazmadan tarihli bir rapor bırakır; kullanıcı raporu inceler ve
-  `python -m app.discovery --apply-report <rapor>` siteye gitmeden o raporu
-  kataloğa ekler.
-- **Fiyat toplama turu** (`python -m app.collection`) her sayfanın sonucunu
-  PostgreSQL'e yazar. Görev Zamanlayıcı'ya kurulunca
-  (`scripts/zamanlayici_kur.ps1`) her gün 10:00 ve 22:00'de penceresiz çalışır;
-  çıktısı `data/logs/` altına yazılır.
-- Yeni telefon eklemek için kod değişmez; `discovery.json` dosyasına bir satır
-  eklenir.
+Telefonlar marka, model ve kapasite düzeyinde takip edilir. Keşif hangi
+sayfaların izleneceğini belirler; toplama bu sayfaların fiyat, stoksuzluk veya
+hata sonucunu kaydeder. Cimri geçmişi bu akışın gözlemleriyle birleştirilmez.
 
-## Temel kavramlar
+## 🛠️ Teknolojiler
 
-```mermaid
-flowchart LR
-    P["Ürün<br/>iPhone 15 128 GB"] --> L1["Sayfa<br/>Trendyol · Mavi"]
-    P --> L2["Sayfa<br/>Hepsiburada · Siyah"]
-    L1 --> O1["Teklif<br/>Satıcı A · 56.999 TL"]
-    L1 --> O2["Teklif<br/>Satıcı B · 59.599 TL"]
-```
-
-| Kavram | Anlamı |
+| Teknoloji | Görevi |
 |---|---|
-| **Ürün** | Marka + model + hafıza. Fiyatlar bu düzeyde karşılaştırılır. |
-| **Sayfa** (bağlantı) | Ürünün bir sitedeki bir sayfası; genelde her renk ayrı sayfadır. |
-| **Teklif** | O sayfadaki bir satıcı ve fiyatı. |
+| Python 3.13 | Keşif, fiyat toplama ve aktarım uygulaması |
+| curl_cffi · BeautifulSoup4 | HTTP erişimi ve sayfa ayrıştırma |
+| Pydantic | Veri şekilleri ve kimlik sözleşmelerinin doğrulanması |
+| PostgreSQL 17 · Psycopg 3 | Kalıcı kayıt, SQL kuralları ve işlemler |
+| Windows Görev Zamanlayıcı | Günlük toplama ve haftalık keşif |
+| pytest · Black · Flake8 · GitHub Actions | Otomatik testler ve kod denetimleri |
 
-iPhone 15 128 GB ile 256 GB farklı ürünlerdir; Pro, Plus, Ultra, FE, Edge gibi
-modeller de ayrıdır. RAM ve garanti türü ürünü bölmez.
+## 📊 Doğrulanmış kapsam
 
-## Bugünkü kapsam
+8 Ekim 2026 itibarıyla:
 
-| | |
+| Alan | Sonuç |
 |---|---|
-| Siteler | Trendyol, Hepsiburada |
-| Takip edilen modeller | 24 (Apple 9 · Samsung 8 · Xiaomi 6 · POCO 1) |
-| Katalog | 59 ürün, 334 sayfa (6 Ekim 2026; 2'si pasif) |
-| Fiyat toplama | İlk tam tur 28 Eylül 2026: 326/326 sayfa, 31 dakika, hatasız. Görev Zamanlayıcı 28 Eylül'de kuruldu; günde 2 tur (10:00, 22:00) |
-| Bir defalık piyasa geçmişi | Cimri: 57 ürün, 20.805 günlük kayıt (20.252 fiyat/553 NULL); iki eşleştirme eksikliği raporlandı. İlk ve tekrar aktarım doğrulandı (8 Ekim 2026). Kendi toplama serimizden ayrı tutulur. |
-| Testler | 1190 otomatik test (276'sı gerçek PostgreSQL üzerinde); her push'ta GitHub Actions. Testler internete çıkamaz ve gerçek veritabanına dokunamaz (otomatik emniyet kemerleri) |
+| Fiyat kaynakları | Trendyol ve Hepsiburada |
+| Model aileleri | 24; Apple, Samsung, Xiaomi ve POCO |
+| Katalog | 59 ürün, 334 bağlantı; 332 etkin bağlantı |
+| Toplama düzeni | Her gün 10:00 ve 22:00; haftalık keşif Pazar 14:00 |
+| Son doğrulanan fiyat turu | 332 sonuç: 237 fiyat, 95 Tükendi, 0 hata |
+| Cimri geçmişi | 57 ürün, 20.805 tarihli kayıt; 20.252 fiyat ve 553 eksik değer |
+| Otomatik testler | 1190 test; 276’sı PostgreSQL üzerinde |
+
+Katalogdaki **334 bağlantının markalara göre dağılımı** (iki pasif bağlantı dahil):
 
 ```mermaid
-pie title Katalogdaki sayfalar (334)
+pie showData
+    title Katalogdaki bağlantılar — 8 Ekim 2026
     "Apple" : 171
     "Samsung" : 104
     "Xiaomi" : 55
     "POCO" : 4
 ```
 
-Katalog, sitelerin o gün gösterdiği sayfalardan oluşur; pazaryerinin eksiksiz
-listesi değildir. Keşif yeniden çalıştıkça satışa giren yeni sayfalar eklenir.
+Son tam yerel test paketinde atlanan veya beklenen başarısızlık yoktu.
+Her push’ta CI, testler ile Black ve Flake8 denetimlerini çalıştırır.
+Otomatik testler canlı ağa çıkmaz; veritabanı testleri yalnız test veritabanını kullanır.
 
-## Hızlı başlangıç
+Katalog pazaryerlerinin tamamını kapsamaz. Cimri’de iki ürünün eşleştirmesi
+doğrulanamadı; eksik fiyatlar doldurulmadı. Kaynak ve işletim sınırları
+[teknik rehberde](docs/teknik.md#bilinen-sınırlar) açıklanır.
 
-Windows ve PowerShell:
+## 🗺️ Yol haritası
 
-```powershell
-# 1. Kurulum
-python -m venv .venv
-.venv\Scripts\python.exe -m pip install -e ".[dev]"
+| Aşama | Durum |
+|---|---|
+| Fiyat okuma, keşif, katalog, veritabanı ve zamanlanmış toplama | ✅ Tamamlandı |
+| FastAPI ve Streamlit ile verileri sunma ve görüntüleme | 🔜 Planlandı |
+| ML ile indirim olasılığı tahmini | 🔜 Planlandı |
+| Docker ve sürekli çalışma ortamı | 🔜 Planlandı |
 
-# 2. Otomatik testler (internete çıkmaz; veritabanı testleri TEST_DATABASE_URL ister)
-.venv\Scripts\python.exe -m pytest -q
+## 📚 Belgeler
 
-# 3. Veritabanı (PostgreSQL 17 kurulduktan sonra, DATABASE_URL ile):
-#    şemayı kur, katalogu veritabanına eşitle
-.venv\Scripts\python.exe -m app.database migrate
-.venv\Scripts\python.exe -m app.database sync-catalog
-
-# 4. Fiyat toplama turu (sitelere istek atar; sonuçları veritabanına yazar)
-.venv\Scripts\python.exe -m app.collection --prefix poco_
-
-#    Her gün 10:00 ve 22:00 için Görev Zamanlayıcı'ya kur (yönetici izni gerekmez)
-powershell -ExecutionPolicy Bypass -File scripts\zamanlayici_kur.ps1
-
-# 5. Canlı deneme (sitelere istek atar; kataloğa ve veritabanına yazmaz,
-#    keşif raporunu data/discovery_report.json dosyasının üzerine yazar)
-[Console]::OutputEncoding = [Text.Encoding]::UTF8
-.venv\Scripts\python.exe -m app.discovery --dry-run --target apple_iphone_15
-.venv\Scripts\python.exe tests\manual\live_scraper_check.py apple_iphone_15_128
-```
-
-`--dry-run` kataloğa yazmaz; raporu `data/discovery_report.json` dosyasına
-yazar. Haftalık keşfi ve incelenen raporun kataloğa eklenmesini
-[docs/teknik.md](docs/teknik.md#zamanlanmış-keşif-görev-zamanlayıcı) anlatır:
-
-```powershell
-# Haftalık keşfi Pazar 14:00 için Görev Zamanlayıcı'ya kur (yönetici izni gerekmez)
-powershell -ExecutionPolicy Bypass -File scripts\kesif_zamanlayici_kur.ps1
-
-# İncelediğiniz önizleme raporunu siteye gitmeden kataloğa ekle
-.venv\Scripts\python.exe -m app.discovery --apply-report data\discovery\kesif_<tarih-saat>.json
-```
-
-Canlı komutları arka arkaya çok kez çalıştırmayın; siteler geçici olarak
-engelleyebilir. Bütün komutlar: [docs/teknik.md](docs/teknik.md#komutların-ayrıntısı).
-PostgreSQL kurulumu (Türkçe Windows'ta locale `C` seçilmeli) ve veritabanı
-kuralları: [docs/teknik.md](docs/teknik.md#veritabanı-postgresql).
-
-### Cimri geçmişinin yerel alımı (Adım 9.1)
-
-8 Ekim üç ürün kontrolünde iPhone 16 ve Galaxy S24'ün 365'er noktası ve
-90'ar tablo eşleşmesi doğrulandı. Xiaomi'nin grafiğindeki dört sıfır fiyat
-ilk alımda reddedildi; kullanıcı kararıyla aynı tarihte tabloda fiyat yoksa
-eksik değer (`null`) olarak okunuyor. Kaydedilmiş yanıt yeniden doğrulandı:
-361 geçerli fiyat, dört eksik gün ve 86 tablo eşleşmesi. İlk rapor değişmedi.
-`config/market_history.json` 59 ürünün 57'sinin araştırılmış ana adresini
-içerir. Galaxy S25 512 GB ve Redmi Note 14 Pro 5G 256 GB için doğru ana
-adres doğrulanamadı; Cimri'de olmadıkları sonucuna varılmadı. 8 Ekim
-10:49–10:58 katalog alımında **53 ürün doğrulandı, dört ürün aynı günün
-gömülü tablo ve ham API fiyatı uyuşmadığı için reddedildi**, iki ürün eşleştirmesiz kaldı.
-53 ürünün toplam 19.345 tarihli noktasında 18.792 fiyat ve 553 eksik değer
-var; 4.413 tablo satırı eşleşti. 11:12–11:13 tekrarında dört uyuşmazlık da
-aynı kaldı. Kullanıcı tarayıcıda grafik ile tablonun eşleştiğini bildirdi;
-programın ham API yanıtı ile ekrandaki grafik aynı kabul edilemez. Alım
-gününü eksik sayma önerisi geri çekildi. Kaynak JavaScript incelemesi, grafiğin
-bugünkü API fiyatını sayfanın ilk teklif fiyatıyla değiştirdiğini doğruladı.
-Kullanıcı onayıyla bu kural uygulandı; tarih kontrolü ve kullanılan fiyatın
-kaynağı rapora eklendi. Yeni kodla 57 ürünün kayıtlı tam yanıtı ağsız doğrulandı:
-20.805 nokta, 20.252 fiyat, 553 eksik değer, 4.773 tablo eşleşmesi. Önceki
-52 ürünün bütün noktaları aynı; S24 Ultra 1 TB'nin yalnız 8 Ekim fiyatı
-85.680 → 86.220 TL oluyor. Son günün tablo satırı yoksa komut bunu bildirir.
-9.1 kapanış kontrolü: **1029 test geçti, 0 atlandı**, Black/Flake8 temiz.
-13:51–13:52 canlı teyidinde beş ürünün tamamı kaydedildi; çıkış 0.
-1.825 noktada 1.754 fiyat ve 71 eksik değer var; 450 tablo satırı eşleşti.
-S24 Ultra 1 TB'nin 71 eksik günü önceki kayıttakiyle aynı.
-9.1 tamamlandı; `79a3f77` gönderildi ve aynı commit'in
-[CI sonucu başarılı](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/37767276279).
-Eski raporlar ve ham kayıtlar korunuyor. 9.1 kapanışında aktarım henüz
-başlamamıştı; aşağıdaki 9.3 bölümünde tamamlanmış gerçek aktarım anlatılıyor.
-
-Zamanlanmış tur bittikten sonra, yeni bir klasöre katalog alımı için:
-
-```powershell
-$cimriKlasor = "data\market_history\katalog_$(Get-Date -Format yyyyMMdd_HHmmss_fff)"
-.venv\Scripts\python.exe -m app.market_history capture `
-  --mapping config\market_history.json --output-dir $cimriKlasor
-$LASTEXITCODE
-```
-
-Komut HTML, API JSON yanıtı ve `report.json` oluşturur; katalog ve veritabanına
-yazmaz. Şu an iki eşleştirme eksik olduğundan 57 alım başarılı olsa da çıkış
-**2** olur; ürün hataları ve denenmeyenler rapordan ayrıca kontrol edilir.
-Tek ürün için `--product-key <anahtar>` eklenebilir.
-Çıkış 0 seçilen ürünler kaydedildi, 2 kısmi sonuç, 1 başlatma/dosya
-hatası, 3 ortak kilit meşgul, 130 Ctrl+C demektir. Grafik fiyatları raporda
-kuruştur; eksik fiyat `null` kalır. Ayrıntılar: [teknik rehber](docs/teknik.md#cimri-geçmişinin-yerel-alımı-adım-91).
-
-### Cimri geçmişinin aktarımı (Adım 9.2)
-
-Adım 9.2 tamamlandı: `c64d14f` gönderildi,
-[aynı commit’in CI sonucu başarılı](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/37777433986)
-ve kod ana projeye alındı. Kullanıcı 004’ü 8 Ekim 2026 12:35 UTC’de uyguladı.
-9.2 devreye alma kontrolünde şema güncel, `market_history` boş ve korumaları
-etkindi; aşağıda 9.3 gerçek aktarımının güncel sonucu yer alıyor.
-9.3’te kullanılan önizleme ve aktarım komutları:
-
-```powershell
-.venv\Scripts\python.exe -m app.market_history import <alım_klasörü> --dry-run
-.venv\Scripts\python.exe -m app.market_history import <alım_klasörü>
-```
-
-`--dry-run` veritabanında yalnız okuma yapar. Aktarım internete çıkmaz;
-raporu, kaynak dosyalarının parmak izlerini, ürün kimliğini ve hesaplanmış
-fiyatları yeniden doğrular. Her ürün birlikte yazılır; aynı kayıt çoğalmaz,
-fiyat/kimlik çelişkisinde o ürünün hiçbir yeni günü yazılmaz. `NULL` korunur.
-İlk kaydın zamanı ve kaynak bilgileri değişmez. Çıkışlar: 0 başarılı/aynı,
-2 atlanan veya çelişkili ürün, 1 durduran hata, 3 kilit meşgul, 130 Ctrl+C.
-
-Kullanıcının 8 Ekim kararıyla **9.3’te güncel araçla yeni toplu alım** yapıldı.
-Önceki raporlardaki eksik alanlar tahmin edilmez; eski dosyalar korunur.
-İlk ve tekrar aktarım doğrulandı; 9.3 tamamlandı. Ayrıntılar:
-[ağsız aktarım](docs/teknik.md#cimri-geçmişinin-ağsız-aktarımı-adım-92).
-
-### Gerçek aktarım ve kapsam kapanışı (Adım 9.3)
-
-**Tamamlandı (8 Ekim).**
-
-8 Ekim 15:59–16:08 yeni alımı doğrulandı: **57 ürün başarılı, iki eşleştirme
-eksik**. 114 kaynak dosyası ve 20.805 günlük nokta yeniden doğrulandı:
-20.252 fiyat, 553 NULL; tarih aralığı 2025-10-09–2026-10-08. Tabloda ortak
-4.773 fiyat eşleşti; beş ürünün son gününde tablo karşılaştırması yapılamadı.
-Galaxy S25 512 GB ve Redmi Note 14 Pro 5G 256 GB açık; çıkış 2 yalnız bu
-eksiklerden kaynaklandı. Katalog/DB kimlikleri uyumlu ve şema güncel.
-**Önizleme ve ilk gerçek aktarım doğrulandı:** 20.805 eklendi, 0 aynı,
-0 çelişkili ürün, iki atlanan; çıkış 2. Bağımsız READ ONLY kontrolde bütün
-satırların 10 alanı kaynakla birebir aynı; 553 NULL korundu, kaynak dosyaları
-değişmedi. Tekrar aktarım **0 yeni / 20.805 aynı** verdi; bütün satır alanları
-ve ürün bazında parmak izleri ilk aktarımla aynı kaldı.
-
-Sıra: yeni tarih-saatli klasöre `capture` → rapor incelemesi → `import --dry-run`
-→ kullanıcı `import` → bağımsız okuma ve aynı klasörün tekrar aktarımı.
-Canlı alımı ve yazmayı kullanıcı tur/keşif saatleri dışında çalıştırır.
-Girdi `data/market_history/aktarim_20261008_155952_339` klasörüdür.
-İlk ve tekrar aktarımda iki eşleştirmesiz ürün atlandı; çıkış 2 bu eksiklerden
-kaynaklanıyor. İlk kaynak bilgileri korundu. 59 ürünün tamamının sonucu
-raporlandı: 57 aktarılmış, iki gerekçeli eşleştirme eksik. Yerel kapanış raporu:
-`data/market_history/kapanis_9_3_20261008_141239_175902.json`.
-9.3 belgeleri `2c78af2` ile gönderildi;
-[aynı commit’in CI sonucu başarılı](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/37795271692).
-Ardından Adım 7 kapanışında son turun 332 log satırı DB ile eşleşti; şema,
-katalog, 59 ürünün karşılaştırma görünümü ve Cimri geçmişi yeniden teyit edildi.
-Veritabanı aşaması tamamlandı; kullanıcı kapanış belge commit/push işlemini
-onayladı. Aynı yeni commit’in CI sonucu GitHub Actions kaydından izlenir.
-
-## Yeni telefon ekleme
-
-`config/discovery.json` dosyasındaki `targets` listesine bir satır eklenir:
-
-```json
-{"key": "samsung_galaxy_s25", "brand": "Samsung", "model": "Galaxy S25"}
-```
-
-- **brand:** sitedeki marka etiketi (ör. POCO ayrı bir markadır).
-- **model:** markasız, tam model adı. "Galaxy S25", S25 Ultra ya da S25 Edge'i
-  kapsamaz.
-- Aynı adı taşıyan farklı telefonlar için (ör. 4G / 5G sürümler)
-  `exclude_terms` ve `network` alanları var:
-  [ayrıntılar](docs/teknik.md#yeni-telefon-ekleme-bütün-kurallar).
-
-## Proje yapısı
-
-```text
-config/
-  discovery.json    takip edilecek telefonlar (kullanıcı yazar)
-  catalog.json      doğrulanmış ürünler ve sayfalar (keşif yazar)
-  runtime.json      zaman aşımı, tekrar deneme, istekler arası bekleme
-  market_history.json  bir defalık Cimri alımının ürün/adres/kimlik eşleştirmeleri
-app/
-  contracts.py      veri şekilleri ve doğrulama
-  scraper/          fiyat okuma: tek HTTP kapısı, ortak kimlik kuralları, site okuyucuları
-  discovery/        keşif: site aramaları, katalogla birleştirme, rapor, raporu uygulama
-  database/         PostgreSQL: bağlantı, migration dosyaları, katalog eşitleme, tur SQL'leri
-  collection/       fiyat toplama turu: sayfaları okuyup sonuçları veritabanına yazar
-  market_history/   Cimri geçmişi: yerel alım, dosya doğrulama ve aktarım komutu
-  scrape_lock.py    siteye giden bütün girişlerin ortak kilidi
-  console.py        zamanlanmış komutların ortak çıktı ve log yardımcıları
-  settings.py       config dosyalarını okur; dosya ve klasör yolları ortam değişkeniyle değişir
-scripts/
-  zamanlayici_kur.ps1        günde 2 turu Windows Görev Zamanlayıcı'ya kurar
-  kesif_zamanlayici_kur.ps1  haftalık keşfi (Pazar 14:00, katalog yazmadan) kurar
-tests/              otomatik testler; manual/ altında canlı kontrol araçları
-.github/workflows/  ci.yml (her push: Black, Flake8, testler) ve bulut-deneme.yml
-                    (elle tetiklenen canlı okuma denemesi)
-docs/teknik.md      ayrıntılı teknik rehber
-pyproject.toml      bağımlılıklar ve araç ayarları
-```
-
-## İlkeler
-
-- **Veri uydurulmaz.** Bulunamayan fiyat ya da stok boş kalır ve hata olarak
-  raporlanır.
-- **"Tükendi" yalnızca sitenin açık sinyaliyle** verilir; bağlantı hatası
-  "Tükendi" sayılmaz.
-- **Siteye nazik davranılır.** Bütün istekler tek kapıdan geçer; aynı siteye
-  istekler arasında 3 saniye beklenir.
-- **"Testler geçti", "pazaryerinin tamamı tarandı" demek değildir.** Bilinen
-  sınırlar [teknik rehberde](docs/teknik.md#bilinen-sınırlar) listelenir.
-
-## Not
-
-Önceki aşamalardan kalan yerel taslaklar (eski veritabanı, API, ML, arayüz ve
-Docker dosyaları) `_eski_taslaklar/` klasöründedir. Git'e gönderilmezler ve
-bugünkü kodla çalışmazlar; yalnızca örnek olarak incelenebilirler.
+- [Teknik rehber](docs/teknik.md): kurulum, çalıştırma, veri kuralları ve bakım ayrıntıları.
+- [Proje planı](proje_plani.md): aşamalar, kararlar ve geliştirme geçmişi.

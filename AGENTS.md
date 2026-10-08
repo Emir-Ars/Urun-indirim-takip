@@ -11,8 +11,8 @@ güvenilmez; diğer araç onu göremez. Kalıcı bilgi repodaki dosyalarda durur
 2. `DEVAM.md` (varsa): yerel devir notu, Git dışında. Son oturumdan kalan yarım
    işi, bekleyen kararları ve sıradaki adımı içerir.
 3. `git status` ve `git log --oneline -5`: commit edilmemiş değişiklikler.
-4. Gerekirse `README.md` (çalıştırma) ve `docs/teknik.md` (işleyiş, kurallar,
-   hata kodları).
+4. Gerekirse `README.md` (proje tanıtımı) ve `docs/teknik.md` (çalıştırma,
+   işleyiş, kurallar, hata kodları).
 
 ## Oturum sonunda ve araç değiştirmeden önce
 
