@@ -27,9 +27,10 @@ flowchart LR
     class E,F todo
 ```
 
-Bugün biten kısım: telefonların sayfalarını bulan **keşif** ve o sayfalardaki
-fiyatları okuyan **scraper**. Sürmekte olan aşama: PostgreSQL veritabanı ve
-günde 2 kez otomatik fiyat toplama.
+Keşif, fiyat okuma, PostgreSQL kaydı ve zamanlanmış toplama hazır.
+Cimri’nin 57 ürün için geçmişi ayrı tabloya aktarıldı ve tekrar aktarımda
+kayıt çoğalmadığı doğrulandı. Veritabanı aşamasında **Adım 7 kapanış belgeleri**
+kaldı; bu adıma henüz geçilmedi.
 
 ## Nasıl çalışır
 
@@ -89,6 +90,7 @@ modeller de ayrıdır. RAM ve garanti türü ürünü bölmez.
 | Takip edilen modeller | 24 (Apple 9 · Samsung 8 · Xiaomi 6 · POCO 1) |
 | Katalog | 59 ürün, 334 sayfa (6 Ekim 2026; 2'si pasif) |
 | Fiyat toplama | İlk tam tur 28 Eylül 2026: 326/326 sayfa, 31 dakika, hatasız. Görev Zamanlayıcı 28 Eylül'de kuruldu; günde 2 tur (10:00, 22:00) |
+| Bir defalık piyasa geçmişi | Cimri: 57 ürün, 20.805 günlük kayıt (20.252 fiyat/553 NULL); iki eşleştirme eksikliği raporlandı. İlk ve tekrar aktarım doğrulandı (8 Ekim 2026). Kendi toplama serimizden ayrı tutulur. |
 | Testler | 1190 otomatik test (276'sı gerçek PostgreSQL üzerinde); her push'ta GitHub Actions. Testler internete çıkamaz ve gerçek veritabanına dokunamaz (otomatik emniyet kemerleri) |
 
 ```mermaid
@@ -199,11 +201,12 @@ kuruştur; eksik fiyat `null` kalır. Ayrıntılar: [teknik rehber](docs/teknik.
 
 ### Cimri geçmişinin aktarımı (Adım 9.2)
 
-Aktarım komutu ve `004_market_history.sql` izole kopyada hazırlandı ve test edildi.
-Kullanıcı commit/push, aynı commit için CI kontrolü ve ardından ana klasöre
-geçişi onayladı. Devreye alma, kullanıcının gerçek migration teyidiyle tamamlanacak.
-Bu paket devreye alınıp kullanıcı `migrate`/`status` ile şemayı doğruladıktan
-sonra komutlar kullanılabilir:
+Adım 9.2 tamamlandı: `c64d14f` gönderildi,
+[aynı commit’in CI sonucu başarılı](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/37777433986)
+ve kod ana projeye alındı. Kullanıcı 004’ü 8 Ekim 2026 12:35 UTC’de uyguladı.
+9.2 devreye alma kontrolünde şema güncel, `market_history` boş ve korumaları
+etkindi; aşağıda 9.3 gerçek aktarımının güncel sonucu yer alıyor.
+9.3’te kullanılan önizleme ve aktarım komutları:
 
 ```powershell
 .venv\Scripts\python.exe -m app.market_history import <alım_klasörü> --dry-run
@@ -217,10 +220,37 @@ fiyat/kimlik çelişkisinde o ürünün hiçbir yeni günü yazılmaz. `NULL` ko
 İlk kaydın zamanı ve kaynak bilgileri değişmez. Çıkışlar: 0 başarılı/aynı,
 2 atlanan veya çelişkili ürün, 1 durduran hata, 3 kilit meşgul, 130 Ctrl+C.
 
-Kullanıcının 8 Ekim kararıyla **9.3'te güncel araçla yeni toplu alım** yapılacak.
+Kullanıcının 8 Ekim kararıyla **9.3’te güncel araçla yeni toplu alım** yapıldı.
 Önceki raporlardaki eksik alanlar tahmin edilmez; eski dosyalar korunur.
-Henüz gerçek fiyat geçmişi aktarılmadı. Ayrıntılar:
+İlk ve tekrar aktarım doğrulandı; 9.3 tamamlandı. Ayrıntılar:
 [ağsız aktarım](docs/teknik.md#cimri-geçmişinin-ağsız-aktarımı-adım-92).
+
+### Gerçek aktarım ve kapsam kapanışı (Adım 9.3)
+
+**Tamamlandı (8 Ekim).**
+
+8 Ekim 15:59–16:08 yeni alımı doğrulandı: **57 ürün başarılı, iki eşleştirme
+eksik**. 114 kaynak dosyası ve 20.805 günlük nokta yeniden doğrulandı:
+20.252 fiyat, 553 NULL; tarih aralığı 2025-10-09–2026-10-08. Tabloda ortak
+4.773 fiyat eşleşti; beş ürünün son gününde tablo karşılaştırması yapılamadı.
+Galaxy S25 512 GB ve Redmi Note 14 Pro 5G 256 GB açık; çıkış 2 yalnız bu
+eksiklerden kaynaklandı. Katalog/DB kimlikleri uyumlu ve şema güncel.
+**Önizleme ve ilk gerçek aktarım doğrulandı:** 20.805 eklendi, 0 aynı,
+0 çelişkili ürün, iki atlanan; çıkış 2. Bağımsız READ ONLY kontrolde bütün
+satırların 10 alanı kaynakla birebir aynı; 553 NULL korundu, kaynak dosyaları
+değişmedi. Tekrar aktarım **0 yeni / 20.805 aynı** verdi; bütün satır alanları
+ve ürün bazında parmak izleri ilk aktarımla aynı kaldı.
+
+Sıra: yeni tarih-saatli klasöre `capture` → rapor incelemesi → `import --dry-run`
+→ kullanıcı `import` → bağımsız okuma ve aynı klasörün tekrar aktarımı.
+Canlı alımı ve yazmayı kullanıcı tur/keşif saatleri dışında çalıştırır.
+Girdi `data/market_history/aktarim_20261008_155952_339` klasörüdür.
+İlk ve tekrar aktarımda iki eşleştirmesiz ürün atlandı; çıkış 2 bu eksiklerden
+kaynaklanıyor. İlk kaynak bilgileri korundu. 59 ürünün tamamının sonucu
+raporlandı: 57 aktarılmış, iki gerekçeli eşleştirme eksik. Yerel kapanış raporu:
+`data/market_history/kapanis_9_3_20261008_141239_175902.json`.
+Kullanıcı kapanış belgelerinin commit/push işlemini onayladı; aynı commit’in
+CI sonucu GitHub Actions kaydından izlenir. Adım 7’ye geçilmedi.
 
 ## Yeni telefon ekleme
 

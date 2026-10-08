@@ -439,15 +439,18 @@ doğrulandı. Yerel kontrol izi aynı klasörde `verification.json`.
 onayladı. Aynı commit için CI doğrulaması gönderim akışının parçasıdır. Gerçek DB, katalog, migration ve zamanlayıcı
 değişmedi. Eşleştirmesi açık iki ürün raporlandı; kapsam/gerçek aktarım
 9.3'te ele alınacak. 9.1 daha sonra `79a3f77` ile gönderildi; aynı SHA için
-CI 37767276279 başarılı. 9.2 altyapısı izole kopyada hazırlandı; gerçek
-migration ve fiyat geçmişi aktarımı henüz yapılmadı.
+CI 37767276279 başarılı. 9.2 altyapısı `c64d14f` ile gönderildi, aynı SHA için
+CI 37777433986 başarılı ve ana geçiş tamam. Kullanıcı 004’ü 8 Ekim 12:35 UTC’de
+uyguladı; şema salt okunur sorgularla doğrulandı. Gerçek ve tekrar aktarım
+9.3’te tamamlandı; aşağıdaki 9.3 bölümünde sonuçlar yer alıyor.
 
 Kullanıcı Adım 9 planını onayladı: önce yerel rapor, sonra ayrı ağsız aktarım;
 tekrar aktarımda farklı fiyat çıkarsa eski kayıt korunacak; ilk aktarımda yeni
 alım esas alınacak. 29 Eylül'deki üç rapor araştırma/test kanıtı olarak kalır.
-Aktarım ve `004_market_history.sql` **9.2 kapsamında hazırlandı; gerçek
-veritabanına uygulanmadı**. 8 Ekim kararıyla 9.3'te güncel araçla yeni toplu
-alım yapılacak; eski raporlara eksik doğrulama alanı eklenmeyecek.
+Aktarım altyapısı ve `004_market_history.sql` **9.2 kapsamında tamamlandı;
+004 kullanıcı tarafından gerçek veritabanına uygulandı**. 8 Ekim kararıyla
+9.3’te güncel araçla yeni toplu alım yapıldı; eski raporlara eksik doğrulama
+alanı eklenmedi.
 
 Eşleştirme dosyası `version: 1`, `source: "cimri"`, `entries` taşır. Her girdi
 `product_key`, `url`, `cimri_product_id` içerir; anahtar, URL ve Cimri kimliği
@@ -1387,9 +1390,12 @@ eşitlemeyi çalıştırır; komut, keşiften sonra farkı gözle görmek içind
 
 ### Cimri geçmişinin ağsız aktarımı (Adım 9.2)
 
-8 Ekim: kod ve 004 izole proje kopyasında hazırlandı ve test edildi. Kullanıcı
-commit/push → aynı SHA CI kontrolü → ana klasöre geçiş sırasını onayladı.
-Devreye alma, kullanıcının gerçek `migrate`/`status` teyidiyle tamamlanacak.
+8 Ekim: kod/test ve devreye alma tamam. `c64d14f` gönderildi,
+[aynı SHA için CI 37777433986 başarılı](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/37777433986)
+ve ana klasöre geçildi. Kullanıcı 004’ü **2026-10-08 12:35:53 UTC**’de
+uyguladı. Gerçek DB’de READ ONLY sorgularla 001–004 ad/parmak izi uyumu,
+bekleyen migration bulunmadığı, boş `market_history` tablosu ve üç etkin
+UPDATE/DELETE/TRUNCATE koruması doğrulandı. 9.2 tamamlandı.
 Gerçek geçmiş aktarımı 9.3'ün işidir. 161 yeni testin 48'i PostgreSQL'de;
 tam paket **1190 geçti, 0 atlandı/xfail**, 73,10 sn (276 PostgreSQL). Black/Flake8 temiz. Kayıtlı son beş ürün yeni dosya okuyucuyla
 ağsız kabul edildi: 10 kaynak dosyası, 1825 nokta, 71 eksik değer. Eski toplu
@@ -1451,6 +1457,65 @@ gösterir. Kaynak dosyalarına veya giriş raporuna yazılmaz; çıktı terminal
 meşgul; **130** Ctrl+C. Kesintide son ürün ya tamamen yazılır ya hiç yazılmaz;
 önceki ürünler korunur. Global katalogdaki eşleştirmesiz ürünler seçili
 girdide yoksa komutun başarısını değiştirmez; katalog kapsamı 9.3'te raporlanır.
+
+### Gerçek aktarımın işletimi (Adım 9.3)
+
+8 Ekim kullanıcı onayıyla hazırlık başladı. 59 etkin ürünün katalog/DB
+kimlikleri READ ONLY sorgularla karşılaştırıldı: uyuşmazlık yok, 001–004 güncel,
+`market_history` boş. Mevcut 57 eşleştirme korunuyor; Galaxy S25 512 GB ve
+Redmi Note 14 Pro 5G 256 GB açık. Araştırma izi proje planının 9.3 bölümünde.
+Kullanıcının 8 Ekim 15:59–16:08 alımı incelendi:
+`data/market_history/aktarim_20261008_155952_339`. 57 captured/iki unmapped,
+171 HTTP; 114 kaynak dosyası ve 20.805 nokta ağsız yeniden doğrulandı.
+20.252 fiyat/553 NULL, her üründe 365 nokta (2025-10-09–2026-10-08).
+Tabloda ortak 4.773 ürün/gün eşleşti; 16.032 ürün/gün için tablo yok.
+52 üründe ilk teklif kuralı (dokuz fiyat değişimi), beşinde ilk teklif ve
+son gün tablo satırı yok: mevcut API kuralı korundu. Rapor ve kaynakların
+115 hash’i değişmedi. İki açık ürün dışında hata yok; ek alım gerekmiyor.
+Kullanıcının dry-run çıktısı doğrulandı: 57 × 365 = 20.805 eklenecek,
+0 aynı, 0 çelişkili ürün, iki eşleştirmesiz atlanan; çıkış 2. 57 ürünün
+özetleri ve karşılaştırılamayan tarih aralıkları kaynakla aynı. 115 girdi
+dosyası değişmedi; bağımsız 16:48 READ ONLY sorgusunda DB hâlâ 0 satır.
+Önizleme kanıtı:
+`data/market_history/dry_run_verification_9_3_20261008_135103_464459.json`.
+Doğrulama kaydı: `data/market_history/capture_verification_9_3_20261008_131025_927553.json`.
+
+Kullanıcı ilk gerçek aktarımı tamamladı: 20.805 eklendi/0 aynı/0 çelişkili
+ürün/iki atlanan, çıkış 2. 16:59 bağımsız READ ONLY / REPEATABLE READ okumada
+bütün market_history tablosu alımla karşılaştırıldı: 57 ürün/20.805 satırın
+10 alanı birebir aynı; eksik/fazla/farklı satır yok, 553 NULL korundu.
+115 kaynak/rapor dosyası değişmedi, 001–004 ve 59 katalog/DB kimliği uyumlu.
+Bütün tablo ve ürün bazında kaynak alanları parmak izi tekrar kontrolü için
+saklandı: `data/market_history/import_verification_9_3_20261008_135906_391044.json`.
+Kullanıcı aynı girdiyi tekrar aktardı: **0 yeni/20.805 aynı/0 çelişkili ürün/
+iki atlanan**, çıkış 2. 17:12 READ ONLY / REPEATABLE READ kontrolünde bütün
+10 alan yeniden kaynakla aynı bulundu; 57 ürünün hash’i ve bütün tablo hash’i
+ilk aktarımla eşleşti. İlk source_url, captured_at ve üç hash korunmuş;
+115 alım dosyası da aynı. Eksik/fazla/farklı satır yok, 553 NULL korundu.
+
+**9.3 tamamlandı:** 59 ürünün 57’si aktarılmış ve doğrulanmış; iki ürün doğru
+eşleştirme doğrulanamadığı için gerekçeli eksik. Ürünlerin kaynakta olmadığı
+iddia edilmez. Tablo karşılaştırması ve gözlem sıklığı sınırları korunur.
+Kapanış raporu bütün ürünlerin durumunu ve önceki kanıtların dosya/hash
+referanslarını içerir; tekrar çıktısı ve karşılaştırma da içindedir:
+`data/market_history/kapanis_9_3_20261008_141239_175902.json`.
+Kullanıcı kapanış belgelerinin commit/push işlemini onayladı; aynı commit’in
+CI sonucu GitHub Actions kaydından izlenir. Adım 7’ye geçilmedi.
+
+Her alım ayrı klasörde saklanır. Raporlar birleştirilmez/değiştirilmez; ek
+alım yalnız başarısız/denenmemiş ürünleri tamamlar. Her kabul edilen ürünün
+kaynak klasörü ve rapor hash’i belirlenir. Önce ana alım, sonra eksikleri
+karşılayan ek alımlar önizlenir ve kullanıcı tarafından ayrı ayrı aktarılır.
+Önizleme ve rapor değerlendirmesinden önce gerçek aktarım başlatılmaz.
+
+Bağımsız doğrulama READ ONLY sorgularla bütün geçmiş satırlarını kaynakla
+karşılaştırır: ürün/kaynak/kimlik/adres/gün/kuruş/zaman ve üç hash.
+Ürün başına sayı, tarih aralığı ve NULL sayısı ayrıca raporlanır. Kullanıcının
+aynı girdiyi tekrar aktarımında 0 yeni kayıt ve ilk kaynak bilgilerinin
+korunması beklenir; atlanan ürünler nedeniyle çıkış 2 sürebilir.
+59 ürünün durumu, alım klasörleri/hash’leri ve karşılaştırma sonuçları yukarıdaki
+tarihli yerel kapanış raporunda kayıtlıdır. Önceki hazırlık/doğrulama raporları
+kanıt olarak korunur; alım dosyaları veya gerçek DB asistan tarafından değiştirilmedi.
 
 ### Migration kuralları
 
