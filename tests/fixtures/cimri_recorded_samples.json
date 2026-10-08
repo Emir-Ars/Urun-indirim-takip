@@ -1,0 +1,3229 @@
+{
+  "provenance": "2026-09-29 local reports: observed headings and three price samples; API envelopes in tests are reconstructed, not original responses. Xiaomi product fields are a minimal extraction from the saved HTML.",
+  "samples": [
+    {
+      "product_key": "apple_iphone_16_128gb",
+      "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-apple-iphone-16-5g-128gb-fiyatlari%2Ca2314921069",
+      "cimri_product_id": "2314921069",
+      "title": "Apple iPhone 16 128GB Fiyatları ve Modelleri | Cimri",
+      "headings": [
+        "Apple iPhone 16 128 GB"
+      ],
+      "last_day": "2026-09-29",
+      "latest_three_prices_tl": [
+        71390.42,
+        71390.42,
+        70262.5
+      ]
+    },
+    {
+      "product_key": "samsung_galaxy_s24_256gb",
+      "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-samsung-galaxy-s24-5g-256gb-8gb-ram-fiyatlari%2Ca2305983921",
+      "cimri_product_id": "2305983921",
+      "title": "Samsung Galaxy S24 5G 256 GB 8 GB Ram Fiyatları | Cimri",
+      "headings": [
+        "Samsung Galaxy S24 5G 256 GB 8 GB Ram"
+      ],
+      "last_day": "2026-09-29",
+      "latest_three_prices_tl": [
+        42750,
+        45374.18,
+        43200
+      ]
+    },
+    {
+      "product_key": "xiaomi_14t_pro_256gb",
+      "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-xiaomi-14t-pro-fiyatlari%2Ca2372365900",
+      "cimri_product_id": "2372365900",
+      "title": "Xiaomi 14T Pro Fiyatları ve Modelleri | Cimri",
+      "headings": [
+        "Xiaomi 14T Pro 256 GB 12 GB Ram"
+      ],
+      "last_day": "2026-09-29",
+      "latest_three_prices_tl": [
+        46549.05,
+        46549.05,
+        46549.05
+      ]
+    }
+  ],
+  "xiaomi_product": {
+    "id": "2372365900",
+    "title": "Xiaomi 14T Pro 256 GB 12 GB Ram",
+    "brand": {
+      "id": "9208",
+      "name": "Xiaomi",
+      "slug": "xiaomi"
+    },
+    "category": {
+      "id": "130",
+      "name": "Cep Telefonu",
+      "slug": "cep-telefonlari"
+    }
+  },
+  "xiaomi_zero_gap": {
+    "provenance": "2026-10-08 user capture pilot_20261008_092438_295: eight newest graph prices and four overlapping HTML table rows; a selected excerpt, not a full response. The four zero dates have no table rows.",
+    "cimri_product_id": "2372365900",
+    "last_day": "2026-10-08",
+    "prices": [
+      54434.04,
+      54434.04,
+      54377.05,
+      0,
+      0,
+      0,
+      0,
+      47039.04
+    ],
+    "table_rows": [
+      {
+        "date": "08/10/2026",
+        "minPrice": 54434.04
+      },
+      {
+        "date": "07/10/2026",
+        "minPrice": 54434.04
+      },
+      {
+        "date": "06/10/2026",
+        "minPrice": 54377.05
+      },
+      {
+        "date": "01/10/2026",
+        "minPrice": 47039.04
+      }
+    ]
+  },
+  "frontend_history": {
+    "provenance": "2026-10-08 katalog_20261008_104936_277: minimal identity, first two offers, three newest API prices and matching table rows for 57 products. Extracted from hash-verified saved responses; envelopes are reduced, not full responses. Frontend rule verified in chart_7401.js SHA-256 f1b27f355697cf3b90c73220d07ae64e07aa28d1a3824b941846e72a191db85e. No page request timestamp was recorded in the original capture; tests use the saved completion time for both boundaries unless testing a synthetic crossing.",
+    "samples": [
+      {
+        "product_key": "apple_iphone_15_128gb",
+        "mapping": {
+          "product_key": "apple_iphone_15_128gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-apple-iphone-15-5g-128gb-akilli-cep-telefonu-fiyatlari%2Ca2231112273",
+          "cimri_product_id": "2231112273"
+        },
+        "captured_at_utc": "2026-10-08T07:49:43.369418+00:00",
+        "page": {
+          "product": {
+            "id": "2231112273",
+            "title": "Apple iPhone 15 128 GB",
+            "brand": {
+              "name": "Apple"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 57399
+              },
+              {
+                "price": 57749
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 57399
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 57399
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 56360.66
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2231112273,
+              "lastDay": "2026-10-08",
+              "prices": [
+                57399,
+                57399,
+                56360.66
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "apple_iphone_15_256gb",
+        "mapping": {
+          "product_key": "apple_iphone_15_256gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-apple-iphone-15-5g-256gb-fiyatlari%2Ca2237452135",
+          "cimri_product_id": "2237452135"
+        },
+        "captured_at_utc": "2026-10-08T07:49:52.350710+00:00",
+        "page": {
+          "product": {
+            "id": "2237452135",
+            "title": "Apple iPhone 15 256 GB",
+            "brand": {
+              "name": "Apple"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 66709.05
+              },
+              {
+                "price": 66999
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 66709.05
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 66709.05
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 64999
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2237452135,
+              "lastDay": "2026-10-08",
+              "prices": [
+                66709.05,
+                66709.05,
+                64999
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "apple_iphone_15_512gb",
+        "mapping": {
+          "product_key": "apple_iphone_15_512gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-apple-iphone-15-5g-512gb-fiyatlari%2Ca2237453208",
+          "cimri_product_id": "2237453208"
+        },
+        "captured_at_utc": "2026-10-08T07:50:01.374309+00:00",
+        "page": {
+          "product": {
+            "id": "2237453208",
+            "title": "Apple iPhone 15 512 GB",
+            "brand": {
+              "name": "Apple"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": []
+          },
+          "priceHistoryTablePrices": []
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2237453208,
+              "lastDay": "2026-10-08",
+              "prices": [
+                0,
+                0,
+                0
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "apple_iphone_15_pro_128gb",
+        "mapping": {
+          "product_key": "apple_iphone_15_pro_128gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-apple-iphone-15-pro-5g-128gb-fiyatlari%2Ca2237890819",
+          "cimri_product_id": "2237890819"
+        },
+        "captured_at_utc": "2026-10-08T07:50:10.380085+00:00",
+        "page": {
+          "product": {
+            "id": "2237890819",
+            "title": "Apple iPhone 15 Pro 128 GB",
+            "brand": {
+              "name": "Apple"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 75036.88
+              },
+              {
+                "price": 76537.35
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 75036.88
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 75036.88
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 75036.88
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2237890819,
+              "lastDay": "2026-10-08",
+              "prices": [
+                75036.88,
+                75036.88,
+                75036.88
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "apple_iphone_15_pro_256gb",
+        "mapping": {
+          "product_key": "apple_iphone_15_pro_256gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-apple-iphone-pro-15-5g-256gb-fiyatlari%2Ca2237892596",
+          "cimri_product_id": "2237892596"
+        },
+        "captured_at_utc": "2026-10-08T07:50:19.395392+00:00",
+        "page": {
+          "product": {
+            "id": "2237892596",
+            "title": "Apple iPhone 15 Pro 256 GB",
+            "brand": {
+              "name": "Apple"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 108999
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 108999
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 108999
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 108999
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2237892596,
+              "lastDay": "2026-10-08",
+              "prices": [
+                108999,
+                108999,
+                108999
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "apple_iphone_15_pro_512gb",
+        "mapping": {
+          "product_key": "apple_iphone_15_pro_512gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-apple-iphone-15-pro-5g-512gb-fiyatlari%2Ca2237897103",
+          "cimri_product_id": "2237897103"
+        },
+        "captured_at_utc": "2026-10-08T07:50:28.355478+00:00",
+        "page": {
+          "product": {
+            "id": "2237897103",
+            "title": "Apple iPhone 15 Pro 512 GB",
+            "brand": {
+              "name": "Apple"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 113406.05
+              },
+              {
+                "price": 118999
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 113406.05
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 113406.05
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 113406.05
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2237897103,
+              "lastDay": "2026-10-08",
+              "prices": [
+                113406.05,
+                113406.05,
+                113406.05
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "apple_iphone_15_pro_1024gb",
+        "mapping": {
+          "product_key": "apple_iphone_15_pro_1024gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-apple-iphone-15-pro-5g-1tb-fiyatlari%2Ca2237897195",
+          "cimri_product_id": "2237897195"
+        },
+        "captured_at_utc": "2026-10-08T07:50:37.377088+00:00",
+        "page": {
+          "product": {
+            "id": "2237897195",
+            "title": "Apple iPhone 15 Pro 1 TB",
+            "brand": {
+              "name": "Apple"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": []
+          },
+          "priceHistoryTablePrices": []
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2237897195,
+              "lastDay": "2026-10-08",
+              "prices": [
+                0,
+                0,
+                0
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "apple_iphone_15_pro_max_256gb",
+        "mapping": {
+          "product_key": "apple_iphone_15_pro_max_256gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-apple-iphone-15-pro-max-5g-256gb-fiyatlari%2Ca2237900438",
+          "cimri_product_id": "2237900438"
+        },
+        "captured_at_utc": "2026-10-08T07:50:46.370618+00:00",
+        "page": {
+          "product": {
+            "id": "2237900438",
+            "title": "Apple iPhone 15 Pro Max 256 GB",
+            "brand": {
+              "name": "Apple"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 79549.99
+              },
+              {
+                "price": 86925
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 79549.99
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 79549.99
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 79549.99
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2237900438,
+              "lastDay": "2026-10-08",
+              "prices": [
+                79549.99,
+                79549.99,
+                79549.99
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "apple_iphone_15_pro_max_512gb",
+        "mapping": {
+          "product_key": "apple_iphone_15_pro_max_512gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-apple-iphone-15-pro-max-5g-512gb-fiyatlari%2Ca2237900537",
+          "cimri_product_id": "2237900537"
+        },
+        "captured_at_utc": "2026-10-08T07:50:55.382871+00:00",
+        "page": {
+          "product": {
+            "id": "2237900537",
+            "title": "Apple iPhone 15 Pro Max 512 GB",
+            "brand": {
+              "name": "Apple"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 104829.05
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 104829.05
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 104829.05
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 104829.05
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2237900537,
+              "lastDay": "2026-10-08",
+              "prices": [
+                104829.05,
+                104829.05,
+                104829.05
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "apple_iphone_15_pro_max_1024gb",
+        "mapping": {
+          "product_key": "apple_iphone_15_pro_max_1024gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-apple-iphone-15-pro-max-5g-1tb-fiyatlari%2Ca2237901092",
+          "cimri_product_id": "2237901092"
+        },
+        "captured_at_utc": "2026-10-08T07:51:04.364378+00:00",
+        "page": {
+          "product": {
+            "id": "2237901092",
+            "title": "Apple iPhone 15 Pro Max 1 TB",
+            "brand": {
+              "name": "Apple"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": []
+          },
+          "priceHistoryTablePrices": []
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2237901092,
+              "lastDay": "2026-10-08",
+              "prices": [
+                0,
+                0,
+                0
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "apple_iphone_16_128gb",
+        "mapping": {
+          "product_key": "apple_iphone_16_128gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-apple-iphone-16-5g-128gb-fiyatlari%2Ca2314921069",
+          "cimri_product_id": "2314921069"
+        },
+        "captured_at_utc": "2026-10-08T07:51:13.374661+00:00",
+        "page": {
+          "product": {
+            "id": "2314921069",
+            "title": "Apple iPhone 16 128 GB",
+            "brand": {
+              "name": "Apple"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 71860.1
+              },
+              {
+                "price": 73269
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 71860.1
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 71860.1
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 71860.1
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2314921069,
+              "lastDay": "2026-10-08",
+              "prices": [
+                71860.1,
+                71860.1,
+                71860.1
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "apple_iphone_16_256gb",
+        "mapping": {
+          "product_key": "apple_iphone_16_256gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-apple-iphone-16-5g-256gb-fiyatlari%2Ca2314915610",
+          "cimri_product_id": "2314915610"
+        },
+        "captured_at_utc": "2026-10-08T07:51:22.376771+00:00",
+        "page": {
+          "product": {
+            "id": "2314915610",
+            "title": "Apple iPhone 16 256 GB",
+            "brand": {
+              "name": "Apple"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 84817
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 84817
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 84817
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 84817
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2314915610,
+              "lastDay": "2026-10-08",
+              "prices": [
+                84817,
+                84817,
+                84817
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "apple_iphone_16_512gb",
+        "mapping": {
+          "product_key": "apple_iphone_16_512gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-apple-iphone-16-5g-512gb-fiyatlari%2Ca2314914277",
+          "cimri_product_id": "2314914277"
+        },
+        "captured_at_utc": "2026-10-08T07:51:31.384740+00:00",
+        "page": {
+          "product": {
+            "id": "2314914277",
+            "title": "Apple iPhone 16 512 GB",
+            "brand": {
+              "name": "Apple"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 89999
+              },
+              {
+                "price": 100921.75
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 89999
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 89999
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 100921.75
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2314914277,
+              "lastDay": "2026-10-08",
+              "prices": [
+                89999,
+                89999,
+                100921.75
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "apple_iphone_16_pro_128gb",
+        "mapping": {
+          "product_key": "apple_iphone_16_pro_128gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-apple-iphone-16-pro-5g-128gb-fiyatlari%2Ca2314866756",
+          "cimri_product_id": "2314866756"
+        },
+        "captured_at_utc": "2026-10-08T07:51:40.373612+00:00",
+        "page": {
+          "product": {
+            "id": "2314866756",
+            "title": "Apple iPhone 16 Pro 128 GB",
+            "brand": {
+              "name": "Apple"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 118875
+              },
+              {
+                "price": 119125
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 118875
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 118875
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 118875
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2314866756,
+              "lastDay": "2026-10-08",
+              "prices": [
+                118875,
+                118875,
+                118875
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "apple_iphone_16_pro_256gb",
+        "mapping": {
+          "product_key": "apple_iphone_16_pro_256gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-apple-iphone-16-pro-5g-256gb-fiyatlari%2Ca2314866754",
+          "cimri_product_id": "2314866754"
+        },
+        "captured_at_utc": "2026-10-08T07:51:49.380562+00:00",
+        "page": {
+          "product": {
+            "id": "2314866754",
+            "title": "Apple iPhone 16 Pro 256 GB",
+            "brand": {
+              "name": "Apple"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 124800
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 124800
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 124800
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 124800
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2314866754,
+              "lastDay": "2026-10-08",
+              "prices": [
+                124800,
+                124800,
+                124800
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "apple_iphone_16_pro_512gb",
+        "mapping": {
+          "product_key": "apple_iphone_16_pro_512gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-apple-iphone-16-pro-5g-512gb-fiyatlari%2Ca2314866745",
+          "cimri_product_id": "2314866745"
+        },
+        "captured_at_utc": "2026-10-08T07:51:58.368853+00:00",
+        "page": {
+          "product": {
+            "id": "2314866745",
+            "title": "Apple iPhone 16 Pro 512 GB",
+            "brand": {
+              "name": "Apple"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": []
+          },
+          "priceHistoryTablePrices": []
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2314866745,
+              "lastDay": "2026-10-08",
+              "prices": [
+                0,
+                0,
+                0
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "apple_iphone_16_pro_1024gb",
+        "mapping": {
+          "product_key": "apple_iphone_16_pro_1024gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-apple-iphone-16-pro-5g-1tb-fiyatlari%2Ca2314866642",
+          "cimri_product_id": "2314866642"
+        },
+        "captured_at_utc": "2026-10-08T07:52:07.373075+00:00",
+        "page": {
+          "product": {
+            "id": "2314866642",
+            "title": "Apple iPhone 16 Pro 1 TB",
+            "brand": {
+              "name": "Apple"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": []
+          },
+          "priceHistoryTablePrices": []
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2314866642,
+              "lastDay": "2026-10-08",
+              "prices": [
+                0,
+                0,
+                0
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "apple_iphone_16_pro_max_256gb",
+        "mapping": {
+          "product_key": "apple_iphone_16_pro_max_256gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-apple-iphone-16-pro-max-5g-256gb-fiyatlari%2Ca2314863848",
+          "cimri_product_id": "2314863848"
+        },
+        "captured_at_utc": "2026-10-08T07:52:16.404153+00:00",
+        "page": {
+          "product": {
+            "id": "2314863848",
+            "title": "Apple iPhone 16 Pro Max 256 GB",
+            "brand": {
+              "name": "Apple"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 99585.99
+              },
+              {
+                "price": 99748.91
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 99585.99
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 99585.99
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 99585.99
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2314863848,
+              "lastDay": "2026-10-08",
+              "prices": [
+                99585.99,
+                99585.99,
+                99585.99
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "apple_iphone_16_pro_max_512gb",
+        "mapping": {
+          "product_key": "apple_iphone_16_pro_max_512gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-apple-iphone-16-pro-max-5g-512gb-fiyatlari%2Ca2314863834",
+          "cimri_product_id": "2314863834"
+        },
+        "captured_at_utc": "2026-10-08T07:52:25.382427+00:00",
+        "page": {
+          "product": {
+            "id": "2314863834",
+            "title": "Apple iPhone 16 Pro Max 512 GB",
+            "brand": {
+              "name": "Apple"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 159000
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 159000
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 114999
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 114999
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2314863834,
+              "lastDay": "2026-10-08",
+              "prices": [
+                114999,
+                114999,
+                114999
+              ]
+            }
+          }
+        },
+        "previous_status": "error"
+      },
+      {
+        "product_key": "apple_iphone_16_pro_max_1024gb",
+        "mapping": {
+          "product_key": "apple_iphone_16_pro_max_1024gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-apple-iphone-16-pro-max-5g-1tb-fiyatlari%2Ca2314863727",
+          "cimri_product_id": "2314863727"
+        },
+        "captured_at_utc": "2026-10-08T07:52:34.374417+00:00",
+        "page": {
+          "product": {
+            "id": "2314863727",
+            "title": "Apple iPhone 16 Pro Max 1 TB",
+            "brand": {
+              "name": "Apple"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 149999
+              },
+              {
+                "price": 151993.02
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 149999
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 149999
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 149999
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2314863727,
+              "lastDay": "2026-10-08",
+              "prices": [
+                149999,
+                149999,
+                149999
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "apple_iphone_17_256gb",
+        "mapping": {
+          "product_key": "apple_iphone_17_256gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-apple-iphone-17-fiyatlari%2Ca2393572193",
+          "cimri_product_id": "2393572193"
+        },
+        "captured_at_utc": "2026-10-08T07:52:43.368782+00:00",
+        "page": {
+          "product": {
+            "id": "2393572193",
+            "title": "Apple iPhone 17 256 GB",
+            "brand": {
+              "name": "Apple"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 82999
+              },
+              {
+                "price": 82999
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 82999
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 82999
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 82999
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2393572193,
+              "lastDay": "2026-10-08",
+              "prices": [
+                82999,
+                82999,
+                82999
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "apple_iphone_17_512gb",
+        "mapping": {
+          "product_key": "apple_iphone_17_512gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-apple-iphone-17-512gb-fiyatlari%2Ca2508503182",
+          "cimri_product_id": "2508503182"
+        },
+        "captured_at_utc": "2026-10-08T07:52:52.387347+00:00",
+        "page": {
+          "product": {
+            "id": "2508503182",
+            "title": "Apple iPhone 17 512 GB",
+            "brand": {
+              "name": "Apple"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 99999
+              },
+              {
+                "price": 99999
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 99999
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 99999
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 99999
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2508503182,
+              "lastDay": "2026-10-08",
+              "prices": [
+                99999,
+                99999,
+                99999
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "apple_iphone_17_pro_256gb",
+        "mapping": {
+          "product_key": "apple_iphone_17_pro_256gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-apple-iphone-17-pro-fiyatlari%2Ca2393572198",
+          "cimri_product_id": "2393572198"
+        },
+        "captured_at_utc": "2026-10-08T07:53:01.385076+00:00",
+        "page": {
+          "product": {
+            "id": "2393572198",
+            "title": "Apple iPhone 17 Pro 256 GB",
+            "brand": {
+              "name": "Apple"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 97999
+              },
+              {
+                "price": 97999
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 97999
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 97999
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 97999
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2393572198,
+              "lastDay": "2026-10-08",
+              "prices": [
+                97999,
+                97999,
+                97999
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "apple_iphone_17_pro_512gb",
+        "mapping": {
+          "product_key": "apple_iphone_17_pro_512gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-apple-iphone-17-pro-512gb-fiyatlari%2Ca2508500911",
+          "cimri_product_id": "2508500911"
+        },
+        "captured_at_utc": "2026-10-08T07:53:10.386193+00:00",
+        "page": {
+          "product": {
+            "id": "2508500911",
+            "title": "Apple iPhone 17 Pro 512 GB",
+            "brand": {
+              "name": "Apple"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 109999
+              },
+              {
+                "price": 109999
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 109999
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 109999
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 109999
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2508500911,
+              "lastDay": "2026-10-08",
+              "prices": [
+                109999,
+                109999,
+                109999
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "apple_iphone_17_pro_1024gb",
+        "mapping": {
+          "product_key": "apple_iphone_17_pro_1024gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-apple-iphone-17-pro-1tb-fiyatlari%2Ca2508500919",
+          "cimri_product_id": "2508500919"
+        },
+        "captured_at_utc": "2026-10-08T07:53:19.379347+00:00",
+        "page": {
+          "product": {
+            "id": "2508500919",
+            "title": "Apple iPhone 17 Pro 1 TB",
+            "brand": {
+              "name": "Apple"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 125999
+              },
+              {
+                "price": 125999
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 125999
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 125999
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 125999
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2508500919,
+              "lastDay": "2026-10-08",
+              "prices": [
+                125999,
+                125999,
+                125999
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "apple_iphone_17_pro_max_256gb",
+        "mapping": {
+          "product_key": "apple_iphone_17_pro_max_256gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-apple-iphone-17-pro-max-fiyatlari%2Ca2393572199",
+          "cimri_product_id": "2393572199"
+        },
+        "captured_at_utc": "2026-10-08T07:53:28.384460+00:00",
+        "page": {
+          "product": {
+            "id": "2393572199",
+            "title": "Apple iPhone 17 Pro Max 256 GB",
+            "brand": {
+              "name": "Apple"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 108999.01
+              },
+              {
+                "price": 108999.01
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 108999.01
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 108999.01
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 108999.01
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2393572199,
+              "lastDay": "2026-10-08",
+              "prices": [
+                108999.01,
+                108999.01,
+                108999.01
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "apple_iphone_17_pro_max_512gb",
+        "mapping": {
+          "product_key": "apple_iphone_17_pro_max_512gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-apple-iphone-17-pro-max-512gb-fiyatlari%2Ca2508500969",
+          "cimri_product_id": "2508500969"
+        },
+        "captured_at_utc": "2026-10-08T07:53:37.374709+00:00",
+        "page": {
+          "product": {
+            "id": "2508500969",
+            "title": "Apple iPhone 17 Pro Max 512 GB",
+            "brand": {
+              "name": "Apple"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 117999
+              },
+              {
+                "price": 124669
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 117999
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 117999
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 117999
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2508500969,
+              "lastDay": "2026-10-08",
+              "prices": [
+                117999,
+                117999,
+                117999
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "apple_iphone_17_pro_max_1024gb",
+        "mapping": {
+          "product_key": "apple_iphone_17_pro_max_1024gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-apple-iphone-17-pro-max-1tb-fiyatlari%2Ca2508502129",
+          "cimri_product_id": "2508502129"
+        },
+        "captured_at_utc": "2026-10-08T07:53:46.399436+00:00",
+        "page": {
+          "product": {
+            "id": "2508502129",
+            "title": "Apple iPhone 17 Pro Max 1 TB",
+            "brand": {
+              "name": "Apple"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 139987.2
+              },
+              {
+                "price": 139999
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 139987.2
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 139987.2
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 134999
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2508502129,
+              "lastDay": "2026-10-08",
+              "prices": [
+                139987.2,
+                139987.2,
+                134999
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "apple_iphone_17_pro_max_2048gb",
+        "mapping": {
+          "product_key": "apple_iphone_17_pro_max_2048gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-apple-iphone-17-pro-max-2tb-fiyatlari%2Ca2508502288",
+          "cimri_product_id": "2508502288"
+        },
+        "captured_at_utc": "2026-10-08T07:53:55.390078+00:00",
+        "page": {
+          "product": {
+            "id": "2508502288",
+            "title": "Apple iPhone 17 Pro Max 2 TB",
+            "brand": {
+              "name": "Apple"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 155338.05
+              },
+              {
+                "price": 155338.05
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 155338.05
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 155338.05
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 155338.05
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2508502288,
+              "lastDay": "2026-10-08",
+              "prices": [
+                155338.05,
+                155338.05,
+                155338.05
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "samsung_galaxy_s25_128gb",
+        "mapping": {
+          "product_key": "samsung_galaxy_s25_128gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-samsung-galaxy-s25-fiyatlari%2Ca2372354981",
+          "cimri_product_id": "2372354981"
+        },
+        "captured_at_utc": "2026-10-08T07:54:04.397386+00:00",
+        "page": {
+          "product": {
+            "id": "2372354981",
+            "title": "Samsung Galaxy S25 128 GB 12 GB Ram",
+            "brand": {
+              "name": "Samsung"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 48249.03
+              },
+              {
+                "price": 48551.05
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 48249.03
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 48551.05
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 48999.02
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2372354981,
+              "lastDay": "2026-10-08",
+              "prices": [
+                48249.03,
+                48551.05,
+                48999.02
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "samsung_galaxy_s25_256gb",
+        "mapping": {
+          "product_key": "samsung_galaxy_s25_256gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-samsung-galaxy-s25-256gb-12gb-ram-fiyatlari%2Ca2430825219",
+          "cimri_product_id": "2430825219"
+        },
+        "captured_at_utc": "2026-10-08T07:54:13.392974+00:00",
+        "page": {
+          "product": {
+            "id": "2430825219",
+            "title": "Samsung Galaxy S25 256 GB 12 GB Ram",
+            "brand": {
+              "name": "Samsung"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 44499
+              },
+              {
+                "price": 44981.05
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 44499
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 44499
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 44499
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2430825219,
+              "lastDay": "2026-10-08",
+              "prices": [
+                44499,
+                44499,
+                44499
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "samsung_galaxy_s25_ultra_256gb",
+        "mapping": {
+          "product_key": "samsung_galaxy_s25_ultra_256gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-samsung-galaxy-s25-ultra-256gb-12gb-ram-fiyatlari%2Ca2432333010",
+          "cimri_product_id": "2432333010"
+        },
+        "captured_at_utc": "2026-10-08T07:54:22.387814+00:00",
+        "page": {
+          "product": {
+            "id": "2432333010",
+            "title": "Samsung Galaxy S25 Ultra 256 GB 12 GB Ram",
+            "brand": {
+              "name": "Samsung"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 65999
+              },
+              {
+                "price": 65999
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 65999
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 65999
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 65999
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2432333010,
+              "lastDay": "2026-10-08",
+              "prices": [
+                65999,
+                65999,
+                65999
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "samsung_galaxy_s25_ultra_512gb",
+        "mapping": {
+          "product_key": "samsung_galaxy_s25_ultra_512gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-samsung-galaxy-s25-ultra-fiyatlari%2Ca2372354955",
+          "cimri_product_id": "2372354955"
+        },
+        "captured_at_utc": "2026-10-08T07:54:31.396723+00:00",
+        "page": {
+          "product": {
+            "id": "2372354955",
+            "title": "Samsung Galaxy S25 Ultra 512 GB 12 GB Ram",
+            "brand": {
+              "name": "Samsung"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 71499
+              },
+              {
+                "price": 71499
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 71499
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 71499
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 71499
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2372354955,
+              "lastDay": "2026-10-08",
+              "prices": [
+                71499,
+                71499,
+                71499
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "samsung_galaxy_s25_ultra_1024gb",
+        "mapping": {
+          "product_key": "samsung_galaxy_s25_ultra_1024gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-samsung-galaxy-s25-ultra-1tb-12gb-ram-fiyatlari%2Ca2430824113",
+          "cimri_product_id": "2430824113"
+        },
+        "captured_at_utc": "2026-10-08T07:54:40.430858+00:00",
+        "page": {
+          "product": {
+            "id": "2430824113",
+            "title": "Samsung Galaxy S25 Ultra 1 TB 12 GB Ram",
+            "brand": {
+              "name": "Samsung"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 78910.33
+              },
+              {
+                "price": 78920.8
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 78910.33
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 78910.33
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 78199
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2430824113,
+              "lastDay": "2026-10-08",
+              "prices": [
+                78910.33,
+                78910.33,
+                78199
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "samsung_galaxy_s24_128gb",
+        "mapping": {
+          "product_key": "samsung_galaxy_s24_128gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-samsung-galaxy-s24-5g-128gb-8gb-ram-fiyatlari%2Ca2305980899",
+          "cimri_product_id": "2305980899"
+        },
+        "captured_at_utc": "2026-10-08T07:54:49.392872+00:00",
+        "page": {
+          "product": {
+            "id": "2305980899",
+            "title": "Samsung Galaxy S24 5G 128 GB 8 GB Ram",
+            "brand": {
+              "name": "Samsung"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 49999
+              },
+              {
+                "price": 55000
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 49999
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 49999
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 49999
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2305980899,
+              "lastDay": "2026-10-08",
+              "prices": [
+                49999,
+                49999,
+                49999
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "samsung_galaxy_s24_256gb",
+        "mapping": {
+          "product_key": "samsung_galaxy_s24_256gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-samsung-galaxy-s24-5g-256gb-8gb-ram-fiyatlari%2Ca2305983921",
+          "cimri_product_id": "2305983921"
+        },
+        "captured_at_utc": "2026-10-08T07:54:58.424031+00:00",
+        "page": {
+          "product": {
+            "id": "2305983921",
+            "title": "Samsung Galaxy S24 5G 256 GB 8 GB Ram",
+            "brand": {
+              "name": "Samsung"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 44719.29
+              },
+              {
+                "price": 44743.05
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 44719.29
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 44719.29
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 45120
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2305983921,
+              "lastDay": "2026-10-08",
+              "prices": [
+                44160,
+                44719.29,
+                45120
+              ]
+            }
+          }
+        },
+        "previous_status": "error"
+      },
+      {
+        "product_key": "samsung_galaxy_s24_ultra_256gb",
+        "mapping": {
+          "product_key": "samsung_galaxy_s24_ultra_256gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-samsung-galaxy-s24-ultra-5g-256gb-12gb-ram-fiyatlari%2Ca2305998967",
+          "cimri_product_id": "2305998967"
+        },
+        "captured_at_utc": "2026-10-08T07:55:07.403427+00:00",
+        "page": {
+          "product": {
+            "id": "2305998967",
+            "title": "Samsung Galaxy S24 Ultra 5G 256 GB 12 GB Ram",
+            "brand": {
+              "name": "Samsung"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 61641.02
+              },
+              {
+                "price": 68269.42
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 61641.02
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 61641.02
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 61641.02
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2305998967,
+              "lastDay": "2026-10-08",
+              "prices": [
+                61641.02,
+                61641.02,
+                61641.02
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "samsung_galaxy_s24_ultra_512gb",
+        "mapping": {
+          "product_key": "samsung_galaxy_s24_ultra_512gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-samsung-galaxy-s24-ultra-5g-512gb-12gb-ram-fiyatlari%2Ca2306001108",
+          "cimri_product_id": "2306001108"
+        },
+        "captured_at_utc": "2026-10-08T07:55:16.404377+00:00",
+        "page": {
+          "product": {
+            "id": "2306001108",
+            "title": "Samsung Galaxy S24 Ultra 5G 512 GB 12 GB Ram",
+            "brand": {
+              "name": "Samsung"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 73304
+              },
+              {
+                "price": 73920
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 73304
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 73304
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 73304
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2306001108,
+              "lastDay": "2026-10-08",
+              "prices": [
+                73920,
+                73304,
+                73304
+              ]
+            }
+          }
+        },
+        "previous_status": "error"
+      },
+      {
+        "product_key": "samsung_galaxy_s24_ultra_1024gb",
+        "mapping": {
+          "product_key": "samsung_galaxy_s24_ultra_1024gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-samsung-galaxy-s24-ultra-5g-1tb-12gb-ram-fiyatlari%2Ca2306003620",
+          "cimri_product_id": "2306003620"
+        },
+        "captured_at_utc": "2026-10-08T07:55:25.401616+00:00",
+        "page": {
+          "product": {
+            "id": "2306003620",
+            "title": "Samsung Galaxy S24 Ultra 5G 1 TB 12 GB Ram",
+            "brand": {
+              "name": "Samsung"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 86220
+              },
+              {
+                "price": 96000
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "07/10/2026",
+              "minPrice": 86220
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 86220
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2306003620,
+              "lastDay": "2026-10-08",
+              "prices": [
+                85680,
+                86220,
+                86220
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "samsung_galaxy_s24_fe_256gb",
+        "mapping": {
+          "product_key": "samsung_galaxy_s24_fe_256gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-samsung-galaxy-s24-fe-256gb-8gb-ram-fiyatlari%2Ca2394302660",
+          "cimri_product_id": "2394302660"
+        },
+        "captured_at_utc": "2026-10-08T07:55:34.393608+00:00",
+        "page": {
+          "product": {
+            "id": "2394302660",
+            "title": "Samsung Galaxy S24 FE 256 GB 8 GB Ram",
+            "brand": {
+              "name": "Samsung"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 39983.05
+              },
+              {
+                "price": 41999
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 39983.05
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 39983.05
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 39983.05
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2394302660,
+              "lastDay": "2026-10-08",
+              "prices": [
+                39983.05,
+                39983.05,
+                39983.05
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "samsung_galaxy_s23_fe_128gb",
+        "mapping": {
+          "product_key": "samsung_galaxy_s23_fe_128gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-samsung-galaxy-s23-fe-5g-128gb-8gb-ram-6-4-inc-50mp-akilli-cep-telefonu-fiyatlari%2Ca2253254787",
+          "cimri_product_id": "2253254787"
+        },
+        "captured_at_utc": "2026-10-08T07:55:43.407461+00:00",
+        "page": {
+          "product": {
+            "id": "2253254787",
+            "title": "Samsung Galaxy S23 FE 5G 128 GB 8 GB Ram",
+            "brand": {
+              "name": "Samsung"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 43999
+              },
+              {
+                "price": 44499
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 43999
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 43999
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 43999
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2253254787,
+              "lastDay": "2026-10-08",
+              "prices": [
+                43999,
+                43999,
+                43999
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "samsung_galaxy_s23_fe_256gb",
+        "mapping": {
+          "product_key": "samsung_galaxy_s23_fe_256gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-samsung-galaxy-s23-fe-5g-256gb-8gb-ram-6-4-inc-50mp-akilli-cep-telefonu-fiyatlari%2Ca2253255695",
+          "cimri_product_id": "2253255695"
+        },
+        "captured_at_utc": "2026-10-08T07:55:52.428061+00:00",
+        "page": {
+          "product": {
+            "id": "2253255695",
+            "title": "Samsung Galaxy S23 FE 5G 256 GB 8 GB Ram",
+            "brand": {
+              "name": "Samsung"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 37603.05
+              },
+              {
+                "price": 38555.05
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 37603.05
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 37603.05
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 37603.05
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2253255695,
+              "lastDay": "2026-10-08",
+              "prices": [
+                37603.05,
+                37603.05,
+                37603.05
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "samsung_galaxy_a55_128gb",
+        "mapping": {
+          "product_key": "samsung_galaxy_a55_128gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-samsung-galaxy-a55-128gb-8gb-ram-fiyatlari%2Ca2336654068",
+          "cimri_product_id": "2336654068"
+        },
+        "captured_at_utc": "2026-10-08T07:56:01.402097+00:00",
+        "page": {
+          "product": {
+            "id": "2336654068",
+            "title": "Samsung Galaxy A55 128 GB 8 GB Ram",
+            "brand": {
+              "name": "Samsung"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 30367.85
+              },
+              {
+                "price": 31142.88
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 30367.85
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 30367.85
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 30367.85
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2336654068,
+              "lastDay": "2026-10-08",
+              "prices": [
+                30367.85,
+                30367.85,
+                30367.85
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "samsung_galaxy_a55_256gb",
+        "mapping": {
+          "product_key": "samsung_galaxy_a55_256gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-samsung-galaxy-a55-256gb-8gb-ram-fiyatlari%2Ca2336654166",
+          "cimri_product_id": "2336654166"
+        },
+        "captured_at_utc": "2026-10-08T07:56:10.412768+00:00",
+        "page": {
+          "product": {
+            "id": "2336654166",
+            "title": "Samsung Galaxy A55 256 GB 8 GB Ram",
+            "brand": {
+              "name": "Samsung"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 28910
+              },
+              {
+                "price": 28910
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 28910
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 28910
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 28910
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2336654166,
+              "lastDay": "2026-10-08",
+              "prices": [
+                28910,
+                28910,
+                28910
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "samsung_galaxy_a54_128gb",
+        "mapping": {
+          "product_key": "samsung_galaxy_a54_128gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-samsung-galaxy-a54-5g-128gb-8gb-ram-6-4-inc-50mp-akilli-cep-telefonu-fiyatlari%2Ca2162366532",
+          "cimri_product_id": "2162366532"
+        },
+        "captured_at_utc": "2026-10-08T07:56:19.426944+00:00",
+        "page": {
+          "product": {
+            "id": "2162366532",
+            "title": "Samsung Galaxy A54 5G 128 GB 8 GB Ram",
+            "brand": {
+              "name": "Samsung"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 25920.01
+              },
+              {
+                "price": 26180
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 25920.01
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 25920.01
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 25920.01
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2162366532,
+              "lastDay": "2026-10-08",
+              "prices": [
+                25920.01,
+                25920.01,
+                25920.01
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "samsung_galaxy_a54_256gb",
+        "mapping": {
+          "product_key": "samsung_galaxy_a54_256gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-samsung-galaxy-a54-5g-256gb-8gb-ram-6-4-inc-50mp-akilli-cep-telefonu-fiyatlari%2Ca2162366668",
+          "cimri_product_id": "2162366668"
+        },
+        "captured_at_utc": "2026-10-08T07:56:28.397359+00:00",
+        "page": {
+          "product": {
+            "id": "2162366668",
+            "title": "Samsung Galaxy A54 5G 256 GB 8 GB Ram",
+            "brand": {
+              "name": "Samsung"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 32358.48
+              },
+              {
+                "price": 32878
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 32358.48
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 32358.48
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 32358.48
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2162366668,
+              "lastDay": "2026-10-08",
+              "prices": [
+                32358.48,
+                32358.48,
+                32358.48
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "xiaomi_14t_pro_256gb",
+        "mapping": {
+          "product_key": "xiaomi_14t_pro_256gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-xiaomi-14t-pro-fiyatlari%2Ca2372365900",
+          "cimri_product_id": "2372365900"
+        },
+        "captured_at_utc": "2026-10-08T07:56:37.408020+00:00",
+        "page": {
+          "product": {
+            "id": "2372365900",
+            "title": "Xiaomi 14T Pro 256 GB 12 GB Ram",
+            "brand": {
+              "name": "Xiaomi"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 54434.04
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 54434.04
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 54434.04
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 54377.05
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2372365900,
+              "lastDay": "2026-10-08",
+              "prices": [
+                54434.04,
+                54434.04,
+                54377.05
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "xiaomi_14t_pro_512gb",
+        "mapping": {
+          "product_key": "xiaomi_14t_pro_512gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-xiaomi-14t-pro-512gb-12gb-ram-fiyatlari%2Ca2394129082",
+          "cimri_product_id": "2394129082"
+        },
+        "captured_at_utc": "2026-10-08T07:56:46.399689+00:00",
+        "page": {
+          "product": {
+            "id": "2394129082",
+            "title": "Xiaomi 14T Pro 512 GB 12 GB Ram",
+            "brand": {
+              "name": "Xiaomi"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 41399
+              },
+              {
+                "price": 43021.75
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 41399
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 41399
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 41399
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2394129082,
+              "lastDay": "2026-10-08",
+              "prices": [
+                41399,
+                41399,
+                41399
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "xiaomi_13t_pro_512gb",
+        "mapping": {
+          "product_key": "xiaomi_13t_pro_512gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-xiaomi-13t-pro-5g-512gb-12gb-ram-6-67-inc-50mp-akilli-cep-telefonu-fiyatlari%2Ca2248216198",
+          "cimri_product_id": "2248216198"
+        },
+        "captured_at_utc": "2026-10-08T07:56:55.401024+00:00",
+        "page": {
+          "product": {
+            "id": "2248216198",
+            "title": "Xiaomi 13T Pro 5G 512 GB 12 GB Ram",
+            "brand": {
+              "name": "Xiaomi"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 38512.82
+              },
+              {
+                "price": 38710
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 38512.82
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 38512.82
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 38512.82
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2248216198,
+              "lastDay": "2026-10-08",
+              "prices": [
+                38512.82,
+                38512.82,
+                38512.82
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "xiaomi_redmi_note_14_pro_5g_512gb",
+        "mapping": {
+          "product_key": "xiaomi_redmi_note_14_pro_5g_512gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-xiaomi-redmi-note-14-pro-5g-fiyatlari%2Ca2428710429",
+          "cimri_product_id": "2428710429"
+        },
+        "captured_at_utc": "2026-10-08T07:57:04.434577+00:00",
+        "page": {
+          "product": {
+            "id": "2428710429",
+            "title": "Xiaomi Redmi Note 14 Pro 5G 512 GB 12 GB Ram",
+            "brand": {
+              "name": "Xiaomi"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 24956.22
+              },
+              {
+                "price": 33599.04
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 24956.22
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 24956.22
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 24956.22
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2428710429,
+              "lastDay": "2026-10-08",
+              "prices": [
+                24956.22,
+                24956.22,
+                24956.22
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "xiaomi_redmi_note_13_pro_5g_256gb",
+        "mapping": {
+          "product_key": "xiaomi_redmi_note_13_pro_5g_256gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-xiaomi-redmi-note-13-pro-5g-256gb-8gb-ram-fiyatlari%2Ca2313774059",
+          "cimri_product_id": "2313774059"
+        },
+        "captured_at_utc": "2026-10-08T07:57:13.411146+00:00",
+        "page": {
+          "product": {
+            "id": "2313774059",
+            "title": "Xiaomi Redmi Note 13 Pro 5G 256 GB 8 GB Ram",
+            "brand": {
+              "name": "Xiaomi"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 19304.04
+              },
+              {
+                "price": 19687.69
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 19304.04
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 19304.04
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 18948.24
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2313774059,
+              "lastDay": "2026-10-08",
+              "prices": [
+                19304.04,
+                19304.04,
+                18948.24
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "xiaomi_redmi_note_13_pro_5g_512gb",
+        "mapping": {
+          "product_key": "xiaomi_redmi_note_13_pro_5g_512gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-xiaomi-redmi-note-13-pro-5g-512gb-12gb-ram-fiyatlari%2Ca2313774611",
+          "cimri_product_id": "2313774611"
+        },
+        "captured_at_utc": "2026-10-08T07:57:22.415838+00:00",
+        "page": {
+          "product": {
+            "id": "2313774611",
+            "title": "Xiaomi Redmi Note 13 Pro 5G 512 GB 12 GB Ram",
+            "brand": {
+              "name": "Xiaomi"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 23401.41
+              },
+              {
+                "price": 25418.37
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 23401.41
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 23401.41
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 23401.41
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2313774611,
+              "lastDay": "2026-10-08",
+              "prices": [
+                23401.41,
+                23401.41,
+                23401.41
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "poco_x6_pro_512gb",
+        "mapping": {
+          "product_key": "poco_x6_pro_512gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-xiaomi-poco-x6-pro-5g-512gb-12gb-ram-fiyatlari%2Ca2308370397",
+          "cimri_product_id": "2308370397"
+        },
+        "captured_at_utc": "2026-10-08T07:57:31.424694+00:00",
+        "page": {
+          "product": {
+            "id": "2308370397",
+            "title": "Poco X6 Pro 5G 512 GB 12 GB Ram",
+            "brand": {
+              "name": "Poco"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 30999
+              },
+              {
+                "price": 30999
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 30999
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 30999
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 49999
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2308370397,
+              "lastDay": "2026-10-08",
+              "prices": [
+                30999,
+                30999,
+                49999
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "xiaomi_redmi_note_14_pro_4g_256gb",
+        "mapping": {
+          "product_key": "xiaomi_redmi_note_14_pro_4g_256gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-xiaomi-redmi-note-14-pro-fiyatlari%2Ca2372365369",
+          "cimri_product_id": "2372365369"
+        },
+        "captured_at_utc": "2026-10-08T07:57:40.420586+00:00",
+        "page": {
+          "product": {
+            "id": "2372365369",
+            "title": "Xiaomi Redmi Note 14 Pro 256 GB 8 GB Ram",
+            "brand": {
+              "name": "Xiaomi"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 18999
+              },
+              {
+                "price": 18999
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 18999
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 18999
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 18999
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2372365369,
+              "lastDay": "2026-10-08",
+              "prices": [
+                18999,
+                18999,
+                18999
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "xiaomi_redmi_note_14_pro_4g_512gb",
+        "mapping": {
+          "product_key": "xiaomi_redmi_note_14_pro_4g_512gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-xiaomi-redmi-note-14-pro-512gb-12gb-ram-fiyatlari%2Ca2430184601",
+          "cimri_product_id": "2430184601"
+        },
+        "captured_at_utc": "2026-10-08T07:57:49.409675+00:00",
+        "page": {
+          "product": {
+            "id": "2430184601",
+            "title": "Xiaomi Redmi Note 14 Pro 512 GB 12 GB Ram",
+            "brand": {
+              "name": "Xiaomi"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 23754.63
+              },
+              {
+                "price": 23819.1
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 23754.63
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 23754.63
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 22199
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2430184601,
+              "lastDay": "2026-10-08",
+              "prices": [
+                23754.63,
+                23754.63,
+                22199
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "xiaomi_redmi_note_13_pro_4g_256gb",
+        "mapping": {
+          "product_key": "xiaomi_redmi_note_13_pro_4g_256gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-xiaomi-redmi-note-13-pro-4g-256gb-8gb-ram-fiyatlari%2Ca2297852745",
+          "cimri_product_id": "2297852745"
+        },
+        "captured_at_utc": "2026-10-08T07:57:58.424287+00:00",
+        "page": {
+          "product": {
+            "id": "2297852745",
+            "title": "Xiaomi Redmi Note 13 Pro 4G 256 GB 8 GB Ram",
+            "brand": {
+              "name": "Xiaomi"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 17977.72
+              },
+              {
+                "price": 18999
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 17977.72
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 17977.72
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 17999
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2297852745,
+              "lastDay": "2026-10-08",
+              "prices": [
+                17977.72,
+                17977.72,
+                17999
+              ]
+            }
+          }
+        },
+        "previous_status": "captured"
+      },
+      {
+        "product_key": "xiaomi_redmi_note_13_pro_4g_512gb",
+        "mapping": {
+          "product_key": "xiaomi_redmi_note_13_pro_4g_512gb",
+          "url": "https://www.cimri.com/cep-telefonlari/en-ucuz-xiaomi-redmi-note-13-pro-4g-512gb-12gb-ram-fiyatlari%2Ca2297854502",
+          "cimri_product_id": "2297854502"
+        },
+        "captured_at_utc": "2026-10-08T07:58:07.423059+00:00",
+        "page": {
+          "product": {
+            "id": "2297854502",
+            "title": "Xiaomi Redmi Note 13 Pro 4G 512 GB 12 GB Ram",
+            "brand": {
+              "name": "Xiaomi"
+            },
+            "category": {
+              "slug": "cep-telefonlari"
+            },
+            "offers": [
+              {
+                "price": 24910.01
+              },
+              {
+                "price": 25880.53
+              }
+            ]
+          },
+          "priceHistoryTablePrices": [
+            {
+              "date": "08/10/2026",
+              "minPrice": 24910.01
+            },
+            {
+              "date": "07/10/2026",
+              "minPrice": 21999
+            },
+            {
+              "date": "06/10/2026",
+              "minPrice": 21999
+            }
+          ]
+        },
+        "response": {
+          "data": {
+            "priceHistoryV2": {
+              "productId": 2297854502,
+              "lastDay": "2026-10-08",
+              "prices": [
+                21999,
+                21999,
+                21999
+              ]
+            }
+          }
+        },
+        "previous_status": "error"
+      }
+    ]
+  }
+}

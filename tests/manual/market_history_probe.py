@@ -4,14 +4,18 @@ import argparse
 import json
 import re
 import sys
-from datetime import date, datetime, timedelta, timezone
-from decimal import Decimal, InvalidOperation
+from datetime import datetime, timezone
 from pathlib import Path
 
 from bs4 import BeautifulSoup
 
 from app.console import utf8_output
 from app.contracts import Catalog
+from app.market_history.cimri import (
+    CIMRI_API_URL,
+    cimri_history,
+    cimri_page_data,
+)
 from app.scrape_lock import ScrapeBusy, scrape_lock
 from app.scraper.http import FetchError, PageClient
 from app.scraper.parsing import verify_identity
@@ -28,8 +32,6 @@ SOURCE_HOSTS = {
 }
 DATE_FORMATS = ("%d.%m.%Y", "%d/%m/%Y", "%Y-%m-%d")
 PRICE_PATTERN = re.compile(r"\d[\d.,\s]*\s*(?:TL|₺)\b|₺\s*\d", re.I)
-CIMRI_API_URL = "https://www.cimri.com/api/cimri"
-MAX_HISTORY_DAYS = 366
 
 
 def candidate_date(value: str) -> str | None:
@@ -93,110 +95,6 @@ def summarize_html(html: str, product) -> dict:
         "has_history_label": "fiyat geçmiş" in visible_text,
         "has_chart_element": bool(soup.find(["canvas", "svg"])),
         "interpretation": "Aday satırlar manuel doğrulama gerektirir.",
-    }
-
-
-def _cimri_product_id(value) -> str:
-    if isinstance(value, bool) or not isinstance(value, (str, int)):
-        raise FetchError("parse", "Cimri ürün kimliği bulunamadı")
-    product_id = str(value)
-    if not product_id.isascii() or not product_id.isdecimal():
-        raise FetchError("parse", "Cimri ürün kimliği geçersiz")
-    return product_id
-
-
-def _cimri_price(value) -> Decimal:
-    if isinstance(value, bool) or not isinstance(value, (int, float)):
-        raise FetchError("parse", "Cimri geçmişinde geçersiz fiyat")
-    try:
-        price = Decimal(str(value))
-    except InvalidOperation as exc:
-        raise FetchError("parse", "Cimri geçmişinde geçersiz fiyat") from exc
-    if not price.is_finite() or price <= 0:
-        raise FetchError("parse", "Cimri geçmişinde geçersiz fiyat")
-    return price
-
-
-def _cimri_day(value: str, date_format: str) -> date:
-    if not isinstance(value, str):
-        raise FetchError("parse", "Cimri geçmişinde geçersiz tarih")
-    try:
-        day = datetime.strptime(value, date_format).date()
-    except ValueError as exc:
-        raise FetchError("parse", "Cimri geçmişinde geçersiz tarih") from exc
-    if day.strftime(date_format) != value:
-        raise FetchError("parse", "Cimri geçmişinde geçersiz tarih")
-    return day
-
-
-def cimri_page_data(html: str) -> tuple[str, list]:
-    script = BeautifulSoup(html, "html.parser").find("script", id="__OCTOPUS_DATA__")
-    try:
-        data = json.loads(script.string)["props"]["pageProps"]["data"]
-        product_id = _cimri_product_id(data["product"]["id"])
-        table_rows = data.get("priceHistoryTablePrices", [])
-    except (AttributeError, KeyError, TypeError, ValueError) as exc:
-        raise FetchError("parse", "Cimri ürün verisi okunamadı") from exc
-    if not isinstance(table_rows, list):
-        raise FetchError("parse", "Cimri tablo verisi geçersiz")
-    return product_id, table_rows
-
-
-def cimri_history(response: dict, product_id: str, table_rows: list) -> dict:
-    try:
-        history = response["data"]["priceHistoryV2"]
-        response_id = _cimri_product_id(history["productId"])
-        last_day = _cimri_day(history["lastDay"], "%Y-%m-%d")
-        prices = history["prices"]
-    except (KeyError, TypeError) as exc:
-        raise FetchError("parse", "Cimri grafik yanıtı eksik") from exc
-    if response_id != product_id:
-        raise FetchError("identity", "Cimri grafik yanıtı farklı ürüne ait")
-    if not isinstance(prices, list) or not 1 <= len(prices) <= MAX_HISTORY_DAYS:
-        raise FetchError("parse", "Cimri grafik fiyat dizisi geçersiz")
-
-    points = []
-    for offset, raw_price in enumerate(prices):
-        day = last_day - timedelta(days=offset)
-        if raw_price is not None:
-            _cimri_price(raw_price)
-        points.append({"day": day.isoformat(), "price_tl": raw_price})
-    points.reverse()
-    by_day = {point["day"]: point["price_tl"] for point in points}
-
-    compared = 0
-    mismatches = []
-    for row in table_rows:
-        if not isinstance(row, dict):
-            raise FetchError("parse", "Cimri tablo verisi geçersiz")
-        try:
-            day = _cimri_day(row["date"], "%d/%m/%Y").isoformat()
-            table_price = _cimri_price(row["minPrice"])
-        except KeyError as exc:
-            raise FetchError("parse", "Cimri tablo verisi eksik") from exc
-        if day not in by_day:
-            continue
-        compared += 1
-        graph_price = by_day[day]
-        if graph_price is None or _cimri_price(graph_price) != table_price:
-            mismatches.append(day)
-    if mismatches:
-        raise FetchError(
-            "parse", f"Cimri tablo ve grafik fiyatı uyuşmuyor: {mismatches[0]}"
-        )
-
-    return {
-        "summary": {
-            "product_id": product_id,
-            "oldest_day": points[0]["day"],
-            "newest_day": points[-1]["day"],
-            "point_count": len(points),
-            "missing_price_count": sum(p["price_tl"] is None for p in points),
-            "table_compared_rows": compared,
-            "table_comparison": "matched" if compared else "unavailable",
-            "interpretation": "Tekrarlanan fiyatlar ayrı günlük gözlemleri kanıtlamaz.",
-        },
-        "points": points,
     }
 
 

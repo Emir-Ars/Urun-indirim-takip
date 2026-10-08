@@ -1,6 +1,6 @@
 # Akıllı Telefon İndirim Takip ve Tahmin Sistemi — Proje Planı
 
-Son güncelleme: 7 Ekim 2026.
+Son güncelleme: 8 Ekim 2026.
 
 Bu belge **kararların ve aşama durumunun** ana kaynağıdır. Sistemin genel
 tanıtımı [README.md](README.md), ayrıntılı işleyişi, komutları, kuralları ve
@@ -31,7 +31,7 @@ Kullanıcı arayüzde arama yaptığında canlı scraping veya model eğitimi
 | 3. Trendyol doğrulanmış stoksuz sayfa | ✅ Uygulandı | `e6664a3` |
 | 4. Scraper/discovery kabul kontrolü (6 adım) | ✅ Tamamlandı | `4d5613d`, Bölüm 5 |
 | 5. Katalogun 25 hedefle sıfırdan kurulumu ve kod denetimi | ✅ Tamamlandı | Bölüm 6 |
-| 6. Veritabanı ve zamanlanmış toplama | ⏳ Sürüyor: Adım 0–6, 8, 10 ve 11 tamamlandı (şema, katalog eşitleme, toplama turu, ilk tam tur 326/326 hatasız, zamanlayıcı gözlemi: 7 tur, tur 4–6 hatasız, tur 7'de 1 `network` hatası; tek piyasa geçmişi araştırması; haftalık keşif zamanlayıcısı; `002` migration: koruyucu kurallar ve karşılaştırılabilirlik görünümü; tur sonu `network` ikinci okuması). Görev Zamanlayıcı 28 Eylül'den beri çalışıyor. Kalan sıra (1 Ekim kararı; Adım 10 ve 4 5 Ekim'de, Adım 11 6 Ekim'de kapandı): **9 → 7**; Adım 9 ML eğitimi için Cimri geçmişinin bir defalık aktarımı (karar 30 Eylül), Adım 7 kapanış belgeleri | Bölüm 9 |
+| 6. Veritabanı ve zamanlanmış toplama | ⏳ Sürüyor: Adım 0–6, 8, 10 ve 11 tamamlandı (şema, katalog eşitleme, toplama turu, ilk tam tur 326/326 hatasız, zamanlayıcı gözlemi: 7 tur, tur 4–6 hatasız, tur 7'de 1 `network` hatası; tek piyasa geçmişi araştırması; haftalık keşif zamanlayıcısı; `002` migration: koruyucu kurallar ve karşılaştırılabilirlik görünümü; tur sonu `network` ikinci okuması). Görev Zamanlayıcı 28 Eylül'den beri çalışıyor. Kalan sıra (1 Ekim kararı; Adım 10 ve 4 5 Ekim'de, Adım 11 6 Ekim'de kapandı): **9 → 7**; Adım 9 ML eğitimi için Cimri geçmişinin bir defalık aktarımı (karar 30 Eylül), Adım 7 kapanış belgeleri. **9.1 ilk üç canlı yanıt kontrol edildi; Xiaomi sıfır fiyat kuralı kullanıcı kararıyla düzeltildi. 57/59 adres alındı: 53 geçmiş kabul edildi, dört üründe tablo/grafik fiyatı çelişti; iki eşleştirme açık. İkinci alımda ham veri farkı sürdü; kullanıcı ekranda uyum gördü. Null önerisi geri çekildi; bugünkü ilk teklif dönüşümü kaynakta doğrulandı, dar düzeltme kullanıcı onayıyla uygulandı; 57 kayıt yeni kodla ağsız doğrulandı, beş ürünün canlı teyidi tamam; commit/push onaylandı; CI sonucu GitHub Actions kaydından izlenir. 9.2 başlamadı** | Bölüm 9 |
 | 7. FastAPI ve Streamlit | 🔜 Planlandı, başlanmadı | Bölüm 9 |
 | 8. ML (indirim tahmini) | 🔜 Planlandı, başlanmadı | Bölüm 9 |
 | 9. Docker ve 7/24 işletim | 🔜 Planlandı, başlanmadı | Bölüm 9 |
@@ -923,6 +923,214 @@ Onaylanan bakım sırası ve durum (her adımdan sonra sonuç anlatılıp durulu
   (docs/teknik.md "Hata kodları"). Regex'lerdeki `_` bilerek kaldı: tam
   genişlikli "＿" gibi nadir karakterler `normalize` sonrası yine `_` olur.
 
+### Cimri Adım 9 yeniden kontrolü (7 Ekim araştırması; 8 Ekim uygulama durumu)
+
+Web araştırmasında [Xiaomi 14T Pro sayfasında](https://www.cimri.com/cep-telefonlari/en-ucuz-xiaomi-14t-pro-fiyatlari,a2372365900)
+fiyat analizi gösterilmedi. [Galaxy S24 sayfasında](https://www.cimri.com/cep-telefonlari/en-ucuz-samsung-galaxy-s24-5g-256gb-8gb-ram-fiyatlari,a2305983921)
+29 Eylül fiyatı yerel rapordan farklı göründü. Web görünümü, API'nin güncel
+cevabı veya bütün serinin değiştiği şeklinde yorumlanmaz; bu nedenle üç ürünün
+yeni ham HTML/JSON kontrolü gerekti, 8 Ekim sonucu aşağıdadır. Kopyalama/işleme koşulları tekrar incelendi;
+bir defalık aktarım kararı kullanım izni olarak sunulmaz.
+
+9.1 yerel alım aracı hazır; ilk üç eşleştirme mevcut gerçek araştırma
+kayıtlarına dayanır. 8 Ekim yeni üç yanıt incelendi; aşağıdaki kaynak
+sınırı kullanıcı kararıyla ele alındı. 8 Ekim devamında 59 ürünün 57'sinin
+ana adresi web araştırmasıyla eşleştirildi. 10:49–10:58 alımında 53 geçmiş
+kabul edildi, dört üründe tablo/grafik fiyatı çelişti. Galaxy S25 512 GB ve Redmi Note 14 Pro 5G 256 GB için doğru
+ana adres doğrulanamadı, kaynakta olmadıkları iddia edilmez. Veritabanı
+tablosu ve 004 henüz yok.
+
+**8 Ekim 09:24–09:25 pilot alım (kullanıcı çalıştırdı):**
+`data/market_history/pilot_20261008_092438_295/report.json` çıkış 2.
+iPhone 16 128 GB ve Galaxy S24 256 GB: 365’er nokta,
+2025-10-09–2026-10-08, eksik fiyat 0, 90’ar tablo eşleşmesi. Xiaomi
+14T Pro 256 GB grafiğinde 2–5 Ekim için dört sayısal sıfır var; bu tarihler
+HTML fiyat tablosunda yok. Kalan 361 fiyat pozitif, mevcut 86 tablo satırı
+grafikle eşleşiyor. İlk alım pozitif fiyat kuralıyla Xiaomi’yi `parse` olarak
+reddetti; ürün kimlikleri ve altı dosyanın parmak izi yeniden doğrulandı.
+
+**Aynı oturumdaki kullanıcı kararı ve dar düzeltme:** Grafik sıfırı, aynı
+tarihte tabloda fiyat yoksa eksik değer (`null`) olarak ele alınıyor;
+tablo fiyatı varsa çelişki reddediliyor. Ham yanıt değiştirilmez, negatif
+ve bozuk fiyatlar kabul edilmez. Bu bir kaynak yorumudur; eksikliğin nedeni
+ve sıfırın resmî API anlamı doğrulandı denmez. Eski TL araştırma aracının
+sıfırı reddeden sözleşmesi korunur. Kayıtlı yeni yanıtlar ağsız yeniden
+doğrulandı: 1.095 nokta, dört eksik gün, 266 tablo eşleşmesi; iPhone/Samsung
+kayıtları aynı kaldı. İlk rapor ve ham dosyalar değiştirilmedi; DB’ye yazılmadı.
+12 yeni kalıcı testin altısı eski kodda başarısız, altı koruma testi başarılıydı.
+Son paket 929 passed, 0 atlandı/xfail, 228 PostgreSQL yalnız fiyat_takip_test;
+Black/Flake8 temiz. 9.1 kapanmadı; katalog alımının sonucu aşağıdadır.
+
+**8 Ekim eşleştirme araştırması:** `config/market_history.json` üçten 57
+ana adrese genişletildi; ilk üç adres/kimlik korundu. 57 görünen başlığın
+tamamı mevcut model/kapasite kontrolünden geçti. Araştırma anında gömülü
+sayfa kimliği ve grafik erişimi yalnız üç pilotta kontrol edilmişti;
+ardından 57 ürünün tamamının yanıtı alındı (sonuç aşağıda). Yerel araştırma izi:
+`data/market_history/mapping_research_20261008_073732.json`.
+İki açık anahtar `samsung_galaxy_s25_512gb` ve
+`xiaomi_redmi_note_14_pro_5g_256gb`; başka model/kapasite bunların yerine
+konmadı. Redmi Note 14 Pro 4G'nin 256/512 GB sayfalarında ağ özelliği 4G,
+5G 512 GB ayrı sayfa; POCO marka etiketi korundu (kaynaklar teknik belgede).
+Kod/kimlik kuralları, katalog ve migration değişmedi. İki eşleştirme eksik
+olduğundan katalog komutu 57 başarıda da çıkış 2 verir; gerçek alımda ayrıca
+dört ürünün fiyat uyuşmazlığı görüldü. 9.2'ye geçilmedi.
+
+**8 Ekim 10:49:37–10:58:07 katalog alımı (kullanıcı):**
+`data/market_history/katalog_20261008_104936_277/report.json`, çıkış 2.
+53 kabul edilmiş geçmiş, dört fiyat uyuşmazlığı, iki açık eşleştirme;
+denenmeden kalan yok. 57 üründe üçer HTTP denemesi (171), kimlik/HTTP hatası
+yok. 114 kaynak dosyasının parmak izi ve 57 sayfa/API kimliği ağsız yeniden
+doğrulandı. 53 geçmişin tarih/kuruş değerleri bağımsız hesapla da aynı:
+her biri 365 nokta (2025-10-09–2026-10-08), toplam 19.345 nokta,
+18.792 pozitif fiyat ve 14 üründe 553 eksik değer. Bunların hepsi grafik
+sıfırlarından gelir; 4.413 tablo satırı eşleşti, eksiklik nedeni bilinmiyor.
+
+Dört üründe yalnız 2026-10-08 fiyatı farklı; diğer 89 ortak tablo satırı
+aynı. Tablo / grafik: iPhone 16 Pro Max 512 GB 159.000 / 114.999 TL,
+Galaxy S24 256 GB 44.719,29 / 44.160 TL, Galaxy S24 Ultra 512 GB
+73.304 / 73.920 TL, Redmi Note 13 Pro 4G 512 GB 24.910,01 / 21.999 TL.
+Kaynağın neden farklı fiyat döndürdüğü kanıtlanmadı. Onaylanan çelişki
+reddi çalıştı; hata geçiştirilmedi, bugünün fiyatı atılmadı ve kaynaklardan
+biri seçilmedi. Ham kanıt korundu; bu dört ürünün kabul edilmiş geçmişi yok.
+Yalnız dört ürünün bir kez daha alımı istendi; sonucu aşağıdadır.
+Eski 53 ürünün tekrar alınması gerekmiyor. Bu oturumda kod değişmedi,
+tam testler yeniden çalıştırılmadı (son sonuç 929 passed / 0 atlandı).
+Belgeler güncellendi; 9.1 kapanmadı, 9.2/004/aktarım başlamadı.
+
+**8 Ekim 11:12:45–11:13:18 tekrar (kullanıcı):**
+`data/market_history/tekrar_20261008_111245_044/report.json`, dört hata,
+12 HTTP denemesi, çıkış 2. Önceki ve yeni alımın toplam 16 dosya parmak izi
+doğrulandı. Dört grafik JSON'u önceki alımla bayt düzeyinde aynı; HTML
+dosyaları değişse de kimlikler ve 90'ar tablo fiyatı aynı. Her üründe
+365 pozitif grafik noktası ve 89 eşleşen tablo satırı var; yalnız 8 Ekim'in
+yukarıdaki fiyat farkları sürüyor. Kaynak uyuşmazlığının nedeni bilinmiyor;
+aynı komutun gerekçesiz tekrarı önerilmiyor. Mevcut kabul 53 ürün, dört
+ret ve iki açık eşleştirme olarak kaldı.
+
+**Kullanıcı ekran kontrolü sonrası düzeltme (8 Ekim):** Kullanıcı dört
+ürünün tarayıcıdaki grafik ve tablosunun uyuştuğunu bildirdi; S24 Ultra
+512 GB'da 73.920 TL, diğer üçünde önceki tablo değerleri görülüyor. Agent'ın
+ham API yanıtını ekranda çizilen grafikle aynı kabul etmesi doğrulanmamıştı.
+Kaydedilmiş HTML günlük dizisi ile ayrı API yanıtında fark gerçek; ekranda
+iki görünümün çeliştiği iddiası çıkarılamaz. Aynı tarih kontrolü soruldu,
+cevabı bekleniyor. Yeni fiyat kuralı onaylanmış değildir.
+
+Dört HTML'de bugünkü tablo değeri sayfanın en ucuz teklif fiyatıyla aynı.
+Görünen tablo yalnız değişim günlerini gösteriyor (S24: 7 Ekim; S24 Ultra:
+5 Ekim son satır); günlük gömülü dizide 8 Ekim var. Grafiğin API üzerinde
+hangi dönüşümü yaptığı bu ilk incelemede henüz bilinmiyordu. **Alım gününü null yapma önerisi
+geri çekildi; uygulanmadı.** Kullanıcı 13:04'te kayıtlı HTML'nin işaret ettiği
+iki JavaScript dosyasını aldı; çıkış 0, iki HTTP isteği. Kaynak:
+`data/market_history/frontend_20261008_130454_461756/index.json`.
+İki dosyanın parmak izi doğrulandı. Metin incelemesi, `priceHistoryWrapper`
+bölümünün grafik modülünü (27401) sonradan yüklenen 7401 ve 1657 numaralı
+iki dosyadan aldığını gösterdi; fiyat dönüşümü henüz görülmedi. Bu dosyaların
+adresleri `product.js` içindeki yükleme tablosundan çıkarıldı, tahmin edilmedi.
+Web aracı bunları da açamadı; `.scratch/cimri_frontend_check.py` yalnız bu
+iki ek dosyayı yeni klasöre alacak şekilde güncellendi ve ağsız sınandı.
+İndirilen JavaScript çalıştırılmadı; üretim/test kodu değişmedi.
+53 kabul/dört ret/iki açık eşleştirme, kaynak dosyaları ve gerçek DB korunur.
+9.1 açık; 9.2'ye geçilmedi.
+
+**13:12 grafik kaynağı sonucu (8 Ekim):** Kullanıcının
+`data/market_history/frontend_20261008_131242_210133/` alımı iki HTTP isteğiyle
+başarılı; iki dosyanın SHA-256 değeri doğru. `chart_7401.js` içindeki 27401
+modülü, teklif varsa API'nin ilk fiyatını `product.offers[0].price` ile
+değiştiriyor; diğer günler API'den kalıyor. Tablo HTML dizisini kullanıyor.
+Grafik tarihi tarayıcının gününden geriye sayılıyor; API `lastDay` alanı bu
+bileşende kullanılmıyor. Kayıtlı 57 üründe `lastDay` ve alımın İstanbul günü
+aynı (8 Ekim). İlk teklif verisinin HTML'den geldiği `product.js` içindeki
+`__OCTOPUS_DATA__` → `window.__NEXT_DATA__` atamasıyla da doğrulandı.
+
+Yalnız bellekte aynı ilk fiyat dönüşümüyle 57 ürün mevcut tablo kontrolünden
+geçti: 20.805 nokta, 20.252 fiyat, 553 eksik değer ve 4.773 tablo eşleşmesi.
+Dört ret çözülüyor. Önceden kabul edilen 53 üründen 52'sinin çıktısı tamamen
+aynı; S24 Ultra 1 TB'nin yalnız 8 Ekim fiyatı 85.680 → 86.220 TL oluyor.
+Bu ürünün tablosu 7 Ekim'de bitiyor; eski kontrol bugünkü fiyatı kapsamıyordu.
+Dört ürünün tekrar alımında da 360 tablo satırı eşleşiyor; ilk üç pilotun
+sonucu değişmiyor. Araştırma izi aynı klasörde `offline_analysis.json`.
+İndirilen JS çalıştırılmadı; raporlar/ham yanıtlar ve üretim kodu değişmedi.
+**Bu sonuç yeni başarılı alım değildir:** mevcut rapor hâlâ 53 kabul/dört ret.
+Kullanıcının sonradan gördüğü S24 Ultra 512 GB 73.920 TL ile kayıt anındaki
+73.304 TL farkının zamanı/nedeni bu dosyalarla kanıtlanamaz.
+
+**Dar düzeltme planı — kullanıcı “uygula” onayıyla uygulandı (8 Ekim):**
+
+1. Yeni kuruş alımında, kimliği doğrulanmış HTML'nin ilk teklif fiyatını
+   kaynakta görülen biçimde yalnız bugünkü nokta için kullan. Diğer fiyatları,
+   sıfır/eksik değer kuralını ve kimlik doğrulamasını koru; bozuk fiyatları
+   dönüşümün arkasına saklama. İlk teklif yoksa mevcut API davranışı sürsün.
+2. Tarihleri mevcut API `lastDay` alanından üretmeye devam et. Güncel teklif
+   kullanılırken API tarihi kayıtlı alımın İstanbul günüyle eşleşsin;
+   gün sınırı veya eski API yanıtında ürün reddedilsin. Yeniden doğrulama
+   çalıştırıldığı günün saatini değil, kayıtlı alınma zamanını kullansın.
+3. Tabloyla bütün ortak günler yine birebir karşılaştırılsın. Bugünkü tablo
+   satırı yoksa bu sınır raporda açıkça yer alsın. Ham API fiyatı, kullanılan
+   ilk teklif fiyatı, tarih ve uygulanan kaynak kuralı raporda izlenebilsin;
+   özgün HTML/API ve eski raporlar değiştirilmesin.
+4. Dört ret ve S24 Ultra 1 TB için küçük gerçek örneklerden regresyon ekle;
+   önce eski kodda başarısızlığı göster. Değişmeyen 52 ürün, önceki günler,
+   eksik/geçersiz teklif, tarih uyuşmazlığı ve çözülmeyen tablo çelişkisini
+   sına. Eski TL araştırma sözleşmesini koru.
+5. Bütün pytest/Black/Flake8 çalışsın; PostgreSQL yalnız `_test`, atlananlar
+   bildirilsin. Kayıtlı 57 ürün yeni kuralla ağsız yeniden kontrol edilsin.
+   Sonuç ve dar canlı doğrulama komutu kullanıcıya sunulsun; yeni alımı
+   kullanıcı çalıştırsın. Commit/push ayrı onayla; 9.2'ye geçilmesin.
+
+**Uygulama ve doğrulama sonucu:** İlk teklif dönüşümü yeni kuruş alımına
+eklendi. Sayfa isteği başlangıcı ve API bitişi UTC kaydediliyor; ilk teklif
+için İstanbul günü ve API `lastDay` eşitliği zorunlu. Ham API fiyatı önce
+doğrulanıyor; bugünkü sıfır/null ilk teklifle doldurulmuyor, `parse` kalıyor.
+Raporda ham/ilk teklif/etkin fiyat, kaynak kuralı, değişim ve son günün tablo
+kontrolü ayrı. Son gün tablo satırı yoksa komut bunu belirtiyor. İlk teklif
+yoksa API korunuyor. Eski TL araştırması, HTTP bütçesi/kilit ve çıkışlar aynı.
+
+Beş gerçek regresyon eski kodda başarısızdı (dört ret + 1 TB son fiyatı).
+100 ek sınama ile son tam sonuç **1029 passed, 0 skipped/xfail, 54,20 sn**;
+228 PostgreSQL yalnız `fiyat_takip_test`, Black 49 dosya ve Flake8 temiz.
+İlk tam koşuda beş teklifsiz örneğin test beklentisindeki eksik kontrol
+düzeltildi; üretim davranışı API'yi zaten koruyordu. Son koşu tamamı geçti.
+57 tam kayıt yeni kodla ve bağımsız tarih/Decimal hesabıyla doğrulandı:
+20.805 nokta/20.252 fiyat/553 eksik/4.773 tablo eşleşmesi. 52 eski ürünün
+bütün noktaları aynı; S24 Ultra 1 TB'de yalnız 8 Ekim değişti.
+İz: `data/market_history/frontend_20261008_131242_210133/implemented_validation.json`.
+Eski rapor/ham dosyalar değiştirilmedi; bu bir yeni canlı alım değildir.
+
+Bu düzeltmenin dosyaları: `app/market_history/cimri.py`, `capture.py`,
+`__main__.py`; `tests/test_market_history.py`,
+`tests/fixtures/cimri_recorded_samples.json`; `pyproject.toml` (İstanbul
+saat diliminin Windows'ta da bulunması için açık `tzdata` bağımlılığı);
+README, teknik belge, bu plan ve yerel DEVAM. Gerçek DB, katalog,
+migration'lar ve zamanlayıcı değişmedi. Dört eski ret ile S24 Ultra 1 TB
+için canlı teyit tamamlandı; 9.1 için kullanıcı commit/push onayı verdi; aynı SHA CI doğrulanacak.
+9.1 commit mesajı önerisi: **“Adım 9.1: Cimri geçmişinin doğrulanmış yerel
+alımını ve güncel fiyat dönüşümünü hazırla”**. Kullanıcı 8 Ekim tarihinde
+commit/push işlemini onayladı; aynı commit için CI doğrulaması yapılacak.
+9.2'ye geçilmedi.
+
+**Canlı teyit (8 Ekim 13:51:43–13:52:25, kullanıcı):**
+`data/market_history/duzeltme_20261008_135142_423/report.json`, beş
+`captured`, 15 HTTP denemesi ve çıkış 0. On kaynak parmak izi,
+katalog/eşleştirme, kimlikler ve alım tarihleri doğrulandı; rapor hem yeni
+ayrıştırıcıyla hem bağımsız tarih/Decimal hesabıyla kontrol edildi.
+1.825 nokta/1.754 fiyat/71 eksik/450 tablo eşleşmesi; son gün beşinde de
+tabloyla eşleşti. S24 Ultra 1 TB'deki 71 eksik tarih ilk kayıttakiyle aynı.
+Yeni ilk teklif fiyatı 85.680 TL; 512 GB sürümünde 73.920 TL. Eski
+alımın rakamları yeni alıma taşınmadı. Dört API ilk alımla aynı; S24 256 GB
+API yanıtı değişmiş, yeni son fiyatı ilk teklifle doğrulandı.
+İz: aynı klasörde `verification.json`; kaynaklar ve eski raporlar değişmedi.
+
+**9.1 uygulama/canlı doğrulaması tamamlandı; kullanıcı 8 Ekim tarihinde commit/push onayı verdi.**
+Yeni kodla 57 kayıt ağsız doğrulandı ve sorunlu beş ürün canlıda teyit edildi.
+Galaxy S25 512 GB ve Redmi Note14 Pro 5G 256 GB eşleştirmeleri hâlâ açık;
+bu eksiklik raporlandı, kapsam/aktarım kapanışı 9.3'ün işi. 57 ürün tek yeni
+alım raporu gibi sunulmaz; farklı alımlar korunur, aktarım girdilerinin seçimi
+9.2/9.3'te doğrulanır. Bu oturum yalnız inceleme/belge güncellemesi; kod
+değişmedi, tam testler tekrar edilmedi. Son 1029 passed/0 atlandı ve
+Black/Flake8 sonucu geçerli. Kullanıcı commit/push onayı verdi; aynı SHA CI
+doğrulaması gönderim akışının parçasıdır. Güncel commit ve CI kaydı yerel
+DEVAM notunda tutulur; yeni alt adıma geçilmedi.
+
 ## 8. Açık kararlar
 
 | Konu | Durum |
@@ -931,6 +1139,9 @@ Onaylanan bakım sırası ve durum (her adımdan sonra sonuç anlatılıp durulu
 | Veritabanı teknolojisi, veri modeli, çalışma ortamı | **Karar verildi (28 Eylül 2026):** PostgreSQL 17, `psycopg` + ham SQL, kullanıcının bilgisayarı, günde 2 tur; ayrıntı Bölüm 9. SQLite önerisi bırakıldı. |
 | Keşfin zamanlanması | **Karar verildi (28 Eylül 2026):** bu aşamada manuel, haftada bir; fiyat turuyla ortak kilit. Otomasyon, veritabanı birkaç hafta sorunsuz çalıştıktan sonra değerlendirilir. Kanıt: 28 Eylül kapanış taramasında tek günde 21 yeni bağlantı çıktı; Hepsiburada genel aramasının ilk 36 kartı her seferinde değişebildiği için tekrar eden keşif kapsamı artırır. **29 Eylül güncellemesi (kullanıcıyla):** haftalık zamanlayıcı değerlendirildi; şimdilik elle devam, **Adım 6 gözlemi bitince (1 Ekim sonrası) otomatikleştirilecek**. Biçim o gün seçilecek: (A) önerilen, görev keşfi deneme modunda çalıştırır ve tarihli rapor bırakır, yeni sayfaları kullanıcı inceleyip tek komutla ekler; 2–3 hafta rapor temiz giderse (B)'ye geçiş değerlendirilir. (B) tam otomatik: yeni sayfalar doğrudan kataloğa girer. B'nin riski: yanlış bir sayfa kataloğa girerse tur onu birkaç saat içinde veritabanına ekler, fiyatları ürünün geçmişine yazılır ve sayfa sonradan yalnız pasife alınabilir; ayrıca `catalog.json` Git'te olduğu için her hafta commit edilmemiş değişiklik birikir. Teknik gereksinimler: keşfe `--scheduled` (log + tarihli rapor + özet satırı; bugün rapor her çalışmada üzerine yazılır); görev tur saatlerinden uzak olmalı (ör. Pazar 14:00, keşif ~50 dk tahmin edilmişti, 5 Ekim'de 34 dk ölçüldü); keşif görevinde kaçan çalışmayı telafi **kapalı** olmalı, yoksa geç açılan bilgisayarda telafi keşfi 22:00 turunu kilitle atlatabilir; keşif çıkış kodu Hepsiburada yüzünden hep 2'dir, özet satırı ayrıca okunmalı. **Karar verildi (1 Ekim 2026, kullanıcı): A seçildi, ekleme komutuyla (A1).** Görev her Pazar 14:00'te keşfi deneme modunda çalıştırır ve tarihli log + rapor + özet satırı bırakır; kaçan çalışmayı telafi etmez. Kullanıcı raporu inceler; yeni bir komut (`--apply-report`) siteye gitmeden **tam olarak incelenen** raporu kataloğa uygular. Gerekçe: bugün yazmanın tek yolu keşfi yeniden çalıştırmaktır ve Hepsiburada'nın ilk 36 kartı değişebildiği için ikinci tarama incelenenden farklı sonuç verebilir. Rapor 2–3 hafta temiz giderse (B)'ye geçiş yeniden değerlendirilir. Uygulama Adım 10'dur ve 5 Ekim'de tamamlandı (Bölüm 9): ilk zamanlanmış çalışma (4 Ekim) internet kesintisi yüzünden boş bitti, elle yapılan tam tarama ve `--apply-report` 5 Ekim'de 7 sayfa ekledi. |
 | Piyasa geçmişi kaynağı | **29 Eylül araştırma sonucu:** Cimri üç üründe teknik olarak doğrulandı; Akakçe'nin ilk örneği 403 verdi. O tarihte aktarım kaynağı seçilmedi. **Güncel karar (30 Eylül 2026, kullanıcı; Codex):** ML eğitimi için geçmiş fiyat hareketinin kaynağı Cimri olacak; katalogdaki telefonların mevcut geçmişi bir defa alınacak. Akakçe ve Cimri serileri birleştirilmeyecek, düzenli Cimri toplaması yapılmayacak. Kullanım koşullarına ilişkin önceki bulgu Bölüm 7'de korunur ve aktarım adımında ele alınır. |
+| Cimri Adım 9 uygulama sırası | **Karar verildi (7 Ekim 2026, kullanıcı; plan onaylandı):** 9.1 eşleştirme/yerel alım → 9.2 ayrı ağsız aktarım ve yeni 004 → 9.3 katalog kapsamı/gerçek aktarım/kapanış. Önce rapor, sonra ayrı aktarım; aynı ürün/tarihte farklı fiyat veya Cimri kimliği olursa eski kayıt korunur, o ürünün aktarımı durur. İlk aktarımda yeni alım esas; 29 Eylül üç raporu yalnız araştırma/test kanıtı olarak kalır. Her alt adım ayrı durma ve commit/push onayı; gerçek site/DB yazma komutları kullanıcıda. Şu an üç yeni kaynak kontrol edildi, Xiaomi sıfır kuralı ayrı kullanıcı kararıyla düzeltildi. 57 adresin ham alımı incelendi: 53 geçmiş kabul, dört fiyat uyuşmazlığı, iki açık eşleştirme. Dört ürünün ikinci alımında aynı ham veri farkı sürdü; kullanıcı ekranda uyum gördü. Null önerisi geri çekildi; kaynakta ilk teklif dönüşümü doğrulandı. Dar düzeltme kullanıcı onayıyla uygulandı; tarih ve tablo kontrolleri korunuyor, beş ürünün canlı teyidi tamamlandı. 9.1 gönderimi kullanıcı tarafından onaylandı; CI sonucu GitHub Actions kaydından izlenir. 004 ve aktarım komutu henüz yok. |
+| Cimri grafik sıfırlarının anlamı | **Karar verildi ve uygulandı (8 Ekim 2026, kullanıcı):** Gerçek Xiaomi yanıtında grafik sıfırı olan dört tarihte tablo fiyatı yok; yeni kuruş alımı bu sıfırları eksik `null` olarak okur. Tabloda fiyat varsa çelişki reddedilir; negatif/bozuk fiyat, ham dosyalar ve eski TL araştırma sözleşmesi korunur. Kaynağın resmî sıfır tanımı olduğu iddia edilmez. |
+| Cimri ham geçmiş yanıtı ile ekrandaki grafik | **Kullanıcı onayıyla uygulandı (8 Ekim):** Cimri grafiğinin bugünkü ilk teklif dönüşümü yeni alımda kullanılıyor. API/alım günü, ham fiyat ve tablo eşitliği doğrulanıyor; kaynak raporda açık. Beş regresyon eski kodda başarısızdı, son 1029 test geçti/0 atlandı. 57 tam kayıt yeni kodla ağsız doğrulandı: dört ret çözülüyor, 52 eski ürünün noktaları aynı, S24 Ultra 1 TB yalnız 8 Ekim değişiyor. Eski raporlar korunuyor; beş ürünün canlı teyidi tamam; commit/push onaylandı; CI sonucu GitHub Actions kaydından izlenir. Alım gününü null yapma önerisi uygulanmadı. |
 | Cimri geçmişinin bir defalık kaydı ve ML amacı | **Karar verildi (30 Eylül 2026, kullanıcı; Codex):** Aşama 6'ya **Adım 9** eklenir; Adım 4'ten sonra, Adım 7 kapanışından önce yapılır. Veriler aynı PostgreSQL veritabanında ayrı `market_history` tablosunda saklanır. Amaç, erişilebilen bir yıllık geçmiş fiyat hareketini model eğitiminde kullanmaktır. **Gerekçe:** Cimri daha geniş kaynak kapsamına sahip olsa da kullanıcı küçük fiyat farklarını bu amaç için kabul ediyor; öncelik geçmişteki değişimdir. Cimri serisi kendi Hepsiburada/Trendyol gözlemlerimizle aynı ölçüm olarak etiketlenmez. Eğitimin nasıl yapılacağı, mutlak fiyatın mı değişimin mi kullanılacağı ve değerlendirme ayrıntıları ML aşamasında kararlaştırılır. Üç örneğin tam serisi hâlen yerel araştırma raporlarında; toplu alım, tablo ve aktarım henüz uygulanmadı. |
 | Tur sonunda yalnız `network` hatası alan sayfalara ikinci geçiş | **Karar verildi (1 Ekim 2026, kullanıcı): yapılacak, tek geçiş. Uygulandı (6 Ekim 2026, Adım 11).** Tasarım kararları (6 Ekim, kullanıcı): ikinci okuma da `network` verirse ilk satır olduğu gibi kalır; ardışık 5 sayfa yine `network` verirse geçiş durur (bağlantı hâlâ yok); tur notuna yalnız sayılar yazılır, sayfa kimlikleri logdadır; 5xx ayrı kod almaz ve `network` olarak yeniden okunur. Kanıt: tur 3'te (28 Eylül) 47 sayfa bağlantı kesintisiyle `network` hatası aldı; son hatadan sonra kalan 154 sayfa cevap verdi, yani tur bitmeden bağlantı geri gelmişti. Tur 7'de (1 Ekim) 1 sayfa uyku sonrası DNS hatası aldı. Yalnız `network` yeniden okunur; `blocked` yeniden denenmez. İkinci okuma, hata satırının üzerine yazılır (tur × sayfa başına tek satır kuralı korunur); tur notu ve log kaç sayfanın düzeldiğini söyler. Yeniden okunamayan sayfa hata olarak kalır. |
 | Bulutta çalıştırma (PC açık kalmak zorunda olmasın) | **Deneme kararı (6 Ekim 2026, kullanıcı):** Görev Zamanlayıcı aynen çalışmaya devam eder; bu sürede GitHub Actions'tan canlı okuma denenir (`.github/workflows/bulut-deneme.yml`: elle tetiklenir, zamanlama yok, veritabanı ve gizli anahtar yok; Samsung Galaxy A55 128 GB'ın 4 sayfası, Trendyol ve Hepsiburada). **Gerekçe:** PC uyuyunca veya kapalıyken turlar kaçıyor (2–4 Ekim: 4 tur, ~40 saat boşluk; geri alınamaz). Kod taşınabilir (`filelock`, `psycopg`, standart PostgreSQL; `app/` içinde Windows'a bağlı kod yok, yalnız `scripts/*.ps1` kurulum betikleri ve Görev Zamanlayıcı). **Bilinmeyenler (deneme öncesi; (1) aşağıdaki sonuçla yanıtlandı):** (1) Trendyol ve Hepsiburada GitHub'ın bulut adreslerini engelliyor mu (Hepsiburada ev adresimizde bile arama API'sinde 403 veriyor); (2) veritabanı nerede duracak (GitHub'daki bir iş veritabanı tutamaz: kendi sunucumuz mu, yönetilen hizmet mi; yeni mimari karar, verilmedi); (3) maliyet ve bakım (GitHub Actions limitleri teyit edilmedi). **Sonuç (6 Ekim 2026 09:41, çalışma 37425171004, 42 sn):** Hepsiburada'nın 3 sayfası buluttan okundu ve bilgisayarın son üç turuyla birebir aynı çıktı (36.999 TL, 39.999 TL, 1 Tükendi); Trendyol'un 1 sayfası **HTTP 403** (`blocked`) verdi. Aynı kodla bilgisayarda son turda 116 Trendyol sayfasının hiçbiri engellenmedi ve bugüne kadar hiçbir turda `blocked` yok; fark kodda değil çıkış adresinde görünüyor. Ancak bulutta tek örnek var (tekrar denemesi ucuz: 1 Trendyol isteği). **İlke:** 403 `blocked` sayılır ve engel aşılmaz (proxy, adres döndürme, tarayıcı taklidi yapılmaz; Akakçe kararıyla aynı). **Durum:** GitHub'ın makineleriyle tam toplama şimdilik uygun görünmüyor (Trendyol 117 sayfa). Seçenekler (sunucu denemesi, evde 7/24 açık küçük cihaz, bilgisayarı tur için uyandırma) kullanıcıyla değerlendirilecek; karar verilmedi. |
@@ -1022,9 +1233,25 @@ maddesi tamamlandı; kullanıcı bakım 7'nin commit/push işlemini onayladı, A
 | 6. Görev Zamanlayıcı ve 2–3 günlük gözlem | ✅ Tamamlandı (1 Ekim; kuruldu ve gözlendi, gözlem sonucu satırın sonunda). Görev 28 Eylül akşamı `scripts/zamanlayici_kur.ps1` ile kuruldu; kullanıcı ilk turu `Start-ScheduledTask` ile başlattı (tur 3, `scheduled`, 23:22–23:55, 33 dk): `pythonw`, ortam değişkenleri, `pgpass.conf`, çalışma klasörü ve log dosyası Görev Zamanlayıcı ortamında çalıştı. 326 sayfanın 279'u cevap verdi (219 fiyat, 60 Tükendi), 47 sayfa `network` hatası aldı (DNS çözümlenemedi / zaman aşımı; Windows WLAN günlüğüne göre hotspot bağlantısı 23:27:38'de koptu, 23:30:52'de döndü); tur `completed`, çıkış 2, veri uydurulmadı. İlk tetikleyiciyle çalışan tur (tur 4, 29 Eylül 10:00:02, 30 dk 44 sn): 326/326 sayfa, **0 hata** (243 fiyat, 83 Tükendi), çıkış 0; aynı sabah temizlenen kodla gerçek sitelerde ilk tur, istek aralıkları önceki turlarla aynı (Hepsiburada ortalama 8,7 sn). Kararlar (28 Eylül, kullanıcıyla): görev **penceresiz** (`pythonw.exe`) çalışır, `--scheduled` çıktısı `data/logs/tur_<yerel tarih-saat>.log` dosyasına da yazılır (açık kalan bir pencere kapatılınca tur kesilirdi; Görev Zamanlayıcı çıktı saklamaz); görev repodaki `scripts/zamanlayici_kur.ps1` ile kurulur (ayarlar kodda, yeniden kurulabilir). Ayarlar: yerel saatle 10:00/22:00, kaçan tur açılınca bir kez, pilde de çalışır, uyandırmaz, 2 saat süre sınırı, kullanıcı adına yalnız oturum açıkken (docs/teknik.md "Zamanlanmış tur"). Kullanıcının dizüstünde boşta uyku kapalı (şarj ve pil). 5 yeni test (toplam 149); log kodunda 3 kasıtlı bozmanın 3'ü yakalandı; gerçek `pythonw.exe` ile siteye gitmeyen denemede log yazıldı, çıkış 1, tur açılmadı. **Commit öncesi projenin tamamı incelendi (29 Eylül):** 8 bağımsız inceleyici (scraper, keşif, veritabanı, tur, belgeler, güvenlik, okunabilirlik, test kalitesi) bütün dosyaları okudu; her bulgu ayrı bir doğrulayıcıya çürütülmek üzere verildi ve son bir denetçi kimsenin bakmadığı yerlere baktı. 168 ham bulgu → 135 tekil; 10'u çürütüldü, 125'i doğrulandı (57'si kısmen), +24 ek bulgu. Davranış değiştirmeyenler uygulandı: ölü kod temizliği, dışarıdan okuyana yönelik yorumlar (kilit numaraları, Tükendi kuralı, hata kodları, üç istekli Hepsiburada akışı…), belge düzeltmeleri ve testler **149 → 414** (116'sı PostgreSQL'de; yeni `tests/test_http.py`, `tests/test_contracts.py`). Kullanıcı davranış değiştiren bulgulardan üç grubu onayladı ve uygulandı: keşif sağlamlığı (UTF-8 çıktı, BOM'lu dosya okuma, kilit meşgulken çıkış 3, fazladan arama sayfası yok, pasif sayfalar "korunan" listesinde yok, adaptör hatası çıkış 1), migration koşucusu (yeniden adlandırılan dosya reddedilir, numara hatası bulunanları gösterir), tanılama çıktısı (boş satıcı kimliği, `missing_price`/`missing_seller`); her birinin testi önce eski kodda başarısız oldu. Çizili fiyat kuralı (sözleşme + CHECK) Adım 4'e alındı. Araç düzeni: Python `>=3.13,<3.14`, Black `>=26.1`; ortak yapay zekâ talimatları `AGENTS.md`'ye taşındı (Claude Code ve Codex aynı dosyayı okur), `.cursorrules` silindi. Testlere iki emniyet kemeri eklendi: gerçek ağ isteği ve kalıcı `DATABASE_URL` her testte kesilir. Yeni testler bellekte veya kopyada kasıtlı bozmalarla sınandı (75 bozmanın 73'ü yakalandı; kaçan 2'si eşdeğer bozma). Bir gerçek hata bulundu ve `xfail` ile belgelendi (Bölüm 7, Türkçe ekler). Davranış değiştiren bulgular kullanıcı kararına bırakıldı. **Gözlem sonu (1 Ekim):** gerçek veritabanı (yalnız okuma) ve loglar eşleşti: 7 tur kayıtlı, hepsi `completed`, takılı `running` tur ve boş `outcome` satırı yok. Tur 4–6 (29 Eylül 10:00 – 30 Eylül 10:00): 326/326, 0 hata, çıkış 0. **30 Eylül 22:00 turu çalışmadı:** bilgisayar 17:57'de uyudu (Windows günlüğü: uyku nedeni "Application API"; kesin tetikleyici belirlenmedi) ve 1 Ekim 09:20'de uyandı; yukarıdaki "boşta uyku kapalı" ayarı bunu önlemedi. Kaçan tur 1 Ekim 09:26'da açılışta bir kez telafi edildi (tur 7, `scheduled`, 37 dk, 234 fiyat, 91 Tükendi, 1 `network`, çıkış 2): telafi mekanizması bilerek kaçırma denemesine gerek kalmadan gerçek bir uykuda doğrulandı. Aynı turda 09:29'da kritik pil yüzünden yaklaşık 6,5 dk uyku oldu; sayfa 31 uyanma anında DNS hatası aldı, tur veri uydurmadan tamamlandı. 10:00 tetiklemesi tur 7 sürerken geldi ve `IgnoreNew` ile atıldı (ayrı log ve tur kaydı yok); `LastTaskResult = 2` tur 7'nin sonucudur. Bulgular Bölüm 7'ye sınır olarak, kararlar Bölüm 8'e işlendi. |
 | 7. Kapanış belgeleri | 🔜 Adım 9'dan sonra; kendi fiyat toplama altyapısı ve Cimri geçmiş aktarımının sonuçları birlikte belgelenir, veritabanı aşaması kapanır. |
 | 8. Tek piyasa geçmişi kaynağı araştırması (Adım 6'nın 2–3 günlük gözlemi sırasında) | ✅ Araştırma tamamlandı (29 Eylül): Cimri üç üründe doğru kimlikle 365'er nokta (30 Eylül 2025–29 Eylül 2026), 0 eksik fiyat ve her üründe 90/90 tablo eşleşmesi verdi. Akakçe ilk örneği HTTP 403 verdi; diğer ürünlerine istek atılmadı. `tests/manual/market_history_probe.py` ortak HTTP katmanı/kilit ve dört istek bütçesiyle yalnız yerel rapor üretir. Tarihsel satıcı kapsamı ve günlük gözlem sıklığı bilinmiyor. Araştırma tarihinde kullanım koşulları düzenli kopyalama/işleme için uygunluğu doğrulamadığından aktarım kaynağı seçilmedi; veritabanına veri yazılmadı. **30 Eylül kararıyla bir defalık Cimri aktarımı ayrı Adım 9 olarak planlandı**; araştırmanın tamamlanması aktarımın tamamlandığı anlamına gelmez. |
-| 9. Cimri geçmişinin bir defalık aktarımı | 🔜 Planlandı (30 Eylül); **Adım 4'ten sonra, Adım 7'den önce**. Katalogdaki telefonlar Cimri ürünleriyle doğrulanarak eşleştirilir; erişilebilen bir yıllık tarihli fiyat hareketi bir defa alınır ve aynı PostgreSQL veritabanında ayrı `market_history` tablosuna aktarılır. Ürün eşleşmesi, tarih, fiyat, kaynak ve alınma zamanı saklanır; tekrar aktarımın kayıt çoğaltmaması sağlanır. Eşleşmeyen ürünler ve eksik geçmiş raporlanır, veri uydurulmaz. Kullanım koşulu bulgusu ele alınır; tablo yeni numaralı migration ile kurulur. Kod ve ağsız/veritabanı testleri hazırlanır; canlı alım ve gerçek veritabanına yazma komutlarını kullanıcı çalıştırır. Amaç ML eğitimi için geçmiş hareketi saklamaktır; eğitim yöntemi bu adımın işi değildir. Düzenli Cimri toplaması yapılmaz; kendi tur sonuçlarıyla aynı seri gibi birleştirilmez. |
+| 9. Cimri geçmişinin bir defalık aktarımı | ⏳ **9.1 uygulama/canlı doğrulaması tamam, gönderim onaylandı (8 Ekim):** yerel alım aracı ve 57/59 adres hazır; katalog alımında 53 geçmiş kabul edildi, dört üründe yalnız 8 Ekim tablo/grafik fiyatı çelişti, iki eşleştirme açık. 19.345 noktada 18.792 fiyat ve 553 eksik değer var. Son test sonucu 1029 geçti/0 atlandı; ilk teklif dönüşümü uygulandı. Dört ürünün ikinci alımında aynı ham veri farkı sürdü; kullanıcı ekranda uyum gördü; bugünkü ilk teklif dönüşümü kaynakta doğrulandı, dar düzeltme kullanıcı onayıyla uygulandı; 57 kayıt yeni kodla ağsız doğrulandı, beş ürünün canlı teyidi tamam; commit/push onaylandı; CI sonucu GitHub Actions kaydından izlenir; 9.2/9.3 başlamadı. Genel kapsam (30 Eylül): **Adım 4'ten sonra, Adım 7'den önce**. Katalogdaki telefonlar Cimri ürünleriyle doğrulanarak eşleştirilir; erişilebilen bir yıllık tarihli fiyat hareketi bir defa alınır ve aynı PostgreSQL veritabanında ayrı `market_history` tablosuna aktarılır. Ürün eşleşmesi, tarih, fiyat, kaynak ve alınma zamanı saklanır; tekrar aktarımın kayıt çoğaltmaması sağlanır. Eşleşmeyen ürünler ve eksik geçmiş raporlanır, veri uydurulmaz. Kullanım koşulu bulgusu ele alınır; tablo yeni numaralı migration ile kurulur. Kod ve ağsız/veritabanı testleri hazırlanır; canlı alım ve gerçek veritabanına yazma komutlarını kullanıcı çalıştırır. Amaç ML eğitimi için geçmiş hareketi saklamaktır; eğitim yöntemi bu adımın işi değildir. Düzenli Cimri toplaması yapılmaz; kendi tur sonuçlarıyla aynı seri gibi birleştirilmez. |
 | 10. Haftalık keşif zamanlayıcısı (A1) | ✅ **Tamamlandı (5 Ekim).** Kod, test, belgeler ve görev kurulumu 1 Ekim'de hazırdı; canlı kanıt 4–5 Ekim'de geldi (satırın sonunda). Uygulananlar: ortak log yardımcıları `app/console.py`'ye taşındı (fiyat turunun davranışı ve testleri değişmedi); keşfe `--scheduled` (yalnız `--dry-run` ile; `data/logs/kesif_<ts>.log`, `data/discovery/kesif_<ts>.json`, nedene göre sayılmış tek satırlık özet) ve `--apply-report <rapor>` (siteye gitmez; eklenecekler önizlemedeki listenin alt kümesi olmalı, aksi hâlde hiçbir şey yazılmaz; aynı rapor ikinci kez uygulanırsa bir şey eklenmez) eklendi; `DiscoveryReport.generated_at` ve `DISCOVERY_REPORT_DIR` eklendi; `scripts/kesif_zamanlayici_kur.ps1` görevi `\FiyatTakip\HaftalikKesif` olarak kurar (Pazar 14:00, kaçan çalışmayı telafi etmez, uyandırmaz, 2 saat sınırı; betiği kullanıcı 1 Ekim'de çalıştırdı). Testler 426 → 450 (24 yeni, hepsi ağsız ve veritabanısız); projenin kopyasında 14 kasıtlı bozmanın 14'ü testlerce yakalandı. **Canlı kanıt (1 Ekim, kullanıcı):** `--scheduled --dry-run --target apple_iphone_15` (~79 sn): çıkış 2, log ve rapor aynı damgalı, sabit `data/discovery_report.json` ezilmedi, katalog değişmedi, rapor sözleşmeye uyuyor (Trendyol 5 aday `count_mismatch`, Hepsiburada 15 aday `search_api`, 0 yeni, 20 zaten kayıtlı). Görev kuruldu ve kayıtlı ayarlar salt okunur doğrulandı: haftalık Pazar 14:00 (yerel), `StartWhenAvailable=False`, `WakeToRun=False`, `IgnoreNew`, 2 saat sınırı, `pythonw -m app.discovery --scheduled --dry-run`, çalışma klasörü proje klasörü; fiyat görevi değişmedi (2 tetikleyici, sonraki çalışma 22:00); sonraki keşif 4 Ekim 14:00. **Canlı kanıt (4–5 Ekim):** İlk zamanlanmış çalışma 4 Ekim 14:00:03'te kendiliğinden başladı (`pythonw`, Görev Zamanlayıcı): aynı damgalı log ve rapor yazıldı, loga `Çıkış kodu: 2` düştü; ama internet kesildiği için tarama 7 dk'da boş bitti (DNS hatası: Trendyol 21, Hepsiburada 21 hedef; tam sonuç 3/48, yeni sayfa 0; Bölüm 7). Bu çalışma altyapıyı doğruladı, içeriği doğrulamadı. **5 Ekim 11:00'de kullanıcı aynı komutu elle çalıştırdı** (`--scheduled --dry-run`, normal `python`; tur 13 bitmişti, kilit boştu): 34 dk (11:00:14–11:34:09), DNS hatası yok, tam sonuç 23/48 (Trendyol 23/24; Hepsiburada 24/24 kısmi: arama API'si 403, 16 `model_filter_missing`, 2 `html_partial`), çıkış 2, rapor 305 KB, 0 yeni ürün, **7 yeni sayfa** (iPhone 17 Pro Max 2 TB için 3 Hepsiburada; Galaxy S24 FE 256 GB, Xiaomi 14T Pro 256 GB ve Redmi Note 14 Pro 512 GB için 1'er Trendyol; Redmi Note 13 Pro 5G 256 GB için 1 Hepsiburada), 146 reddedilen (başka hedefin modeli, aksesuar, bilinen yurt dışı sürüm), 37 görülmeyen (korunur), 0 çakışma. Kullanıcı `python -m app.discovery --apply-report data\discovery\kesif_2026-10-05_11-00-14.json` çalıştırdı: 7 sayfa eklendi, 289 zaten kayıtlıydı; `config/catalog.json` +56 satır (LF), eklenen `product_id`'ler (29, 40, 47, 51, 55) veritabanından okunarak doğru ürünlere ait çıktı; katalog **59 ürün, 334 bağlantı**. Sonraki fiyat turu (5 Ekim 22:00) yeni sayfaları veritabanına ekler. **Sınırlar:** tam tarama Görev Zamanlayıcı altında henüz görülmedi (ilk fırsat Pazar 11 Ekim 14:00); Redmi Note 14 Pro 512 GB (Trendyol, `trendyol_1208111572`) sayfasının 4G olduğu ekleme sonrası kullanıcı tarafından tarayıcıda doğrulandı (5 Ekim; ürün sayfasında 4G yazıyor; ağ türü raporda görünmediği için eklemeden önce görülemedi); keşif logu ilerleme satırı yazmaz, yalnız 4 satır (başlık, özet, rapor yolu, çıkış kodu) bırakır. |
 | 11. Tur sonunda `network` ikinci geçişi | ✅ **Tamamlandı (6 Ekim):** 1 Ekim kararı (Bölüm 8) uygulandı; migration gerekmedi (Adım 4'teki 002 tetikleyicisi çalışan turdaki `network` satırının yeniden yazılmasına zaten izin veriyordu). `app/collection/service.py` `retry_network_errors`: sayfa döngüsü bittikten sonra, tur kapatılmadan önce yalnız o turda `error`/`network` sonuçlu sayfalar (5xx dahil) bir kez yeniden okunur; yeni `app/database/runs.py` `rewrite_network_result` yalnız süren turun `error`/`network` satırını yazar (`record_result` ile ortak `_write_result`). **Davranış (kullanıcı kararları, 6 Ekim):** düzelirse satır yeni sonuçla değişir (fiyat, Tükendi ya da `network` dışında bir hata); ikinci okuma da `network` verirse ilk satır (mesaj ve zaman damgası dahil) olduğu gibi kalır; veritabanı yeni sonucu reddederse ilk satır kalır ve tur sürer; ardışık 5 sayfa yine `network` verirse geçiş durur (kalanlar denenmez); `blocked`, `parse`, `identity` ve diğer hatalar hiç yeniden denenmez; log `[tekrar i/n]` satırları taşır; tur notuna yalnız sayılar yazılır (`network hatası alan 109 sayfa, ikinci okuma: 104 düzeldi, 5 hâlâ hatalı`), sayfa kimlikleri logdadır; çıkış kodu ve özet ikinci okumadan sonraki duruma göre hesaplanır; düzelen sayfa cevap sayıldığı için görünümde sahte "karşılaştırılamaz" satırı oluşmaz. **Kanıt:** testler 527 → 545 (+18, hepsi gerçek PostgreSQL'de: 182 → 200), 0 atlandı, Black ve Flake8 temiz; akış testleri eski kodda başarısızdı (9 akış testi kırmızı; 7 "yalnız `network` yeniden okunur" koruması ve 2 `rewrite_network_result` birim testi eski kodda da geçer, çünkü işlev yeni); projenin kopyasında 20 kasıtlı bozmanın 20'si testlerce yakalandı. **Sınırlar:** gerçek bir turda henüz görülmedi (`network` hatası olmayan turlarda ikinci okuma çalışmaz); bilgisayar uyursa ya da kesinti tur bitene kadar sürerse sayfalar hatalı kalır (kalıcı çözüm sunucu, Aşama 9); düzelen sayfanın `checked_at` değeri ikinci okuma anıdır (ilk denemeden en çok tur süresi kadar sonra). Ayrıntı: docs/teknik.md "Tur sonu ikinci okuma". |
+
+**Adım 9 onaylanan alt adımlar (7 Ekim kullanıcı kararı):**
+
+9.1 yerel doğrulaması (8 Ekim): 197 yeni ağsız sınama; son tam paket **1029 passed**, 0 atlandı/xfail (228 PostgreSQL yalnız fiyat_takip_test). Black/Flake8 temiz. İlk üç yeni kaynak doğrulandı; Xiaomi’nin dört sıfırı kullanıcı kararıyla eksik değer olarak okunuyor. Mevcut app/config/scripts dosyaları ve 001–003 migration değişmedi; yeni app/market_history ve 57 adresli eşleştirme eklendi. Katalog alımı kontrol edildi: 53 kabul edilmiş geçmiş, dört fiyat uyuşmazlığı, iki açık eşleştirme. İkinci alımda ham veri farkı sürdü; kullanıcı ekranda uyum gördü. Null önerisi geri çekildi; bugünkü ilk teklif dönüşümü kaynakta doğrulandı, dar düzeltme kullanıcı onayıyla uygulandı; 57 kayıt yeni kodla ağsız doğrulandı, beş ürünün canlı teyidi tamam; commit/push onaylandı; CI sonucu GitHub Actions kaydından izlenir. 9.1 uygulama ve canlı doğrulaması tamam; commit/push onaylandı; CI sonucu GitHub Actions kaydından izlenir. Adım 9 henüz tamamlanmadı.
+
+| Alt adım | Durum / durma noktası |
+|---|---|
+| 9.1 Eşleştirme ve yerel alım | ✅ Uygulama ve canlı doğrulama tamam; gönderim onaylı. Ortak HTTP/kilit ile `python -m app.market_history capture` hazır; yeni klasöre HTML, API JSON'u, SHA-256 ve UTC zamanlı rapor kaydeder. Fiyat kuruş, eksik değer null; engelde kalan istekler durur. Mevcut araştırma aracı ortak Cimri ayrıştırıcısını kullanır, TL rapor sözleşmesi korunur. İlk üç araştırılmış adres ve yeni yanıt doğrulaması hazır; Xiaomi’nin 2–5 Ekim grafik sıfırları eksik değer olarak okunuyor, 86 tablo satırı eşleşiyor. İlk rapor ve ham dosyalar değiştirilmedi. 57/59 ana adres araştırıldı; Galaxy S25 512 GB ve Redmi Note 14 Pro 5G 256 GB açık. 57 ürünün ham yanıtı alındı: 53 geçmiş kabul edildi, dört üründe yalnız 8 Ekim fiyatı tablo/grafik arasında farklı. Dört ürünün ikinci alımında aynı ham veri farkı sürdü; kullanıcı ekranda uyum gördü. Null önerisi geri çekildi; bugünkü ilk teklif dönüşümü kaynakta doğrulandı, dar düzeltme kullanıcı onayıyla uygulandı; 57 kayıt yeni kodla ağsız doğrulandı, beş ürünün canlı teyidi tamam; commit/push onaylandı; CI sonucu GitHub Actions kaydından izlenir. 9.1 uygulama ve canlı doğrulaması tamam; gönderim onayı verildi, aynı SHA CI doğrulaması gönderim akışının parçasıdır. |
+| 9.2 Veritabanı aktarımı | 🔜 004, ayrı ağsız `import`/`--dry-run`, ürün bazında transaction ve tekrar/çelişki koruması. İlk kayıt korunur, farklı fiyat/kimlikte o ürün yazılmaz. 004 ana klasöre alınması ve kullanıcı migrate/status işlemi tur saatleri dışında birlikte yapılır; bekleyen migration'ın turu engellemesi önlenir. Başlanmadı. |
+| 9.3 Katalog kapsamı ve kapanış | 🔜 Kullanıcı bir defalık alım/önizleme/aktarım yapar; kabul edilen kayıtlar ve eksikler bağımsız okumayla doğrulanır. Sonuçlar belgelenip Adım 9 kapatılır. Başlanmadı. |
+
+Alt adımlarda testler/biçim denetimleri ve sonuç değerlendirmesi sonrası dosya
+listesi ile Türkçe commit mesajı gösterilir; ayrı onayla commit/push, aynı SHA
+CI kontrolü yapılır. Düzenli Cimri toplaması, ML eğitimi ve API/UI bu adımın
+işi değildir; kaynak serileri birleştirilmez. 29 Eylül raporları ilk aktarıma
+otomatik alınmaz; erişilemeyen veya eksik yeni geçmiş olduğu gibi raporlanır.
 
 Adım 8 canlı sonuçlar (29 Eylül 2026): Akakçe iPhone 16 128 GB sayfası 1
 istekte HTTP 403 `blocked`; Cimri'nin üç örneğinde kimlik eşleşti ve HTML
@@ -1037,7 +1264,7 @@ kaynağı araştırma tarihinde seçilmedi. 30 Eylül'de Cimri'nin bir defalık
 aktarımı Adım 9'a alındı (Bölüm 8). Akakçe 403 için tekrar veya engel aşma
 yapılmaz.
 
-Takvim (tahmin, 7 Ekim güncellemesi; Adım 9 ve 11'in süresi henüz belirlenmedi):
+Takvim (8 Ekim güncellemesi; Adım 9 bitiş tarihi canlı sonuçlardan sonra belirlenecek; Adım 11 tamamlandı):
 
 | Tarih | İş |
 |---|---|
@@ -1058,6 +1285,7 @@ Takvim (tahmin, 7 Ekim güncellemesi; Adım 9 ve 11'in süresi henüz belirlenme
 | 7 Ekim | Bakım 5 önleyici düzeltmesi ayrı kullanıcı istisnasıyla uygulandı: beş tüketici ortak ürün yolu kimliği kullanıyor. Sorunlu TY ucuz teklifi ve HB sorgu SKU'su reddediliyor. 334 katalog/333 farklı aday kimliği korundu; gerçek DB/katalog/migration değişmedi. 39 yeni sınama; 797 passed/0 atlandı/xfail (219 PostgreSQL), Black/Flake8 temiz. Kullanıcı commit/push işlemini onayladı; bakım 6'ya geçilmedi |
 | 7 Ekim | Bakım 6 kontrolü ve mesaj düzeltmesi tamamlandı: kapanış sonrası SQL hatası/bağlantı kapanması/Ctrl+C'de completed tur, bütün kayıtlar, kilitler ve sonraki tur korundu. Yalnız Ctrl+C mesajı değişti, çıkışlar 1/130 aynı. 7 yeni sınama; 804 passed/0 atlandı/xfail (226 PostgreSQL), Black/Flake8 temiz. Kullanıcı onayıyla ea4248e push/aynı SHA için CI 37625155724 yeşil |
 | 7 Ekim | Bakım 7 kontrol/kalıcı test planı uygulandı: yükleyicilerin farklı sözleşmeleri kabul edildi; hata/Ctrl+C, kayıt/dosya koruması, log, kapanış, kilitler ve sonraki normal çalışma doğrulandı. Üretim kodu değişmedi. 28 yeni sınama; 832 passed/0 atlandı/xfail (228 PostgreSQL), Black/Flake8 temiz. Yedi bakım maddesi tamamlandı; kullanıcı bakım 7'nin commit/push işlemini onayladı, yeni özelliklere geçilmedi |
+| 7–8 Ekim | **Adım 9.1 uygulama/canlı doğrulaması tamam, gönderim onaylandı:** yerel alım aracı ve 57/59 ana adres hazır; ilk üç yeni kaynak kontrol edildi. Kullanıcının 8 Ekim kararıyla grafik sıfırları tabloda fiyat yoksa eksik okunuyor; 1029 test geçti/0 atlandı; ilk teklife dayanan güncel fiyat dönüşümü de doğrulandı. Galaxy S25 512 GB ve Redmi Note 14 Pro 5G 256 GB eşleştirmeleri açık. 10:49–10:58 katalog alımı: 53 geçmiş kabul, dört fiyat uyuşmazlığı; 11:12–11:13 dört ürün tekrarı da aynı sonucu verdi; kullanıcı ekranda uyum gördü, null önerisi geri çekildi; grafik kaynağındaki bugünkü ilk teklif dönüşümü doğrulandı, dar düzeltme kullanıcı onayıyla uygulandı; 57 kayıt yeni kodla ağsız doğrulandı, beş ürünün canlı teyidi tamam; commit/push onaylandı; CI sonucu GitHub Actions kaydından izlenir. 9.2 ve 004 başlamadı |
 | Adım 11 sonrası | **Adım 9:** Cimri geçmişinin bir defalık alımı, katalog eşleştirmesi ve ayrı `market_history` tablosuna aktarım |
 | Adım 9 sonrası | **Adım 7:** kapanış belgeleri; veritabanı aşaması biter. Önceki 2–3 Ekim kapanış tahmini yeni adımlara göre yeniden değerlendirilecek |
 

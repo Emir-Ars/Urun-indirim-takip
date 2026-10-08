@@ -29,6 +29,7 @@ geçmişi. Kararların ve aşama durumunun ana kaynağı
 | `discovery.json` | Takip edilecek telefonlar ve tarama sınırları | Kullanıcı |
 | `catalog.json` | Keşfin doğruladığı ürünler ve sayfalar | Keşif (elle yazılmaz) |
 | `runtime.json` | Zaman aşımı, tekrar deneme, istekler arası bekleme (3 sn) | Kullanıcı, nadiren |
+| `market_history.json` | Bir defalık Cimri alımı: `product_key`, URL ve beklenen Cimri kimliği. 59 ürünün 57 ana adresi araştırıldı; iki eşleştirme açık. Katalog alımında 53 geçmiş kabul edildi, dört ürünün tablo/grafik fiyatı çelişti. | Araştırma ve gerçek çıktı kontrolüyle |
 
 ### Ortak parçalar: `app/`
 
@@ -36,8 +37,16 @@ geçmişi. Kararların ve aşama durumunun ana kaynağı
 |---|---|
 | `contracts.py` | Verinin şekilleri ve doğrulaması (Pydantic V2 strict): `Product`, `Listing`, `Catalog`, `PriceObservation`, keşif hedefleri ve raporu. Hatalı veri içeri giremez (ör. fiyat alanına "Tükendi"). Yalnızca biten aşamanın kullandığı tanımları içerir. |
 | `settings.py` | Ayar dosyalarını okur. `CATALOG_PATH`, `DISCOVERY_PATH`, `RUNTIME_PATH`, `SCRAPE_LOCK_PATH`, `LOG_DIR`, `DISCOVERY_REPORT_DIR` ortam değişkenleriyle başka dosya veya klasör gösterilebilir. |
-| `scrape_lock.py` | Siteye giden bütün girişlerin paylaştığı kilit (`data/scrape.lock`). Fiyat turu, keşif ve üç canlı kontrol aracı (`live_scraper_check`, `live_discovery_check`, `market_history_probe`) alır; biri sürerken diğeri beklemeden "sürüyor" deyip çıkar. Süreç çökse bile işletim sistemi kilidi bırakır. |
+| `scrape_lock.py` | Siteye giden bütün girişlerin paylaştığı kilit (`data/scrape.lock`). Fiyat turu, keşif, Cimri yerel alımı ve üç canlı kontrol aracı (`live_scraper_check`, `live_discovery_check`, `market_history_probe`) alır; biri sürerken diğeri beklemeden "sürüyor" deyip çıkar. Süreç çökse bile işletim sistemi kilidi bırakır. |
 | `console.py` | Komut satırı araçlarının ortak çıktı yardımcıları: UTF-8 çıktı (`utf8_output`; fiyat turu, keşif, `app.database` ve canlı kontrol araçları kullanır), `<ön ek>_<tarih-saat>.log` dosyası açma ve stdout/stderr'i log dosyasına da yazan `tee_output` (yalnız zamanlanmış tur ve keşif). pythonw.exe altında ekran akışları yoktur (`None`); hepsi buna dayanır. |
+
+### Cimri geçmişi: `app/market_history/`
+
+| Dosya | Ne işe yarar |
+|---|---|
+| `cimri.py` | Gömülü ürün ve grafik yanıtını ağsız okur; marka/model/kapasite, kategori ve kimlik doğrulaması yapar. Adım 8 araştırma aracı da aynı grafik ayrıştırıcısını kullanır; araştırmanın TL çıktısı korunur. Yeni alım ayrıca fiyatı mevcut `money` ile kuruşa doğrular. |
+| `capture.py` | Eşleştirmeleri doğrular; seçilen ürünlerin HTML ve API JSON yanıtlarını yeni klasöre, parmak izlerini ve sonucu rapora yazar. Veritabanına bağlanmaz. |
+| `__main__.py` | `capture` komutunun girişidir; ortak kilidi alır, Türkçe sonucu basar, çıkış kodlarını yönetir. Aktarım komutu henüz yoktur. |
 
 ### Fiyat okuma: `app/scraper/`
 
@@ -103,6 +112,8 @@ geçmişi. Kararların ve aşama durumunun ana kaynağı
 | `tests/test_comparability.py` | `product_run_prices` görünümü: aynı sayfa kümesi, hata (girerken ve çıkarken), yeni sayfa, Tükendi, cevapsız ürün, ürünlerin ayrı karşılaştırılması, `--prefix` turu, süren ve yarıda kalan turların dışarıda kalması, uzun boşluk (14 test, hepsi gerçek PostgreSQL'de). |
 | `tests/test_url_identity.py` | Ortak ürün adresi kimliği (28 ağsız test): ürün yolu, sorgu, son eğik çizgi, küçük harfli SKU, eksik/bozuk kimlik ve bütün tüketicilerin aynı kimliği okuması. |
 | `tests/test_market_history_probe.py` | Piyasa geçmişi araştırmasında aday tablo satırları, ürün kimliği, sentetik 365 günlük grafik yanıtı, eksik/bozuk fiyat ve tablo uyuşmazlığı (12 ağsız test). Gerçek fiyat dizileri Git dışındaki yerel raporlardadır. |
+| `tests/test_market_history.py` | Yerel Cimri alımı (197 ağsız test): seçilmiş gerçek başlık/fiyat örnekleri, marka/model/kapasite/kategori/kimlik, tarih/fiyat/eksik veri, sıfır fiyatın eksik değer olarak okunması ve eski araştırma davranışının korunması, ham kanıt ve parmak izi, dört istek bütçesi, engelde durma, Ctrl+C, disk/klasör hatası, komut çıktıları ve kilit. |
+| `tests/fixtures/cimri_recorded_samples.json` | 29 Eylül raporlarından üç başlık ve üçer fiyat noktası; kayıtlı Xiaomi HTML'sinden küçük ürün kimliği bölümü. 8 Ekim gerçek Xiaomi yanıtından son sekiz grafik değeri ve bunlarla kesişen dört tablo satırı. Tam fiyat serisi veya tam ham yanıt değildir; testlerin API zarfları yeniden kurulur. |
 | `tests/test_live_discovery_check.py` | Ham keşif kanıtı kaydı (13 ağsız test): HTML/JSON baytları, istek bütçesi ve tekrarlar, bozuk JSON'un korunması, tek hedef/yeni klasör zorunluluğu, kilit ve disk hatası, platformların ayrı kaydı ve eski komut çıktısının korunması. Dosyalar normal veya ters sırada listelense de kayıt denetimi aynıdır. |
 | `tests/fixtures/discovery/` | Testlerin kullandığı örnek site yanıtları ve kataloğun sabit bir kopyası (`catalog.json`); testler gerçek kataloğa bağlı değildir. `phone_identity_examples.json`, kullanıcının 6 Ekim iPhone 15 kontrolündeki 21 sayfanın özgün adlarını, doğrulanan kapasitesini ve kaynak dosya bilgisini taşır; testler Git dışındaki ham dosyalara ihtiyaç duymaz. |
 | `tests/manual/live_scraper_check.py` | Katalogdaki sayfaları canlı okur; bütün satıcıları gösterir. İsteğe bağlı `product_key` ön eki (ör. `samsung_`) ile yalnız o ürünler; sayfa seçimi toplama turuyla aynı fonksiyondur. Başka bir tarama sürüyorsa (ortak kilit) çıkış kodu 3'tür. |
@@ -223,6 +234,308 @@ tablodaki 90/90 fiyat eşleşmesini verdi. Bu teknik doğrulama, fiyatların her
 gün bağımsız ölçüldüğünü veya tarihsel satıcı kapsamını kanıtlamaz. Resmî
 koşullardaki kopyalama/işleme kısıtları nedeniyle Cimri verisinin düzenli
 indirilmesi ve veritabanına alınması bu araştırma sonunda başlatılmadı.
+
+### Cimri geçmişinin yerel alımı (Adım 9.1)
+
+Yerel doğrulama (8 Ekim): 197 yeni ağsız test; son tam paket **1029 geçti, 0 atlandı/xfail**, 54,20 sn. 228 PostgreSQL testi yalnız fiyat_takip_test üzerinde; Black ve Flake8 temiz. Sıfır fiyat düzeltmesi için eklenen 12 testin altısı eski kodda başarısızdı; altı koruma testi eski kodda da geçti. İlk teklif dönüşümü için eklenen 100 testin beş ana regresyonu eski kodda başarısız gösterildi.
+
+Canlı kontrol (8 Ekim 09:24–09:25, kullanıcı çalıştırdı):
+`data/market_history/pilot_20261008_092438_295/report.json` çıkış 2 / kısmi
+sonuç. Üç ürünün sayfa ve grafik kimliği doğrulandı; altı kaynak dosyasının
+SHA-256 parmak izi raporla aynı. iPhone 16 128 GB ve Galaxy S24 256 GB için
+365'er nokta (2025-10-09–2026-10-08), eksik fiyat 0 ve 90'ar tablo eşleşmesi
+var. Kaydedilmiş tarihler ve kuruş fiyatları bağımsız hesapla da karşılaştırıldı.
+Xiaomi 14T Pro 256 GB grafiği 2–5 Ekim için dört sayısal `0` içeriyor;
+bu tarihler HTML fiyat tablosunda yok. Diğer 361 fiyat pozitif ve mevcut
+86 tablo satırı grafikle aynı. Mevcut pozitif fiyat kuralı ürünü `parse`
+hatasıyla reddetti; ham HTML/JSON korundu, kabul edilmiş `history` yazılmadı.
+Kullanıcı, bu grafik sıfırlarının eksik değer olarak ele alınmasını seçti.
+Dar düzeltme uygulandı: aynı tarihte tabloda fiyat yoksa sayısal grafik `0`
+ve `0.0`, `null` olur; tabloda fiyat varsa uyuşmazlık reddedilir. Bu, kaynak
+yanıtına ilişkin kabul edilen yorumdur; fiyatın gerçekten sıfır olduğu veya
+eksikliğin nedeninin bilindiği söylenmez. Negatif, boolean, metin ve bozuk
+fiyatlar hata olmaya devam eder. Eski araştırma aracının TL ayrıştırıcısı
+varsayılan olarak sıfırı reddeder; bu değişiklik yeni kuruş alımına özeldir.
+Kaydedilmiş üç kaynak yeniden ağsız doğrulandı: toplam 1.095 nokta,
+dört eksik gün, 266 tablo eşleşmesi; iPhone/Samsung geçmişi aynen korundu.
+İlk `report.json` hâlâ ilk alımın kısmi sonucu ve Xiaomi `parse` hatasını
+taşır; rapor veya ham yanıtlar üzerine yazılmadı. Gerçek veritabanına yazılmadı.
+
+**Katalog alımı (8 Ekim 10:49:37–10:58:07, kullanıcı):**
+`data/market_history/katalog_20261008_104936_277/report.json`, çıkış 2.
+59 ürün: 53 `captured`, dört `error`, iki `unmapped`; denenmeden kalan yok.
+57 ürünün her birinde üç HTTP denemesi, toplam 171; HTTP engeli veya kimlik
+hatası yok. 114 ham dosyanın SHA-256 değeri raporla aynı; bütün sayfa ve API
+kimlikleri yeniden doğrulandı. 53 kabul edilmiş geçmiş ortak ayrıştırıcıyla
+yeniden okundu; tarihler ve kuruşlar ayrıca bağımsız hesapla raporla aynı çıktı.
+Her birinde 365 nokta (2025-10-09–2026-10-08): toplam 19.345 nokta,
+18.792 pozitif fiyat, 553 eksik değer. Eksikler 14 üründeki sayısal grafik
+sıfırlarıdır; kaynak null değeri yok. Mevcut 4.413 tablo satırı grafikle aynı.
+Eksiklerin nedenine veya ayrı günlük gözlem sıklığına ilişkin çıkarım yapılmadı.
+
+Dört reddin tüm ortak tarihleri ayrıca karşılaştırıldı; her üründe yalnız
+2026-10-08 farklı, diğer 89 tablo satırı aynı. Her iki fiyat da pozitiftir:
+
+| Ürün | HTML günlük dizisi (TL) | Ham API (TL) |
+|---|---:|---:|
+| iPhone 16 Pro Max 512 GB | 159.000,00 | 114.999,00 |
+| Galaxy S24 256 GB | 44.719,29 | 44.160,00 |
+| Galaxy S24 Ultra 512 GB | 73.304,00 | 73.920,00 |
+| Redmi Note 13 Pro 4G 512 GB | 24.910,01 | 21.999,00 |
+
+Bu, kaydedilmiş iki kaynak yanıtının uyuşmazlığıdır; eşzamanlı güncellenmeme
+gibi bir neden kanıtlanmadı. Mevcut ret kuralı doğru çalıştı; kaynak seçimi,
+fiyat düzeltmesi veya bugünü atlama kuralı eklenmedi. Dört ürünün ham kanıtı
+korundu, kabul edilmiş geçmiş yazılmadı. Kullanıcı yalnız bu dört ürünü
+11:12–11:13'te yeniden aldı; sonuç aşağıdadır. Kod değişmedi; son tam test sonucu 929 geçti /
+0 atlandı olarak geçerli, bu oturumda tam testler yeniden çalıştırılmadı.
+
+**Tekrar kontrolü (8 Ekim 11:12:45–11:13:18):**
+`data/market_history/tekrar_20261008_111245_044/report.json`, dört `error`,
+ürün başına üç HTTP denemesi (12 toplam), çıkış 2. Yeni sekiz kaynak dosyası
+ve ilk alımdaki sekiz dosya rapor parmak izleriyle eşleşti; kimlikler aynı.
+Dört API JSON dosyası önceki alımla bayt düzeyinde aynı. HTML dosyaları
+farklı olmakla birlikte ürün kimlikleri ve 90'ar tablo fiyatı aynı kaldı.
+365'er grafik fiyatı pozitif ve kuruşa çevrilebilir; her üründe 89 tablo
+satırı eşleşiyor, yalnız 8 Ekim'de yukarıdaki fark sürüyor. Bu gözlem,
+uyuşmazlığın nedenini veya hangi fiyatın doğru olduğunu kanıtlamaz.
+
+**Kullanıcının tarayıcı kontrolü ve açıklama düzeltmesi (8 Ekim):** Kullanıcı
+Cimri ekranında grafik/tablonun eşleştiğini bildirdi: Galaxy S24 Ultra 512 GB
+73.920 TL, diğer üç ürün önceki tablonun değerleri. Agent daha önce ham API
+fiyatını ekrandaki grafik fiyatı gibi adlandırdı; bu eşitlik doğrulanmamıştı.
+Kanıtlanan fark, 10:49/11:12 kayıtlarındaki HTML `priceHistoryTablePrices`
+ile ayrı `priceHistoryV2` yanıtı arasındadır. Bu, kullanıcının ekranda gördüğü
+iki görünümün çeliştiği anlamına gelmez. Aynı tarih sorusu kullanıcıya iletildi;
+henüz cevabı yok. Tarayıcıdaki değerlerle kayıt zamanları farklıdır.
+
+Dört kayıtlı HTML'de bugünkü `priceHistoryTablePrices[0].minPrice`, aynı
+sayfanın `cheapestOfferPrice` ve en ucuz teklif fiyatına eşit. Görünen HTML
+fiyat tablosu değişim satırlarını gösteriyor: S24 için son satır 7 Ekim,
+S24 Ultra için 5 Ekim; gömülü günlük dizide 8 Ekim de var. Ekranda çizilen
+JavaScript grafiğinin ham API'ye uyguladığı dönüşüm bu ilk incelemede henüz
+doğrulanmamıştı; 13:12 kaynak incelemesinin sonucu aşağıdadır.
+Bu nedenle alım gününü null yapma önerisi **geri çekildi**, uygulanmadı;
+mevcut 53 kabul/dört ret/iki eşleştirme açığı ve tam eşleşme kuralı korunur.
+
+Kayıtlı HTML'de görülen `product/bce3a2248321f85510c5.js` ve
+`_common/eeecfda457fa39ee389d.js` dosyalarına web aracı erişemedi.
+Yerel `.scratch/cimri_frontend_check.py`, kullanıcının bu iki kaynak dosyasını
+ortak PageClient/kilit, dört deneme bütçesi ve 8 MB sınırıyla yeni
+`data/market_history/frontend_<tarih_saat>/` klasörüne kaydetmesi için
+hazırlandı. Dosyalar çalıştırılmaz; index.json adres, SHA-256, UTC ve istek
+sayısı tutar. Üretim kodu/HTTP davranışı değiştirilmedi; geçici yardımcının
+iki dosya kaydı ve istemci kapanışı sahte istemciyle ağsız kontrol edildi.
+
+**13:04 kaynak incelemesi:** Kullanıcı iki betiği
+`data/market_history/frontend_20261008_130454_461756/` klasörüne aldı;
+iki HTTP isteği, çıkış 0. `product.js` (258.181 bayt) ve `common.js`
+(28.174 bayt) parmak izleri doğrulandı. `priceHistoryWrapper`;
+`product`, `priceHistoryTablePrices` ve `priceHistoryDrawable` alıyor,
+ancak işleyişi ayrı 27401 modülünde. Yükleyici 1657 ve 7401 dosyalarını
+çağırıyor. Adresleri aynı dosyanın yükleme tablosunda doğrulandı:
+
+- `static/js/7401/934c195f03086024455d.js`
+- `static/js/1657/5db3b03440f8a65c81e7.js`
+
+İkisinin taban adresi `https://assets.cimri.com/assets/turbo-desktop/octopus/`.
+Web aracı bu dosyaları açamadı; yerel yardımcı yalnız bu iki ek betiği almak
+üzere güncellendi. Doğru adresler, iki kayıt/parmak izi, rapor ve istemci
+kapanışı sahte yanıtlarla ağsız doğrulandı. Bu aşamada gerçek grafik modülü
+henüz alınmamıştı; ardından kullanıcı aşağıdaki alımı yaptı.
+
+**13:12 grafik modülü incelemesi:**
+`data/market_history/frontend_20261008_131242_210133/index.json` iki HTTP
+isteği ve çıkış 0 içeriyor. `chart_7401.js` (34.598 bayt) ve `chart_1657.js`
+(433.858 bayt) parmak izleri doğrulandı. Dosyalar çalıştırılmadan metin
+olarak incelendi. 7401 dosyasının 27401 modülünde şu davranış görüldü:
+
+- İlk ekran durumu HTML'deki `priceHistoryTablePrices` dizisidir.
+- Grafik bölümü açılınca `priceHistoryV2Query` aynı ürün kimliğiyle çağrılır.
+- `product.offers[0]` varsa API `prices[0]` yerine bu teklifin `price` değeri
+  konur; kalan API fiyatları değişmez. Teklif yoksa API dizisi korunur.
+- `product.js`, `__OCTOPUS_DATA__` içeriğini `window.__NEXT_DATA__` olarak
+  atar; dolayısıyla ilk teklif kayıtlı HTML'den okunabilir.
+- Grafik tarihleri tarayıcının o gününden geriye sayılır; bu bileşen API'nin
+  `lastDay` alanını kullanmaz. Sıfır fiyat çizimde boş değer yapılır.
+- Tablo görünümü HTML dizisini kullanmayı sürdürür; `diff` sıfır olan
+  değişimsiz satırlar (son satır hariç) görünmez.
+
+Kaynak dosyaları ve üretim ayrıştırıcısı değiştirilmeden, Python belleğinde
+yalnız ilk fiyat dönüşümü denendi. 57 kayıtlı katalog ürünü için API
+`lastDay` ve UTC alınma zamanının İstanbul tarihi 8 Ekim olarak eşleşti.
+57 ürün mevcut tablo kontrolünden geçti: 20.805 nokta, 20.252 pozitif fiyat,
+553 eksik değer, 4.773 ortak tablo satırı. Tekrarlanan dört ürün de 360
+tablo satırında eşleşti; ilk üç pilotta sonuç değişmedi.
+
+Önceden kabul edilen 53 üründen 52'sinin bütün çıktısı aynı kaldı.
+S24 Ultra 1 TB'de yalnız 8 Ekim fiyatı 85.680 TL'den 86.220 TL'ye değişti;
+bu ürünün HTML tablosu 7 Ekim'de bittiğinden mevcut kontrol bugünkü fiyatı
+karşılaştırmamıştı. Bu yeni değer de aynı ilk teklif kuralından gelir.
+S24 Ultra 512 GB için kayıt zamanındaki ilk teklif/tablo 73.304 TL'dir;
+kullanıcının daha sonra gördüğü 73.920 TL'nin hangi andaki yanıttan geldiği
+bu kayıtlarla kanıtlanmaz. Kaynakta gözlenen dönüşüm, iki görünümün aynı
+olabilmesini açıklar; kaydedilmemiş tarayıcı oturumunun fiyatını kanıtlamaz.
+
+Araştırma izi aynı klasörde `offline_analysis.json`; bu bir kabul/aktarım
+raporu değildir. **Kullanıcı “uygula” onayıyla üretim düzeltmesi tamamlandı.**
+`verified_page` doğrulanmış ürünün ilk teklif fiyatını da okur. İlk teklif
+yoksa mevcut API fiyatları korunur; bozuk teklif geçerli fiyat sayılmaz.
+`history_in_kurus`, bütün ham API fiyatlarını önce doğrular; ardından yalnız
+son noktada geçerli ilk teklif fiyatını kullanır ve bütün ortak tablo günlerini
+yeniden birebir karşılaştırır. Diğer günler, sıfır/eksik değer ve eski TL
+araştırma sözleşmesi korunur. Bugünün ham API fiyatı sıfır/null ise ilk
+teklifle doldurulmaz; doğrulanmamış bu birleşim `parse` olarak kalır.
+
+Alım, HTML isteğinden önce `page_started_at_utc`, API yanıtından sonra
+`captured_at_utc` kaydeder. İlk teklif kullanılacaksa iki zaman UTC, sıralı ve
+İstanbul'da aynı gün olmalı; API `lastDay` bu güne eşit olmalıdır. Gün sınırı
+veya eski API günü `parse` üretir; tarih dizisi yine `lastDay` üzerinden
+kurulur. Ağsız yeniden doğrulama bilgisayarın o gününü kullanmaz.
+İstanbul tarihi `ZoneInfo` ile hesaplanır; Windows'ta da saat dilimi verisinin
+bulunması için zaten ortamda kurulu `tzdata` açık bağımlılık yapıldı
+([Python belgeleri](https://docs.python.org/3/library/zoneinfo.html#data-sources)).
+
+`history.summary.latest_price` alanında `day`, `rule` (`page_first_offer`
+veya `api`), `api_price_kurus`, `first_offer_price_kurus`,
+`effective_price_kurus`, `changed`, `table_comparison` kaydedilir.
+Son günün tablo satırı yoksa `unavailable` olur ve komut bunu ayrıca söyler;
+bu sınır diğer ortak günlerin eşleşmesini geçersiz kılmaz. İstek sırası,
+bütçe, kilit, çıkış kodu ve ham dosyaları koruma davranışı değişmedi.
+
+57 gerçek kaynağın küçük örnekleri kalıcı sınamalara alındı; beş regresyon
+eski kodda başarısız gösterildi. Tam kayıtlar yeni üretim ayrıştırıcısı ve
+ayrıca bağımsız tarih/Decimal hesabıyla ağsız kontrol edildi: 20.805 nokta,
+20.252 fiyat, 553 eksik, 4.773 tablo eşleşmesi. Önceki 52 ürünün bütün
+noktaları aynı; S24 Ultra 1 TB'nin yalnız son noktası değişti. Eski alımda
+sayfa isteği başlangıcı ayrı kaydedilmediğinden bütün alımın kayıtlı başlangıcı
+alt sınır kullanıldı; ikisi de aynı İstanbul günündeydi.
+Araştırma izi `frontend_20261008_131242_210133/implemented_validation.json`;
+bu da aktarım girdisi değildir. Eski raporlar/ham dosyalar değişmedi.
+**Canlı teyit tamamlandı (8 Ekim 13:51:43–13:52:25):** Kullanıcı
+`data/market_history/duzeltme_20261008_135142_423/report.json` alımında beş
+ürünü başarıyla kaydetti; 15 HTTP denemesi, çıkış 0. On ham dosyanın
+SHA-256 değeri, güncel katalog/eşleştirme ve sayfa/API kimlikleri doğrulandı.
+Rapor yeniden ayrıştırıldı; tarih ve kuruşlar ayrıca bağımsız datetime/Decimal
+hesabıyla eşleşti. Toplam 1.825 nokta, 1.754 pozitif fiyat, 71 eksik değer,
+450 tablo eşleşmesi. Beşinin de son günü bu kez tabloyla karşılaştırılabildi.
+
+S24 Ultra 1 TB'deki 71 eksik tarihin tamamı ilk katalog alımındakiyle aynı.
+Yeni ilk teklif fiyatı 85.680 TL, tablo/API de aynı; önceki HTML'deki
+86.220 TL eski alım anına aittir. S24 Ultra 512 GB'nin yeni ilk teklif ve
+tablo fiyatı 73.920 TL, API de aynı. Diğer üç üründe dönüşüm hâlâ gerekli:
+iPhone 16 Pro Max 512 GB 114.999 → 159.000 TL;
+S24 256 GB 44.500 → 44.719,29 TL;
+Redmi Note13 Pro 4G 512 GB 21.999 → 24.910,01 TL.
+Beş API dosyasından dördü ilk alımla aynı; S24 256 GB yanıtı değişmiş.
+Yeni değerler eski rakamlara zorlanmadı; her ürün kendi kayıtlı yanıtlarıyla
+doğrulandı. Yerel kontrol izi aynı klasörde `verification.json`.
+
+9.1'in uygulama ve canlı doğrulaması tamam; kullanıcı commit/push işlemini
+onayladı. Aynı commit için CI doğrulaması gönderim akışının parçasıdır. Gerçek DB, katalog, migration ve zamanlayıcı
+değişmedi. Eşleştirmesi açık iki ürün raporlandı; kapsam/gerçek aktarım
+9.3'te ele alınacak. 9.2/004/import henüz başlamadı.
+
+Kullanıcı Adım 9 planını onayladı: önce yerel rapor, sonra ayrı ağsız aktarım;
+tekrar aktarımda farklı fiyat çıkarsa eski kayıt korunacak; ilk aktarımda yeni
+alım esas alınacak. 29 Eylül'deki üç rapor araştırma/test kanıtı olarak kalır.
+Aktarım ve `004_market_history.sql` **9.2'nin işidir; henüz uygulanmadı**.
+
+Eşleştirme dosyası `version: 1`, `source: "cimri"`, `entries` taşır. Her girdi
+`product_key`, `url`, `cimri_product_id` içerir; anahtar, URL ve Cimri kimliği
+tekrar edemez. URL yalnız Cimri'nin HTTPS telefon sayfası olabilir; ürün etkin
+katalogda bulunmalıdır. 8 Ekim web araştırmasıyla 59 ürünün 57'sinin ana
+sayfa adresi ve görünen ürün başlığı eşleştirildi. İlk üç eşleştirme aynı
+kaldı. Araştırmada 57 başlık mevcut model/kapasite kuralıyla ağsız doğrulandı;
+bu kontrol tek başına API erişimini veya gömülü kimliği kanıtlamaz.
+10:49–10:58 alımında bütün 57 sayfa/API kimliği doğrulandı; dört fiyat
+uyuşmazlığının ayrıntısı yukarıdadır.
+
+Araştırma izi yerelde
+`data/market_history/mapping_research_20261008_073732.json` içindedir:
+araştırma zamanı, görülen başlıklar, kaynak adres/kimlikleri ve açık anahtarlar.
+URL/kimlik tahmin edilmedi; ana sayfalar kullanıldı, renk sayfaları birleştirilmedi.
+Galaxy S25 512 GB (`samsung_galaxy_s25_512gb`) ve Redmi Note 14 Pro 5G
+256 GB (`xiaomi_redmi_note_14_pro_5g_256gb`) için doğru ana adres araştırmada
+doğrulanamadı. Başka kapasite, Ultra/Plus veya 4G sayfası bunların yerine
+konmadı; eşleştirmesi olmayan ürünün Cimri'de bulunmadığı varsayılmaz.
+
+Redmi Note 14 Pro'nun [256 GB](https://www.cimri.com/cep-telefonlari/en-ucuz-xiaomi-redmi-note-14-pro-fiyatlari,a2372365369)
+ve [512 GB](https://www.cimri.com/cep-telefonlari/en-ucuz-xiaomi-redmi-note-14-pro-512gb-12gb-ram-fiyatlari,a2430184601)
+başlıkları 4G yazmıyor; her iki sayfanın teknik özelliklerinde
+`Veri Aktarım Hızı: 4G` doğrulandı. [5G 512 GB](https://www.cimri.com/cep-telefonlari/en-ucuz-xiaomi-redmi-note-14-pro-5g-fiyatlari,a2428710429)
+ayrı ana sayfadır. [Poco X6 Pro](https://www.cimri.com/cep-telefonlari/en-ucuz-xiaomi-poco-x6-pro-5g-512gb-12gb-ram-fiyatlari,a2308370397)
+sayfasında marka Poco'dur; URL'deki Xiaomi metni marka yerine kullanılmadı.
+Galaxy A55 256 GB ve Redmi Note 13 Pro 5G 256 GB için 8 GB RAM ana sayfaları
+seçildi; RAM/renk eş anlamlıları veya yeni kimlik istisnası eklenmedi.
+
+Zamanlanmış tur bittikten sonra katalog alımı:
+
+```powershell
+$cimriKlasor = "data\market_history\katalog_$(Get-Date -Format yyyyMMdd_HHmmss_fff)"
+.venv\Scripts\python.exe -m app.market_history capture `
+  --mapping config\market_history.json --output-dir $cimriKlasor
+$LASTEXITCODE
+```
+
+`--product-key` tekrarlanabilir; verilmezse etkin katalogdaki bütün ürünler
+raporlanır. `--mapping` ve `--output-dir` zorunludur. Var olan klasöre yazılmaz;
+eskisini silmek yerine tarih-saatli yeni klasör kullanılır. Kilit meşgulse
+klasör oluşturulmaz. Canlı komutu kullanıcı tur saatleri dışında çalıştırır.
+İki eşleştirme açık olduğundan bütün 57 alım başarılı olsa bile katalog
+komutunun çıkışı 2 olur. `captured`/`error`/`not_attempted` kayıtları ayrıca
+incelenir; yalnız çıkış 2'den ağ veya kimlik hatası olduğu sonucu çıkarılmaz.
+
+Her ürün için aynı `PageClient` ile sayfa ve grafik okunur; yönlendirme/tekrar
+dahil dört istek bütçesi, ortak bekleme, alan adı ve 8 MB sınırı korunur.
+`__OCTOPUS_DATA__` içindeki ürün kimliği eşleştirmeyle aynı olmalıdır; marka
+katalogla, başlık ve H1'lerin her biri model/kapasiteyle doğrulanır. Kategori
+`cep-telefonlari` olmalıdır. Bunlar doğrulanmadan grafik isteği yapılmaz.
+Grafik API'si kimliği de aynı olmalıdır. HTTP `blocked` alınırsa kalan eşleşmiş
+ürünlere istek yapılmaz; diğer ürün hatalarında sıradaki ürüne devam edilir.
+
+Grafik, `lastDay`'den geriye sıralanmış en çok 366 nokta verir. Mevcut
+araştırmada doğrulanan bu biçim kullanılır; bilinmeyen biçim için tahmin
+yapılmaz. Geçersiz tarih, fiyat veya ortak tarihte tablo uyuşmazlığı hata olur.
+Fiyatlar pozitif ve en çok iki ondalıklı olmalı; mevcut `money` ile kuruşa
+çevrilir. Sayısal grafik sıfırı, aynı tarihte tablo fiyatı yoksa eksik sayılır;
+tablo fiyatıyla çelişirse reddedilir. Eksik değer `null` kalır, kısa geçmiş
+tamamlanmaz. Ham API dosyasında sıfır değeri korunur. Tabloyla ortak
+tarih yoksa `table_comparison: "unavailable"` yazılır. Tekrarlanan fiyatlar
+bağımsız günlük ölçümleri veya sabit satıcı kapsamını kanıtlamaz.
+
+Yeni klasörde `responses/<product_key>.html`, `responses/<product_key>.json`
+ve `report.json` bulunur. HTML alınmış metindir; API JSON'u, ortak HTTP
+katmanının ayrıştırdığı nesnenin UTF-8 dosyasıdır, özgün JSON baytlarının
+aynısı olduğu iddia edilmez. Her kaynak dosyasının SHA-256 parmak izi saklanır.
+HTTP/JSON ayrıştırma hatasında alınamamış gövde uydurulmaz; sayfa alınmışsa
+korunur. Kimlik/grafik doğrulaması başarısızsa kabul edilmiş geçmiş yazılmaz.
+
+Rapor sürümü 1'dir. Kaynak, başlangıç/bitiş zamanı (UTC), sonuç, katalogdaki
+ürün sayısı, eşleştirmesi henüz olmayan katalog anahtarları ve `products`
+listesi taşır. Ürün kaydı katalog kimliğini, eşleştirmeyi, istek sayısını,
+varsa sayfa/API dosyalarının yolunu ve parmak izini, doğrulanmış kimliği,
+API alınma zamanını ve `history`yi içerir. `history.points` eski tarihten yeniye
+`day` ve `price_kurus` taşır; özet tarih aralığını, nokta/eksik fiyat sayısını
+ve tablo karşılaştırmasını gösterir. Ürün durumları `captured`, `error`,
+`unmapped`, `not_attempted`, `interrupted`; genel sonuç `running`, `completed`,
+`partial`, `interrupted` veya `failed` olabilir. Hata ve durma nedeni raporda
+kalır. Yalnız seçilen üç ürünün başarılı olması bütün kataloğun alındığı
+anlamına gelmez; seçilmeyen ürünler için ağ isteği yapılmaz.
+
+Rapor her işlenen ürünün ardından geçici dosyadan atomik olarak yenilenir.
+Ctrl+C önceki kayıtları korur; disk hatasında yeni istekler durur. İstemci ve
+ortak kilit kapanır. Çıkış: 0 seçilen ürünler kaydedildi, 2 kısmi sonuç,
+1 ayar/seçim/klasör/dosya hatası, 3 ortak kilit meşgul, 130 Ctrl+C.
+
+7 Ekim web incelemesinde Xiaomi sayfasında fiyat analizi gösterilmedi;
+Galaxy S24'ün 29 Eylül fiyatı kayıtlı rapordan farklıydı. Bunlar güncel API
+erişimini veya bütün geçmişin değiştiğini kanıtlamaz. Üç ürünün 8 Ekim ham
+çıktısı, katalog alımı ve dört ürünün tekrarı yukarıda kontrol edildi;
+kullanıcının ekran kontrolünden sonra kaynakta bugünkü ilk teklif dönüşümü doğrulandı; dar düzeltme kullanıcı onayıyla uygulandı, beş ürünün canlı teyidi tamamlandı; commit/push onaylandı; CI sonucu GitHub Actions kaydından izlenir.
+[Cimri koşullarındaki](https://www.cimri.com/kullanim-kosullari)
+kopyalama/işleme sınırları sürer; kullanıcı bir defalık aktarım kararı verdi,
+teknik erişim kullanım izni olarak sunulmaz. Düzenli Cimri toplaması yapılmaz.
 
 Türkçe karakterlerin terminalde doğru görünmesi için oturum başında bir kez
 `[Console]::OutputEncoding = [Text.Encoding]::UTF8` çalıştırın. Keşif hedef
