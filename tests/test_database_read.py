@@ -10,6 +10,7 @@ from psycopg.pq import TransactionStatus
 from psycopg.rows import dict_row
 
 from app.database import read, runs
+from app.price_statistics import calculate_statistics
 
 START = datetime(2024, 11, 1, 7, tzinfo=timezone.utc)
 KEY = "apple_iphone_15_128gb"
@@ -646,3 +647,122 @@ def test_closed_connection_raises_database_error(api_db, getter):
     api_db.close()
     with pytest.raises(InterfaceError):
         getter(api_db)
+
+
+def test_statistics_use_full_read_history_even_with_a_one_day_graph(world, api_db):
+    ids = tuple(
+        add_run(
+            world,
+            START + timedelta(hours=12 * index),
+            {"a": ("offer", 10001), "c": "sold_out"},
+        )
+        for index in range(61)
+    )
+    saved = read.read_product(api_db, KEY, history_days=1)
+    result = calculate_statistics(saved)
+    assert len(saved.history) == 3
+    assert len(saved.all_history) == 61
+    assert result.source_run_id == ids[-1]
+    assert result.scope_started_at == START
+    assert result.scope_ended_at == START + timedelta(days=30)
+    assert result.scope_runs == 61
+    assert result.planned_listing_ids == ("a", "c")
+    assert result.low_30d.value == result.high_in_scope.value == 10001
+    assert result.low_30d.reasons == result.high_in_scope.reasons == ()
+    assert result.low_30d.observations == result.high_in_scope.observations == 61
+    assert result.volatility_30d.value == 0.0
+    assert result.volatility_30d.transitions == 60
+    assert result.volatility_30d.days == 31
+    assert result.volatility_30d.observations == 61
+
+    world.execute("UPDATE products SET active=false WHERE product_id=1")
+    world.execute("UPDATE listings SET active=false,color='Mavi'")
+    world.execute("UPDATE platforms SET active=false")
+    changed = read.read_product(api_db, KEY, history_days=366)
+    assert changed.product.active is False
+    assert changed.best_offer.color == "Mavi"
+    assert calculate_statistics(changed) == result
+
+
+def test_statistics_reject_partial_current_even_when_sql_comparison_is_valid(
+    world, api_db
+):
+    add_run(world, START, {"a": ("offer", 10000)})
+    latest = add_run(
+        world,
+        START + timedelta(days=30),
+        {"a": ("offer", 9000), "b": "error"},
+    )
+    saved = read.read_product(api_db, KEY)
+    assert saved.current.comparable_with_previous is True
+    assert saved.best_offer.current_price == 9000
+    result = calculate_statistics(saved)
+    assert result.source_run_id == latest
+    assert result.scope_runs == 0
+    for metric in (result.low_30d, result.high_in_scope, result.volatility_30d):
+        assert metric.value is None
+        assert metric.reasons == ("incomplete_scope",)
+
+
+def test_statistics_exclude_old_page_scope_and_stop_at_an_incomplete_run(world, api_db):
+    add_run(world, START, {"a": ("offer", 90000)})
+    add_run(world, START + timedelta(days=1), {"a": ("offer", 80000), "b": "error"})
+    start = START + timedelta(days=2)
+    add_run(world, start, {"a": ("offer", 15000), "b": "sold_out"})
+    latest = add_run(
+        world, start + timedelta(days=30), {"a": ("offer", 9000), "b": "sold_out"}
+    )
+    result = calculate_statistics(read.read_product(api_db, KEY))
+    assert result.source_run_id == latest
+    assert result.scope_started_at == start
+    assert result.scope_runs == 2
+    assert result.low_30d.value == 9000
+    assert result.high_in_scope.value == 15000
+    assert result.high_in_scope.observations == 2
+
+
+def test_statistics_do_not_bridge_a_sold_out_product_run_from_sql(world, api_db):
+    for index in range(16):
+        result = "sold_out" if index == 7 else ("offer", 10000)
+        add_run(
+            world,
+            START + timedelta(hours=12 * index),
+            {"a": result, "b": "sold_out"},
+        )
+    saved = read.read_product(api_db, KEY)
+    assert saved.all_history[7].best_price is None
+    assert saved.all_history[7].comparable_with_previous is True
+    result = calculate_statistics(saved)
+    assert result.scope_runs == 16
+    assert result.high_in_scope.observations == 15
+    assert result.volatility_30d.transitions == 13
+    assert result.volatility_30d.value is None
+    assert result.volatility_30d.reasons == ("insufficient_transitions",)
+
+
+def test_statistics_do_not_substitute_cimri_for_missing_own_history(world, api_db):
+    add_market(world, date(2023, 5, 1), 9000)
+    saved = read.read_product(api_db, KEY)
+    assert len(saved.cimri_history) == 1
+    result = calculate_statistics(saved)
+    assert result.source_run_id is None
+    for metric in (result.low_30d, result.high_in_scope, result.volatility_30d):
+        assert metric.value is None
+        assert metric.reasons == ("no_history",)
+
+
+def test_statistics_follow_product_completed_runs_not_other_or_open_runs(world, api_db):
+    add_run(world, START, {"a": ("offer", 12000)})
+    latest_at = START + timedelta(days=30)
+    latest = add_run(world, latest_at, {"a": ("offer", 10000)})
+    add_run(world, latest_at + timedelta(hours=12), {"d": ("offer", 5000)})
+    add_run(
+        world, latest_at + timedelta(hours=24), {"a": ("offer", 1000)}, "interrupted"
+    )
+    add_run(world, latest_at + timedelta(hours=36), {"a": ("offer", 500)}, "running")
+    result = calculate_statistics(read.read_product(api_db, KEY))
+    assert result.source_run_id == latest
+    assert result.scope_runs == 2
+    assert result.scope_ended_at == latest_at
+    assert result.low_30d.value == 10000
+    assert result.high_in_scope.value == 12000

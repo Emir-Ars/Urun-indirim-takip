@@ -17,6 +17,7 @@ geliştirme geçmişini açıklar. Kararların ve aşama durumunun ana kaynağı
 - [Veritabanı (PostgreSQL)](#veritabanı-postgresql)
 - [Yerel API hazırlığı](#yerel-api-hazırlığı-aşama-71)
 - [Salt okunur veritabanı okumaları](#salt-okunur-veritabanı-okumaları-aşama-72)
+- [Fiyat istatistikleri](#fiyat-istatistikleri-aşama-73)
 - [Kimlik kuralları](#kimlik-kuralları)
 - [Testler ne kanıtlar, ne kanıtlamaz](#testler-ne-kanıtlar-ne-kanıtlamaz)
 - [Bilinen sınırlar](#bilinen-sınırlar)
@@ -54,6 +55,7 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 | `settings.py` | Ayar dosyalarını okur. `CATALOG_PATH`, `DISCOVERY_PATH`, `RUNTIME_PATH`, `SCRAPE_LOCK_PATH`, `LOG_DIR`, `DISCOVERY_REPORT_DIR` ortam değişkenleriyle başka dosya veya klasör gösterilebilir. |
 | `scrape_lock.py` | Siteye giden bütün girişlerin paylaştığı kilit (`data/scrape.lock`). Fiyat turu, keşif, Cimri yerel alımı/ağsız aktarımı ve üç canlı kontrol aracı (`live_scraper_check`, `live_discovery_check`, `market_history_probe`) alır; biri sürerken diğeri beklemeden "sürüyor" deyip çıkar. Süreç çökse bile işletim sistemi kilidi bırakır. |
 | `console.py` | Komut satırı araçlarının ortak çıktı yardımcıları: UTF-8 çıktı (`utf8_output`; fiyat turu, keşif, `app.database` ve canlı kontrol araçları kullanır), `<ön ek>_<tarih-saat>.log` dosyası açma ve stdout/stderr'i log dosyasına da yazan `tee_output` (yalnız zamanlanmış tur ve keşif). pythonw.exe altında ekran akışları yoktur (`None`); hepsi buna dayanır. |
+| `price_statistics.py` | `ProductSnapshot.all_history` verisinden mevcut tam kapsam dönemini, 30 günlük gözlenen dibi, dönem zirvesini ve değişkenliği hesaplar; eksiklik gerekçeleri ve gözlem sayıları döndürür. Bağlantı/HTTP/dosya işlemi yapmaz; Cimri verisini kullanmaz. |
 
 ### Cimri geçmişi: `app/market_history/`
 
@@ -124,7 +126,8 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 | `tests/conftest.py` | Her testte gerçek curl_cffi ve HTTPX ağ transport'ları kesilir; ASGI/TestClient/MockTransport süreç içinde çalışır. Kalıcı `DATABASE_URL` ve `API_DATABASE_URL` silinir. `db` yalnız `TEST_DATABASE_URL`'deki `_test` DB'yi her testte boşaltır; ortak test kilidi en çok 30 sn bekler. `api_db` ayrıca `TEST_API_DATABASE_URL` ve `fiyat_takip_api_test` ister; iki bağlantının aynı `_test` DB olduğunu denetleyip test şemasında SELECT izinlerini yeniden kurar. Eksik test adresleri yerelde atlama, CI'da hata üretir. |
 | `tests/test_http.py` | HTTP katmanı (104 test): hata kodları (`invalid_host` mesajı hedef alan adını yazar, sorgu metnini yazmaz), indirme sırasında 8 MB sınırı (parçalı/tek parça taşma, tam eşik, aktarımın durması, UTF-8 parçaları, boş yanıt, yarım gövdenin tekrar öncesi atılması), büyük hata/yönlendirme yanıtlarında aynı sınıflandırma ve istek bütçesi, yönlendirme kuralları, 5xx tekrarı ve bekleme süreleri, istekler arası bekleme, factory. Mimari kuralda yalnız `app/ui/api_client.py` için HTTPX izni var; başka dosya veya başka kütüphane bu izni kullanamaz (9 test). `curl_cffi` hâlâ yalnız `http.py`'de. |
 | `tests/test_api_foundation.py` | 7.1 hazırlığı (51 test, 43'ü PostgreSQL): gerçek HTTPX isteklerinin engeli, sahte/süreç içi istemcilerin çalışması, iki üretim adresinin testlerden silinmesi, gerçek API test hesabının sekiz nesneyi okuması, varsayılan READ ONLY kapatılsa da yazma/kalıcı nesne kuramaması, tekrar rol kurulumu ve hatada izinlerin geri alınması. Gerçek API veya UI özelliği testi değildir. |
-| `tests/test_database_read.py` | Salt okunur sorgular (57 test, 43'ü gerçek API test hesabıyla PostgreSQL'de): etkin/pasif ürün, ürüne özel completed tur, fiyat/stoksuz/hata/eksik kapsam, eşit teklif, gün aralıkları, ayrı Cimri/NULL, mevcut katalog bilgisi, iki bağlantıyla tutarlı görüntü, açık işlem reddi, yerel ayarlar, sorgu hatası/zaman aşımı sonrası yeniden okuma ve toplama kilidinden bağımsızlık. |
+| `tests/test_database_read.py` | Salt okunur sorgular (63 test, 49'u gerçek API test hesabıyla PostgreSQL'de): etkin/pasif ürün, ürüne özel completed tur, fiyat/stoksuz/hata/eksik kapsam, eşit teklif, gün aralıkları, ayrı Cimri/NULL, mevcut katalog bilgisi, iki bağlantıyla tutarlı görüntü, açık işlem reddi, yerel ayarlar, sorgu hatası/zaman aşımı sonrası yeniden okuma ve toplama kilidinden bağımsızlık. Altı yeni bütünleşme testi SQL'den gelen verilerle istatistikleri; tam 30 gün, dar grafik aralığı, pasif katalog, kısmi kapsam, scope sınırı, stoksuz tur, Cimri ayrımı ve completed ürün turu seçimini sınar. |
+| `tests/test_price_statistics.py` | 49 ağsız ve veritabanısız istatistik testi: tam kapsam dönemi, boş/stoksuz geçmiş, sayfa kümesi ve eksik cevap sınırları, 30 gün/14 geçiş/7 gün/18 saat eşikleri, gerçek kontrol zamanı/İstanbul günü, NULL üzerinden geçmeme, bağımsız analitik değişkenlik sonucu, kuruş hassasiyeti, değiştirilemez sonuç ve grafik aralığından bağımsızlık. |
 | `tests/test_contracts.py` | Pydantic sözleşmeleri (74 test): satılabilir teklif fiyat ve satıcı taşır, puan ölçeği aşamaz, üstü çizili fiyat güncel fiyattan büyüktür, katalog kimlik/referans/alan adı kuralları, `money()` kuruş çevirimi. |
 | `tests/test_trendyol_scraper.py`, `tests/test_hepsiburada_scraper.py` | Fiyat okuma (44 + 58 test): seçilen teklif, eşit fiyatta satıcı adı, çizili fiyat, Kritik Stok, Tükendi'nin yalnız açık sinyalle verilmesi, bozuk satıcı kayıtlarının reddi, ret nedenleri, `parse` dönüşümü. Sahte sayfa ve istemci; internete çıkmaz. |
 | `tests/test_discovery.py` | Keşif (247 test): kimlik kuralları, sayfalama ve uyarı türleri, katalog birleştirme (aynı adaylar hep aynı kimlikleri alır), dry-run'ın kataloğa yazmaması, LF satır sonu, BOM'lu ayar dosyaları, UTF-8 çıktı, çıkış kodları ve gerçek `config/*.json` dosyalarının sözleşmeye uyması. Ekli aksesuarlar model, başlık/yapısal kapasite, birden çok ürün adı ve kategori düzeyinde reddedilir; kayıtlı 21 telefonun kimlik kabulü korunur. Zamanlanmış keşif (log ve tarihli rapor, `--dry-run` zorunluluğu, konsolsuz çalışma, kilit meşgul, program hatası, log açılamaması, rapor klasörünün baştan denetimi, özet satırı) ve `--apply-report` (siteye gitmez, canlı yazmayla bayt bayt aynı katalog, ikinci uygulamada yazmama, önizleme olmayan/bozuk/sarmalı/yabancı alan adlı/önizlemeyi aşan rapor reddi) ağsız sınanır. Trendyol filtre uyarısının tek yazılması ve tarama sonrası yazma hatasının ("Tarama bitti ama sonuç yazılamadı", çıkış 1; log dahil) "başlatılamadı"dan ayrılması da burada denenir. |
@@ -1794,8 +1797,112 @@ Sorgu hatası ve gerçek 5 saniyelik zaman aşımı sonrası bağlantı temiz ka
 İki mevcut Starlette/AnyIO uyarısı sürdü; gizlenmedi. Testler yalnız
 `fiyat_takip_test` üzerinde çalıştı. Gerçek DB'ye yazılmadı; katalog,
 001–004 ve zamanlayıcılar değişmedi. Yeni kullanıcı komutu yok.
-Kullanıcı commit/push işlemini onayladı; aynı commit'in CI sonucu
-gönderimden sonra doğrulanır.
+Kullanıcı onayıyla `04d765f` gönderildi;
+[aynı commit'in CI sonucu](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/37922348048)
+başarılı.
+
+## Fiyat istatistikleri (Aşama 7.3)
+
+`app/price_statistics.py → calculate_statistics(snapshot)`, 7.2'nin
+`ProductSnapshot` sonucunu alır ve değiştirilemez `ProductStatistics` döndürür.
+Veritabanı, ağ, dosya veya bugünün saati kullanılmaz; giriş değiştirilmez.
+Yeni bağımlılık, SQL, migration veya kullanıcı komutu yoktur.
+API/havuz/ekran sonraki alt adımlardadır.
+
+### Kapsam dönemi ve sonuç alanları
+
+`all_history` içindeki son completed ürün turundan geriye gidilir.
+`answered_pages == planned_pages` olan ve planlanan sayfa kümesi aynı kalan
+turlar alınır; ilk eksik cevap veya farklı küme döneme katılmadan yürüyüşü
+keser. Kümenin sırası önemli değildir. Son tur eksikse eski döneme dönüş yok;
+bütün göstergeler `None` döner. Tükendi geçerli cevaptır; bütün sayfaları
+Tükendi olan tur dönemde kalır. Zaman boşluğu dönemi tek başına kesmez.
+
+Bu şart, görünümün cevap veren sayfa kümesi karşılaştırmasından daha
+sıkıdır. Örneğin aynı sayfalar iki turda hata alsa da görünüm karşılaştırmayı
+kabul edebilir; istatistikler eksik cevaplı turu kabul etmez.
+`comparable_with_previous` ve mevcut tur karşılaştırma davranışı değişmez.
+
+`ProductStatistics` kaynak tur kimliği, kapsam başlangıç/bitişi, tur sayısı,
+planlanan sayfa kimlikleri ve üç gösterge taşır:
+
+| Gösterge | Hesap |
+|---|---|
+| `low_30d` | Kapsam süresi en az 30 günse son 30 gündeki geçerli fiyat minimumu, tam sayı kuruş |
+| `high_in_scope` | Bütün mevcut kapsam döneminin geçerli fiyat maksimumu, tam sayı kuruş; 30 gün şartı yok |
+| `volatility_30d` | Son 30 gündeki geçerli ardışık fiyat değişimlerinin örnek standart sapması × 100, ondalıklı sayı |
+
+Her göstergede `value`, `reasons`, `period_started_at`, `period_ended_at` ve
+`observations` vardır. Dip/zirvede gözlem sayısı dönemindeki fiyatlı tur
+sayısıdır; değişkenlikte kabul edilen geçişlerin uçlarındaki farklı tur
+sayısıdır. Değişkenlik ayrıca `transitions` ve `days` taşır.
+Son tur eksik veya geçmiş yoksa kullanılan dönem yoktur; dönem alanları
+`None`, kullanılan tur/gözlem sayıları sıfırdır.
+
+30 günlük pencere son ürün turunun başlangıcından geriye açılır; tur
+başlangıçlarına göre iki sınır dahil olur. Göstergenin dönem başlangıcı,
+kapsam başlangıcı ile pencere başlangıcından daha yeni olanıdır.
+Grafik için `history_days` veya Cimri için `cimri_days` seçimi hesabı
+değiştirmez; hesap `all_history` kullanır. Cimri serisi katılmaz.
+
+### Değişkenlik ve yeterlilik
+
+Getiri `log(yeni/eski)`'dir. Yalnız kapsam içindeki ardışık iki turun da
+30 günlük pencerede olması, fiyatlarının ve gerçek `best_checked_at`
+zamanlarının bulunması yeterli geçiş adayıdır. Kontrol zamanları arasındaki
+fark pozitif ve en çok 18 saat olmalıdır; **tam 18 saat kabul edilir**,
+yuvarlanmış `hours_since_previous` kullanılmaz.
+Fiyatsız/uzun boşluklu tur üzerinden fiyatlar birleştirilmez.
+
+En az 14 geçerli geçiş ve 7 farklı İstanbul takvim günü gerekir.
+Günler yalnız kabul edilen geçişlerin iki ucunun gerçek kontrol zamanından,
+`ZoneInfo("Europe/Istanbul")` ile sayılır. Kullanıcının iki zaman/gün
+tercihi 9 Ekim'de planlama sırasında verildi ve uygulama planı onaylandı.
+Bu eşikler proje kararıdır; evrensel istatistiksel yeterlilik iddiası değildir.
+
+Hesap [`statistics.stdev`](https://docs.python.org/3.13/library/statistics.html#statistics.stdev)
+ile örnek standart sapmasını kullanır (varyansta bölen `n−1`).
+[`ZoneInfo`](https://docs.python.org/3.13/library/zoneinfo.html)
+mevcut `tzdata` bağımlılığıyla Windows'ta da çalışır.
+Sonuç yuvarlanmaz, yıllıklaştırılmaz. Yeterli veriyle `0.0` gerçek sonuçtur;
+bu, bütün fiyatların aynı olması kadar bütün oransal değişimlerin aynı olması
+durumunda da görülebilir. Bir indirim olasılığı veya fiyat değişim yüzdesi değildir.
+
+| Gerekçe | Anlamı |
+|---|---|
+| `no_history` | Kendi tamamlanmış ürün turu yok |
+| `incomplete_scope` | Son ürün turunda bütün planlanan sayfalar cevaplanmadı |
+| `insufficient_period` | Dibe uygun mevcut kapsam dönemi 30 güne ulaşmadı |
+| `no_prices` | İlgili dönemde kayıtlı geçerli fiyat yok |
+| `insufficient_transitions` | Değişkenlik için 14 geçerli geçiş yok |
+| `insufficient_days` | Geçerli geçişlerin uçları 7 İstanbul gününü kapsamıyor |
+
+Geçmiş yokluğu/eksik son turda ilgili tek kapsam gerekçesi döner. Kullanılabilir
+dönemde birden fazla yeterlilik şartı eksikse ilgili gerekçeler birlikte
+`tuple` içinde döner; başarılı göstergede bu liste boştur.
+Yetersiz değer `None` kalır; fiyatlar doldurulmaz.
+
+**7.3 doğrulaması (9 Ekim):** 49 ağsız birim ve 6 gerçek okuma hesabıyla
+PostgreSQL bütünleşme testi eklendi. İlgili okuma/hesaplama paketi 112 geçti,
+0 atlandı (17,90 sn). Tam paket **1362 geçti, 0 atlandı/xfail
+(368 PostgreSQL)**, 99,30 sn; Black (57 dosya) ve Flake8 temiz.
+İki mevcut Starlette/AnyIO uyarısı sürüyor; gizlenmedi.
+İstanbul gece sınırı, 18 saat mikrosaniye sınırı ve analitik
+`100 × ln(2) × sqrt(14/13)` örneği (yaklaşık `71,93128235098797`) sınandı.
+Bu sayısal örnekler sentetiktir; canlı fiyat sonucu değildir.
+SQL'den gelen dar grafik aralığı, pasif katalog, kısmi kapsam ve stoksuz
+tur verileriyle hesaplama birlikte doğrulandı. DB testleri yalnız
+`fiyat_takip_test` üzerinde çalıştı; gerçek DB'ye yazılmadı.
+001–004, katalog ve zamanlayıcılar korunuyor. Kullanıcı 7.3 commit/push onayını
+verdi; gönderim sonrası aynı commit'in CI sonucu doğrulanacak. 7.4 başlamadı.
+
+**Kayıtlı gerçek veri kontrolü (9 Ekim, 14:39 İstanbul):** 59 etkin ürün
+mevcut kayıtlarından yalnız REPEATABLE READ, READ ONLY işlemlerle okundu;
+hesaplama bellek içinde yapıldı. 30 günlük dip 59 üründe süre yetersizliği
+nedeniyle boştu; bunların 7'sinin ilgili dönemi ayrıca fiyatsızdı.
+Mevcut kapsam zirvesi 52, değişkenlik 31 üründe hesaplandı.
+Bu, veritabanındaki kayıtlı sonuçların kontrolüdür; sitelerin bugünkü
+fiyatlarının doğrulanması veya yeni toplama değildir. Veri yazılmadı.
 
 ## Kimlik kuralları
 
@@ -1910,7 +2017,7 @@ temiz. Gerçek DB, katalog ve uygulanmış migration dosyaları değişmedi.
 
 ## Testler ne kanıtlar, ne kanıtlamaz
 
-- **Otomatik testler (1307; 362'si gerçek PostgreSQL'de):** Kuralların doğru
+- **Otomatik testler (1362; 368'i gerçek PostgreSQL'de):** Kuralların doğru
   çalıştığını kayıtlı ve sahte yanıtlarla kanıtlar. Kimlik değişiklikleri gerçek
   kaynak örneği ve regresyon ister; 7 Ekim varyant ve adres bakımları kullanıcının
   her maddeye ayrı onayıyla yapay çelişkilere karşı önleyici koruma olarak uygulandı.
