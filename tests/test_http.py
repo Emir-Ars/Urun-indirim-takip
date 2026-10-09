@@ -5,6 +5,7 @@ gerçek `time.sleep` yerine çağrıları kaydeden bir liste kullanılır.
 """
 
 import ast
+from importlib.util import resolve_name
 import sys
 import types
 from pathlib import Path
@@ -798,7 +799,7 @@ def app_imports():
     """app/ altındaki her .py dosyasının içe aktardığı modüller (dosya, modül).
 
     `from urllib import request` gibi alt modül aktarmaları da "urllib.request"
-    olarak görünür; göreli aktarmalar proje içidir, atlanır.
+    olarak görünür; göreli aktarmalar dosyanın paketine göre çözülür.
     """
     for path in sorted(APP.rglob("*.py")):
         relative = path.relative_to(APP.parent).as_posix()
@@ -807,10 +808,18 @@ def app_imports():
             if isinstance(node, ast.Import):
                 for alias in node.names:
                     yield relative, alias.name
-            elif isinstance(node, ast.ImportFrom) and node.module and not node.level:
-                yield relative, node.module
+            elif isinstance(node, ast.ImportFrom):
+                package = ".".join(path.parent.relative_to(APP.parent).parts)
+                module = (
+                    resolve_name("." * node.level + (node.module or ""), package)
+                    if node.level
+                    else node.module
+                )
+                if not module:
+                    continue
+                yield relative, module
                 for alias in node.names:
-                    yield relative, f"{node.module}.{alias.name}"
+                    yield relative, f"{module}.{alias.name}"
 
 
 def is_within(module, package):
@@ -832,6 +841,57 @@ def test_app_does_not_import_other_http_libraries():
 def test_curl_cffi_is_imported_only_by_http_module():
     users = {path for path, module in app_imports() if is_within(module, "curl_cffi")}
     assert users == {"app/scraper/http.py"}
+
+
+def test_ui_does_not_import_database_or_server_implementation():
+    forbidden = (
+        "psycopg",
+        "psycopg_pool",
+        "app.database",
+        "app.price_statistics",
+        "app.api.database",
+        "app.api.main",
+        "app.api.models",
+    )
+    offenders = [
+        f"{path}: {module}"
+        for path, module in app_imports()
+        if path.startswith("app/ui/")
+        and any(is_within(module, name) for name in forbidden)
+    ]
+    assert offenders == []
+
+
+@pytest.mark.parametrize(
+    "source,allowed",
+    [
+        ("import psycopg", False),
+        ("from psycopg_pool import ConnectionPool", False),
+        ("from app.database import read", False),
+        ("from ..database import read", False),
+        ("from app import database", False),
+        ("from .. import database", False),
+        ("from app.api.models import product_response", False),
+        ("from ..api import main", False),
+        ("from .. import price_statistics", False),
+        ("from app.api.schemas import ProductResponse", True),
+        ("from ..api.schemas import ProductResponse", True),
+        ("from app.contracts import Product", True),
+    ],
+)
+def test_ui_import_boundary_rejects_direct_and_relative_access(
+    tmp_path, monkeypatch, source, allowed
+):
+    root = tmp_path / "app"
+    path = root / "ui" / "screen.py"
+    path.parent.mkdir(parents=True)
+    path.write_text(source, encoding="utf-8")
+    monkeypatch.setitem(globals(), "APP", root)
+    if allowed:
+        test_ui_does_not_import_database_or_server_implementation()
+    else:
+        with pytest.raises(AssertionError):
+            test_ui_does_not_import_database_or_server_implementation()
 
 
 @pytest.mark.parametrize(

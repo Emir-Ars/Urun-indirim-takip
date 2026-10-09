@@ -19,6 +19,7 @@ geliştirme geçmişini açıklar. Kararların ve aşama durumunun ana kaynağı
 - [Salt okunur veritabanı okumaları](#salt-okunur-veritabanı-okumaları-aşama-72)
 - [Fiyat istatistikleri](#fiyat-istatistikleri-aşama-73)
 - [Salt okunur FastAPI](#salt-okunur-fastapi-aşama-74)
+- [Yerel API istemcisi](#yerel-api-istemcisi-aşama-75)
 - [Kimlik kuralları](#kimlik-kuralları)
 - [Testler ne kanıtlar, ne kanıtlamaz](#testler-ne-kanıtlar-ne-kanıtlamaz)
 - [Bilinen sınırlar](#bilinen-sınırlar)
@@ -118,7 +119,14 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 |---|---|
 | `main.py` | `create_app()` fabrikası, lifespan ile havuz açma/kapatma, dört GET adresi, cevap doğrulaması ve Türkçe güvenli hata cevapları. İçe aktarmada bağlantı açmaz. |
 | `database.py` | Yalnız `API_DATABASE_URL` ile 1–4 bağlantılık Psycopg havuzu; her istekte rol, SELECT/yazma izinleri, nesneler ve migration durumunun salt okunur denetimi. |
-| `models.py` | HTTP/JSON cevap sözleşmeleri; tek `ProductSnapshot` içinden istatistik ve fiyat yaşı. İç `all_history`, ham sayfa hata metni ve tur notu dışarı verilmez. |
+| `schemas.py` | API ve istemcinin ortak, ağsız cevap modelleri. DB/havuz/hesaplama/FastAPI yüklemez; JSON alanları ve OpenAPI aynı kalır. |
+| `models.py` | Tek `ProductSnapshot` içinden istatistik ve fiyat yaşıyla ortak cevaba dönüşüm. İç `all_history`, ham sayfa hata metni ve tur notu dışarı verilmez. |
+
+### Yerel istemci: `app/ui/`
+
+| Dosya | Ne işe yarar |
+|---|---|
+| `api_client.py` | `ApiClient`: dört sabit yerel GET, katı girdi/JSON/hedef doğrulaması; proxy/yönlendirme/tekrar/önbellek yok, açık zaman aşımı ve güvenli Türkçe hatalar. UI veritabanı/sunucu uygulamasını yüklemez. |
 
 ### Kurulum ve zamanlayıcı: `scripts/`
 
@@ -133,9 +141,10 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 | Yer | Ne işe yarar |
 |---|---|
 | `tests/conftest.py` | Her testte gerçek curl_cffi ve HTTPX ağ transport'ları kesilir; ASGI/TestClient/MockTransport süreç içinde çalışır. Kalıcı `DATABASE_URL` ve `API_DATABASE_URL` silinir. `db` yalnız `TEST_DATABASE_URL`'deki `_test` DB'yi her testte boşaltır; ortak test kilidi en çok 30 sn bekler. `api_db` ayrıca `TEST_API_DATABASE_URL` ve `fiyat_takip_api_test` ister; iki bağlantının aynı `_test` DB olduğunu denetleyip test şemasında SELECT izinlerini yeniden kurar. Eksik test adresleri yerelde atlama, CI'da hata üretir. |
-| `tests/test_http.py` | HTTP katmanı (104 test): hata kodları (`invalid_host` mesajı hedef alan adını yazar, sorgu metnini yazmaz), indirme sırasında 8 MB sınırı (parçalı/tek parça taşma, tam eşik, aktarımın durması, UTF-8 parçaları, boş yanıt, yarım gövdenin tekrar öncesi atılması), büyük hata/yönlendirme yanıtlarında aynı sınıflandırma ve istek bütçesi, yönlendirme kuralları, 5xx tekrarı ve bekleme süreleri, istekler arası bekleme, factory. Mimari kuralda yalnız `app/ui/api_client.py` için HTTPX izni var; başka dosya veya başka kütüphane bu izni kullanamaz (9 test). `curl_cffi` hâlâ yalnız `http.py`'de. |
+| `tests/test_http.py` | HTTP katmanı (117 test): hata kodları (`invalid_host` mesajı hedef alan adını yazar, sorgu metnini yazmaz), indirme sırasında 8 MB sınırı (parçalı/tek parça taşma, tam eşik, aktarımın durması, UTF-8 parçaları, boş yanıt, yarım gövdenin tekrar öncesi atılması), büyük hata/yönlendirme yanıtlarında aynı sınıflandırma ve istek bütçesi, yönlendirme kuralları, 5xx tekrarı ve bekleme süreleri, istekler arası bekleme, factory. Mimari kuralda yalnız `app/ui/api_client.py` için HTTPX izni var; başka dosya veya başka kütüphane bu izni kullanamaz (9 test). 13 ek sınama UI'nin DB/havuz/sunucu uygulamasını yüklemesini reddeder; göreli importlar da çözülür. `curl_cffi` hâlâ yalnız `http.py`'de. |
 | `tests/test_api_foundation.py` | 7.1 hazırlığı (51 test, 43'ü PostgreSQL): gerçek HTTPX isteklerinin engeli, sahte/süreç içi istemcilerin çalışması, iki üretim adresinin testlerden silinmesi, gerçek API test hesabının sekiz nesneyi okuması, varsayılan READ ONLY kapatılsa da yazma/kalıcı nesne kuramaması, tekrar rol kurulumu ve hatada izinlerin geri alınması. Gerçek API veya UI özelliği testi değildir. |
 | `tests/test_api.py` | 85 API testi, 44'ü gerçek okuma hesabıyla PostgreSQL'de: dört adres ve OpenAPI, kuruş/UTC/NULL, fiyat yaşı, kapsam/istatistik ve ayrı Cimri; rol/yazma/SELECT/migration hataları, dört bağlantı sınırı, başlangıç/kullanım kesintisi ve yeniden bağlantı, gerçek 5 sn sorgu zaman aşımı, iki bağlantıyla tutarlı cevap ve kayıtların korunması. |
+| `tests/test_api_client.py` | 108 ağsız istemci testi: dört işlev, katı girdi/JSON ve alan tamlığı, kuruş/UTC/NULL, sabit hedef/proxy/yönlendirme sınırı, güvenli hatalar, tekrar/önbellek olmaması, kaynak bırakma ve Ctrl+C; MockTransport ile süreç içi gerçek API köprüsü. Import/kurulumun DB ve ağ açmaması ayrı süreçte sınanır. |
 | `tests/test_database_read.py` | Salt okunur sorgular (63 test, 49'u gerçek API test hesabıyla PostgreSQL'de): etkin/pasif ürün, ürüne özel completed tur, fiyat/stoksuz/hata/eksik kapsam, eşit teklif, gün aralıkları, ayrı Cimri/NULL, mevcut katalog bilgisi, iki bağlantıyla tutarlı görüntü, açık işlem reddi, yerel ayarlar, sorgu hatası/zaman aşımı sonrası yeniden okuma ve toplama kilidinden bağımsızlık. Altı yeni bütünleşme testi SQL'den gelen verilerle istatistikleri; tam 30 gün, dar grafik aralığı, pasif katalog, kısmi kapsam, scope sınırı, stoksuz tur, Cimri ayrımı ve completed ürün turu seçimini sınar. |
 | `tests/test_price_statistics.py` | 49 ağsız ve veritabanısız istatistik testi: tam kapsam dönemi, boş/stoksuz geçmiş, sayfa kümesi ve eksik cevap sınırları, 30 gün/14 geçiş/7 gün/18 saat eşikleri, gerçek kontrol zamanı/İstanbul günü, NULL üzerinden geçmeme, bağımsız analitik değişkenlik sonucu, kuruş hassasiyeti, değiştirilemez sonuç ve grafik aralığından bağımsızlık. |
 | `tests/test_contracts.py` | Pydantic sözleşmeleri (74 test): satılabilir teklif fiyat ve satıcı taşır, puan ölçeği aşamaz, üstü çizili fiyat güncel fiyattan büyüktür, katalog kimlik/referans/alan adı kuralları, `money()` kuruş çevirimi. |
@@ -1641,8 +1650,9 @@ denetler. Temel toplama bağımlılıkları ve yazıcı bağlantı kodu değişm
 
 AGENTS/mimari testine işlenen tek HTTPX istisnası
 `app/ui/api_client.py` içindir: yalnız yerel API, yönlendirme izlemeden,
-ortam proxy'si kullanmadan ve zaman aşımıyla. Bu istemci 7.5'te yazılacak;
-yerel adres/yönlendirme/zaman aşımı davranışı o adımda ayrıca sınanacak.
+ortam proxy'si kullanmadan ve zaman aşımıyla. 7.5'te sabit
+`http://127.0.0.1:8000` istemcisi ve hedef/yönlendirme/zaman aşımı testleri
+eklendi; diğer `app/` modüllerinin HTTPX izni yok.
 Pazaryeri erişimi yalnız `app/scraper/http.py` ve curl_cffi üzerinden sürer.
 
 ### Okuma hesabının bir kerelik kurulumu
@@ -1721,7 +1731,8 @@ CI'da başarısız olur. CI kendi geçici sunucusunda test hesabını kurar.
 Gerçek HTTPX ağ transport'ları otomatik testlerde kapalıdır;
 MockTransport/ASGI/TestClient süreç içinde çalışır. Yerel API'ye gerçek ağ
 isteği de otomatik testte engellenir. Bu, uygulamanın dış adrese gitmeme
-kuralıyla aynı kontrol değildir; istemcinin hedef sınırı 7.5'te sınanır.
+kuralıyla aynı kontrol değildir; istemcinin sabit hedef sınırı 7.5'te
+ayrıca sınandı.
 
 **7.1 doğrulaması (9 Ekim):** altı sabit sürüm kuruldu, `pip check` temiz.
 51 hazırlık testinin 43'ü gerçek okuma hesabıyla PostgreSQL'de geçti;
@@ -2038,8 +2049,125 @@ Eşzamanlı tur/katalog değişiminde cevap/statistik aynı görüntüde kaldı;
 toplama kilidi tutulurken dört adres okudu, bütün tablo/görünüm sonuçları
 değişmedi. 001–004, katalog, gerçek veriler ve zamanlayıcılar korunuyor.
 
-7.4 yerelde tamamlandı; kullanıcı commit/push onayını verdi. Gönderim sonrası
-aynı commit'in CI sonucu doğrulanacak. 7.5 istemcisine veya 7.6 ekranına geçilmedi.
+Kullanıcı onayıyla `d8ba475` gönderildi;
+[aynı commit'in CI sonucu](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/37930206610)
+başarılı. 7.5'te ortak modeller ayrılırken bu API'nin JSON/OpenAPI
+sözleşmesi korundu; üretim sunucusu kontrolü 7.7'de yapılacak.
+
+## Yerel API istemcisi (Aşama 7.5)
+
+`app/ui/api_client.py` içindeki `ApiClient`, Streamlit'in kullanacağı
+eşzamanlı okuma istemcisidir. Ekran, veritabanı bağlantısı veya hesaplama
+içermez. Dört GET yalnız `http://127.0.0.1:8000` adresine gider;
+adres/port ortam ayarı veya genel URL isteyen işlev yoktur.
+
+### Ortak sözleşme ve işlevler
+
+`app/api/schemas.py` mevcut cevap modellerini bağımsız tutar.
+İstatistiklerin `Reason` tipi temel sözleşmededir; hesaplar değişmedi.
+API'nin `models.py` modülü kaynak görüntüsünü ortak cevaba dönüştürür.
+İstemci yalnız ortak sözleşmeleri yükler; DB/havuz/istatistik/uygulama
+modüllerini içe aktarmaz. API JSON alanları ve OpenAPI bütünü öncekiyle aynıdır.
+
+| İşlev | Doğrulanmış sonuç |
+|---|---|
+| `get_health()` | `HealthResponse` |
+| `get_status()` | `StatusResponse`; bulunmayan turlar `None` |
+| `list_products()` | Değiştirilemez `tuple[Product, ...]` |
+| `get_product(product_key, history_days=30, cimri_days=366)` | `ProductResponse`; teklifler, iki ayrı geçmiş ve mevcut istatistikler |
+
+Anahtar mevcut `Key` kuralını, günler katı 1–366 tam sayı koşulunu sağlamalı;
+`bool`/ondalıklı sayı/metin gün sayılmaz. Geçersiz girdide HTTP yoktur.
+Mevcut 59 katalog anahtarı bu koşulla kabul edildi; bu, ürünlerin API'de
+veya pazaryerinde bugün bulunduğunu göstermez.
+
+JSON doğrudan baytlardan `validate_json(..., strict=True)` ile okunur.
+Tarihler/tuple'lar JSON karşılıklarından uygun Python türüne dönüşür;
+para tam sayı kuruş, zamanlar UTC, Cimri günleri `date` kalır.
+Eksikler `None`; sıfırla doldurma, eski tekliften güncel fiyat üretme veya
+istatistikleri yeniden hesaplama yoktur.
+[Pydantic JSON doğrulaması](https://docs.pydantic.dev/latest/concepts/json/)
+
+API'nin varsayılanlı alanları dahil gönderdiği bütün alanlar JSON'da
+bulunmalıdır. İstemci alan tamlığını da denetler: eksik `ready`,
+`currency` veya ürün `active` alanı varsayılanla doldurulup başarılı
+gösterilmez. Bu kontrol API'nin nesne kurma varsayılanlarını değiştirmez.
+
+### Hedef, zaman aşımı ve yaşam döngüsü
+
+İstek gönderilmeden GET yöntemi, şema/host/port, dört izinli yol ve
+ürün isteğinin yalnız iki gün parametresi denetlenir. Anahtar bir URL veya
+başka yol oluşturamaz. Kullanıcı bilgisi/fragment, dış hedef ve tekrarlanan
+sorgu parametresi reddedilir.
+
+HTTPX `trust_env=False` ve `follow_redirects=False` kullanır; ortam
+proxy'leri yok sayılır. Herhangi bir 3xx yönlendirme hata olur,
+`Location` adresine ikinci istek yapılmaz.
+[HTTPX ortam ayarları](https://www.python-httpx.org/environment_variables/)
+
+Bağlanma, yazma ve HTTP bağlantı havuzu beklemesi 3 sn; okuma beklemesi
+15 sn'dir. HTTPX bunları işlem aşamalarında uygular; 15 sn toplam istek
+süresi garantisi değildir.
+[HTTPX zaman aşımı davranışı](https://www.python-httpx.org/advanced/timeouts/)
+
+Otomatik tekrar ve veri önbelleği yoktur. Her çağrı yeni GET yapar; hata
+sonrası sonraki çağrı aynı istemciyle yeniden okuyabilir. İçe aktarmada veya
+nesne kurmada ağ bağlantısı açılmaz. Cevap başarı/hatada kapatılır;
+istemci `with` veya idempotent `close()` ile bırakılır. Ctrl+C aynen yükselir.
+[HTTPX istemci yaşam döngüsü](https://www.python-httpx.org/advanced/clients/)
+
+API daha sonra kullanıcı tarafından başlatıldığında kullanım örneği:
+
+```python
+from app.ui.api_client import ApiClient
+
+with ApiClient() as client:
+    products = client.list_products()
+    detail = client.get_product(products[0].product_key) if products else None
+```
+
+Bu alt adımda gerçek API hesabı kurulmadı ve sunucu başlatılmadı.
+Ekran 7.6, gerçek verilerle birlikte kullanım kontrolü 7.7 kapsamındadır.
+
+### Hatalar
+
+`ApiClientError`, `code`, güvenli Türkçe `message` ve varsa `status_code`
+taşır. Ham gövde, sunucunun mesajı, SQL veya HTTPX istisna metni gösterilmez.
+Bilinen API kodu ancak beklenen HTTP durumuyla eşleşiyorsa korunur.
+
+| Kod | Anlam |
+|---|---|
+| `invalid_request` | Geçersiz anahtar/gün; yerelde reddedildiyse HTTP durumu yok |
+| `invalid_target` | İzinli sabit yerel hedef/yol/sorgu koşulu sağlanmadı |
+| `client_closed` | Kapatılmış istemci tekrar kullanıldı |
+| `timeout` | HTTPX bağlantı/okuma/yazma/havuz beklemesi doldu |
+| `connection_error` | Bağlantı/aktarım/protokol hatası |
+| `redirect_rejected` | 3xx cevap; yönlendirme izlenmedi |
+| `invalid_response` | 200 cevabı bozuk/eksik veya beklenmeyen başarılı HTTP durumu |
+| Mevcut API kodu | Bilinen 404/405/422/500/503; güvenli yerel Türkçe karşılık |
+| `http_error` | Bilinmeyen, bozuk veya durum/kodu uyuşmayan HTTP hatası |
+
+Hata boş liste veya önceki veriye çevrilmez. Beklenmeyen programlama hatası
+da bağlantı hatası gibi gizlenmez.
+
+### Doğrulama ve durum
+
+108 yeni istemci testi ve 13 yeni UI mimari testi eklendi.
+MockTransport ve gerçek FastAPI'nin süreç içi TestClient köprüsüyle
+dört adres, türler, eksik/bozuk veri, güvenli hata, tekrar/önbellek olmaması,
+hedef/proxy/yönlendirme, kapanış ve hata sonrası okuma doğrulandı.
+Ayrı süreçte import/nesne kurma DB/havuz/hesaplama/FastAPI yüklemedi ve
+ağ bağlantısı açmadı. Göreli importlar da mimari kontrolde çözülür.
+
+Tam paket **1568 passed, 0 atlandı/xfail (412 PostgreSQL)**, 138,05 sn;
+Black (66 dosya)/Flake8 temiz. İki mevcut Starlette/AnyIO uyarısı sürüyor.
+SQL sınamaları yalnız `fiyat_takip_test` üzerinde; 001–004 ve katalog
+parmak izleri aynı. Canlı HTTP/üretim DB kontrolü yapılmadı.
+Sahte zaman aşımı sınamaları gerçek ağ süresi ölçümü değildir.
+
+7.5 yerelde tamamlandı; kullanıcı commit/push onayını verdi.
+Gönderim sonrası aynı commit'in CI sonucu doğrulanacak.
+7.6 ekranına geçilmedi.
 
 ## Kimlik kuralları
 
@@ -2154,7 +2282,7 @@ temiz. Gerçek DB, katalog ve uygulanmış migration dosyaları değişmedi.
 
 ## Testler ne kanıtlar, ne kanıtlamaz
 
-- **Otomatik testler (1447; 412'si gerçek PostgreSQL'de):** Kuralların doğru
+- **Otomatik testler (1568; 412'si gerçek PostgreSQL'de):** Kuralların doğru
   çalıştığını kayıtlı ve sahte yanıtlarla kanıtlar. Kimlik değişiklikleri gerçek
   kaynak örneği ve regresyon ister; 7 Ekim varyant ve adres bakımları kullanıcının
   her maddeye ayrı onayıyla yapay çelişkilere karşı önleyici koruma olarak uygulandı.

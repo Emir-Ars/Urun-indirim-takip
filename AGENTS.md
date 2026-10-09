@@ -94,11 +94,13 @@ eskisi düzeltilir; belge baştan yazılmaz.
   - Scraper'ın sözleşmesi `fetch(listing) -> PriceObservation`'dır.
   - Pazaryeri HTTP'si yalnız `app/scraper/http.py` ve `curl_cffi` ile yapılır.
     Kullanıcının Aşama 7 için onayladığı tek istisna:
-    `app/ui/api_client.py`, HTTPX ile yalnız yerel FastAPI'ye erişebilir;
+    `app/ui/api_client.py`, HTTPX ile yalnız sabit
+    `http://127.0.0.1:8000` FastAPI adresine erişebilir;
     yönlendirme izlemez, ortam proxy'lerini kullanmaz ve zaman aşımı uygular.
     Diğer `app/` modülleri HTTPX veya başka HTTP kütüphanesi kullanamaz.
     Arayüz doğrudan veritabanına bağlanmaz. Bunu `tests/test_http.py` denetler;
-    yerel adres sınırı istemci eklendiğinde ayrıca sınanır.
+    sabit hedef/yönlendirme/zaman aşımı ve cevap doğrulaması
+    `tests/test_api_client.py` içinde ayrıca sınanır.
   - Yeni telefon veriyle, `config/discovery.json` üzerinden eklenir.
 - Scraper ve keşfin kimlik kuralları yalnız canlıda görülen gerçek bir örnekle
   değiştirilir ve her değişikliğe regresyon testi eklenir.

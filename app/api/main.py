@@ -12,13 +12,13 @@ from starlette.exceptions import HTTPException
 from starlette.responses import JSONResponse
 
 from app.api import database
-from app.api.models import (
+from app.api.models import product_response
+from app.api.schemas import (
     ErrorDetail,
     ErrorResponse,
     HealthResponse,
     ProductResponse,
     StatusResponse,
-    product_response,
 )
 from app.contracts import Product, utc_now
 from app.database import read

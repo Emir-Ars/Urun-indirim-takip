@@ -37,6 +37,14 @@ Money = Annotated[int, Field(gt=0)]
 Key = Annotated[str, Field(pattern=r"^[a-z][a-z0-9_]*$")]
 URL = Annotated[str, AfterValidator(public_url)]
 Stock = Literal["Stokta Var", "Kritik Stok", "Tükendi"]
+Reason = Literal[
+    "no_history",
+    "incomplete_scope",
+    "insufficient_period",
+    "no_prices",
+    "insufficient_transitions",
+    "insufficient_days",
+]
 
 
 class Contract(BaseModel):

@@ -4,19 +4,10 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from math import log
 from statistics import stdev
-from typing import Literal
 from zoneinfo import ZoneInfo
 
+from app.contracts import Reason
 from app.database.read import ProductRun, ProductSnapshot
-
-Reason = Literal[
-    "no_history",
-    "incomplete_scope",
-    "insufficient_period",
-    "no_prices",
-    "insufficient_transitions",
-    "insufficient_days",
-]
 
 
 @dataclass(frozen=True)
