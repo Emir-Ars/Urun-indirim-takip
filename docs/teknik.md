@@ -16,6 +16,7 @@ geliştirme geçmişini açıklar. Kararların ve aşama durumunun ana kaynağı
 - [Fiyat okuma nasıl çalışır](#fiyat-okuma-nasıl-çalışır)
 - [Veritabanı (PostgreSQL)](#veritabanı-postgresql)
 - [Yerel API hazırlığı](#yerel-api-hazırlığı-aşama-71)
+- [Salt okunur veritabanı okumaları](#salt-okunur-veritabanı-okumaları-aşama-72)
 - [Kimlik kuralları](#kimlik-kuralları)
 - [Testler ne kanıtlar, ne kanıtlamaz](#testler-ne-kanıtlar-ne-kanıtlamaz)
 - [Bilinen sınırlar](#bilinen-sınırlar)
@@ -98,6 +99,7 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 | `market_history.py` | Ağsız aktarımın SQL işlemleri: kimlik ön kontrolü, salt okunur önizleme, ürün başına transaction, tekrar/çelişki koruması ve tur kilidi. |
 | `catalog_sync.py` | `catalog.json`'u veritabanındaki kopyaya eşitler: `plan_sync` farkı veritabanına dokunmadan hesaplar, `sync_catalog` tek transaction'da yazar. |
 | `runs.py` | Tur SQL'leri: veritabanı tur kilidi, yarım kalan turu kapatma, turu ve planlanan sayfaları açma, sayfa sonucunu (bir kez, yalnızca süren tura) yazma, süren turdaki `network` hatası satırını ikinci okumanın sonucuyla değiştirme (`rewrite_network_result`, tek istisna), turu kapatma, özet. |
+| `read.py` | API'nin kullanacağı salt okunur veri katmanı: etkin ürünler, global tur durumu, ürüne özel son tamamlanmış tur, teklifler ve ayrı kendi/Cimri geçmişi. Hazır bağlantıda tek REPEATABLE READ, READ ONLY işlem; bağlantı/havuz açmaz, kilit almaz, veri yazmaz. |
 | `__main__.py` | Komut satırı: `python -m app.database migrate` / `status` / `sync-catalog [--dry-run]`. Çıkış kodları: `0` başarılı; `1` komut başarısız (şema, katalog çakışması, bağlantı, ayar; mesaj stderr'e `Veritabanı komutu başarısız: …` diye yazılır); `2` argüman hatası. |
 
 ### Fiyat toplama turu: `app/collection/`
@@ -122,6 +124,7 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 | `tests/conftest.py` | Her testte gerçek curl_cffi ve HTTPX ağ transport'ları kesilir; ASGI/TestClient/MockTransport süreç içinde çalışır. Kalıcı `DATABASE_URL` ve `API_DATABASE_URL` silinir. `db` yalnız `TEST_DATABASE_URL`'deki `_test` DB'yi her testte boşaltır; ortak test kilidi en çok 30 sn bekler. `api_db` ayrıca `TEST_API_DATABASE_URL` ve `fiyat_takip_api_test` ister; iki bağlantının aynı `_test` DB olduğunu denetleyip test şemasında SELECT izinlerini yeniden kurar. Eksik test adresleri yerelde atlama, CI'da hata üretir. |
 | `tests/test_http.py` | HTTP katmanı (104 test): hata kodları (`invalid_host` mesajı hedef alan adını yazar, sorgu metnini yazmaz), indirme sırasında 8 MB sınırı (parçalı/tek parça taşma, tam eşik, aktarımın durması, UTF-8 parçaları, boş yanıt, yarım gövdenin tekrar öncesi atılması), büyük hata/yönlendirme yanıtlarında aynı sınıflandırma ve istek bütçesi, yönlendirme kuralları, 5xx tekrarı ve bekleme süreleri, istekler arası bekleme, factory. Mimari kuralda yalnız `app/ui/api_client.py` için HTTPX izni var; başka dosya veya başka kütüphane bu izni kullanamaz (9 test). `curl_cffi` hâlâ yalnız `http.py`'de. |
 | `tests/test_api_foundation.py` | 7.1 hazırlığı (51 test, 43'ü PostgreSQL): gerçek HTTPX isteklerinin engeli, sahte/süreç içi istemcilerin çalışması, iki üretim adresinin testlerden silinmesi, gerçek API test hesabının sekiz nesneyi okuması, varsayılan READ ONLY kapatılsa da yazma/kalıcı nesne kuramaması, tekrar rol kurulumu ve hatada izinlerin geri alınması. Gerçek API veya UI özelliği testi değildir. |
+| `tests/test_database_read.py` | Salt okunur sorgular (57 test, 43'ü gerçek API test hesabıyla PostgreSQL'de): etkin/pasif ürün, ürüne özel completed tur, fiyat/stoksuz/hata/eksik kapsam, eşit teklif, gün aralıkları, ayrı Cimri/NULL, mevcut katalog bilgisi, iki bağlantıyla tutarlı görüntü, açık işlem reddi, yerel ayarlar, sorgu hatası/zaman aşımı sonrası yeniden okuma ve toplama kilidinden bağımsızlık. |
 | `tests/test_contracts.py` | Pydantic sözleşmeleri (74 test): satılabilir teklif fiyat ve satıcı taşır, puan ölçeği aşamaz, üstü çizili fiyat güncel fiyattan büyüktür, katalog kimlik/referans/alan adı kuralları, `money()` kuruş çevirimi. |
 | `tests/test_trendyol_scraper.py`, `tests/test_hepsiburada_scraper.py` | Fiyat okuma (44 + 58 test): seçilen teklif, eşit fiyatta satıcı adı, çizili fiyat, Kritik Stok, Tükendi'nin yalnız açık sinyalle verilmesi, bozuk satıcı kayıtlarının reddi, ret nedenleri, `parse` dönüşümü. Sahte sayfa ve istemci; internete çıkmaz. |
 | `tests/test_discovery.py` | Keşif (247 test): kimlik kuralları, sayfalama ve uyarı türleri, katalog birleştirme (aynı adaylar hep aynı kimlikleri alır), dry-run'ın kataloğa yazmaması, LF satır sonu, BOM'lu ayar dosyaları, UTF-8 çıktı, çıkış kodları ve gerçek `config/*.json` dosyalarının sözleşmeye uyması. Ekli aksesuarlar model, başlık/yapısal kapasite, birden çok ürün adı ve kategori düzeyinde reddedilir; kayıtlı 21 telefonun kimlik kabulü korunur. Zamanlanmış keşif (log ve tarihli rapor, `--dry-run` zorunluluğu, konsolsuz çalışma, kilit meşgul, program hatası, log açılamaması, rapor klasörünün baştan denetimi, özet satırı) ve `--apply-report` (siteye gitmez, canlı yazmayla bayt bayt aynı katalog, ikinci uygulamada yazmama, önizleme olmayan/bozuk/sarmalı/yabancı alan adlı/önizlemeyi aşan rapor reddi) ağsız sınanır. Trendyol filtre uyarısının tek yazılması ve tarama sonrası yazma hatasının ("Tarama bitti ama sonuç yazılamadı", çıkış 1; log dahil) "başlatılamadı"dan ayrılması da burada denenir. |
@@ -1606,10 +1609,11 @@ kurulum/çalıştırma ayrıntıları bu rehberde korunup eksikleri tamamlandı.
 
 ## Yerel API hazırlığı (Aşama 7.1)
 
-9 Ekim'de yedi alt adımlı FastAPI/Streamlit planı onaylandı; şu anda yalnız
-bağımlılık, okuma rolü kurulumu ve test hazırlığı var. API adresleri, bağlantı
-havuzu, sorgular ve arayüz henüz uygulanmadı. Kurulu paketler tamamlanmış
-özellik sayılmaz; uygulama sırası proje planının Aşama 7 bölümündedir.
+9 Ekim'de yedi alt adımlı FastAPI/Streamlit planı onaylandı. 7.1'de
+bağımlılık, okuma rolü kurulumu ve test hazırlığı tamamlandı; 7.2'de eklenen
+okuma sorguları aşağıdaki bölümde açıklanır. API adresleri, bağlantı havuzu
+ve arayüz henüz uygulanmadı. Kurulu paketler tamamlanmış özellik sayılmaz;
+uygulama sırası proje planının Aşama 7 bölümündedir.
 
 ### Bağımlılıklar ve HTTP sınırı
 
@@ -1705,19 +1709,93 @@ MockTransport/ASGI/TestClient süreç içinde çalışır. Yerel API'ye gerçek 
 isteği de otomatik testte engellenir. Bu, uygulamanın dış adrese gitmeme
 kuralıyla aynı kontrol değildir; istemcinin hedef sınırı 7.5'te sınanır.
 
-**9 Ekim doğrulaması:** altı sabit sürüm kuruldu, `pip check` temiz.
+**7.1 doğrulaması (9 Ekim):** altı sabit sürüm kuruldu, `pip check` temiz.
 51 hazırlık testinin 43'ü gerçek okuma hesabıyla PostgreSQL'de geçti;
 9 HTTP mimari sınamasıyla toplam 60 yeni test eklendi. Tam paket
 **1250 geçti, 0 atlandı/xfail (319 PostgreSQL)**, 125,77 sn; Black
 (53 dosya) ve Flake8 temiz. Veritabanı testleri yalnız `fiyat_takip_test`
 üzerinde çalıştı. Katalog ve uygulanmış 001–004 dosyalarının fiziksel
-parmak izleri oturum öncesiyle aynı. Kullanıcı commit/push işlemini onayladı;
-aynı commit'in CI sonucu gönderim akışında ayrıca doğrulanır.
+parmak izleri oturum öncesiyle aynı. Kullanıcı onayıyla `bcbad7c` gönderildi;
+[aynı commit'in CI sonucu](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/37915304432)
+başarılı.
 
 Starlette 1.6.0 TestClient, mevcut HTTPX uyumu ve AnyIO takma adı için iki
 kullanım sonlandırma uyarısı veriyor; testler başarılı, uyarılar gizlenmedi.
 Onaylanan bağımlılık sürümleri korundu. Gerçek okuma hesabı daha sonra
 kullanıcı tarafından kurulacak; API/havuz/arayüz uygulaması henüz yok.
+
+## Salt okunur veritabanı okumaları (Aşama 7.2)
+
+`app/database/read.py` yalnız hazır Psycopg bağlantısıyla çalışır; ortam
+adresi seçmez, bağlantı açmaz/kapatmaz. Ürün için mevcut değiştirilemez
+`Product` sözleşmesi kullanılır; tur, sayfa sonucu ve geçmişler aynı modüldeki
+`frozen` veri sınıfları ve tuple'larla döner. Henüz HTTP/JSON cevabı değildir.
+
+| İşlev | Sonuç |
+|---|---|
+| `list_products(conn)` | Etkin ürünler, artan ürün kimliğiyle `tuple[Product, ...]` |
+| `read_run_status(conn)` | Kayıtlı running ve en yüksek kimlikli global completed tur; olmayan alan `None` |
+| `read_product(conn, product_key, history_days=30, cimri_days=366)` | `ProductSnapshot`: ürün, güncel tur, sayfa sonuçları, en ucuz/son başarılı teklif, kendi ve ayrı Cimri geçmişi; bilinmeyen ürün `None` |
+
+Pasif ürün doğrudan anahtarıyla okunabilir; etkinlik bilgisi korunur ve ürün
+listesine eklenmez. Sorgular parametrelidir.
+
+### İşlem ve hata sözleşmesi
+
+Her giriş bağlantının işlemsiz olmasını ister. Açık işlem `ValueError` ile
+reddedilir; çağıranın işlemi sonlandırılmaz. Kapalı bağlantı
+`psycopg.InterfaceError` üretir. Kendi işleminde REPEATABLE READ, READ ONLY,
+5 saniyelik `statement_timeout` ve UTC kurulur; işlem bitince bağlantının
+önceki ayarları geri gelir. Sorgu hatası yükselir ve okuma işlemi geri alınır;
+boş veri gibi gösterilmez. Başarılı veya SQL hatalı okumadan sonra açık
+bağlantı yeniden kullanılabilir.
+
+Tek işlem bütün ürün cevabını aynı veritabanı görüntüsünden kurar;
+eşzamanlı tamamlanan tur veya katalog değişikliği cevabın ortasında görünmez.
+Toplama kilidi alınmaz, migration/katalog eşitleme/tur kapatma çağrılmaz.
+İşlem yönetiminin dayanağı
+[PostgreSQL yalıtımı](https://www.postgresql.org/docs/17/transaction-iso.html)
+ve [Psycopg işlemleridir](https://www.psycopg.org/psycopg3/docs/basic/transactions.html).
+
+### Güncel sonuç ve geçmişlerin anlamı
+
+- Güncel tur, ürünün kendisini içeren en yüksek `run_id` değerli completed
+  turdur. Başka ürünün daha yeni sınırlı turu sonucu gizlemez;
+  running/interrupted turlar elenir.
+- O turdaki bütün planlanan sayfalar okunur. Mevcut katalogdaki pasif
+  sayfa/platform geçmiş sonucu elemez. En ucuz teklif ve eşit fiyatta küçük
+  sayfa kimliği seçimi `product_run_prices` görünümünden gelir.
+- `state`: fiyat varsa `offer`; bütün sayfalar sold_out ise `sold_out`;
+  fiyat yokken hata/sonuçsuz sayfa varsa `unverified`; ürünün tamamlanmış turu
+  yoksa `no_history`. `partial`, cevaplanan sayfalar planlananlardan azsa
+  doğrudur. Hata ve henüz cevaplanmamış sayılar ayrı tutulur.
+- `last_successful_offer` ayrı bilgidir; güncel fiyatın yerine geçirilmez.
+  `best_checked_at` seçilen teklif zamanı, `last_checked_at` turun ürüne ait
+  son kontrol zamanıdır.
+- Fiyat/satıcı/stok kayıtlı sonuçtan; URL/renk/etkinlik mevcut katalogdan
+  gelir. Geçmiş URL veya renk varmış gibi sunulmaz.
+- Kendi `history` aralığı, son completed ürün turunun başlangıcı eksi
+  `history_days` ile bu başlangıç arasındadır; iki sınır dahildir.
+  Cimri aralığı ürünün son kayıtlı günü dahil `cimri_days` takvim günüdür.
+  Bugünün tarihi esas alınmaz. Parametreler 1–366 tam sayı olmalıdır;
+  bool, metin ve kesirli sayılar kabul edilmez.
+- Fiyatsız turlar/günler `None` kalır; boş gün eklenmez ve seriler birleşmez.
+  Kuruşlar tam sayı, zamanlar UTC, Cimri günü `date`'tir. Görünen aralığın
+  dışındaki önceki tur karşılaştırması korunur. `all_history` bütün
+  tamamlanmış ürün turu özetlerini ve planlanan sayfa kimliklerini 7.3 için
+  tutar; bu adım dip/zirve/değişkenlik hesaplamaz.
+
+**7.2 doğrulaması (9 Ekim):** 57 yeni test, 43'ü gerçek
+`fiyat_takip_api_test` hesabıyla PostgreSQL'de. Tam paket **1307 geçti,
+0 atlandı/xfail (362 PostgreSQL)**, 102,93 sn; Black (55 dosya) ve Flake8
+temiz. İki bağlantılı sınamalar tur/katalog/Cimri değişiminde aynı cevabın
+tutarlılığını ve sonraki okumada yeni verinin görünmesini doğruladı.
+Sorgu hatası ve gerçek 5 saniyelik zaman aşımı sonrası bağlantı temiz kaldı.
+İki mevcut Starlette/AnyIO uyarısı sürdü; gizlenmedi. Testler yalnız
+`fiyat_takip_test` üzerinde çalıştı. Gerçek DB'ye yazılmadı; katalog,
+001–004 ve zamanlayıcılar değişmedi. Yeni kullanıcı komutu yok.
+Kullanıcı commit/push işlemini onayladı; aynı commit'in CI sonucu
+gönderimden sonra doğrulanır.
 
 ## Kimlik kuralları
 
@@ -1832,7 +1910,7 @@ temiz. Gerçek DB, katalog ve uygulanmış migration dosyaları değişmedi.
 
 ## Testler ne kanıtlar, ne kanıtlamaz
 
-- **Otomatik testler (1250; 319'u gerçek PostgreSQL'de):** Kuralların doğru
+- **Otomatik testler (1307; 362'si gerçek PostgreSQL'de):** Kuralların doğru
   çalıştığını kayıtlı ve sahte yanıtlarla kanıtlar. Kimlik değişiklikleri gerçek
   kaynak örneği ve regresyon ister; 7 Ekim varyant ve adres bakımları kullanıcının
   her maddeye ayrı onayıyla yapay çelişkilere karşı önleyici koruma olarak uygulandı.
