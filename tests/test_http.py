@@ -824,6 +824,7 @@ def test_app_does_not_import_other_http_libraries():
         f"{path}: {module}"
         for path, module in app_imports()
         if any(is_within(module, forbidden) for forbidden in FORBIDDEN_HTTP)
+        and not (path == "app/ui/api_client.py" and is_within(module, "httpx"))
     ]
     assert offenders == []
 
@@ -831,3 +832,32 @@ def test_app_does_not_import_other_http_libraries():
 def test_curl_cffi_is_imported_only_by_http_module():
     users = {path for path, module in app_imports() if is_within(module, "curl_cffi")}
     assert users == {"app/scraper/http.py"}
+
+
+@pytest.mark.parametrize(
+    "relative,source,allowed",
+    [
+        ("ui/api_client.py", "import httpx", True),
+        ("ui/api_client.py", "from httpx import Client", True),
+        ("ui/api_client.py", "import httpx._client", True),
+        ("ui/other.py", "import httpx", False),
+        ("api/main.py", "from httpx import Client", False),
+        ("scraper/http.py", "import httpx", False),
+        ("ui/sub/api_client.py", "import httpx", False),
+        ("ui/api_client.py", "import requests", False),
+        ("ui/api_client.py", "from urllib import request", False),
+    ],
+)
+def test_local_api_http_exception_is_limited_to_one_module(
+    tmp_path, monkeypatch, relative, source, allowed
+):
+    root = tmp_path / "app"
+    path = root / relative
+    path.parent.mkdir(parents=True)
+    path.write_text(source, encoding="utf-8")
+    monkeypatch.setitem(globals(), "APP", root)
+    if allowed:
+        test_app_does_not_import_other_http_libraries()
+    else:
+        with pytest.raises(AssertionError):
+            test_app_does_not_import_other_http_libraries()

@@ -32,7 +32,7 @@ Kullanıcı arayüzde arama yaptığında canlı scraping veya model eğitimi
 | 4. Scraper/discovery kabul kontrolü (6 adım) | ✅ Tamamlandı | `4d5613d`, Bölüm 5 |
 | 5. Katalogun 25 hedefle sıfırdan kurulumu ve kod denetimi | ✅ Tamamlandı | Bölüm 6 |
 | 6. Veritabanı ve zamanlanmış toplama | ✅ **Tamamlandı (8 Ekim): Adım 0–11 ve yedi bakım kapandı.** 001–004 şeması ve katalog/DB eşitliği doğrulandı: 59 ürün, 334 sayfa (332 etkin). Son zamanlanmış tur 19: 332/332 sonuç, 237 fiyat/95 Tükendi/0 hata; log ve DB aynı. Karşılaştırılabilirlik görünümü 59 ürün için bağımsız doğrulandı. Cimri: 57 ürün/20.805 kayıt/553 NULL; tekrar aktarım ve ilk kaynak bilgileri korundu, iki eşleştirme eksikliği belgeli. Bilinen sınırlar ve canlı gözlem bekleyen senaryolar korunuyor. Adım 7 kapanışı `3c4d030` ile gönderildi; aynı SHA CI 37813840435 başarılı. Ayrı onaylanan README/teknik rehber düzenlemesi uygulandı; commit/push işlemi kullanıcı tarafından onaylandı; aynı commit CI gönderim akışında doğrulanır. API/arayüz başlamadı. | Bölüm 7, Adım 7 kapanışı; Bölüm 9 |
-| 7. FastAPI ve Streamlit | 🔜 Planlandı, başlanmadı | Bölüm 9 |
+| 7. FastAPI ve Streamlit | 🛠️ **Başlandı (9 Ekim):** 7.1 temel hazırlık tamamlandı; 1250 test başarılı, atlanan yok. Kullanıcı commit/push işlemini onayladı; aynı commit'in CI sonucu gönderim akışında doğrulanır. 7.2 başlamadı; API ve arayüz henüz çalışır özellik değil. | Bölüm 9, FastAPI ve Streamlit |
 | 8. ML (indirim tahmini) | 🔜 Planlandı, başlanmadı | Bölüm 9 |
 | 9. Docker ve 7/24 işletim | 🔜 Planlandı, başlanmadı | Bölüm 9 |
 
@@ -421,6 +421,15 @@ Bu adımda alınan kararlar:
   teklifler arasında sunulduğunu gösteriyor. Tarihsel satıcı kapsamı ve eksik
   günlerin anlamı açıklanmıyor; bu seri bizim iki platformda takip ettiğimiz
   minimumla aynı kapsamda kabul edilmez.
+
+- **Aşama 7.1 rol kurulumu (9 Ekim):** kullanıcının test DB'sinde psql ile
+  çalıştırdığı UTF-8 SQL dosyası, istemci WIN1254 kullandığı için hata verdi.
+  İşlem COMMIT'e ulaşmadı; salt okunur kontrolde test rolü yoktu. Kurulum
+  komutu dosyadan önce açık UTF8 ayarı ve `-X` ile düzeltildi; kullanıcı tekrar
+  çalıştırınca DO/COMMIT geldi. Salt okunur kontrol test rolünü, sekiz nesnenin
+  SELECT iznini ve varsayılan READ ONLY ayarını doğruladı. Bildirimde Türkçe
+  harflerin bozuk görüntülenmesi kurulumu engellemedi. Kullanıcı şifre/pgpass
+  hazırlığını tamamladı; gerçek test hesabıyla 43 yetki testi ve tam paket başarılı.
 
 ### Bakım listesi (denetimde bulundu, ertelendi)
 
@@ -1369,6 +1378,7 @@ işlemini onayladı. Aynı commit CI gönderim akışında doğrulanır. Commit 
 
 | Konu | Durum |
 |---|---|
+| Aşama 7 API/arayüz kararları | **Kullanıcı planı onayladı (9 Ekim):** yalnız bu bilgisayarda; ayrı SELECT hesabı ve `API_DATABASE_URL`; eşzamanlı Psycopg, 1–4 bağlantılık havuz; yalnız yerel API istemcisine HTTPX istisnası; ayrı Cimri grafiği; 30 saniyede yenileme, ilk sürümde önbellek yok; 18 saatten itibaren eski veri uyarısı. Dip/zirve tam cevaplı aynı kapsam döneminden; değişkenlik en az 14 geçiş/7 gün. SlowAPI dış erişim öncesinde işletim aşamasında değerlendirilecek. Her alt adım ayrı durma, commit/push onayı ve aynı SHA CI doğrulaması. |
 | Adım 7 kapanışı | **Tamamlandı ve gönderildi (8 Ekim):** mevcut tur/katalog/şema/Cimri kanıtları salt okunur teyit edildi ve Aşama 6 kapatıldı. Kullanıcı onayıyla `3c4d030` gönderildi; aynı SHA CI 37813840435 başarılı. |
 | README ve teknik belgenin görev paylaşımı | **Plan onaylandı; uygulandı (8 Ekim):** veritabanı kapanışından sonra README projeyi dışarıdan inceleyenlere yönelik 106 satırlık tanıtıma dönüştürüldü. Kurulum/çalıştırma/bakım ve kaynak inceleme ayrıntıları teknik rehberde korundu; eksik sanal ortam adımı ve tek ürün kontrol örneği eklendi. AGENTS.md belge yönlendirmesi yeni rollerle eşitlendi. Kullanıcının görsellik isteğiyle emojiler, renkli akış ve 334 bağlantının marka grafiği eklendi. Kod değişmedi; kullanıcı commit/push işlemini onayladı. Aynı commit CI gönderim akışında doğrulanır. |
 | Garanti türüne göre ayrım | **Karar verildi (27 Eylül 2026): ayrılmıyor;** yurt dışı sürümler ürün adından tanınıp kapsam dışı bırakılıyor. |
@@ -1536,6 +1546,7 @@ Takvim (8 Ekim güncellemesi; Adım 9 ve Adım 7 tamamlandı, veritabanı aşama
 | Adım 11 sonrası | **Adım 9:** Cimri geçmişinin bir defalık alımı, katalog eşleştirmesi ve ayrı `market_history` tablosuna aktarım |
 | 8 Ekim, Adım 7 kapanışı | **Aşama 6 tamamlandı:** 19:55 bağımsız salt okunur kontrolde son tur logları, katalog, şema, 59 ürünün karşılaştırma görünümü ve Cimri geçmişi doğrulandı. Kapanış belgeleri kullanıcı onayıyla `3c4d030` olarak gönderildi; aynı SHA CI 37813840435 başarılı. Ardından README/teknik rehber için ayrı plan onaylandı; API/arayüz başlamadı. |
 | 8 Ekim, belge görev paylaşımı | Kullanıcının onayladığı ayrı plan uygulandı: README kısa proje tanıtımı; kurulum/çalıştırma/bakım ayrıntıları teknik rehberde. Kod ve gerçek veri değişmedi; kullanıcı commit/push işlemini onayladı. Aynı commit CI gönderim akışında doğrulanır. |
+| 9 Ekim, Aşama 7.1 | **Temel hazırlık tamamlandı:** web paketleri/kurulum uyumu, dar HTTPX istisnası, kullanıcı tarafından test okuma rolü ve pgpass hazırlığı, ağ koruması ve CI rol kurulumu. 60 yeni test; tam paket 1250 passed/0 atlandı/xfail (319 PostgreSQL, 43'ü API rolü), 125,77 sn; Black/Flake8 temiz. Kullanıcı commit/push işlemini onayladı; aynı SHA CI gönderim akışında doğrulanır. 7.2 başlamadı. |
 
 Kendi topladığımız geçmiş, ilk tam turdan (28 Eylül) sayılırsa Ekim sonunda
 30 güne ulaşır; bu süre tek başına yeterli eğitim verisi garantisi değildir.
@@ -1571,15 +1582,109 @@ izlenemeyen tek bir anlık görüntünün ML'e katkısı ihmal edilebilir, yanl�
 riski gerçektir. İlk gerçek veri Adım 5'teki canlı denemeyle girer; elle veri
 eklenmez.
 
-### FastAPI ve Streamlit
+### FastAPI ve Streamlit (Aşama 7; plan onaylandı, 9 Ekim)
 
-- FastAPI hazır ürün, geçmiş ve özetleri sunar; istek anında scraping veya
-  tahmin çalışmaz. SlowAPI ile oran sınırlandırma.
-- Streamlit telefon seçimini katalogdan beslenen açılır menüyle sunar; en ucuz
-  teklif, platform, satıcı, puan ve son gözlem zamanı gösterilir.
-- Son 30 günün dibi, tarihi zirve ve volatilite takip edilen geçmişten
-  hesaplanır; 30 günlük veri yoksa rozet gösterilmez. Kritik stok uyarısı
-  tahminden ayrı bir iş kuralıdır.
+**Amaç:** mevcut toplama → PostgreSQL → salt okunur FastAPI → Streamlit.
+İstek sırasında keşif, toplama, katalog eşitleme, migration veya eğitim yok.
+Bu bölümdeki 7.1–7.7, Aşama 6'nın tamamlanan Adım 7 kapanışından ayrıdır.
+
+**Araştırmanın değerlendirilmesi:**
+[ChatGPT raporu](docs/arastirma/asama_07_api_arayuz/chatgpt_deep_research.md) ve
+[Claude raporu](docs/arastirma/asama_07_api_arayuz/claude_deep_research.md),
+yerel kod/şema ve salt okunur DB kontrolüyle karşılaştırıldı. Claude'un kaynak
+kodu erişimi olmadığını belirttiği iddialar doğrulanmış hata sayılmadı.
+Mevcut `listing_checks(product_id, checked_at)` indeksi ve
+`product_run_prices` görünümü var; yeni migration/ORM/asenkron dönüşüm
+gerektiren eksik doğrulanmadı. Planlama kontrolünde 20 completed tur;
+Cimri 57 ürün/20.805 satır/553 NULL; 001–004 güncel. Sayılar o kontrolün
+anlık görüntüsüdür, sonraki zamanlanmış turlar bunları artırabilir.
+
+**Onaylanan mimari:**
+
+- Yalnız yerel kullanım: API `127.0.0.1:8000`, UI `127.0.0.1:8501`; tek
+  Uvicorn çalışanı. Yeni zamanlayıcı, Docker, ML veya dış erişim yok.
+- Ayrı `API_DATABASE_URL`; yazıcı `DATABASE_URL`'e dönüş yok. Üretimde
+  `fiyat_takip_api`, testte `fiyat_takip_api_test`; şifre pgpass'ta.
+  Kullanıcı yönetici hesabıyla rol kurulumunu yapar. Yalnız gerekli sekiz
+  tablo/görünüme SELECT verilir; rol dosyası migration değildir.
+- Psycopg eşzamanlı havuz: min 1/max 4, bağlantı bekleme 3 sn, sorgu 5 sn.
+  Havuz API yaşam döngüsünde açılır/kapanır. Ürün cevabı tek
+  REPEATABLE READ, READ ONLY işleminde hazırlanır; yazıcı bağlantısı değişmez.
+- Pazaryeri HTTP'si mevcut katmanda kalır. Tek HTTPX istisnası
+  `app/ui/api_client.py`: yalnız yerel API, yönlendirme yok, ortam proxy'si
+  yok, zaman aşımı var. UI doğrudan DB'ye bağlanmaz. AGENTS ve mimari testine
+  işlenir; gerçek istemci ve yerel adres testleri 7.5'te eklenecek.
+- `web` kurulum grubu: FastAPI 0.142.4, Uvicorn 0.54.0, Streamlit 1.65.0,
+  Psycopg Pool 3.3.3, HTTPX 0.28.1, Altair 6.3.0. FastAPI'nin 9 Ekim'deki
+  güncel sürümü 0.143.0; başlangıç için araştırılan 0.142 serisi seçildi.
+  Kaynaklar: [FastAPI](https://pypi.org/project/fastapi/),
+  [Streamlit](https://pypi.org/project/streamlit/),
+  [Psycopg havuzu](https://www.psycopg.org/psycopg3/docs/advanced/pool.html),
+  [PostgreSQL yalıtımı](https://www.postgresql.org/docs/17/transaction-iso.html).
+- SlowAPI bu yerel sürüme eklenmez; dış erişim açılmadan önce işletim
+  aşamasında oran sınırlandırma hazırlanıp doğrulanacak. Bu, eski plandaki
+  Aşama 7 SlowAPI satırını kullanıcının seçimiyle erteler.
+
+**Planlanan API sözleşmesi (henüz uygulanmadı):**
+
+| GET adresi | Cevap |
+|---|---|
+| `/health` | DB, okuma yetkisi ve şema hazır mı? |
+| `/api/v1/status` | Kayıtlı çalışan tur ve son tamamlanmış tur |
+| `/api/v1/products` | Etkin ürünlerin kimliği, marka/model/kapasitesi |
+| `/api/v1/products/{product_key}` | Güncel durum, teklifler, kendi geçmişi, istatistikler ve ayrı Cimri geçmişi; tek tutarlı okuma |
+
+Kendi geçmişi varsayılan 30, Cimri 366 gün; gün parametreleri 1–366.
+JSON fiyatları tam sayı kuruş, zaman UTC, Cimri günü tarih; eksik fiyat NULL.
+Bilinmeyen ürün 404, geçersiz parametre 422, DB/havuz/şema erişilemezliği 503;
+hata cevabında şifre/SQL ayrıntısı yok.
+
+**Veri ve gösterim kuralları (7.2–7.6'da uygulanacak):**
+
+- Güncel sonuç ürünün kendisini içeren son completed turdur; global son
+  turun başka ürünle sınırlı olması sonucu gizlemez. Running/interrupted
+  fiyatları güncel olmaz. Bugün pasif olan sayfanın o turdaki sonucu korunur.
+- Fiyat, bütün planlanan sayfaların Tükendi olması ve okuma hatası ayrıdır.
+  Son başarılı fiyat güncel fiyatın yerine geçirilmez; puan kendi ölçeğiyle,
+  kritik stok doğrulanmış teklif bilgisiyle gösterilir.
+- Fiyat yaşı gerçek teklif kontrol zamanından; 18 saat ve üzerinde eski veri
+  uyarısı. Fiyat yoksa son kontrol zamanı ayrıca gösterilir. Tur değişimi
+  mevcut karşılaştırılabilirlik kuralıyla; kısmi kapsam açıkça belirtilir.
+- Kapsam dönemi son completed turdan geriye, bütün planlanan sayfaların
+  cevaplandığı ve sayfa kümesinin aynı kaldığı dönemdir; eksik cevap veya
+  küme değişimi dönemi keser. Son tur eksikse eski döneme sessiz dönüş yok.
+- Dip: dönem en az 30 güne ulaşmışsa son 30 günün geçerli minimumu.
+  Zirve: bütün mevcut kapsam döneminin geçerli maksimumu; dönem başlangıcı
+  ve gözlem sayısıyla, "tarihi zirve" denmeden gösterilir.
+- Değişkenlik: aynı dönemin son 30 gününde ardışık fiyatların
+  `log(yeni/eski)` değerlerinin örnek standart sapması × 100; en az 14 geçiş
+  ve 7 farklı İstanbul takvim günü. 18 saatten uzun aralık/eksik fiyat
+  üzerinden geçiş kullanılmaz, yıllıklaştırılmaz. Eşikler proje kararıdır.
+  Koşul yoksa NULL + gerekçe + gözlem sayısı; sıfırla doldurma yok.
+- UI seçimi API ürünlerinden; en ucuz teklif, satıcı/platform/puan/stok,
+  kontrol zamanı, cevaplanan/planlanan sayılar. Kendi grafiğinde NULL,
+  kapsam değişimi ve uzun boşlukta çizgi kesilir. Cimri ayrı grafik;
+  seriler birleşmez. Veri yoksa yalnız "Cimri geçmişi bulunmuyor" denir.
+- Seçilen ürün aktif oturumda 30 saniyede bir ve elle yenilenir;
+  başlangıçta önbellek yok. API hatasında eski ekran güncelmiş gibi tutulmaz.
+
+| Alt adım | Yapılacak iş | Durum |
+|---|---|---|
+| 7.1 Temel hazırlık | Kararlar/araştırma, web bağımlılıkları, dar HTTP istisnası, rol kurulumu, test ortamı | **Tamamlandı (9 Ekim):** altı paket kuruldu/pip check temiz; kullanıcı test rolü/pgpass hazırlığını tamamladı. 51 hazırlık testinin 43'ü gerçek okuma hesabıyla PostgreSQL'de başarılı; 9 mimari sınamayla 60 yeni test. Tam paket **1250 passed, 0 atlandı/xfail (319 PostgreSQL)**, 125,77 sn; Black (53 dosya)/Flake8 temiz. 001–004 ve katalog baytları korundu. İki bağımlılık kullanım sonlandırma uyarısı belgeli. Kullanıcı commit/push işlemini onayladı; aynı SHA CI gönderim akışında doğrulanır. |
+| 7.2 Veritabanı okumaları | Ürün, ürünün son completed turu, teklifler, kendi/Cimri geçmişi | Planlandı, başlanmadı |
+| 7.3 İstatistikler | Kapsam dönemi, dip/zirve/değişkenlik ve gerekçeler | Planlandı, başlanmadı |
+| 7.4 FastAPI | Havuz yaşam döngüsü, dört GET adresi, cevap/hata sözleşmeleri | Planlandı, başlanmadı |
+| 7.5 Yerel API istemcisi | HTTPX istemcisi, cevap doğrulama, zaman aşımı ve yerel adres sınırı | Planlandı, başlanmadı |
+| 7.6 Streamlit | Seçim, teklif/istatistik ekranı, iki grafik, yenileme; AppTest/görsel kontrol | Planlandı, başlanmadı |
+| 7.7 Birlikte kontrol/kapanış | Gerçek DB yalnız okuma ile SQL/API/UI karşılaştırması, akışın korunması, belgeler | Planlandı, başlanmadı |
+
+Her alt adım sonunda durulur; dosyalar ve Türkçe commit mesajı gösterilir,
+ayrı onayla commit/push yapılır; aynı SHA CI yeşil olmadan sonraki adıma
+geçilmez. Plan onayı önce yalnız 7.1'i uygulatır. Her kod değişikliği sonrası
+tam pytest/Black/Flake8; DB yalnız `_test`, atlananlar açıkça bildirilir.
+İstatistik için veri henüz yetmiyorsa doğru eksiklik mesajı kapanışı engellemez.
+Kaynak kodu/şema hatası bulunursa dar düzeltme ayrıca planlanır. 001–004,
+gerçek fiyatlar, katalog ve zamanlayıcılar korunur.
 
 ### ML
 

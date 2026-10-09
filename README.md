@@ -10,7 +10,7 @@ Uzun vadeli hedef, bu geçmişten telefonun yakında indirime girme olasılığ�
 hesaplamaktır.
 
 > ✅ **Keşif, fiyat toplama ve veritabanı aşamaları tamamlandı.**
-> API, kullanıcı arayüzü ve tahmin modeli henüz geliştirilmedi.
+> API/arayüz için temel hazırlık tamamlandı; çalışan ekran ve tahmin modeli henüz yok.
 
 ## ✨ Tamamlanan özellikler
 
@@ -60,7 +60,7 @@ hata sonucunu kaydeder. Cimri geçmişi bu akışın gözlemleriyle birleştiril
 
 ## 📊 Doğrulanmış kapsam
 
-8 Ekim 2026 itibarıyla:
+Veri ve katalog kontrolleri 8 Ekim 2026, otomatik test sonucu 9 Ekim 2026:
 
 | Alan | Sonuç |
 |---|---|
@@ -70,7 +70,7 @@ hata sonucunu kaydeder. Cimri geçmişi bu akışın gözlemleriyle birleştiril
 | Toplama düzeni | Her gün 10:00 ve 22:00; haftalık keşif Pazar 14:00 |
 | Son doğrulanan fiyat turu | 332 sonuç: 237 fiyat, 95 Tükendi, 0 hata |
 | Cimri geçmişi | 57 ürün, 20.805 tarihli kayıt; 20.252 fiyat ve 553 eksik değer |
-| Otomatik testler | 1190 test; 276’sı PostgreSQL üzerinde |
+| Otomatik testler | 1250 test; 319’u PostgreSQL üzerinde |
 
 Katalogdaki **334 bağlantının markalara göre dağılımı** (iki pasif bağlantı dahil):
 
@@ -96,7 +96,7 @@ doğrulanamadı; eksik fiyatlar doldurulmadı. Kaynak ve işletim sınırları
 | Aşama | Durum |
 |---|---|
 | Fiyat okuma, keşif, katalog, veritabanı ve zamanlanmış toplama | ✅ Tamamlandı |
-| FastAPI ve Streamlit ile verileri sunma ve görüntüleme | 🔜 Planlandı |
+| FastAPI ve Streamlit ile verileri sunma ve görüntüleme | 🛠️ Temel hazırlık tamam; uygulama geliştirmesi sırada |
 | ML ile indirim olasılığı tahmini | 🔜 Planlandı |
 | Docker ve sürekli çalışma ortamı | 🔜 Planlandı |
 

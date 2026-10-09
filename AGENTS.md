@@ -92,9 +92,13 @@ eskisi düzeltilir; belge baştan yazılmaz.
 
 - Sözleşmeleri koru:
   - Scraper'ın sözleşmesi `fetch(listing) -> PriceObservation`'dır.
-  - HTTP yalnız `app/scraper/http.py` ve `curl_cffi` ile yapılır;
-    requests/httpx/Playwright/Selenium kullanılmaz. Bunu `tests/test_http.py`
-    denetler.
+  - Pazaryeri HTTP'si yalnız `app/scraper/http.py` ve `curl_cffi` ile yapılır.
+    Kullanıcının Aşama 7 için onayladığı tek istisna:
+    `app/ui/api_client.py`, HTTPX ile yalnız yerel FastAPI'ye erişebilir;
+    yönlendirme izlemez, ortam proxy'lerini kullanmaz ve zaman aşımı uygular.
+    Diğer `app/` modülleri HTTPX veya başka HTTP kütüphanesi kullanamaz.
+    Arayüz doğrudan veritabanına bağlanmaz. Bunu `tests/test_http.py` denetler;
+    yerel adres sınırı istemci eklendiğinde ayrıca sınanır.
   - Yeni telefon veriyle, `config/discovery.json` üzerinden eklenir.
 - Scraper ve keşfin kimlik kuralları yalnız canlıda görülen gerçek bir örnekle
   değiştirilir ve her değişikliğe regresyon testi eklenir.
@@ -104,9 +108,11 @@ eskisi düzeltilir; belge baştan yazılmaz.
   `.venv\Scripts\python.exe -m pytest -q`,
   `.venv\Scripts\python.exe -m black --check app tests` ve
   `.venv\Scripts\python.exe -m flake8 app tests`.
-  Veritabanı testleri `TEST_DATABASE_URL` ister; değişken tanımlı değilse
-  yerelde atlanır. Çıktıda `skipped` sayısı 0 değilse "bütün testler geçti"
-  denmez.
+  Veritabanı testleri `TEST_DATABASE_URL`, API okuma rolü testleri ayrıca
+  `TEST_API_DATABASE_URL` ister; değişken tanımlı değilse yerelde atlanır.
+  Her ikisi de yalnız `_test` veritabanına bağlanır. Testlere gerçek
+  `DATABASE_URL` ve `API_DATABASE_URL` aktarılmaz. Çıktıda `skipped` sayısı
+  0 değilse "bütün testler geçti" denmez.
 - Test sonucunu canlı sonuçla karıştırma. Testler kuralları sınar; "testler
   geçti", "siteler bugün doğru okunuyor" ya da "pazaryerinin tamamı tarandı"
   anlamına gelmez.

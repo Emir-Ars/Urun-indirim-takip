@@ -15,6 +15,7 @@ geliştirme geçmişini açıklar. Kararların ve aşama durumunun ana kaynağı
 - [Keşif nasıl çalışır](#keşif-nasıl-çalışır)
 - [Fiyat okuma nasıl çalışır](#fiyat-okuma-nasıl-çalışır)
 - [Veritabanı (PostgreSQL)](#veritabanı-postgresql)
+- [Yerel API hazırlığı](#yerel-api-hazırlığı-aşama-71)
 - [Kimlik kuralları](#kimlik-kuralları)
 - [Testler ne kanıtlar, ne kanıtlamaz](#testler-ne-kanıtlar-ne-kanıtlamaz)
 - [Bilinen sınırlar](#bilinen-sınırlar)
@@ -106,19 +107,21 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 | `service.py` | Bir tur: şema kontrolü, yarım kalan turu kapatma, katalog eşitleme, planlama, her sayfayı mevcut scraper'la okuyup sonucunu hemen yazma, `network` hatası alan sayfaları tur sonunda bir kez yeniden okuma, turu kapatma. Scraper ile veritabanını bağlayan tek yer. |
 | `__main__.py` | Komut satırı: `python -m app.collection [--prefix ÖN_EK] [--scheduled]`; ortak kilidi alır. `--scheduled` ile çıktı `data/logs/` altındaki log dosyasına da yazılır. |
 
-### Zamanlayıcı: `scripts/`
+### Kurulum ve zamanlayıcı: `scripts/`
 
 | Dosya | Ne işe yarar |
 |---|---|
 | `zamanlayici_kur.ps1` | Fiyat toplama turunu Windows Görev Zamanlayıcı'ya kurar (her gün 10:00 ve 22:00, penceresiz); `-Kaldir` ile siler. Ayarları [Zamanlanmış tur](#zamanlanmış-tur-görev-zamanlayıcı) bölümündedir. |
 | `kesif_zamanlayici_kur.ps1` | Haftalık keşfi Görev Zamanlayıcı'ya kurur (her Pazar 14:00, katalog yazmadan, penceresiz, kaçan çalışmayı telafi etmez); `-Kaldir` ile siler. Ayarları [Zamanlanmış keşif](#zamanlanmış-keşif-görev-zamanlayıcı) bölümündedir. |
+| `api_okuma_rolu.sql` | Yönetici hesabıyla çalıştırılan, tek işlemde rol/SELECT izinlerini hazırlayan ortam kurulumu. Yeni tablo veya migration oluşturmaz; fiyat/katalog satırlarını değiştirmez. Üretimde `fiyat_takip_api`, `_test` DB'de `fiyat_takip_api_test`; mevcut ayrıcalıklı/üye/sahip veya yazma yetkili rolü reddeder. |
 
 ### Testler ve CI
 
 | Yer | Ne işe yarar |
 |---|---|
-| `tests/conftest.py` | Bütün testlerin emniyet kemerleri: her testte gerçek curl_cffi isteği kesilir (sahte istemci kullanmayı unutan test siteye gitmek yerine başarısız olur) ve kalıcı `DATABASE_URL` silinir. `db` fixture'ı yalnızca `TEST_DATABASE_URL`'deki, adı `_test` ile biten veritabanını kullanır ve her testten önce onu boşaltır; aynı anda iki pytest çalışırsa ikincisi en çok 30 sn bekler. `TEST_DATABASE_URL` yoksa veritabanı testleri yerelde atlanır; `CI` ortam değişkeni tanımlıysa (GitHub Actions tanımlar) başarısız olur. |
-| `tests/test_http.py` | HTTP katmanı (95 test): hata kodları (`invalid_host` mesajı hedef alan adını yazar, sorgu metnini yazmaz), indirme sırasında 8 MB sınırı (parçalı/tek parça taşma, tam eşik, aktarımın durması, UTF-8 parçaları, boş yanıt, yarım gövdenin tekrar öncesi atılması), büyük hata/yönlendirme yanıtlarında aynı sınıflandırma ve istek bütçesi, yönlendirme kuralları, 5xx tekrarı ve bekleme süreleri, istekler arası bekleme, factory. Ayrıca mimari kural: `app/` içinde `requests`/`httpx`/`playwright`/`selenium` yok, `curl_cffi` yalnız `http.py`'de. |
+| `tests/conftest.py` | Her testte gerçek curl_cffi ve HTTPX ağ transport'ları kesilir; ASGI/TestClient/MockTransport süreç içinde çalışır. Kalıcı `DATABASE_URL` ve `API_DATABASE_URL` silinir. `db` yalnız `TEST_DATABASE_URL`'deki `_test` DB'yi her testte boşaltır; ortak test kilidi en çok 30 sn bekler. `api_db` ayrıca `TEST_API_DATABASE_URL` ve `fiyat_takip_api_test` ister; iki bağlantının aynı `_test` DB olduğunu denetleyip test şemasında SELECT izinlerini yeniden kurar. Eksik test adresleri yerelde atlama, CI'da hata üretir. |
+| `tests/test_http.py` | HTTP katmanı (104 test): hata kodları (`invalid_host` mesajı hedef alan adını yazar, sorgu metnini yazmaz), indirme sırasında 8 MB sınırı (parçalı/tek parça taşma, tam eşik, aktarımın durması, UTF-8 parçaları, boş yanıt, yarım gövdenin tekrar öncesi atılması), büyük hata/yönlendirme yanıtlarında aynı sınıflandırma ve istek bütçesi, yönlendirme kuralları, 5xx tekrarı ve bekleme süreleri, istekler arası bekleme, factory. Mimari kuralda yalnız `app/ui/api_client.py` için HTTPX izni var; başka dosya veya başka kütüphane bu izni kullanamaz (9 test). `curl_cffi` hâlâ yalnız `http.py`'de. |
+| `tests/test_api_foundation.py` | 7.1 hazırlığı (51 test, 43'ü PostgreSQL): gerçek HTTPX isteklerinin engeli, sahte/süreç içi istemcilerin çalışması, iki üretim adresinin testlerden silinmesi, gerçek API test hesabının sekiz nesneyi okuması, varsayılan READ ONLY kapatılsa da yazma/kalıcı nesne kuramaması, tekrar rol kurulumu ve hatada izinlerin geri alınması. Gerçek API veya UI özelliği testi değildir. |
 | `tests/test_contracts.py` | Pydantic sözleşmeleri (74 test): satılabilir teklif fiyat ve satıcı taşır, puan ölçeği aşamaz, üstü çizili fiyat güncel fiyattan büyüktür, katalog kimlik/referans/alan adı kuralları, `money()` kuruş çevirimi. |
 | `tests/test_trendyol_scraper.py`, `tests/test_hepsiburada_scraper.py` | Fiyat okuma (44 + 58 test): seçilen teklif, eşit fiyatta satıcı adı, çizili fiyat, Kritik Stok, Tükendi'nin yalnız açık sinyalle verilmesi, bozuk satıcı kayıtlarının reddi, ret nedenleri, `parse` dönüşümü. Sahte sayfa ve istemci; internete çıkmaz. |
 | `tests/test_discovery.py` | Keşif (247 test): kimlik kuralları, sayfalama ve uyarı türleri, katalog birleştirme (aynı adaylar hep aynı kimlikleri alır), dry-run'ın kataloğa yazmaması, LF satır sonu, BOM'lu ayar dosyaları, UTF-8 çıktı, çıkış kodları ve gerçek `config/*.json` dosyalarının sözleşmeye uyması. Ekli aksesuarlar model, başlık/yapısal kapasite, birden çok ürün adı ve kategori düzeyinde reddedilir; kayıtlı 21 telefonun kimlik kabulü korunur. Zamanlanmış keşif (log ve tarihli rapor, `--dry-run` zorunluluğu, konsolsuz çalışma, kilit meşgul, program hatası, log açılamaması, rapor klasörünün baştan denetimi, özet satırı) ve `--apply-report` (siteye gitmez, canlı yazmayla bayt bayt aynı katalog, ikinci uygulamada yazmama, önizleme olmayan/bozuk/sarmalı/yabancı alan adlı/önizlemeyi aşan rapor reddi) ağsız sınanır. Trendyol filtre uyarısının tek yazılması ve tarama sonrası yazma hatasının ("Tarama bitti ama sonuç yazılamadı", çıkış 1; log dahil) "başlatılamadı"dan ayrılması da burada denenir. |
@@ -136,7 +139,7 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 | `tests/manual/live_scraper_check.py` | Katalogdaki sayfaları canlı okur; bütün satıcıları gösterir. İsteğe bağlı `product_key` ön eki (ör. `samsung_`) ile yalnız o ürünler; sayfa seçimi toplama turuyla aynı fonksiyondur. Başka bir tarama sürüyorsa (ortak kilit) çıkış kodu 3'tür. |
 | `tests/manual/live_discovery_check.py` | Keşfi kataloğa yazmadan canlı çalıştırır; `--trace` ile her kararın nedenini gösterir. Normalde raporu `data/discovery_report.json` dosyasının üzerine yazar. `--save-responses KLASOR`, tek hedefin ham HTML/JSON yanıtlarını ve raporunu yeni klasöre kaydeder; karar izini de basar. |
 | `tests/manual/market_history_probe.py` | Akakçe için tek örnek sayfayı, Cimri için ürün sayfası ve grafik API'sini ortak HTTP katmanı ve tarama kilidiyle okur. Cimri'nin tarihli fiyat noktalarını Git dışındaki yerel JSON raporuna yazar; ham HTML'yi ve veritabanını yazmaz. |
-| `.github/workflows/ci.yml` | Her push/pull request'te geçici bir PostgreSQL 17 açar (yereldeki gibi `C.UTF-8`) ve Black, Flake8 ile bütün testleri çalıştırır. |
+| `.github/workflows/ci.yml` | Her push/pull request'te geçici PostgreSQL 17 (`C.UTF-8`) açar, `dev,web` bağımlılıklarını kurar; yalnız `_test` DB'de API rolünü hazırlar ve Black/Flake8/tam testleri çalıştırır. `ci_only` şifresi yalnız o işte açılıp silinen sunucunundur. |
 | `.github/workflows/bulut-deneme.yml` | Elle tetiklenen bulut denemesi (zamanlama, veritabanı ve gizli anahtar yok): `tests/manual/live_scraper_check.py samsung_galaxy_a55_128gb` ile 4 sayfayı (Trendyol ve Hepsiburada) GitHub'ın makinesinden okur; her iki site de hatasız okunduysa başarılı, aksi hâlde başarısız biter ve sonucu çalışmanın özet sayfasına yazar. Soru: siteler bulut adreslerini engelliyor mu ([proje_plani.md](../proje_plani.md) Bölüm 8). **İlk sonuç (6 Ekim):** Hepsiburada'nın 3 sayfası okundu, Trendyol'un sayfası HTTP 403 (`blocked`) verdi; tek örnek (bkz. "Bilinen sınırlar"). Tetiklemek: GitHub → Actions → "Bulut deneme (canlı okuma)" → Run workflow. Bilgisayardaki tur saatlerinde (10:00–10:40, 22:00–22:40) tetiklenmemelidir: `data/scrape.lock` bu makineye özgüdür, GitHub'daki çalışma onu almaz ve aynı siteye iki yerden gidilir (iş tanımı bunu denetlemez, yalnız yorumda uyarır). |
 
 ## Komutların ayrıntısı
@@ -144,9 +147,9 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 Windows ve PowerShell, Python sanal ortamı `.venv`:
 
 ```powershell
-# Kurulum: yalnız biten aşamanın bağımlılıkları + test/biçim araçları
+# Kurulum: mevcut kod + test araçları + API/arayüz hazırlığı
 python -m venv .venv
-.venv\Scripts\python.exe -m pip install -e ".[dev]"
+.venv\Scripts\python.exe -m pip install -e ".[dev,web]"
 
 # Otomatik testler (internete çıkmaz; veritabanı testleri TEST_DATABASE_URL ister)
 .venv\Scripts\python.exe -m pytest -q
@@ -1601,6 +1604,121 @@ kurulum/çalıştırma ayrıntıları bu rehberde korunup eksikleri tamamlandı.
   geliştirilir ve gerçek klasöre yalnız bitince konur; `migrate` hemen ardından,
   10:00–10:40 ve 22:00–22:40 tur saatleri dışında çalıştırılır.
 
+## Yerel API hazırlığı (Aşama 7.1)
+
+9 Ekim'de yedi alt adımlı FastAPI/Streamlit planı onaylandı; şu anda yalnız
+bağımlılık, okuma rolü kurulumu ve test hazırlığı var. API adresleri, bağlantı
+havuzu, sorgular ve arayüz henüz uygulanmadı. Kurulu paketler tamamlanmış
+özellik sayılmaz; uygulama sırası proje planının Aşama 7 bölümündedir.
+
+### Bağımlılıklar ve HTTP sınırı
+
+`web` grubu FastAPI 0.142.4, Uvicorn 0.54.0, Streamlit 1.65.0,
+Psycopg Pool 3.3.3, HTTPX 0.28.1 ve Altair 6.3.0 içerir. Python 3.13'te
+`pip install -e ".[dev,web]"` ile kurulur; `pip check` bağımlılık uyumunu
+denetler. Temel toplama bağımlılıkları ve yazıcı bağlantı kodu değişmedi.
+9 Ekim'de FastAPI güncel sürümü 0.143.0'dır; ilk doğrulama araştırılan
+0.142 serisiyle yapılır. [FastAPI](https://pypi.org/project/fastapi/),
+[Streamlit](https://pypi.org/project/streamlit/).
+
+AGENTS/mimari testine işlenen tek HTTPX istisnası
+`app/ui/api_client.py` içindir: yalnız yerel API, yönlendirme izlemeden,
+ortam proxy'si kullanmadan ve zaman aşımıyla. Bu istemci 7.5'te yazılacak;
+yerel adres/yönlendirme/zaman aşımı davranışı o adımda ayrıca sınanacak.
+Pazaryeri erişimi yalnız `app/scraper/http.py` ve curl_cffi üzerinden sürer.
+
+### Okuma hesabının bir kerelik kurulumu
+
+Önce 001–004 uygulanmış olmalıdır. `scripts/api_okuma_rolu.sql` yönetici
+hesabıyla çalışır; yeni tablo/migration yoktur. `fiyat_takip` DB'sinde
+`fiyat_takip_api`, `_test` DB'sinde `fiyat_takip_api_test` seçilir. Diğer DB
+adları reddedilir. Script tekrar çalışabilir; mevcut rolün yönetici/üye/sahip
+veya yazma yetkili olması hata üretir, kurulumun bütün izinleri geri alınır.
+
+Verilen izinler CONNECT, public şemasına USAGE ve şu sekiz nesneye SELECT:
+`schema_migrations`, `platforms`, `products`, `listings`, `collection_runs`,
+`listing_checks`, `product_run_prices`, `market_history`. Yeni nesnelere
+otomatik izin verilmez. Rolün varsayılan işlemi READ ONLY'dir; bu varsayılan
+kapatılsa da proje tablolarına yazma ve kalıcı nesne oluşturma izni yoktur.
+
+PostgreSQL'in `psql.exe` yolu bu bilgisayarda doğrulanmıştır. Tam yollarla
+herhangi bir PowerShell klasöründen, kullanıcı yönetici şifresini terminale
+girerek çalıştırır:
+
+```powershell
+[Console]::OutputEncoding = [Text.Encoding]::UTF8
+$env:PGCLIENTENCODING = "UTF8"
+$apiPsql = "C:\Program Files\PostgreSQL\17\bin\psql.exe"
+& $apiPsql -X -h localhost -U postgres -d fiyat_takip_test -v ON_ERROR_STOP=1 -c "SET client_encoding TO 'UTF8';" -f "C:\Users\Emir\Desktop\Staj\scripts\api_okuma_rolu.sql"
+& $apiPsql -X -h localhost -U postgres -d fiyat_takip_test
+```
+
+SQL dosyası UTF-8'dir. 9 Ekim'deki kodlama ayarı verilmeden yapılan deneme,
+psql'in WIN1254 kullanması nedeniyle hata verdi; COMMIT'e ulaşılmadı ve test
+rolü oluşmadı. Yukarıdaki komut dosyadan önce bağlantının kodlamasını açıkça
+UTF8 yapar; `-X` kişisel psql başlangıç dosyasını devre dışı bırakır.
+Kurulum ancak rol hazır bildirimi, DO ve COMMIT görüldüğünde başarılı sayılır.
+Kullanıcı düzeltilmiş komutla DO/COMMIT aldı; test rolü ve sekiz SELECT izni
+bağımsız salt okunur sorguyla doğrulandı. Bildirimdeki Türkçe harfler terminalde
+bozuk görüntülendi; bu, başarılı kurulumun durumunu değiştirmedi. Kullanıcı
+şifre/pgpass hazırlığını tamamladı; rolün gerçek bağlantısıyla 43 yetki testi
+başarılı oldu.
+
+Açılan psql oturumunda `\password fiyat_takip_api_test` ile şifre belirlenir,
+`\q` ile çıkılır. Şifre mesaja veya repoya yazılmaz; mevcut
+`%APPDATA%\postgresql\pgpass.conf` dosyasına kullanıcı tarafından eklenir:
+
+```text
+localhost:5432:fiyat_takip_test:fiyat_takip_api_test:SEÇİLEN_ŞİFRE
+```
+
+Üretim rolü gerektiğinde aynı dosya `-d fiyat_takip` ile kullanıcı tarafından
+çalıştırılır; oturumda `\password fiyat_takip_api`, pgpass'ta
+`localhost:5432:fiyat_takip:fiyat_takip_api:SEÇİLEN_ŞİFRE` kullanılır. Asistan
+gerçek DB'ye rol/izin/fiyat yazmaz. Bu işlem mevcut `fiyat_takip` yazıcı rolünü,
+tur kilitlerini, tabloları ve zamanlayıcıları değiştirmez.
+
+Şifresiz adresler; `setx` yeni terminal/süreç için, `$env:` mevcut terminal için:
+
+```powershell
+setx TEST_API_DATABASE_URL "postgresql://fiyat_takip_api_test@localhost:5432/fiyat_takip_test"
+$env:TEST_API_DATABASE_URL = "postgresql://fiyat_takip_api_test@localhost:5432/fiyat_takip_test"
+```
+
+API gerçek çalıştırması hazırlanırken ayrı `API_DATABASE_URL` değeri
+`postgresql://fiyat_takip_api@localhost:5432/fiyat_takip` olacak;
+`DATABASE_URL`'e dönüş olmayacak. Gerçek hesabın kurulması ve API/UI'nin
+birlikte kullanımı sonraki alt adımların devreye alma kontrolündedir.
+
+### Test ortamı ve sınırı
+
+Tam testler `dev,web` kurulumu, `TEST_DATABASE_URL` ve rol testleri için
+`TEST_API_DATABASE_URL` ister. Her iki bağlantı aynı `_test` DB olmalı;
+okuma bağlantısının kullanıcısı `fiyat_takip_api_test` olmalı. `db` test başında
+şemayı boşalttığı için `api_db`, mevcut test rolüne yeni şemanın SELECT
+izinlerini yeniden verir; yönetici rolü veya şifre oluşturmaz. Üretim adresleri
+her testte ortamdan silinir. API adresi yoksa rol testleri yerelde atlanır;
+CI'da başarısız olur. CI kendi geçici sunucusunda test hesabını kurar.
+
+Gerçek HTTPX ağ transport'ları otomatik testlerde kapalıdır;
+MockTransport/ASGI/TestClient süreç içinde çalışır. Yerel API'ye gerçek ağ
+isteği de otomatik testte engellenir. Bu, uygulamanın dış adrese gitmeme
+kuralıyla aynı kontrol değildir; istemcinin hedef sınırı 7.5'te sınanır.
+
+**9 Ekim doğrulaması:** altı sabit sürüm kuruldu, `pip check` temiz.
+51 hazırlık testinin 43'ü gerçek okuma hesabıyla PostgreSQL'de geçti;
+9 HTTP mimari sınamasıyla toplam 60 yeni test eklendi. Tam paket
+**1250 geçti, 0 atlandı/xfail (319 PostgreSQL)**, 125,77 sn; Black
+(53 dosya) ve Flake8 temiz. Veritabanı testleri yalnız `fiyat_takip_test`
+üzerinde çalıştı. Katalog ve uygulanmış 001–004 dosyalarının fiziksel
+parmak izleri oturum öncesiyle aynı. Kullanıcı commit/push işlemini onayladı;
+aynı commit'in CI sonucu gönderim akışında ayrıca doğrulanır.
+
+Starlette 1.6.0 TestClient, mevcut HTTPX uyumu ve AnyIO takma adı için iki
+kullanım sonlandırma uyarısı veriyor; testler başarılı, uyarılar gizlenmedi.
+Onaylanan bağımlılık sürümleri korundu. Gerçek okuma hesabı daha sonra
+kullanıcı tarafından kurulacak; API/havuz/arayüz uygulaması henüz yok.
+
 ## Kimlik kuralları
 
 Keşif ve scraper aynı fonksiyonu (`app/scraper/parsing.py → identify`) kullanır;
@@ -1714,7 +1832,7 @@ temiz. Gerçek DB, katalog ve uygulanmış migration dosyaları değişmedi.
 
 ## Testler ne kanıtlar, ne kanıtlamaz
 
-- **Otomatik testler (1190; 276'sı gerçek PostgreSQL'de):** Kuralların doğru
+- **Otomatik testler (1250; 319'u gerçek PostgreSQL'de):** Kuralların doğru
   çalıştığını kayıtlı ve sahte yanıtlarla kanıtlar. Kimlik değişiklikleri gerçek
   kaynak örneği ve regresyon ister; 7 Ekim varyant ve adres bakımları kullanıcının
   her maddeye ayrı onayıyla yapay çelişkilere karşı önleyici koruma olarak uygulandı.
