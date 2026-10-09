@@ -18,6 +18,7 @@ geliştirme geçmişini açıklar. Kararların ve aşama durumunun ana kaynağı
 - [Yerel API hazırlığı](#yerel-api-hazırlığı-aşama-71)
 - [Salt okunur veritabanı okumaları](#salt-okunur-veritabanı-okumaları-aşama-72)
 - [Fiyat istatistikleri](#fiyat-istatistikleri-aşama-73)
+- [Salt okunur FastAPI](#salt-okunur-fastapi-aşama-74)
 - [Kimlik kuralları](#kimlik-kuralları)
 - [Testler ne kanıtlar, ne kanıtlamaz](#testler-ne-kanıtlar-ne-kanıtlamaz)
 - [Bilinen sınırlar](#bilinen-sınırlar)
@@ -111,6 +112,14 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 | `service.py` | Bir tur: şema kontrolü, yarım kalan turu kapatma, katalog eşitleme, planlama, her sayfayı mevcut scraper'la okuyup sonucunu hemen yazma, `network` hatası alan sayfaları tur sonunda bir kez yeniden okuma, turu kapatma. Scraper ile veritabanını bağlayan tek yer. |
 | `__main__.py` | Komut satırı: `python -m app.collection [--prefix ÖN_EK] [--scheduled]`; ortak kilidi alır. `--scheduled` ile çıktı `data/logs/` altındaki log dosyasına da yazılır. |
 
+### Yerel API: `app/api/`
+
+| Dosya | Ne işe yarar |
+|---|---|
+| `main.py` | `create_app()` fabrikası, lifespan ile havuz açma/kapatma, dört GET adresi, cevap doğrulaması ve Türkçe güvenli hata cevapları. İçe aktarmada bağlantı açmaz. |
+| `database.py` | Yalnız `API_DATABASE_URL` ile 1–4 bağlantılık Psycopg havuzu; her istekte rol, SELECT/yazma izinleri, nesneler ve migration durumunun salt okunur denetimi. |
+| `models.py` | HTTP/JSON cevap sözleşmeleri; tek `ProductSnapshot` içinden istatistik ve fiyat yaşı. İç `all_history`, ham sayfa hata metni ve tur notu dışarı verilmez. |
+
 ### Kurulum ve zamanlayıcı: `scripts/`
 
 | Dosya | Ne işe yarar |
@@ -126,6 +135,7 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 | `tests/conftest.py` | Her testte gerçek curl_cffi ve HTTPX ağ transport'ları kesilir; ASGI/TestClient/MockTransport süreç içinde çalışır. Kalıcı `DATABASE_URL` ve `API_DATABASE_URL` silinir. `db` yalnız `TEST_DATABASE_URL`'deki `_test` DB'yi her testte boşaltır; ortak test kilidi en çok 30 sn bekler. `api_db` ayrıca `TEST_API_DATABASE_URL` ve `fiyat_takip_api_test` ister; iki bağlantının aynı `_test` DB olduğunu denetleyip test şemasında SELECT izinlerini yeniden kurar. Eksik test adresleri yerelde atlama, CI'da hata üretir. |
 | `tests/test_http.py` | HTTP katmanı (104 test): hata kodları (`invalid_host` mesajı hedef alan adını yazar, sorgu metnini yazmaz), indirme sırasında 8 MB sınırı (parçalı/tek parça taşma, tam eşik, aktarımın durması, UTF-8 parçaları, boş yanıt, yarım gövdenin tekrar öncesi atılması), büyük hata/yönlendirme yanıtlarında aynı sınıflandırma ve istek bütçesi, yönlendirme kuralları, 5xx tekrarı ve bekleme süreleri, istekler arası bekleme, factory. Mimari kuralda yalnız `app/ui/api_client.py` için HTTPX izni var; başka dosya veya başka kütüphane bu izni kullanamaz (9 test). `curl_cffi` hâlâ yalnız `http.py`'de. |
 | `tests/test_api_foundation.py` | 7.1 hazırlığı (51 test, 43'ü PostgreSQL): gerçek HTTPX isteklerinin engeli, sahte/süreç içi istemcilerin çalışması, iki üretim adresinin testlerden silinmesi, gerçek API test hesabının sekiz nesneyi okuması, varsayılan READ ONLY kapatılsa da yazma/kalıcı nesne kuramaması, tekrar rol kurulumu ve hatada izinlerin geri alınması. Gerçek API veya UI özelliği testi değildir. |
+| `tests/test_api.py` | 85 API testi, 44'ü gerçek okuma hesabıyla PostgreSQL'de: dört adres ve OpenAPI, kuruş/UTC/NULL, fiyat yaşı, kapsam/istatistik ve ayrı Cimri; rol/yazma/SELECT/migration hataları, dört bağlantı sınırı, başlangıç/kullanım kesintisi ve yeniden bağlantı, gerçek 5 sn sorgu zaman aşımı, iki bağlantıyla tutarlı cevap ve kayıtların korunması. |
 | `tests/test_database_read.py` | Salt okunur sorgular (63 test, 49'u gerçek API test hesabıyla PostgreSQL'de): etkin/pasif ürün, ürüne özel completed tur, fiyat/stoksuz/hata/eksik kapsam, eşit teklif, gün aralıkları, ayrı Cimri/NULL, mevcut katalog bilgisi, iki bağlantıyla tutarlı görüntü, açık işlem reddi, yerel ayarlar, sorgu hatası/zaman aşımı sonrası yeniden okuma ve toplama kilidinden bağımsızlık. Altı yeni bütünleşme testi SQL'den gelen verilerle istatistikleri; tam 30 gün, dar grafik aralığı, pasif katalog, kısmi kapsam, scope sınırı, stoksuz tur, Cimri ayrımı ve completed ürün turu seçimini sınar. |
 | `tests/test_price_statistics.py` | 49 ağsız ve veritabanısız istatistik testi: tam kapsam dönemi, boş/stoksuz geçmiş, sayfa kümesi ve eksik cevap sınırları, 30 gün/14 geçiş/7 gün/18 saat eşikleri, gerçek kontrol zamanı/İstanbul günü, NULL üzerinden geçmeme, bağımsız analitik değişkenlik sonucu, kuruş hassasiyeti, değiştirilemez sonuç ve grafik aralığından bağımsızlık. |
 | `tests/test_contracts.py` | Pydantic sözleşmeleri (74 test): satılabilir teklif fiyat ve satıcı taşır, puan ölçeği aşamaz, üstü çizili fiyat güncel fiyattan büyüktür, katalog kimlik/referans/alan adı kuralları, `money()` kuruş çevirimi. |
@@ -1614,9 +1624,10 @@ kurulum/çalıştırma ayrıntıları bu rehberde korunup eksikleri tamamlandı.
 
 9 Ekim'de yedi alt adımlı FastAPI/Streamlit planı onaylandı. 7.1'de
 bağımlılık, okuma rolü kurulumu ve test hazırlığı tamamlandı; 7.2'de eklenen
-okuma sorguları aşağıdaki bölümde açıklanır. API adresleri, bağlantı havuzu
-ve arayüz henüz uygulanmadı. Kurulu paketler tamamlanmış özellik sayılmaz;
-uygulama sırası proje planının Aşama 7 bölümündedir.
+okuma sorguları ve 7.3 istatistikleri aşağıdaki bölümlerde açıklanır.
+7.4'te API adresleri ve bağlantı havuzu test veritabanında doğrulandı.
+Yerel istemci ve arayüz sonraki alt adımlardır; uygulama sırası proje
+planının Aşama 7 bölümündedir.
 
 ### Bağımlılıklar ve HTTP sınırı
 
@@ -1725,7 +1736,8 @@ başarılı.
 Starlette 1.6.0 TestClient, mevcut HTTPX uyumu ve AnyIO takma adı için iki
 kullanım sonlandırma uyarısı veriyor; testler başarılı, uyarılar gizlenmedi.
 Onaylanan bağımlılık sürümleri korundu. Gerçek okuma hesabı daha sonra
-kullanıcı tarafından kurulacak; API/havuz/arayüz uygulaması henüz yok.
+kullanıcı tarafından kurulacak. 7.4 API/havuzunun sınamaları test hesabıyla
+yapıldı; arayüz henüz uygulanmadı.
 
 ## Salt okunur veritabanı okumaları (Aşama 7.2)
 
@@ -1807,7 +1819,7 @@ başarılı.
 `ProductSnapshot` sonucunu alır ve değiştirilemez `ProductStatistics` döndürür.
 Veritabanı, ağ, dosya veya bugünün saati kullanılmaz; giriş değiştirilmez.
 Yeni bağımlılık, SQL, migration veya kullanıcı komutu yoktur.
-API/havuz/ekran sonraki alt adımlardadır.
+API/havuz 7.4 bölümünde; ekran sonraki alt adımlardadır.
 
 ### Kapsam dönemi ve sonuç alanları
 
@@ -1893,8 +1905,9 @@ Bu sayısal örnekler sentetiktir; canlı fiyat sonucu değildir.
 SQL'den gelen dar grafik aralığı, pasif katalog, kısmi kapsam ve stoksuz
 tur verileriyle hesaplama birlikte doğrulandı. DB testleri yalnız
 `fiyat_takip_test` üzerinde çalıştı; gerçek DB'ye yazılmadı.
-001–004, katalog ve zamanlayıcılar korunuyor. Kullanıcı 7.3 commit/push onayını
-verdi; gönderim sonrası aynı commit'in CI sonucu doğrulanacak. 7.4 başlamadı.
+001–004, katalog ve zamanlayıcılar korunuyor. Kullanıcı onayıyla `a964c23`
+gönderildi; [aynı commit'in CI sonucu](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/37925934164)
+başarılı.
 
 **Kayıtlı gerçek veri kontrolü (9 Ekim, 14:39 İstanbul):** 59 etkin ürün
 mevcut kayıtlarından yalnız REPEATABLE READ, READ ONLY işlemlerle okundu;
@@ -1903,6 +1916,130 @@ nedeniyle boştu; bunların 7'sinin ilgili dönemi ayrıca fiyatsızdı.
 Mevcut kapsam zirvesi 52, değişkenlik 31 üründe hesaplandı.
 Bu, veritabanındaki kayıtlı sonuçların kontrolüdür; sitelerin bugünkü
 fiyatlarının doğrulanması veya yeni toplama değildir. Veri yazılmadı.
+
+## Salt okunur FastAPI (Aşama 7.4)
+
+`create_app()` mevcut 7.2 okumalarını ve 7.3 istatistiklerini yerel HTTP
+adreslerinden sunar. Modül içe aktarılırken veya fabrika çağrılırken bağlantı
+açılmaz; havuz FastAPI lifespan başlangıcında açılır, kapanışta bırakılır.
+Sorgulu adresler normal `def` işlevleriyle çalışır.
+[FastAPI yaşam döngüsü](https://fastapi.tiangolo.com/advanced/events/)
+ve [eşzamanlı işlevler](https://fastapi.tiangolo.com/async/#path-operation-functions).
+
+### Ayar, havuz ve hazır olma
+
+Yalnız `API_DATABASE_URL` okunur; `DATABASE_URL`'e dönüş yoktur. Kullanıcı ve
+veritabanı açıkça belirtilmelidir. Eksik/ayrıştırılamayan ayar bağlantı
+adresini göstermeyen Türkçe başlangıç hatası verir. Şifre pgpass'ta kalır.
+
+Havuz min 1/max 4 bağlantı; edinme sınırı 3 sn, yeni bağlantı zaman aşımı
+3 sn'dir. Bağlantılar autocommit ve varsayılan READ ONLY çalışır; oturum
+UTC, sorgu sınırı 5 sn, search_path `pg_catalog,public` olur.
+Bozuk boşta bağlantı ödünç verilmeden denetlenir ve elenir.
+
+Kullanıcının kararıyla başlangıç veritabanını beklemez: geçici kesintide API
+açık kalır ve 503 verir. Psycopg havuzunun tekrar denemeleri ve sonraki
+isteklerin bağlantı edinmesiyle düzelme sonrası aynı uygulama yeniden
+okuyabilir. Bağlantı bilgisi/hazırlık hatası veriyi boş başarılı cevap gibi
+göstermez. [Psycopg havuzu](https://www.psycopg.org/psycopg3/docs/advanced/pool.html)
+
+Her veri isteğinde ayrı kısa REPEATABLE READ, READ ONLY işlemle:
+
+- Gerçek veritabanı ve current/session kullanıcıları denetlenir. `fiyat_takip`
+  için `fiyat_takip_api`, `_test` için `fiyat_takip_api_test` kabul edilir.
+- Ayrıcalıklı rol, üyelik, nesne sahipliği, kalıcı nesne oluşturma veya
+  public nesnelerinde tablo/sütun yazma izni reddedilir. Sekiz gerekli
+  tablo/görünümün varlığı ve SELECT izinleri denetlenir.
+- Mevcut `pending` migration denetimi kullanılır: eksik, bilinmeyen veya
+  ad/parmak izi uyuşmazlıklı migration şemayı hazır olmaktan çıkarır.
+
+Hazırlık işlemi kapanınca 7.2 okuma işlevi kendi tutarlı salt okunur
+işlemini açar; dış işlemle sarılmaz. Başarı veya hata sonrası bağlantı
+havuza geri verilir. API migration/rol kurulumu, katalog eşitleme veya
+toplama/keşif başlatmaz; tarama/tur kilidi almaz.
+
+### Adresler ve cevaplar
+
+| GET adresi | Cevap |
+|---|---|
+| `/health` | Hazırsa `{"ready": true}`; DB/yetki/şema hazır değilse 503 |
+| `/api/v1/status` | `running` ve son global `completed`; olmayan alan `null` |
+| `/api/v1/products` | Kimlik sırasıyla etkin ürün dizisi |
+| `/api/v1/products/{product_key}` | Ürün cevabı; pasif ürün doğrudan okunabilir, bilinmeyen ürün 404 |
+
+Ürün parametreleri `history_days=30` ve `cimri_days=366`; ikisi de 1–366.
+7.2'nin son kayıtlı veriden açılan, sınırları dahil aralıkları korunur.
+Adresler/cevap modelleri `/docs` ve `/openapi.json` üzerinden belgelenir.
+Önbellek yoktur; cevaplar `Cache-Control: no-store` taşır.
+
+Ürün cevabı `product`, `state`, `current`, `checks`, `best_offer`,
+`last_successful_offer`, `history`, `cimri_history`, `statistics`,
+`generated_at`, `currency`, `price_age_seconds` ve `is_stale` alanlarıdır.
+Tek `read_product` çağrısının görüntüsünden hazırlanır; istatistikler aynı
+görüntünün bütün iç geçmişini kullanır. `all_history` JSON'a gönderilmez.
+
+- Para alanları tam sayı TRY kuruşudur; float'a çevrilmez. Zamanlar UTC
+  RFC 3339 metni, Cimri günü `YYYY-MM-DD`, tuple'lar JSON dizisidir.
+  Eksikler `null`, olmayan seriler `[]` kalır; seriler birleştirilmez.
+- Satıcı puanı/ölçeği ve saat aralığı JSON'da sonlu sayı olarak döner.
+  Kapsam sayıları, `partial`, `unchecked_pages` ve önceki tur
+  karşılaştırılabilirliği korunur; önceki teklif güncel fiyatın yerine geçmez.
+- `generated_at` cevap hazırlanma zamanıdır. Güncel teklifin gerçek kontrol
+  zamanıyla yaş saniye olarak hesaplanır; tam 18 saatte `is_stale=true`.
+  Gelecekteki kontrol zamanı negatif yaş yerine 0 üretir; eski sayılmaz.
+  Güncel teklif yoksa yaş/eski işareti `null`; son kontrol zamanı
+  `current.last_checked_at` alanında kalır.
+- İstatistik değer/gerekçe/dönem/gözlem/geçiş/gün sayıları 7.3'ten aynen gelir.
+  Ham `error_message` ve tur `note` dışarı verilmez; sayfanın `error_code`
+  bilgisi korunur. URL/renk/etkinlik mevcut katalog kopyasıdır.
+
+Pydantic cevap modelleri geçersiz alanı başarılı cevap olarak kabul etmez.
+[FastAPI cevap modelleri](https://fastapi.tiangolo.com/tutorial/response-model/)
+
+### Hatalar
+
+Hata biçimi: `{"detail": {"code": "...", "message": "Türkçe açıklama"}}`.
+Bağlantı adresi/şifre/SQL/ham istisna cevaba eklenmez.
+
+| HTTP | Kod | Anlam |
+|---|---|---|
+| 404 | `product_not_found` / `not_found` | Ürün veya adres bulunamadı |
+| 405 | `method_not_allowed` | Yazma isteği kabul edilmez |
+| 422 | `invalid_request` | Gün parametreleri geçersiz |
+| 503 | `pool_unavailable` | Havuzdan bağlantı edinilemedi |
+| 503 | `database_unavailable` | DB bağlantısı/sorgusu veya zaman aşımı |
+| 503 | `read_access_denied` | Okuma hesabı/izinleri uygun değil |
+| 503 | `schema_not_ready` | Şema eksik/tutarsız |
+| 500 | `internal_error` | Beklenmeyen kod/cevap doğrulama hatası |
+
+### Yerel başlatma ve doğrulama
+
+Gerçek API hesabı henüz kurulmadı; kullanıcı rol/pgpass hazırlığını sonraki
+devreye alma kontrolünde tamamlayacak. Hazır olduğunda ayrı API terminalinde:
+
+```powershell
+$env:API_DATABASE_URL = "postgresql://fiyat_takip_api@localhost:5432/fiyat_takip"
+.venv\Scripts\python.exe -m uvicorn app.api.main:create_app --factory --host 127.0.0.1 --port 8000 --workers 1
+```
+
+Tek çalışan süreç ve yalnız yerel adres kullanılır. Yeni zamanlayıcı görevi
+yoktur. Bu oturumda gerçek API sunucusu veya üretim rol kurulumu çalıştırılmadı.
+
+**7.4 doğrulaması (9 Ekim):** 85 yeni test; 41 ağsız birim/sahte havuz,
+44 gerçek test okuma hesabıyla PostgreSQL. Tam paket **1447 passed,
+0 atlandı/xfail (412 PostgreSQL)**, 122,12 sn; Black (62 dosya)/Flake8 temiz.
+Mevcut iki Starlette/AnyIO uyarısı sürdü; gizlenmedi.
+
+TestClient süreç içinde çalıştı, sitelere gidilmedi. Dört bağlantı doluyken
+503 ve boşalınca yeniden okuma; kesilen API oturumunun yenilenmesi;
+başlangıç kesintisi/tekrarların tükenmesinden sonra aynı uygulamada düzelme;
+gerçek 5 sn sorgu sınırı ve temiz bağlantının yeniden kullanımı sınandı.
+Eşzamanlı tur/katalog değişiminde cevap/statistik aynı görüntüde kaldı;
+toplama kilidi tutulurken dört adres okudu, bütün tablo/görünüm sonuçları
+değişmedi. 001–004, katalog, gerçek veriler ve zamanlayıcılar korunuyor.
+
+7.4 yerelde tamamlandı; kullanıcı commit/push onayını verdi. Gönderim sonrası
+aynı commit'in CI sonucu doğrulanacak. 7.5 istemcisine veya 7.6 ekranına geçilmedi.
 
 ## Kimlik kuralları
 
@@ -2017,7 +2154,7 @@ temiz. Gerçek DB, katalog ve uygulanmış migration dosyaları değişmedi.
 
 ## Testler ne kanıtlar, ne kanıtlamaz
 
-- **Otomatik testler (1362; 368'i gerçek PostgreSQL'de):** Kuralların doğru
+- **Otomatik testler (1447; 412'si gerçek PostgreSQL'de):** Kuralların doğru
   çalıştığını kayıtlı ve sahte yanıtlarla kanıtlar. Kimlik değişiklikleri gerçek
   kaynak örneği ve regresyon ister; 7 Ekim varyant ve adres bakımları kullanıcının
   her maddeye ayrı onayıyla yapay çelişkilere karşı önleyici koruma olarak uygulandı.

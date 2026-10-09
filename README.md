@@ -10,7 +10,7 @@ Uzun vadeli hedef, bu geçmişten telefonun yakında indirime girme olasılığ�
 hesaplamaktır.
 
 > ✅ **Keşif, fiyat toplama ve veritabanı aşamaları tamamlandı.**
-> Veri okuma katmanı ve fiyat istatistikleri hazır; çalışan ekran ve tahmin modeli henüz yok.
+> Salt okunur yerel API ve fiyat istatistikleri hazır; çalışan ekran ve tahmin modeli henüz yok.
 
 ## ✨ Tamamlanan özellikler
 
@@ -26,6 +26,8 @@ hesaplamaktır.
   düşüşü karşılaştırmasından ayırır. Okuma hatası stoksuzluk olarak kaydedilmez.
 - 📅 **Bir defalık geçmiş aktarımı:** doğrulanmış Cimri geçmişini ayrı tabloda
   saklar; tekrar aktarımda kayıt çoğaltmadan ilk kaynak bilgilerini korur.
+- 🌐 **Yerel API:** kayıtlı teklifleri, iki ayrı fiyat geçmişini ve veri
+  yeterliliği açıklanan istatistikleri salt okunur sunar.
 
 ## 🔄 Çalışma akışı
 
@@ -35,11 +37,12 @@ flowchart LR
     B --> C["Doğrulanmış katalog"]
     C --> D["Fiyat ve stok toplama"]
     D --> E[("PostgreSQL fiyat geçmişi")]
+    E --> F["Yerel salt okunur API"]
     classDef targets fill:#fff3bf,stroke:#b08900,color:#1b4332
     classDef processing fill:#d8f3dc,stroke:#2d6a4f,color:#1b4332
     classDef records fill:#dbeafe,stroke:#2563eb,color:#172554
     class A targets
-    class B,D processing
+    class B,D,F processing
     class C,E records
 ```
 
@@ -55,6 +58,7 @@ hata sonucunu kaydeder. Cimri geçmişi bu akışın gözlemleriyle birleştiril
 | curl_cffi · BeautifulSoup4 | HTTP erişimi ve sayfa ayrıştırma |
 | Pydantic | Veri şekilleri ve kimlik sözleşmelerinin doğrulanması |
 | PostgreSQL 17 · Psycopg 3 | Kalıcı kayıt, SQL kuralları ve işlemler |
+| FastAPI · Uvicorn · Psycopg Pool | Yerel, salt okunur API ve bağlantı havuzu |
 | Windows Görev Zamanlayıcı | Günlük toplama ve haftalık keşif |
 | pytest · Black · Flake8 · GitHub Actions | Otomatik testler ve kod denetimleri |
 
@@ -70,7 +74,7 @@ Veri ve katalog kontrolleri 8 Ekim 2026, otomatik test sonucu 9 Ekim 2026:
 | Toplama düzeni | Her gün 10:00 ve 22:00; haftalık keşif Pazar 14:00 |
 | Son doğrulanan fiyat turu | 332 sonuç: 237 fiyat, 95 Tükendi, 0 hata |
 | Cimri geçmişi | 57 ürün, 20.805 tarihli kayıt; 20.252 fiyat ve 553 eksik değer |
-| Otomatik testler | 1362 test; 368’i PostgreSQL üzerinde |
+| Otomatik testler | 1447 test; 412’si PostgreSQL üzerinde |
 
 Katalogdaki **334 bağlantının markalara göre dağılımı** (iki pasif bağlantı dahil):
 
@@ -96,7 +100,7 @@ doğrulanamadı; eksik fiyatlar doldurulmadı. Kaynak ve işletim sınırları
 | Aşama | Durum |
 |---|---|
 | Fiyat okuma, keşif, katalog, veritabanı ve zamanlanmış toplama | ✅ Tamamlandı |
-| FastAPI ve Streamlit ile verileri sunma ve görüntüleme | 🛠️ Veri okuma ve istatistikler hazır; API ve ekran sırada |
+| FastAPI ve Streamlit ile verileri sunma ve görüntüleme | 🛠️ Yerel API ve istatistikler hazır; istemci ve ekran sırada |
 | ML ile indirim olasılığı tahmini | 🔜 Planlandı |
 | Docker ve sürekli çalışma ortamı | 🔜 Planlandı |
 

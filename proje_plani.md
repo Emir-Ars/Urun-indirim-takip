@@ -32,7 +32,7 @@ Kullanıcı arayüzde arama yaptığında canlı scraping veya model eğitimi
 | 4. Scraper/discovery kabul kontrolü (6 adım) | ✅ Tamamlandı | `4d5613d`, Bölüm 5 |
 | 5. Katalogun 25 hedefle sıfırdan kurulumu ve kod denetimi | ✅ Tamamlandı | Bölüm 6 |
 | 6. Veritabanı ve zamanlanmış toplama | ✅ **Tamamlandı (8 Ekim): Adım 0–11 ve yedi bakım kapandı.** 001–004 şeması ve katalog/DB eşitliği doğrulandı: 59 ürün, 334 sayfa (332 etkin). Son zamanlanmış tur 19: 332/332 sonuç, 237 fiyat/95 Tükendi/0 hata; log ve DB aynı. Karşılaştırılabilirlik görünümü 59 ürün için bağımsız doğrulandı. Cimri: 57 ürün/20.805 kayıt/553 NULL; tekrar aktarım ve ilk kaynak bilgileri korundu, iki eşleştirme eksikliği belgeli. Bilinen sınırlar ve canlı gözlem bekleyen senaryolar korunuyor. Adım 7 kapanışı `3c4d030` ile gönderildi; aynı SHA CI 37813840435 başarılı. Ayrı onaylanan README/teknik rehber düzenlemesi uygulandı; commit/push işlemi kullanıcı tarafından onaylandı; aynı commit CI gönderim akışında doğrulanır. API/arayüz başlamadı. | Bölüm 7, Adım 7 kapanışı; Bölüm 9 |
-| 7. FastAPI ve Streamlit | 🛠️ **Başlandı (9 Ekim):** 7.1 ve 7.2 gönderildi; son `04d765f` ile aynı SHA CI 37922348048 başarılı. 7.3 istatistikleri yerelde tamamlandı; **1362 test geçti, atlanan yok (368 PostgreSQL)**, Black/Flake8 temiz. Kullanıcı commit/push onayını verdi; gönderim sonrası aynı commit'in CI sonucu doğrulanacak. 7.4 başlamadı; API ve arayüz henüz çalışır özellik değil. | Bölüm 9, FastAPI ve Streamlit |
+| 7. FastAPI ve Streamlit | 🛠️ **Başlandı (9 Ekim):** 7.1–7.3 gönderildi; son `a964c23` ile aynı SHA CI 37925934164 başarılı. 7.4 salt okunur API/havuzu yerelde tamamlandı; **1447 test geçti, atlanan yok (412 PostgreSQL)**, Black/Flake8 temiz. Gerçek API hesabı devreye alma kontrolünde kurulacak; kullanıcı commit/push onayını verdi; gönderim sonrası aynı commit'in CI sonucu doğrulanacak. 7.5 başlamadı; ekran henüz yok. | Bölüm 9, FastAPI ve Streamlit |
 | 8. ML (indirim tahmini) | 🔜 Planlandı, başlanmadı | Bölüm 9 |
 | 9. Docker ve 7/24 işletim | 🔜 Planlandı, başlanmadı | Bölüm 9 |
 
@@ -1380,7 +1380,8 @@ işlemini onayladı. Aynı commit CI gönderim akışında doğrulanır. Commit 
 |---|---|
 | Aşama 7 API/arayüz kararları | **Kullanıcı planı onayladı (9 Ekim):** yalnız bu bilgisayarda; ayrı SELECT hesabı ve `API_DATABASE_URL`; eşzamanlı Psycopg, 1–4 bağlantılık havuz; yalnız yerel API istemcisine HTTPX istisnası; ayrı Cimri grafiği; 30 saniyede yenileme, ilk sürümde önbellek yok; 18 saatten itibaren eski veri uyarısı. Dip/zirve tam cevaplı aynı kapsam döneminden; değişkenlik en az 14 geçiş/7 gün. SlowAPI dış erişim öncesinde işletim aşamasında değerlendirilecek. Her alt adım ayrı durma, commit/push onayı ve aynı SHA CI doğrulaması. |
 | Aşama 7.2 okuma kapsamı | **Kullanıcı planı onayladı (9 Ekim); uygulandı ve gönderildi:** pasif ürün doğrudan anahtarıyla okunabilir, ürün seçicisine yalnız etkin ürünler girer. Kendi geçmişi son tamamlanmış ürün turunun başlangıcından, Cimri geçmişi son kayıtlı günden geriye açılır; bugünün tarihi esas alınmaz. URL/renk/etkinlik mevcut katalog bilgisi olarak döner; geçmişteki değerleri yeniden oluşturulmaz. `04d765f` ve aynı SHA CI 37922348048 başarılı. |
-| Aşama 7.3 istatistik kararları | **Kullanıcı tercihleri ve uygulama planı onaylandı (9 Ekim); yerelde uygulandı:** geçişlerin 18 saat sınırı gerçek teklif kontrol zamanından, 7 gün koşulu yalnız geçerli geçişlerin iki ucunun İstanbul günlerinden hesaplanır. Tam 18 saat kabul; eşit/geriye giden kontrol zamanı kabul edilmez. Son ürün turu başlangıcından geriye 30 günlük pencere, iki sınır dahil; grafik aralığı hesabı etkilemez. Uzun boşluk kapsam dönemini tek başına kesmez, geçişi eler; NULL üzerinden atlanmaz. Cimri katılmaz. Eksik gerekçeleri ve kullanılan gözlem/geçiş/gün sayıları birlikte döner; kullanıcı commit/push onayını verdi. |
+| Aşama 7.3 istatistik kararları | **Kullanıcı tercihleri ve uygulama planı onaylandı (9 Ekim); yerelde uygulandı:** geçişlerin 18 saat sınırı gerçek teklif kontrol zamanından, 7 gün koşulu yalnız geçerli geçişlerin iki ucunun İstanbul günlerinden hesaplanır. Tam 18 saat kabul; eşit/geriye giden kontrol zamanı kabul edilmez. Son ürün turu başlangıcından geriye 30 günlük pencere, iki sınır dahil; grafik aralığı hesabı etkilemez. Uzun boşluk kapsam dönemini tek başına kesmez, geçişi eler; NULL üzerinden atlanmaz. Cimri katılmaz. Eksik gerekçeleri ve kullanılan gözlem/geçiş/gün sayıları birlikte döner; kullanıcı onayıyla `a964c23` gönderildi, aynı SHA CI 37925934164 başarılı. |
+| Aşama 7.4 FastAPI kararları | **Kullanıcı planı uygulamayı onayladı (9 Ekim); yerelde uygulandı:** ayrı `API_DATABASE_URL`, eşzamanlı 1–4 bağlantılık havuz, edinme/bağlanma 3 sn, sorgu 5 sn. DB geçici kapalıysa API açık kalır/503 verir; düzeldikten sonra aynı uygulama yeniden okur. Her veri isteğinde canlılık, doğru rol/SELECT/yazma izinleri ve şema kontrolü. Dört GET, tek ürün görüntüsü, doğrulanan JSON, kuruş/UTC/NULL, ayrı Cimri; iç geçmiş/ham hata/tur notu dışarı çıkmaz. Üretim rolü sonraki devreye alma kontrolünde; 7.5 başlamaz; kullanıcı commit/push onayını verdi. |
 | Adım 7 kapanışı | **Tamamlandı ve gönderildi (8 Ekim):** mevcut tur/katalog/şema/Cimri kanıtları salt okunur teyit edildi ve Aşama 6 kapatıldı. Kullanıcı onayıyla `3c4d030` gönderildi; aynı SHA CI 37813840435 başarılı. |
 | README ve teknik belgenin görev paylaşımı | **Plan onaylandı; uygulandı (8 Ekim):** veritabanı kapanışından sonra README projeyi dışarıdan inceleyenlere yönelik 106 satırlık tanıtıma dönüştürüldü. Kurulum/çalıştırma/bakım ve kaynak inceleme ayrıntıları teknik rehberde korundu; eksik sanal ortam adımı ve tek ürün kontrol örneği eklendi. AGENTS.md belge yönlendirmesi yeni rollerle eşitlendi. Kullanıcının görsellik isteğiyle emojiler, renkli akış ve 334 bağlantının marka grafiği eklendi. Kod değişmedi; kullanıcı commit/push işlemini onayladı. Aynı commit CI gönderim akışında doğrulanır. |
 | Garanti türüne göre ayrım | **Karar verildi (27 Eylül 2026): ayrılmıyor;** yurt dışı sürümler ürün adından tanınıp kapsam dışı bırakılıyor. |
@@ -1550,7 +1551,8 @@ Takvim (8 Ekim güncellemesi; Adım 9 ve Adım 7 tamamlandı, veritabanı aşama
 | 8 Ekim, belge görev paylaşımı | Kullanıcının onayladığı ayrı plan uygulandı: README kısa proje tanıtımı; kurulum/çalıştırma/bakım ayrıntıları teknik rehberde. Kod ve gerçek veri değişmedi; kullanıcı commit/push işlemini onayladı. Aynı commit CI gönderim akışında doğrulanır. |
 | 9 Ekim, Aşama 7.1 | **Temel hazırlık tamamlandı ve gönderildi:** web paketleri/kurulum uyumu, dar HTTPX istisnası, kullanıcı tarafından test okuma rolü ve pgpass hazırlığı, ağ koruması ve CI rol kurulumu. 60 yeni test; tam paket 1250 passed/0 atlandı/xfail (319 PostgreSQL, 43'ü API rolü), 125,77 sn; Black/Flake8 temiz. `bcbad7c` gönderildi; aynı SHA CI 37915304432 başarılı. |
 | 9 Ekim, Aşama 7.2 | **Tamamlandı ve gönderildi:** hazır bağlantıda REPEATABLE READ, READ ONLY okuma; etkin ürünler, tur durumu, ürüne özel son completed sonuçları ve ayrı iki geçmiş. 57 yeni test (43 PostgreSQL), tam paket **1307 passed/0 atlandı/xfail (362 PostgreSQL)**, 102,93 sn; Black (55 dosya)/Flake8 temiz. 001–004 ve katalog baytları korundu; gerçek DB'ye yazılmadı. `04d765f` gönderildi; aynı SHA CI 37922348048 başarılı. |
-| 9 Ekim, Aşama 7.3 | **Yerelde tamamlandı:** saf hesaplama katmanı mevcut tam kapsam döneminden dip/zirve/değişkenlik ve yeterlilik gerekçelerini döndürür. 49 ağsız birim + 6 gerçek okuma hesabıyla bütünleşme testi eklendi; tam paket **1362 passed/0 atlandı/xfail (368 PostgreSQL)**, 99,30 sn; Black (57 dosya)/Flake8 temiz. Mevcut iki bağımlılık uyarısı sürüyor. 001–004/katalog/gerçek fiyatlar/zamanlayıcılar değişmedi; kullanıcı commit/push onayını verdi, gönderim sonrası aynı commit'in CI sonucu doğrulanacak. 7.4 başlamadı. |
+| 9 Ekim, Aşama 7.3 | **Tamamlandı ve gönderildi:** saf hesaplama katmanı mevcut tam kapsam döneminden dip/zirve/değişkenlik ve yeterlilik gerekçelerini döndürür. 49 ağsız birim + 6 gerçek okuma hesabıyla bütünleşme testi eklendi; tam paket **1362 passed/0 atlandı/xfail (368 PostgreSQL)**, 99,30 sn; Black (57 dosya)/Flake8 temiz. Mevcut iki bağımlılık uyarısı sürüyor. 001–004/katalog/gerçek fiyatlar/zamanlayıcılar değişmedi; kullanıcı onayıyla `a964c23` gönderildi; aynı SHA CI 37925934164 başarılı. |
+| 9 Ekim, Aşama 7.4 | **Yerelde tamamlandı:** dört GET, salt okunur ayrı havuz, her istekte rol/şema kontrolü ve tipli güvenli JSON/hata cevapları. 85 yeni test (44 PostgreSQL); tam paket **1447 passed/0 atlandı/xfail (412 PostgreSQL)**, 122,12 sn; Black (62 dosya)/Flake8 temiz. Dört bağlantı sınırı, kesinti/yenilenme, gerçek sorgu zaman aşımı, eşzamanlı tutarlılık ve sıfır veri değişimi doğrulandı. 001–004/katalog/gerçek fiyatlar/zamanlayıcılar değişmedi. Kullanıcı commit/push onayını verdi; gönderim sonrası aynı commit'in CI sonucu doğrulanacak; 7.5 başlamadı. |
 
 Kendi topladığımız geçmiş, ilk tam turdan (28 Eylül) sayılırsa Ekim sonunda
 30 güne ulaşır; bu süre tek başına yeterli eğitim verisi garantisi değildir.
@@ -1678,8 +1680,8 @@ hata cevabında şifre/SQL ayrıntısı yok.
 |---|---|---|
 | 7.1 Temel hazırlık | Kararlar/araştırma, web bağımlılıkları, dar HTTP istisnası, rol kurulumu, test ortamı | **Tamamlandı ve gönderildi (9 Ekim):** altı paket kuruldu/pip check temiz; kullanıcı test rolü/pgpass hazırlığını tamamladı. 51 hazırlık testinin 43'ü gerçek okuma hesabıyla PostgreSQL'de başarılı; 9 mimari sınamayla 60 yeni test. Tam paket **1250 passed, 0 atlandı/xfail (319 PostgreSQL)**, 125,77 sn; Black (53 dosya)/Flake8 temiz. 001–004 ve katalog baytları korundu. İki bağımlılık kullanım sonlandırma uyarısı belgeli. `bcbad7c` gönderildi; aynı SHA CI 37915304432 başarılı. |
 | 7.2 Veritabanı okumaları | Ürün, ürünün son completed turu, teklifler, kendi/Cimri geçmişi | **Tamamlandı ve gönderildi (9 Ekim):** `app/database/read.py` ve değiştirilemez tipli sonuçlar eklendi. 57 yeni testin 43'ü gerçek okuma hesabıyla PostgreSQL'de; tam paket **1307 passed, 0 atlandı/xfail (362 PostgreSQL)**, 102,93 sn. Black (55 dosya)/Flake8 temiz; iki mevcut bağımlılık uyarısı sürüyor. Eşzamanlı tur/katalog/Cimri değişiminde tutarlı okuma ve SQL hatasından sonra bağlantının yeniden kullanımı doğrulandı. `04d765f` gönderildi; aynı SHA CI 37922348048 başarılı. |
-| 7.3 İstatistikler | Kapsam dönemi, dip/zirve/değişkenlik ve gerekçeler | **Yerelde tamamlandı (9 Ekim):** `calculate_statistics`, değiştirilemez tipli göstergeler, kapsam/pencere ve gerekçeler eklendi. 49 birim + 6 PostgreSQL bütünleşme testi; tam paket **1362 passed, 0 atlandı/xfail (368 PostgreSQL)**, 99,30 sn; Black (57 dosya)/Flake8 temiz. 30 gün/14 geçiş/7 gün/18 saat, kontrol zamanı/İstanbul günü, NULL boşluğu, örnek standart sapması ve grafik aralığından bağımsızlık doğrulandı. Kullanıcı commit/push onayını verdi; gönderim sonrası aynı commit'in CI sonucu doğrulanacak. |
-| 7.4 FastAPI | Havuz yaşam döngüsü, dört GET adresi, cevap/hata sözleşmeleri | Planlandı, başlanmadı |
+| 7.3 İstatistikler | Kapsam dönemi, dip/zirve/değişkenlik ve gerekçeler | **Tamamlandı ve gönderildi (9 Ekim):** `calculate_statistics`, değiştirilemez tipli göstergeler, kapsam/pencere ve gerekçeler eklendi. 49 birim + 6 PostgreSQL bütünleşme testi; tam paket **1362 passed, 0 atlandı/xfail (368 PostgreSQL)**, 99,30 sn; Black (57 dosya)/Flake8 temiz. 30 gün/14 geçiş/7 gün/18 saat, kontrol zamanı/İstanbul günü, NULL boşluğu, örnek standart sapması ve grafik aralığından bağımsızlık doğrulandı. Kullanıcı onayıyla `a964c23` gönderildi; aynı SHA CI 37925934164 başarılı. |
+| 7.4 FastAPI | Havuz yaşam döngüsü, dört GET adresi, cevap/hata sözleşmeleri | **Yerelde tamamlandı (9 Ekim):** ayrı salt okunur 1–4 bağlantılık havuz; rol/şema/SELECT/yazma izinleri denetimi, dört adres, tipli JSON, güvenli Türkçe hatalar. 85 yeni test (44 PostgreSQL); tam paket **1447 passed, 0 atlandı/xfail (412 PostgreSQL)**, 122,12 sn; Black (62 dosya)/Flake8 temiz. DB kesintisinde açık kalma ve yeniden okuma, dört bağlantı sınırı, gerçek 5 sn sorgu zaman aşımı, aynı ürün görüntüsü ve veri koruması sınandı. Kullanıcı commit/push onayını verdi; gönderim sonrası aynı commit'in CI sonucu doğrulanacak. |
 | 7.5 Yerel API istemcisi | HTTPX istemcisi, cevap doğrulama, zaman aşımı ve yerel adres sınırı | Planlandı, başlanmadı |
 | 7.6 Streamlit | Seçim, teklif/istatistik ekranı, iki grafik, yenileme; AppTest/görsel kontrol | Planlandı, başlanmadı |
 | 7.7 Birlikte kontrol/kapanış | Gerçek DB yalnız okuma ile SQL/API/UI karşılaştırması, akışın korunması, belgeler | Planlandı, başlanmadı |
@@ -1732,7 +1734,7 @@ hata cevabında şifre/SQL ayrıntısı yok.
   `insufficient_transitions`, `insufficient_days` ayrı gerekçelerdir.
   Uygun dönemde eksik koşullar birlikte döner; yetersiz değer `None`,
   yeterli örnekte sıfır değişkenlik gerçek `0.0` sonucudur.
-- 7.3 saf hesaplama katmanıdır; API, havuz veya ekran yoktur.
+- 7.3 saf hesaplama katmanıdır; bu modül API, havuz veya ekran içermez.
   Planlama sırasındaki 21 completed tur yaklaşık 11 günlük geçmişti;
   ilk kullanımda 30 günlük dibin yetersiz süreyle boş kalması beklenir.
 - **Kayıtlı veri teyidi (9 Ekim, 14:39):** gerçek DB'deki 59 etkin ürün
@@ -1741,10 +1743,40 @@ hata cevabında şifre/SQL ayrıntısı yok.
   hesaplandı. Bu site fiyatı teyidi değildir; mevcut kayıtların bellek içi
   hesaplama kontrolüdür, DB'ye yazılmadı.
 
+**7.4 uygulama ayrıntıları:**
+
+- `app/api/main.py` içinde `create_app()`; lifespan havuzu açar/kapatır.
+  İçe aktarmada bağlantı yok; dört normal GET işlevi 7.2 okumalarını
+  çağırır. Ürün bir kez okunur; 7.3 hesabı aynı görüntüden yapılır.
+- `database.py` ayrı adres/havuz kullanır; autocommit, READ ONLY,
+  UTC, 3 sn edinme/bağlanma ve 5 sn sorgu sınırı. Bozuk bağlantı
+  ödünç verilmeden elenir; geçici kesintide API açık kalır/503 verir.
+  Kullanım öncesi rol/izin/şema salt okunur denetlenir; hazırlık kapanınca
+  7.2 kendi REPEATABLE READ, READ ONLY işlemini açar.
+- `models.py` kuruş, UTC, tarih, sonlu puan, NULL ve ayrı Cimri sözleşmesini
+  doğrular. Kapsam/önceki tur/yeterlilik korunur; iç `all_history`,
+  ham hata ve tur notu dışarı verilmez. Güncel teklif kontrol zamanından
+  fiyat yaşı ve tam 18 saatten itibaren eski işareti; fiyat yoksa ikisi NULL.
+- Başlangıç ayarı hatası, 404/422/503/500 cevapları bağlantı/şifre/SQL
+  göstermez. Veri önbelleği yok; `Cache-Control: no-store`. API yeni
+  tur/keşif/migration/katalog işi başlatmaz ve kilit almaz.
+- 85 yeni testin 44'ü `fiyat_takip_test` üzerinde gerçek okuma hesabıyla.
+  TestClient/sahteler canlı ağa çıkmadı; dört bağlantı sınırı ve düzelme,
+  başlangıç/istek kesintisi, gerçek zaman aşımı ve temiz bağlantı,
+  eşzamanlı tur/katalog değişiminde aynı cevap/statistik görüntüsü
+  doğrulandı. Toplama kilidi tutulurken okumalar bütün kayıtları korudu.
+- Tam paket 1447 geçti/0 atlandı/xfail (412 PostgreSQL), 122,12 sn;
+  Black (62 dosya)/Flake8 temiz, önceki iki bağımlılık uyarısı sürüyor.
+  Gerçek DB'ye bağlantı/rol kurulumu yapılmadı; 001–004, katalog ve
+  zamanlayıcılar korunuyor. Teknik rehberde yerel başlatma komutu var;
+  üretim API hesabı sonraki devreye alma kontrolünde kullanıcıya ait.
+
 Her alt adım sonunda durulur; dosyalar ve Türkçe commit mesajı gösterilir,
 ayrı onayla commit/push yapılır; aynı SHA CI yeşil olmadan sonraki adıma
-geçilmez. Ana plan onayı önce yalnız 7.1'i uygulatmıştı; 7.2 ve 7.3 ayrı
-plan onaylarıyla uygulandı. Kullanıcı 7.3 gönderimini onayladı; 7.4'e geçiş bekliyor.
+geçilmez. Ana plan onayı önce yalnız 7.1'i uygulatmıştı; 7.2–7.4 ayrı
+plan onaylarıyla uygulandı. 7.3 gönderimi/CI tamamlandı; kullanıcı 7.4
+gönderimini onayladı. Gönderim sonrası aynı commit'in CI sonucu doğrulanacak;
+7.5'in ayrı planı bekliyor.
 Her kod değişikliği sonrası
 tam pytest/Black/Flake8; DB yalnız `_test`, atlananlar açıkça bildirilir.
 İstatistik için veri henüz yetmiyorsa doğru eksiklik mesajı kapanışı engellemez.
