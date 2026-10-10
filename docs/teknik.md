@@ -2058,7 +2058,7 @@ değişmedi. 001–004, katalog, gerçek veriler ve zamanlayıcılar korunuyor.
 Kullanıcı onayıyla `d8ba475` gönderildi;
 [aynı commit'in CI sonucu](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/37930206610)
 başarılı. 7.5'te ortak modeller ayrılırken bu API'nin JSON/OpenAPI
-sözleşmesi korundu; üretim sunucusu kontrolü 7.7'de yapılacak.
+sözleşmesi korundu; üretim sunucusu kontrolü 7.7'de doğrulandı.
 
 ## Yerel API istemcisi (Aşama 7.5)
 
@@ -2240,7 +2240,7 @@ olağan API hatası gibi gizlenmez.
 
 ### Başlatma ve test önizlemesi
 
-Normal ekran (gerçek API hesabı ve birlikte kontrol 7.7'de hazırlanacak):
+Normal ekran (gerçek API hesabı ve birlikte kontrol 7.7'de doğrulandı):
 
 ```powershell
 .venv\Scripts\python.exe -m streamlit run app\ui\main.py --server.address 127.0.0.1 --server.port 8501 --server.headless true --browser.gatherUsageStats false
@@ -2278,9 +2278,9 @@ Black (71 dosya)/Flake8 temiz. Önceki iki Starlette/AnyIO uyarısı sürüyor.
 Veritabanı testleri yalnız `fiyat_takip_test` üzerinde yapıldı; 001–004,
 katalog, API/hesaplama ve zamanlayıcı dosyaları değişmedi.
 
-**7.6 tamamlandı; 10 Ekim'de kullanıcının isteğiyle test verili önizleme
-Edge'de kontrol edildi. Commit/push onayı ve ardından aynı commit'in CI
-sonucu bekleniyor; 7.7 başlamadı.**
+**7.6 tamamlandı ve `7ec1d0a` ile gönderildi; aynı SHA CI 38035484461
+başarılı. Test verili Edge kontrolü tamam; 7.7 ayrı plan/onayla başladı,
+gerçek ekranın birlikte kontrolü henüz bitmedi.**
 
 Kullanıcı 9 Ekim'de iki grafiğin ekran görüntüsünü paylaştı. Kendi grafiğinde
 eksik fiyat/kısmi kapsam, Cimri'de iki eksik fiyat günü arasında çizgi yok;
@@ -2297,8 +2297,98 @@ kontroller ve grafikler incelendi; belge genişliği 390 piksel, yatay taşma
 yoktu. Görünüm boyutu ve ilk telefon/30–366 gün tercihleri geri alındı.
 Tarayıcının kayıtlı hata günlüğü boştu. Kaynak kodunda ek değişiklik yok;
 9 Ekim tam test sonucu ile 10 Ekim tarayıcı kanıtı ayrı doğrulamalardır.
-Gerçek API/veritabanı kontrolü 7.7'de kalır. Kanıtlar yalnız yerelde,
+7.6'da gerçek API/veritabanı kullanılmadı; 7.7 doğrulaması aşağıda kayıtlı.
+7.6 kanıtları yalnız yerelde,
 Git dışında `artifacts/ui_7_6_20261010/kontrol.json` ve ekran görüntülerindedir.
+
+## SQL–API–Streamlit birlikte doğrulaması (Aşama 7.7)
+
+7.7'nin yerel ve gerçek ortam doğrulaması tamamlandı; kullanıcı commit/push
+işlemini onayladı. Kapanış koşulu aynı commit'in CI başarısıdır. Üretim okuma hesabını kullanıcı mevcut rol dosyasıyla
+hazırladı; şifre yalnız pgpass'ta. API yalnız API_DATABASE_URL kullanır.
+API/UI başlatma komutları önceki bölümlerdedir; test önizlemesi aynı 8501
+portunda açık bırakılmaz. Üçüncü proje terminalinde bağımsız denetim:
+
+```powershell
+$env:API_DATABASE_URL = "postgresql://fiyat_takip_api@localhost:5432/fiyat_takip"
+$kontrolKlasoru = "artifacts\ui_7_7_$(Get-Date -Format yyyyMMdd_HHmmss_fff)"
+.venv\Scripts\python.exe tests\manual\api_ui_check.py --output-dir $kontrolKlasoru
+$LASTEXITCODE
+```
+
+Araç yalnız okur; kilit almaz, tur başlatmaz. Rol/SELECT, nesne sahipliği,
+fazladan yazma/CREATE yetkileri ve migration parmak izlerini denetler.
+Temel tablolar tek REPEATABLE READ READ ONLY işleminde okunur. Üretim okuma,
+cevap dönüştürme ve istatistik işlevleri beklenen sonuç için kullanılmaz.
+Sağlık, global tur ve etkin ürün listesi; her ürünün 30/366 gün cevabındaki
+kimlik, completed tur, bütün sonuçlar/teklifler/kapsam, önceki başarı,
+karşılaştırılabilirlik, iki geçmiş ve istatistikler karşılaştırılır. Fiyatlar
+birebir; yalnız değişkenlik değeri rel_tol=1e-9/abs_tol=1e-12 toleransıyla.
+Fiyat yaşı cevabın generated_at zamanından hesaplanır.
+
+Sekiz tablo/görünümün tüm kayıtları önce/sonra parmak iziyle karşılaştırılır.
+Değişimde sonuç kararsızdır. Çıkış 0 doğrulandı, 1 uyuşmazlık/durduran hata,
+2 kaynak değişti (sakin zamanda yeniden kontrol), 130 Ctrl+C. Yeni çıktı
+klasörü gerekir; UTC zaman, commit/worktree_dirty, araç SHA-256'sı, kapsam,
+ürün sonuçları/farklı alan yolları ve parmak izleri raporlanır. Şifre, SQL,
+ham hata veya özel tur notları çıktıya konmaz; raporlar Git'e gönderilmez.
+
+10 Ekim 12:30 İstanbul: **59/59 eşleşti**, 49 teklif/10 stoksuzluk, 20.805
+Cimri noktası/553 NULL; endpoint farkı yok, önce/sonra parmak izleri aynı.
+Kanıt: `artifacts/ui_7_7_20261010_123030_661/report.json`, SHA-256
+`4b04662de5ecfa06c8a80e24c2647321f7889d57c3cbc95f10303f7403a4795f`.
+Kirli çalışma ağacı raporda açık; araç parmak izi mevcut dosyayla eşleşir.
+
+34 yeni test (22 PostgreSQL): gerçek _test hesabı → FastAPI TestClient →
+MockTransport ApiClient → Streamlit AppTest; SQL/hesaplama sahte değil.
+Teklif/stoksuz/hata/sonuçsuz/geçmiş yok, eski başarı ayrılığı, NULL/Cimri
+boşluğu, seçim/aralık ve hata sonrası toparlanma sınandı. Araç testleri
+uyuşmazlık/değişen kaynak/rol/ek sütun yazma yetkisi/şema/aralık sınırları,
+kaynak kapanışı ve güvenli raporlamayı kapsar. **1676 passed/0 skipped/xfail
+(434 PostgreSQL)**, 159,27 sn; Black 74 dosya/Flake8 temiz. İki mevcut
+bağımlılık uyarısı sürüyor.
+
+**Gerçek tarayıcı kontrolü (10 Ekim):** Edge eklentisi politika yükleme
+hatası verdi. Kullanıcının doğrudan deneme isteği üzerine ChatGPT'nin dahili
+tarayıcısıyla aynı gerçek `127.0.0.1:8501` ekranına erişildi; Edge kontrolü
+yapılmış gibi sunulmadı. iPhone 16 128 GB (72.989,00 TL/10 sayfa), iPhone
+16 256 GB (6/6 stoksuz) ve Galaxy S25 512 GB (79.699,00 TL/1 sayfa)
+SQL/API sonuçlarıyla eşleşti. Satıcı/puan/renk/stok ve İstanbul kontrol
+zamanları, ayrı eski başarılı teklif ve istatistik değer/gerekçeleri kontrol edildi.
+
+Üç telefonda 7/30/90/366 gün seçimlerinin **12/12'si** bağımsız SQL–API
+referansıyla eşleşti; SVG fiyat noktaları ve boşluklar kontrol edildi.
+iPhone 16 256 GB'ın 366 günlük Cimri serisindeki 103 NULL çizgiyle
+birleştirilmedi; S25 için Cimri yokluğu açık gösterildi. Gerçek ekranda test
+verisi uyarısı yoktu. İki ardışık otomatik cevap aralığı **31 ve 29 saniye**;
+elle yenileme de yeni cevap üretti. Telefon ve aralık seçimleri korundu.
+390×844 pikselde seçimler/kartlar/grafikler incelendi; viewport ayarı geri alındı.
+
+Kullanıcı yalnız API'yi durdurdu. Yenilemede güvenli erişim hatası gösterildi;
+önceki fiyat, istatistikler ve iki grafik kaldırıldı. API yeniden başladıktan
+sonra aynı oturumdaki iPhone 16 128 GB ve 7/30 gün seçimleriyle fiyat/grafikler
+geri geldi. PostgreSQL, toplama veya keşif işleri durdurulmadı. Ardından
+varsayılan 30/366 gün seçildi. Tarayıcıda error düzeyinde kayıt yok;
+grafik yenilemelerinde Vega `Infinite extent` uyarıları kaydedildi. Nedeni
+kesinleştirilmedi; görünen nokta/boşluk ve SQL–API eşleşmelerinde hata bulunmadı.
+
+Kanıtlar aynı yerel klasörde `browser_kontrol.json`, `range_reference.json`,
+`browser_sql_kontrol.json` ve JPEG görüntülerdir. Tarayıcı kontrolü ve API
+yeniden başlatma sonrasında sekiz nesnenin parmak izleri 12:30 raporuyla
+aynı kaldı; girdi raporunun SHA-256'sı değişmedi. Son tur 23: 235 teklif,
+97 stoksuzluk, 0 hata. Üretim kodu, katalog, migration ve zamanlayıcı değişmedi.
+
+**Gerçek ekranın ilk kullanıcı kanıtı (10 Ekim):** Kullanıcı iPhone 16 128 GB
+teklif ve iki grafik görüntüsünü paylaştı. 72.989,00 TL, Trendyol/MediaMarkt,
+8,80/10,00 puan, Beyaz/Stokta Var ve 10:50:59 İstanbul kontrol zamanı görünür.
+Kendi geçmişi ve ayrı Cimri grafiği var; Cimri aralığı 09.10.2025–08.10.2026,
+eksik fiyat 0. Test verisi uyarısı gerçek ekranda bulunmamalıdır; yalnız
+ui_preview.py ekranının en üstünde gösterilir. İlk görüntüler sayfanın en üstünü
+tam göstermiyordu; uyarının yokluğu daha sonra doğrudan tarayıcıda doğrulandı.
+Kanıtlar artifacts/ui_7_7_20261010_123030_661/iphone16_128_teklif.png ve
+iphone16_128_grafikler.png olarak yerelde korundu; report.json değiştirilmedi.
+Bu statik görüntüler diğer iki ürünün, aralık seçimlerinin, otomatik/elle
+ yenilemenin, kesinti-toparlanmanın veya dar ekranın kanıtı değildir.
 
 ## Kimlik kuralları
 
@@ -2413,7 +2503,7 @@ temiz. Gerçek DB, katalog ve uygulanmış migration dosyaları değişmedi.
 
 ## Testler ne kanıtlar, ne kanıtlamaz
 
-- **Otomatik testler (1642; 412'si gerçek PostgreSQL'de):** Kuralların doğru
+- **Otomatik testler (1676; 434'ü gerçek PostgreSQL'de):** Kuralların doğru
   çalıştığını kayıtlı ve sahte yanıtlarla kanıtlar. Kimlik değişiklikleri gerçek
   kaynak örneği ve regresyon ister; 7 Ekim varyant ve adres bakımları kullanıcının
   her maddeye ayrı onayıyla yapay çelişkilere karşı önleyici koruma olarak uygulandı.

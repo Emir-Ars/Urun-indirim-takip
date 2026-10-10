@@ -11,8 +11,8 @@ hesaplamaktır.
 
 > ✅ **Keşif, fiyat toplama ve veritabanı aşamaları tamamlandı.**
 > Salt okunur yerel API, veriyi doğrulayan istemci ve fiyat istatistikleri hazır.
-> Streamlit ekranı otomatik testlerden ve test verili tarayıcı kontrolünden geçti.
-> Gerçek verilerle birlikte kullanım kontrolü bekleniyor. Tahmin modeli henüz yok.
+> Streamlit ekranı gerçek verilerle SQL–API karşılaştırmasından ve tarayıcı
+> kontrolünden geçti. Aşama 7'nin kapanış gönderimi hazır. Tahmin modeli henüz yok.
 
 ## ✨ Tamamlanan özellikler
 
@@ -34,8 +34,8 @@ hesaplamaktır.
   eksik veri ve bağlantı hatalarını anlaşılır mesajlarla bildirir.
 
 🖥️ **Telefon ekranı:** Telefon seçimi, teklif/istatistik kartları ve ayrı
-kendi/Cimri grafikleri hazır. Test verisiyle Edge'de seçimler, hata sonrası
-toparlanma, dar ekran ve gerçek 30 saniyelik yenileme doğrulandı.
+kendi/Cimri grafikleri hazır. Gerçek verilerle seçimler, hata sonrası
+toparlanma, dar ekran ve 30 saniyelik yenileme doğrulandı.
 
 ## 🔄 Çalışma akışı
 
@@ -78,8 +78,8 @@ hata sonucunu kaydeder. Cimri geçmişi bu akışın gözlemleriyle birleştiril
 
 ## 📊 Doğrulanmış kapsam
 
-Veri/katalog kontrolü 8 Ekim, otomatik test sonucu 9 Ekim;
-test verili tarayıcı kontrolü 10 Ekim 2026:
+Cimri aktarımı 8 Ekim; güncel katalog/tur, otomatik testler, bütün ürünlerin
+SQL–API karşılaştırması ve gerçek ekran kontrolü 10 Ekim 2026:
 
 | Alan | Sonuç |
 |---|---|
@@ -87,9 +87,10 @@ test verili tarayıcı kontrolü 10 Ekim 2026:
 | Model aileleri | 24; Apple, Samsung, Xiaomi ve POCO |
 | Katalog | 59 ürün, 334 bağlantı; 332 etkin bağlantı |
 | Toplama düzeni | Her gün 10:00 ve 22:00; haftalık keşif Pazar 14:00 |
-| Son doğrulanan fiyat turu | 332 sonuç: 237 fiyat, 95 Tükendi, 0 hata |
+| Son doğrulanan fiyat turu | Tur 23: 332 sonuç; 235 fiyat, 97 Tükendi, 0 hata |
 | Cimri geçmişi | 57 ürün, 20.805 tarihli kayıt; 20.252 fiyat ve 553 eksik değer |
-| Otomatik testler | 1642 test; 412’si PostgreSQL üzerinde |
+| Otomatik testler | 1676 test; 434’ü PostgreSQL üzerinde |
+| SQL–API ve ekran | 59 ürün eşleşti; üç temsilci ürün, dört grafik aralığı, yenileme ve hata sonrası dönüş doğrulandı |
 
 Katalogdaki **334 bağlantının markalara göre dağılımı** (iki pasif bağlantı dahil):
 
@@ -115,7 +116,7 @@ doğrulanamadı; eksik fiyatlar doldurulmadı. Kaynak ve işletim sınırları
 | Aşama | Durum |
 |---|---|
 | Fiyat okuma, keşif, katalog, veritabanı ve zamanlanmış toplama | ✅ Tamamlandı |
-| FastAPI ve Streamlit ile verileri sunma ve görüntüleme | 🛠️ API ve ekran hazır; gerçek verilerle birlikte kontrol bekliyor |
+| FastAPI ve Streamlit ile verileri sunma ve görüntüleme | ✅ Gerçek verilerle doğrulandı; kapanış gönderimi hazır |
 | ML ile indirim olasılığı tahmini | 🔜 Planlandı |
 | Docker ve sürekli çalışma ortamı | 🔜 Planlandı |
 
