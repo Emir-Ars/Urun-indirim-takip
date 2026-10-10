@@ -20,6 +20,7 @@ geliştirme geçmişini açıklar. Kararların ve aşama durumunun ana kaynağı
 - [Fiyat istatistikleri](#fiyat-istatistikleri-aşama-73)
 - [Salt okunur FastAPI](#salt-okunur-fastapi-aşama-74)
 - [Yerel API istemcisi](#yerel-api-istemcisi-aşama-75)
+- [Streamlit ekranı](#streamlit-ekranı-aşama-76)
 - [Kimlik kuralları](#kimlik-kuralları)
 - [Testler ne kanıtlar, ne kanıtlamaz](#testler-ne-kanıtlar-ne-kanıtlamaz)
 - [Bilinen sınırlar](#bilinen-sınırlar)
@@ -122,11 +123,13 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 | `schemas.py` | API ve istemcinin ortak, ağsız cevap modelleri. DB/havuz/hesaplama/FastAPI yüklemez; JSON alanları ve OpenAPI aynı kalır. |
 | `models.py` | Tek `ProductSnapshot` içinden istatistik ve fiyat yaşıyla ortak cevaba dönüşüm. İç `all_history`, ham sayfa hata metni ve tur notu dışarı verilmez. |
 
-### Yerel istemci: `app/ui/`
+### Yerel istemci ve ekran: `app/ui/`
 
 | Dosya | Ne işe yarar |
 |---|---|
 | `api_client.py` | `ApiClient`: dört sabit yerel GET, katı girdi/JSON/hedef doğrulaması; proxy/yönlendirme/tekrar/önbellek yok, açık zaman aşımı ve güvenli Türkçe hatalar. UI veritabanı/sunucu uygulamasını yüklemez. |
+| `main.py` | Kartlı Streamlit ekranı: telefon/aralık seçimi, güncel sonuç, API istatistikleri, iki grafik ve 30 sn/elle yenileme. Hata halinde eski veri kaldırılır; yalnız seçim tercihleri korunur. |
+| `presentation.py` | Tamsayı kuruş ve İstanbul saati biçimleme, Türkçe gerekçeler, açık boşluk/kapsam sınırlarına sahip Altair çizgi/nokta verisi. İstatistik hesaplamaz veya veri kaynağına bağlanmaz. |
 
 ### Kurulum ve zamanlayıcı: `scripts/`
 
@@ -145,6 +148,8 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 | `tests/test_api_foundation.py` | 7.1 hazırlığı (51 test, 43'ü PostgreSQL): gerçek HTTPX isteklerinin engeli, sahte/süreç içi istemcilerin çalışması, iki üretim adresinin testlerden silinmesi, gerçek API test hesabının sekiz nesneyi okuması, varsayılan READ ONLY kapatılsa da yazma/kalıcı nesne kuramaması, tekrar rol kurulumu ve hatada izinlerin geri alınması. Gerçek API veya UI özelliği testi değildir. |
 | `tests/test_api.py` | 85 API testi, 44'ü gerçek okuma hesabıyla PostgreSQL'de: dört adres ve OpenAPI, kuruş/UTC/NULL, fiyat yaşı, kapsam/istatistik ve ayrı Cimri; rol/yazma/SELECT/migration hataları, dört bağlantı sınırı, başlangıç/kullanım kesintisi ve yeniden bağlantı, gerçek 5 sn sorgu zaman aşımı, iki bağlantıyla tutarlı cevap ve kayıtların korunması. |
 | `tests/test_api_client.py` | 108 ağsız istemci testi: dört işlev, katı girdi/JSON ve alan tamlığı, kuruş/UTC/NULL, sabit hedef/proxy/yönlendirme sınırı, güvenli hatalar, tekrar/önbellek olmaması, kaynak bırakma ve Ctrl+C; MockTransport ile süreç içi gerçek API köprüsü. Import/kurulumun DB ve ağ açmaması ayrı süreçte sınanır. |
+| `tests/test_ui.py` | 74 ağsız ekran/grafik/biçim sınaması; AppTest ile seçim/aralık/durum/hata sonrası dönüş, kaynak bırakma ve ayrı Cimri; 18 saat/NULL/sayfa kümesi sınırları ve Altair tanımı. Gerçek tarayıcı görünümü veya otomatik zamanlama kanıtı değildir. |
+| `tests/ui_samples.py` | AppTest/önizlemenin ortak yapay örnekleri ve MockTransport istemcisi; gerçek fiyat/veri kanıtı değildir. |
 | `tests/test_database_read.py` | Salt okunur sorgular (63 test, 49'u gerçek API test hesabıyla PostgreSQL'de): etkin/pasif ürün, ürüne özel completed tur, fiyat/stoksuz/hata/eksik kapsam, eşit teklif, gün aralıkları, ayrı Cimri/NULL, mevcut katalog bilgisi, iki bağlantıyla tutarlı görüntü, açık işlem reddi, yerel ayarlar, sorgu hatası/zaman aşımı sonrası yeniden okuma ve toplama kilidinden bağımsızlık. Altı yeni bütünleşme testi SQL'den gelen verilerle istatistikleri; tam 30 gün, dar grafik aralığı, pasif katalog, kısmi kapsam, scope sınırı, stoksuz tur, Cimri ayrımı ve completed ürün turu seçimini sınar. |
 | `tests/test_price_statistics.py` | 49 ağsız ve veritabanısız istatistik testi: tam kapsam dönemi, boş/stoksuz geçmiş, sayfa kümesi ve eksik cevap sınırları, 30 gün/14 geçiş/7 gün/18 saat eşikleri, gerçek kontrol zamanı/İstanbul günü, NULL üzerinden geçmeme, bağımsız analitik değişkenlik sonucu, kuruş hassasiyeti, değiştirilemez sonuç ve grafik aralığından bağımsızlık. |
 | `tests/test_contracts.py` | Pydantic sözleşmeleri (74 test): satılabilir teklif fiyat ve satıcı taşır, puan ölçeği aşamaz, üstü çizili fiyat güncel fiyattan büyüktür, katalog kimlik/referans/alan adı kuralları, `money()` kuruş çevirimi. |
@@ -164,6 +169,7 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 | `tests/manual/live_scraper_check.py` | Katalogdaki sayfaları canlı okur; bütün satıcıları gösterir. İsteğe bağlı `product_key` ön eki (ör. `samsung_`) ile yalnız o ürünler; sayfa seçimi toplama turuyla aynı fonksiyondur. Başka bir tarama sürüyorsa (ortak kilit) çıkış kodu 3'tür. |
 | `tests/manual/live_discovery_check.py` | Keşfi kataloğa yazmadan canlı çalıştırır; `--trace` ile her kararın nedenini gösterir. Normalde raporu `data/discovery_report.json` dosyasının üzerine yazar. `--save-responses KLASOR`, tek hedefin ham HTML/JSON yanıtlarını ve raporunu yeni klasöre kaydeder; karar izini de basar. |
 | `tests/manual/market_history_probe.py` | Akakçe için tek örnek sayfayı, Cimri için ürün sayfası ve grafik API'sini ortak HTTP katmanı ve tarama kilidiyle okur. Cimri'nin tarihli fiyat noktalarını Git dışındaki yerel JSON raporuna yazar; ham HTML'yi ve veritabanını yazmaz. |
+| `tests/manual/ui_preview.py` | Aynı Streamlit ekranını ağsız test istemcisiyle gösterir; kalıcı test verisi uyarısı vardır. API/DB veya canlı site gerekmez; kullanıcı görünüm/yenileme kontrolünü burada yapar. |
 | `.github/workflows/ci.yml` | Her push/pull request'te geçici PostgreSQL 17 (`C.UTF-8`) açar, `dev,web` bağımlılıklarını kurar; yalnız `_test` DB'de API rolünü hazırlar ve Black/Flake8/tam testleri çalıştırır. `ci_only` şifresi yalnız o işte açılıp silinen sunucunundur. |
 | `.github/workflows/bulut-deneme.yml` | Elle tetiklenen bulut denemesi (zamanlama, veritabanı ve gizli anahtar yok): `tests/manual/live_scraper_check.py samsung_galaxy_a55_128gb` ile 4 sayfayı (Trendyol ve Hepsiburada) GitHub'ın makinesinden okur; her iki site de hatasız okunduysa başarılı, aksi hâlde başarısız biter ve sonucu çalışmanın özet sayfasına yazar. Soru: siteler bulut adreslerini engelliyor mu ([proje_plani.md](../proje_plani.md) Bölüm 8). **İlk sonuç (6 Ekim):** Hepsiburada'nın 3 sayfası okundu, Trendyol'un sayfası HTTP 403 (`blocked`) verdi; tek örnek (bkz. "Bilinen sınırlar"). Tetiklemek: GitHub → Actions → "Bulut deneme (canlı okuma)" → Run workflow. Bilgisayardaki tur saatlerinde (10:00–10:40, 22:00–22:40) tetiklenmemelidir: `data/scrape.lock` bu makineye özgüdür, GitHub'daki çalışma onu almaz ve aynı siteye iki yerden gidilir (iş tanımı bunu denetlemez, yalnız yorumda uyarır). |
 
@@ -2165,9 +2171,134 @@ SQL sınamaları yalnız `fiyat_takip_test` üzerinde; 001–004 ve katalog
 parmak izleri aynı. Canlı HTTP/üretim DB kontrolü yapılmadı.
 Sahte zaman aşımı sınamaları gerçek ağ süresi ölçümü değildir.
 
-7.5 yerelde tamamlandı; kullanıcı commit/push onayını verdi.
-Gönderim sonrası aynı commit'in CI sonucu doğrulanacak.
-7.6 ekranına geçilmedi.
+7.5 kullanıcı onayıyla `ec42361` olarak gönderildi;
+aynı SHA CI 37933861856 başarılı. 7.6 ekranı ayrı plan onayıyla uygulandı;
+10 Ekim'de test verili Edge kontrolü tamamlandı; commit/push onayı bekleniyor.
+
+## Streamlit ekranı (Aşama 7.6)
+
+`app/ui/main.py` aynı bilgisayardaki API'nin doğrulanmış sonuçlarını gösterir.
+`presentation.py` yalnız biçimlendirme ve grafik verisini hazırlar;
+veritabanına veya pazaryerine erişmez. API/JSON sözleşmeleri aynı kaldı.
+
+### Ekran ve veri anlamı
+
+- Ürün seçimi etkin API listesinden, ürün anahtarıyla korunur. Seçilen ürün
+  etkin listeden çıkarsa bilgi verilerek ilk etkin ürün seçilir. Liste boşsa
+  açıklama gösterilir; veri hatası boş listeye çevrilmez.
+- Güncel teklif, bütün sayfaların stoksuz olması, doğrulanamayan fiyat ve
+  tamamlanmış ürün turunun yokluğu ayrı gösterilir. Önceki başarılı teklif
+  ayrı açılır bölümdedir; güncel teklifin aynısı ikinci kez gösterilmez.
+- Platform/satıcı/puan/ölçek/renk/stok ve gerçek kontrol zamanı gösterilir.
+  Kritik stok kayıtlı durumdan, eski fiyat uyarısı API'nin `is_stale`
+  değerinden gelir. Güncel fiyat farkı yalnız API karşılaştırılabilir diyorsa
+  önceki fiyatla hesaplanır. Satıcının eski fiyatı ayrıca etiketlenir.
+- Fiyat/stok cevabı sayısı, hata ve kontrol edilmeyen sayfa sayısı ayrı
+  gösterilir. Kısmi kapsam uyarısı vardır. Sayfa tablosu bugün pasif olan
+  sayfa/platformu elemez; adres/renk/etkinlik mevcut katalog bilgisidir.
+- Dip, kapsam zirvesi ve değişkenlik API'den aynen alınır. Eksik göstergeler
+  sıfırla doldurulmaz; Türkçe gerekçe, dönem ve gözlem/geçiş/gün sayıları
+  gösterilir. Değişkenlik yalnız gösterimde iki ondalıkla biçimlenir;
+  kaynak değeri ve hesap değişmez. Sıfır değişkenlik `0,00` olarak görünür.
+- Fiyat metni tamsayı kuruştan üretilir; saatler Europe/Istanbul'dur.
+  Global tur ve ürün turu ayrı etiketlenir; iki API okumasının aynı
+  veritabanı görüntüsü olduğu iddia edilmez.
+
+### Grafikler ve yenileme
+
+İki grafikte bağımsız 7/30/90/366 gün seçimi vardır. Varsayılan kendi
+geçmişi 30, Cimri 366 gündür; API'nin son kayıtlı veriden geriye açtığı
+aralık kullanılır. Grafik aralığı istatistikleri değiştirmez.
+
+Kendi grafiğinde tur başlangıcı eksendedir; tooltip fiyatın gerçek kontrol
+zamanını ve kapsamı taşır. Çizgi yalnız ardışık fiyatlı, tam cevaplanmış,
+aynı planlanan sayfa kümesine sahip turlar arasında kurulur. Gerçek teklif
+kontrol zamanlarının farkı pozitif/en çok 18 saat olmalıdır; tam 18 saat
+kabul edilir. Eksik fiyat, kısmi kapsam, küme değişimi ve uzun boşluk çizgiyi
+keser. Kısmi fiyat noktası elmasla görünür. Tek nokta çizgi olmasa da görünür.
+
+Cimri ayrı grafiktedir. NULL ve ardışık olmayan tarihler çizgiyi keser;
+eksik gün oluşturulmaz. Hiç kayıt yoksa “Cimri geçmişi bulunmuyor” denir;
+neden tahmin edilmez. Kayıt var/fiyatların hepsi eksik durumu ayrıca açıklanır.
+Tekrarlanan fiyatlar bağımsız günlük ölçüm kanıtı olarak sunulmaz.
+
+Altair'da bölüm kimliği ve `invalid="break-paths-show-domains"` açıkça
+kullanılır. NULL satırları grafik hazırlığında korunur; sıfıra dönüştürülmez.
+Grafik çizim sayıları TL, tooltip fiyat metni doğrudan tamsayı kuruştandır.
+Kendi zaman ekseni tarayıcı saatinden etkilenmesin diye yalnız çizimde
+İstanbul duvar saati UTC ölçeğine kodlanır; gerçek API zamanları UTC kalır.
+[Vega-Lite eksik veri davranışı](https://vega.github.io/vega-lite/docs/invalid-data.html)
+
+Tek `st.fragment(run_every=30)` veri/seçim bölümünü oturum açıkken yeniler.
+Elle Yenile düğmesi aynı bölümü çalıştırır. Her yenilemede ürün listesi,
+global durum ve seçilen ürün yeniden okunur; istemci `with` ile bırakılır.
+Yalnız seçim/aralık tercihleri oturumda tutulur; veri/istemci önbelleği yoktur.
+API hatasında eski teklif/grafik/göstergeler kaldırılır, güvenli Türkçe hata
+gösterilir; sonraki yenileme yeniden okuyabilir. Beklenmeyen kod hatası
+olağan API hatası gibi gizlenmez.
+[Streamlit fragment](https://docs.streamlit.io/develop/api-reference/execution-flow/st.fragment)
+
+### Başlatma ve test önizlemesi
+
+Normal ekran (gerçek API hesabı ve birlikte kontrol 7.7'de hazırlanacak):
+
+```powershell
+.venv\Scripts\python.exe -m streamlit run app\ui\main.py --server.address 127.0.0.1 --server.port 8501 --server.headless true --browser.gatherUsageStats false
+```
+
+7.6 görsel kontrolü için API sunucusu ve veritabanı gerektirmeyen önizleme:
+
+```powershell
+.venv\Scripts\python.exe -m streamlit run tests\manual\ui_preview.py --server.address 127.0.0.1 --server.port 8501 --server.headless true --browser.gatherUsageStats false
+```
+
+Proje klasöründen çalıştırılır; tarayıcıda `http://127.0.0.1:8501` açılır.
+İki ekran aynı portta birlikte başlatılmaz. Önizleme aynı `render_app`
+işlevine testteki MockTransport istemcisini verir; üretim demo modu yoktur.
+“Test verisi — gerçek fiyatlar değildir” uyarısı sürekli görünür.
+`tests/ui_samples.py` örnekleri AppTest ve önizleme için ortaktır; gerçek
+fiyat kanıtı değildir. Sidebar'dan teklif/boşluk, eski/kısmi fiyat, stoksuzluk,
+doğrulanamama, yalnız Cimri, eksik geçmiş, API hatası ve boş liste denenir.
+
+Telefon/aralık seçimi, dar ekran görünümü, grafik boşlukları ve hata sonrası
+dönüş kontrol edilir. API cevabı saatinin açık oturumda yaklaşık 30 saniyede
+değişmesi, elle Yenile'nin hemen yenilemesi ve tercihlerin korunması gözlenir.
+Terminalde Ctrl+C önizlemeyi kapatır.
+
+### Doğrulama ve durum
+
+74 yeni ağsız test; biçim/kuruş/İstanbul zamanı, grafik boşlukları ve Altair
+tanımı, AppTest ekran durumları/seçimler, hata sonrası toparlanma ve kapanış,
+aynı ekranın MockTransport önizlemesi doğrulandı. 30 sn fragment ayarı sınandı;
+AppTest gerçek tarayıcı zamanlaması veya piksel görünümü kanıtı değildir.
+[AppTest belgesi](https://docs.streamlit.io/develop/api-reference/app-testing/st.testing.v1.apptest)
+
+Tam paket **1642 passed, 0 atlandı/xfail (412 PostgreSQL)**, 149,81 sn;
+Black (71 dosya)/Flake8 temiz. Önceki iki Starlette/AnyIO uyarısı sürüyor.
+Veritabanı testleri yalnız `fiyat_takip_test` üzerinde yapıldı; 001–004,
+katalog, API/hesaplama ve zamanlayıcı dosyaları değişmedi.
+
+**7.6 tamamlandı; 10 Ekim'de kullanıcının isteğiyle test verili önizleme
+Edge'de kontrol edildi. Commit/push onayı ve ardından aynı commit'in CI
+sonucu bekleniyor; 7.7 başlamadı.**
+
+Kullanıcı 9 Ekim'de iki grafiğin ekran görüntüsünü paylaştı. Kendi grafiğinde
+eksik fiyat/kısmi kapsam, Cimri'de iki eksik fiyat günü arasında çizgi yok;
+paylaşılan görüntüler beklenen boşluk davranışını gösteriyor. Bu statik
+görüntüler seçim/dar ekran veya gerçek 30 sn yenileme kontrolü değildir.
+
+10 Ekim tarayıcı kontrolünde 11 önizleme senaryosu sınandı: telefon/aralık
+seçimi, eski/kısmi teklif, dört ürün durumu, eksik geçmiş, bağlantı/bozuk
+cevap ve boş liste. Hata ekranında önceki teklif/istatistik/grafikler
+kalktı; normal senaryoya dönünce telefon ve aralık tercihleri korundu.
+Hiçbir düğmeye basmadan cevap zamanı 00:44:57 → 00:45:27 → 00:45:57
+(İstanbul) ilerledi; elle Yenile de yeni cevap üretti. 390×844 görünümde
+kontroller ve grafikler incelendi; belge genişliği 390 piksel, yatay taşma
+yoktu. Görünüm boyutu ve ilk telefon/30–366 gün tercihleri geri alındı.
+Tarayıcının kayıtlı hata günlüğü boştu. Kaynak kodunda ek değişiklik yok;
+9 Ekim tam test sonucu ile 10 Ekim tarayıcı kanıtı ayrı doğrulamalardır.
+Gerçek API/veritabanı kontrolü 7.7'de kalır. Kanıtlar yalnız yerelde,
+Git dışında `artifacts/ui_7_6_20261010/kontrol.json` ve ekran görüntülerindedir.
 
 ## Kimlik kuralları
 
@@ -2282,7 +2413,7 @@ temiz. Gerçek DB, katalog ve uygulanmış migration dosyaları değişmedi.
 
 ## Testler ne kanıtlar, ne kanıtlamaz
 
-- **Otomatik testler (1568; 412'si gerçek PostgreSQL'de):** Kuralların doğru
+- **Otomatik testler (1642; 412'si gerçek PostgreSQL'de):** Kuralların doğru
   çalıştığını kayıtlı ve sahte yanıtlarla kanıtlar. Kimlik değişiklikleri gerçek
   kaynak örneği ve regresyon ister; 7 Ekim varyant ve adres bakımları kullanıcının
   her maddeye ayrı onayıyla yapay çelişkilere karşı önleyici koruma olarak uygulandı.

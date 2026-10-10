@@ -10,8 +10,9 @@ Uzun vadeli hedef, bu geçmişten telefonun yakında indirime girme olasılığ�
 hesaplamaktır.
 
 > ✅ **Keşif, fiyat toplama ve veritabanı aşamaları tamamlandı.**
-> Salt okunur yerel API, veriyi doğrulayan istemci ve fiyat istatistikleri hazır;
-> çalışan ekran ve tahmin modeli henüz yok.
+> Salt okunur yerel API, veriyi doğrulayan istemci ve fiyat istatistikleri hazır.
+> Streamlit ekranı otomatik testlerden ve test verili tarayıcı kontrolünden geçti.
+> Gerçek verilerle birlikte kullanım kontrolü bekleniyor. Tahmin modeli henüz yok.
 
 ## ✨ Tamamlanan özellikler
 
@@ -32,6 +33,10 @@ hesaplamaktır.
 - 🔗 **Yerel istemci:** API cevaplarını ortak sözleşmeyle doğrular;
   eksik veri ve bağlantı hatalarını anlaşılır mesajlarla bildirir.
 
+🖥️ **Telefon ekranı:** Telefon seçimi, teklif/istatistik kartları ve ayrı
+kendi/Cimri grafikleri hazır. Test verisiyle Edge'de seçimler, hata sonrası
+toparlanma, dar ekran ve gerçek 30 saniyelik yenileme doğrulandı.
+
 ## 🔄 Çalışma akışı
 
 ```mermaid
@@ -42,12 +47,15 @@ flowchart LR
     D --> E[("PostgreSQL fiyat geçmişi")]
     E --> F["Yerel salt okunur API"]
     F --> G["Yerel API istemcisi"]
+    G --> H["Streamlit telefon ekranı"]
     classDef targets fill:#fff3bf,stroke:#b08900,color:#1b4332
     classDef processing fill:#d8f3dc,stroke:#2d6a4f,color:#1b4332
     classDef records fill:#dbeafe,stroke:#2563eb,color:#172554
+    classDef preview fill:#f3e8ff,stroke:#9333ea,color:#581c87
     class A targets
     class B,D,F,G processing
     class C,E records
+    class H preview
 ```
 
 Telefonlar marka, model ve kapasite düzeyinde takip edilir. Keşif hangi
@@ -64,12 +72,14 @@ hata sonucunu kaydeder. Cimri geçmişi bu akışın gözlemleriyle birleştiril
 | PostgreSQL 17 · Psycopg 3 | Kalıcı kayıt, SQL kuralları ve işlemler |
 | FastAPI · Uvicorn · Psycopg Pool | Yerel, salt okunur API ve bağlantı havuzu |
 | HTTPX | Yalnız yerel API'den veri alan doğrulayıcı istemci |
+| Streamlit · Altair | Telefon ekranı, ayrı fiyat grafikleri ve yenileme |
 | Windows Görev Zamanlayıcı | Günlük toplama ve haftalık keşif |
 | pytest · Black · Flake8 · GitHub Actions | Otomatik testler ve kod denetimleri |
 
 ## 📊 Doğrulanmış kapsam
 
-Veri ve katalog kontrolleri 8 Ekim 2026, otomatik test sonucu 9 Ekim 2026:
+Veri/katalog kontrolü 8 Ekim, otomatik test sonucu 9 Ekim;
+test verili tarayıcı kontrolü 10 Ekim 2026:
 
 | Alan | Sonuç |
 |---|---|
@@ -79,7 +89,7 @@ Veri ve katalog kontrolleri 8 Ekim 2026, otomatik test sonucu 9 Ekim 2026:
 | Toplama düzeni | Her gün 10:00 ve 22:00; haftalık keşif Pazar 14:00 |
 | Son doğrulanan fiyat turu | 332 sonuç: 237 fiyat, 95 Tükendi, 0 hata |
 | Cimri geçmişi | 57 ürün, 20.805 tarihli kayıt; 20.252 fiyat ve 553 eksik değer |
-| Otomatik testler | 1568 test; 412’si PostgreSQL üzerinde |
+| Otomatik testler | 1642 test; 412’si PostgreSQL üzerinde |
 
 Katalogdaki **334 bağlantının markalara göre dağılımı** (iki pasif bağlantı dahil):
 
@@ -105,7 +115,7 @@ doğrulanamadı; eksik fiyatlar doldurulmadı. Kaynak ve işletim sınırları
 | Aşama | Durum |
 |---|---|
 | Fiyat okuma, keşif, katalog, veritabanı ve zamanlanmış toplama | ✅ Tamamlandı |
-| FastAPI ve Streamlit ile verileri sunma ve görüntüleme | 🛠️ Yerel API, istemci ve istatistikler hazır; ekran sırada |
+| FastAPI ve Streamlit ile verileri sunma ve görüntüleme | 🛠️ API ve ekran hazır; gerçek verilerle birlikte kontrol bekliyor |
 | ML ile indirim olasılığı tahmini | 🔜 Planlandı |
 | Docker ve sürekli çalışma ortamı | 🔜 Planlandı |
 
