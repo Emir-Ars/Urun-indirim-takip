@@ -92,8 +92,11 @@ dosyalı commit/push işlemini onayladı; d251291 gönderildi ve aynı SHA CI
 38564530086 completed/success oldu. Kullanıcı kalan işleri önerilen sırada
 ele almayı ve her adım öncesinde sade sorun/çözüm açıklaması, adım sonunda
 commit/push ve CI kontrolünü istedi. İlk ağ çelişkisi korumasının dar
-uygulaması ve yerel doğrulaması tamamlandı; gönderim ve aynı SHA CI
-bu adımın kapanışında ayrıca doğrulanır.
+uygulaması ve yerel doğrulaması tamamlandı; 4eaf35e gönderildi ve aynı SHA
+CI 38569095383 completed/success oldu. Kullanıcı üç kanıt eksikliğinin
+iki grup halinde araştırılmasını onayladı. İlk 512 GB ağ incelemesi ve tek
+güncel kontrol tamamlandı: iki adayda da ağ kanıtı yetersiz, katalog dışında.
+Bu araştırma adımının gönderimi ve aynı SHA CI kapanışta doğrulanacak.
 Ayrıntı Bölüm 9 / ML öncesi bakım.
 
 **6 Ekim ikinci denetimi sonrası bakım (kullanıcı onayı):** Hepsiburada bozuk
@@ -540,6 +543,27 @@ NewCondition etiketi mevcut, fakat 4G hedefe kabul kanıtı yetersiz.
 Başlıkta 5G olmaması veya distribütör garantisi 4G kanıtı değildir.
 Bütün gruplardan sonraki dar aday çözümünde eşleştirme ayrıca ele alınır;
 kanıt yoksa bu adaylar uygulanacak rapora alınmaz. Katalog/kod değişmedi.
+
+**14 Ekim ek ağ araştırması tamamlandı (1b-1):** iki aynı SKU'nun kaydedilmiş
+JSON'larında ağ alanı ve üretici model kodu yok. Xiaomi Türkiye'nin Pro ve
+Pro 5G resmî teknik sayfaları referans olarak incelendi; iki GTIN için
+mi.com/mi.co.id/appmifile.com aramaları kesin resmî model eşleşmesi vermedi.
+Bu, hiçbir yerde resmî eşleşme bulunmadığı iddiası değildir. Genel model
+özellikleri ve Mor açıklamasındaki Snapdragon 7 tek başına kabul üretmedi.
+Kullanıcı güncel Mor/512 GB başlığı ve rengini doğruladı; Mobil Bağlantı
+Hızı görünmüyor, işlemci özellik alanında yok, tanıtım görselinde bulunduğunu
+bildirdi. Yeşil başlığı aynı ve satılamama mesajı sürüyor. Üretici model kodu
+tanımı açıklandı; kullanıcıdan görülmeyen bir kod varmış gibi çıkarılmadı.
+Kullanıcının 17:05 tek güncel ham kontrolü de aynı eksikliği gösterdi;
+HBCV00005PZUWE/Mor ve HBCV00005PZUWG/Yeşil kararları kanıt yetersiz olarak
+kesinleştirildi. Genel araştırma sonucu budur; telefonun fiziksel ağ türü
+kesinleşmiş sayılmaz. Mor'un güncel API'sinde yalnız teknolojikapinda/
+34.999 TL var; önceki dogabilisim/21.999 TL teklifi güncel yanıtta yok.
+Kaynak teklif kümesinin değişimi tek başına kod hatası sayılmadı. Yeşil'in
+başarılı boş satıcı API'si ve isInStock=false değeri Tükendi ile uyumlu;
+JSON-LD 0.00/InStock güncel fiyat/stok kanıtı olarak kullanılmadı.
+Tanıtım metinleri kesin GTIN/üretici sürüm eşleşmesi yerine geçmedi.
+İki aday katalog dışında kalır; mevcut 15/7/3 toplamı ve katalog değişmedi.
 
 **14 Ekim stoksuz sayfanın renk eksikliği (grup 10):** HBCV0000A1GTQO
 raporda Mor; güncel başlık/SKU ürün bağlamı/JSON-LD renk belirtmiyor,
@@ -2145,6 +2169,64 @@ tamamlanan adımda commit/push istedi. Önceki 11 grup boyunca erteleme bu
 incelemeyle sona erdi. Gönderim yetkisi bu bakım dizisi için geçerlidir;
 uygulama planının ve katalog raporunun kabulü ayrıca netleşir.
 
+**Eksik ağ/renk planı onayı (14 Ekim):** kullanıcı üç adayın eksik kanıtını
+tamamlama planını uygulatma talimatı verdi. Önce product_id=57 iki 512 GB
+Hepsiburada sayfası HBCV00005PZUWE/Mor ve HBCV00005PZUWG/Yeşil (1b-1).
+Kayıtlı aynı-SKU ağ/model/GTIN ve resmî üretici eşleşmesi araştırılır;
+yetersiz kalırsa belirsiz sayfalarda kullanıcı terminalinde bir güncel
+kontrol. Her sayfaya doğrulandı/uyuşmazlık/kanıt yetersiz ve gerekçe;
+kanıt bulunamaması araştırmanın geçerli kapanış sonucudur. Bu grup
+tamamlanınca belge/dosya listesi/Türkçe mesaj, verilmiş yetkiyle commit/push,
+aynı SHA CI ve durma. Kullanıcı devam isteğinden sonra HBCV0000A1GTQO'nun
+aynı-SKU Mor renk incelemesi (1b-2) aynı şekilde ayrı kapatılır.
+
+**1b-1 ağsız hazırlık (14 Ekim; güncel kontrol öncesi):** eski 09 grubunun 10 ham dosyası ve önceki
+11 grubun 219 kanıtı korunuyor. Güncel app/tests/config 92 dosya aynı.
+İki same-SKU kaydında üretici model kodu yok, ağ okuyucusu None; Mor/Yeşil
+GTIN 6941812762899/6941812762776. Resmî referanslar ve arama sınırı
+Git dışı ek_redmi_note_13_pro_4g_512gb/kayitli_kaynak_ve_resmi_arastirma.json
+içinde. Araştırma mevcut iki adayın ağ kimliğini kesinleştirmedi.
+
+Eski betik F78F... parsing hashini beklediğinden aynen çalıştırılmaz;
+koruma kaldırılmadan yeni ek_redmi_note_13_pro_4g_512gb/ hazırlandı.
+Geçici katalog/eski ham yardımcı baytları aynı; plan_listings yalnız iki
+beklenen Hepsiburada kimliğini product_id=57/model/512 GB ile seçti.
+BOM'lu yeni PS komutu güncel parsing AA348... ve HB, manuel araç/capture,
+runtime/discovery, kaynak rapor/katalog/geçici katalog/yardımcı hashlerini
+korur; yeni ek_kontrol_<zaman>/, NoClobber ve finally CATALOG_PATH/konum/
+konsol geri alma içerir. Python AST, PowerShell sözdizimi, BOM, araç yükleme,
+tam iki hedef ve hashler ağsız doğrulandı; main/fetch çağrılmadı.
+Kullanıcı başlık/renk/alan eksikliği yanıtı tarayici_teyidi.json'da;
+güncel ham sonuç bekleniyor. Stoksuzluk kabul edilebilir, fakat fiyat veya
+errors=[] 4G kanıtı sayılmaz. Normal checked=2/errors=[]; her durumda
+başarılı+errors iki farklı beklenen kimliği kapsamalı. Üretim/test/katalog/
+DB değişmedi; son 1751 test/0 atlama yeniden çalıştırılmadı. Grup kapanmadı,
+commit/push yok, 1b-2 başlamadı. Katalog 59/334/332 ve toplam 15/7/3 aynı.
+
+**1b-1 güncel kontrol ve araştırma sonucu (14 Ekim 17:05):** kullanıcı yeni
+ham_kayit.ps1 komutunu bir kez çalıştırdı; ek_kontrol_20261014_170540_981/
+içinde checked_listings=2, errors=[], çıkış 0 ve iki farklı beklenen
+Hepsiburada kimliği. Product_id=57; çalışma/kod/rapor/katalog hashleri uyumlu.
+Mor'un kendi başlık/JSON-LD/varyantı 512 GB/Mor, GTIN 6941812762899;
+aynı-SKU ağ alanı ve üretici model kodu yok. Teklif API'leri bir geçerli
+teknolojikapinda/9,7/34.999 TL/Stokta Var teklifiyle üretim seçimini destekliyor.
+Yeşil kendi başlığında 512 GB/Yeşil, GTIN 6941812762776; ağ/model kodu yine
+yok. Satıcı API 200/boş liste, kendi ürün isInStock=false ve kullanıcı
+satılamama teyidi Tükendi'yi destekliyor. Sıfır fiyatlı JSON-LD/InStock
+etiketi güncel fiyat/stok kabulü üretmedi. İki kaynakta NewCondition etiketi
+var; bu etiket ağ kimliği kanıtı değildir. Güncel tanıtım işlemci metinleri,
+kesin resmî GTIN/üretici sürüm eşleşmesi olmadan sınıflandırma üretmedi.
+
+**Karar:** HBCV00005PZUWE ve HBCV00005PZUWG için kanıt yetersiz; iki aday
+katalog dışında. İnceleme tamamlandı, fiziksel ağ türü kesinleştirilmedi.
+Kanıt yokluğu onaylanan bitiş ölçütünü sağlar; başka canlı tekrar yapılmaz.
+Önceki 219 kanıt/92 app-tests-config dosyası ve yeni ham kayıtlar korundu;
+source/tarih/SKU/gerekçe Git dışı ek klasörün grup_sonucu.json ve güncel
+kaynak_incelemesi.json kayıtlarında. Üretim/test/katalog/DB değişmedi;
+tam test paketi tekrarlanmadı. Plan/teknik güncellendi, README sayıları aynı.
+Bu adım dosya listesi/Türkçe mesaj, commit/push ve aynı SHA CI ile kapatılır;
+sonra durulur. 1b-2 başlamadı; kullanıcı devam isteği beklenir.
+
 **İlk kalan iş — dar ağ kimliği koruma planı (14 Ekim; kullanıcı onayladı):**
 gerçek Trendyol797850359 başlığı/ürün özellikleri 5G/4G çelişkisini,
 fiyat okunmadan ve keşif adayı üretilmeden önce reddetmek. Güncel 5G hedefin
@@ -2213,12 +2295,15 @@ Bu kayıtlı kaynak uyumu/test sonucu; güncel site tekrar teyidi değildir.
 Kaynak zaten aynı gün kullanıcı tarafından alınmış olduğu için bu dar
 karşılaştırma değişikliği için yeni canlı istek gerektirilmedi. Fiziksel ağ/
 RAM kararı ve üç kanıt yetersiz adayın çözümü tamamlanmış sayılmaz.
-Verilmiş adım sonu gönderim yetkisiyle dosyalar/Türkçe mesaj gösterilir,
-commit/push ve aynı yeni SHA CI doğrulanır; ardından bu adımda durulur.
+Verilmiş adım sonu gönderim yetkisiyle dosyalar/Türkçe mesaj gösterildi;
+4eaf35e commit/push tamamlandı, aynı SHA CI 38569095383 başarılı oldu.
+Bu adım kapandı; sonraki eksik kanıt incelemesi ayrı onayla başladı.
 
 | Adım | İnceleme ve kabul ölçütü | Durum |
 |---|---|---|
-| 1a. Dar ağ kimliği koruması | Açık 5G model/açık 4G ürün özelliği çelişkisini Trendyol keşif ve scraper'da fiyat/adaydan önce ortak kuralla reddetmek; gerçek kötü örnek ve doğru iki kontrolün korunması. | **Uygulama ve yerel doğrulama tamam (14 Ekim):** 34 yeni regresyon, 1751 test/0 atlama, Black/Flake8 temiz; üç tam HTML replay doğru. Gönderim ve aynı SHA CI bu adımın kapanışında doğrulanır. Kaynak çelişkisi ve üç kanıt eksikliği çözülmüş sayılmaz. |
+| 1b-1. 512 GB ağ kanıtı | İki aynı Hepsiburada SKU'su için kayıt/model/GTIN/resmî kaynak ve gerekirse tek güncel ham kontrol; gerekçeli üçlü karar. | **İnceleme tamam (14 Ekim 17:05):** kayıt/resmî araştırma ve tek güncel ham kontrol kesin ağ kimliği sağlamadı; Mor/Yeşil için 2 kanıt yetersiz, katalog dışında. checked=2/errors=[]/çıkış 0; eski kanıt/kod/katalog korundu. Gönderim ve aynı SHA CI kapanışta doğrulanacak; ardından durma. |
+| 1b-2. 256 GB renk kanıtı | HBCV0000A1GTQO'nun kendi SKU'suna ait renk; başka SKU veya satıcı metni GTIN sayılmaz. | **Plan onaylandı, başlamadı:** ilk grubun kapanışı ve kullanıcı devam isteği sonrası. |
+| 1a. Dar ağ kimliği koruması | Açık 5G model/açık 4G ürün özelliği çelişkisini Trendyol keşif ve scraper'da fiyat/adaydan önce ortak kuralla reddetmek; gerçek kötü örnek ve doğru iki kontrolün korunması. | **Tamamlandı (14 Ekim):** 34 yeni regresyon, 1751 test/0 atlama, Black/Flake8 temiz; üç tam HTML replay doğru. 4eaf35e gönderildi, aynı SHA CI 38569095383 başarılı. Kaynak çelişkisi ve üç kanıt eksikliği çözülmüş sayılmaz. |
 | 1. Yeni keşif sayfaları | 11 Ekim raporu/katalog ağsız eşleşmesi; 11 grubun 25 sayfasında güncel model/kapasite/renk/kimlik ve kapsam kontrolü; kapsam içi adaylarda geçici katalogla mevcut canlı scraper aracı, satıcı/teklif/stok ve tarayıcı karşılaştırması. Her sayfada doğrulandı/uyuşmazlık/kanıt yetersiz sonucu, her gruptan sonra durma. | **Tamamlandı: 11/11 grup ve 25/25 sayfa; 15 doğrulandı / 7 uyuşmazlık / 3 kanıt yetersiz / 0 bekliyor (14 Ekim).** Yenilio/kalite başlık boşluğu ayrı kullanıcı onayıyla düzeltildi; 41 regresyon ve tam 1717 test/0 atlama, Black/Flake8 temiz. İkinci grubun üç canlı reddi 14:33'te, üçüncü grubun üç canlı reddi 15:19'da doğrulandı. Kullanıcı gönderimi 11 grubun sonuna erteledi. Dördüncü grubun ham kaydı 15:54'te alındı: doğru SKU/URL/fiyatlı JSON-LD teklifinde NewCondition, 512 GB/Lavanta ve API/tarayıcı teklif eşleşmesi doğrulandı. Beşinci grubun 16:24 kaydında aynı SKU teklifinde NewCondition, 1024 GB/Kozmik Turuncu ve ENHIZLIBİZDE/9,9/Stokta Var/156.999 TL eşleşti; kullanıcı tarayıcı ve aktif Sepete Ekle teyidini verdi. Altıncı grubun 17:29 kaydında aynı kimlik/URL/fiyatlı ProductGroup ana teklifinde NewCondition, 1024 GB/Siyah ve ALTINKOZA TEKNOLOJİM/8,2/Kritik Stok/95.000 TL eşleşti; Son 1 Ürün ham HTML'de, kullanıcı tüm alanlar ve aktif Sepete Ekle'yi teyit etti. Yedinci grubun 14 Ekim 09:39 ikinci kaydında doğru kimlik/URL/256 GB/Mavi/fiyatlı Product teklifinde NewCondition ve AYPA/9,4/Kritik Stok/54.999 TL kullanıcı görüntüsüyle eşleşti; ilk Ceppodium/Tükendi kaydı ayrı korundu. Sekizinci grubun 10:32 kaydında Xiaomi 14T Pro 512 GB/Titan Gri/SKU eşleşti, aynı üründe NewCondition etiketi var; başarılı boş satıcı API'si ve isInStock=false kullanıcı/HTML satılamama mesajıyla eşleşti. Tükendi geçerli sonuç; JSON-LD 0.00/InStock güncel stok/fiyat kanıtı sayılmadı. Dokuzuncu grubun 10:51 kaydında Mor iki teklif/en ucuz seçim ve Yeşil stoksuzluk kaynak/tarayıcıyla eşleşti; aynı ürünlerin NewCondition etiketi var. İki sayfada da 4G/5G alanı bulunmadığı için katalog kabul sonucu 2 kanıt yetersiz; Mor Snapdragon 7 metni ayrıca eşleştirme bekler. Onuncu grubun 13:29 kaydında 1/2/4 doğru SKU/5G/256 GB/renk/NewCondition ve teklif/tarayıcı eşleşmesiyle doğrulandı; üçüncü A1GTQO stoksuzluk doğru, fakat renk kanıtı yok: 1 kanıt yetersiz. Başka SKU'nun Beyaz rengi kullanılmadı. Son grubun 14:10 kaydı ve tarayıcı teyidi tamamlandı: altı aday doğrulandı, Trendyol 797850359 başlık 5G/12 GB RAM ile özellik 4G/8 GB RAM çelişkisi nedeniyle uyuşmazlık. İlk incelemede kod bu çelişkiyi reddetmiyordu; sonradan ayrı kullanıcı onaylı dar ortak koruma uygulandı, yerelde doğrulandı (Adım 1a). Kaynak çelişkisi sürüyor. Son grupta duruldu. Özgün rapor uygulanmaz; inceleme_ozeti.json bütün 25 kararın kaynaklarını içerir. Katalog uygulaması ve ML öncesi diğer ana adımlar tamamlanmadı. |
 | 2. Katalog bakımı | Bütün adaylar doğrulanıp kullanıcı raporu kabul edince mevcut --apply-report; şüpheli/ret varsa rapor uygulanmaz, ayrı dar çözüm planlanır. Katalog aynı kalmış ve 25'i de kabul edilmişse 59 ürün/359 bağlantı/357 etkin, eski kimlikler korunur. Normal zamanlanmış tur sonrası salt okunur DB ve bağımsız SQL–API teyidi. | Planlandı; başlamadı. |
 | 3. Erişim ve grafik | invalid_host vakasının sonraki altı normal tamamlanmış turda gözlemi; tekrarda kaynak/yönlendirme kanıtı, ayrı düzeltme planı. Vega uyarısı gerçek ekran ve ağsız önizlemede fiyatlı/fiyatsız/kısmi/Cimri eksikliği, seçim ve yenileme ile incelenir; üç temsilci ürün önceki 7.7 ile aynı. | Planlandı; yeni kontrol başlamadı. |

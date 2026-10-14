@@ -961,6 +961,65 @@ dosya listesi/Türkçe mesaj, commit/push ve aynı SHA CI ile kapatılır.
 Kaynak çelişkisi düzeltilmiş sayılmaz; TY797850359 aday kararı hâlâ
 uyuşmazlık, toplam 15 doğrulandı/7 uyuşmazlık/3 kanıt yetersiz değişmedi.
 
+**Eksik ağ/renk araştırması (14 Ekim; ilk ağ grubu tamamlandı):**
+önce HBCV00005PZUWE/Mor ve HBCV00005PZUWG/Yeşil, product_id=57 /
+Redmi Note 13 Pro 512 GB / 4G. Kayıtlı aynı-SKU JSON'larda ağ özelliği ve
+üretici model kodu yok; GTIN 6941812762899/6941812762776. Referanslar
+[Xiaomi Pro teknik sayfası](https://www.mi.com/tr/product/redmi-note-13-pro/specs/)
+ve [Xiaomi Pro 5G teknik sayfası](https://www.mi.com/tr/product/redmi-note-13-pro-5g/specs/).
+Resmî model özellikleri, belirli Hepsiburada SKU'suna eşleşme olmadan
+ağ kabul kanıtı sayılmaz. Yapılan GTIN/resmî domain araması kesin eşleşme
+vermedi; bütün olası kaynaklarda eşleşme bulunmadığı iddia edilmez.
+Mor'daki işlemci metni/tanıtım görseli, garanti veya eksik 5G ifadesi tek
+başına yeterli değildir. Kullanıcı Mor/512 GB/renk aynı, ağ alanı görünmüyor
+ve Yeşil satılamama mesajı sürüyor dedi; üretici model kodu açıklaması yapıldı.
+
+Eski 09 kontrolü parsing.py F78F... hashini bekler; 4eaf35e sonrası güncel
+AA348... için eski dosyalar korunarak ek_redmi_note_13_pro_4g_512gb/
+altında yeni BOM'lu ham_kayit.ps1 hazırlandı. Eski ham_scraper.py ve geçici
+katalog baytları aynı; yalnız iki beklenen bağlantı seçilir. Yeni PS kaynak
+rapor/asıl-geçici katalog/güncel parsing/HB/manuel araç/capture/runtime/
+discovery/yardımcı hashlerini denetler; yeni tarihli çıktı ve NoClobber,
+finally içinde CATALOG_PATH/konum/konsol geri alma sürer.
+AST/PowerShell sözdizimi/BOM/import/tam iki hedef/hashler ağsız doğrulandı;
+main/fetch çağrılmadı. Önceki 219 kanıt ve app/tests/config 92 dosya aynı;
+üretim/test/katalog/DB değişmedi, son 1751 test/0 atlama tekrarlanmadı.
+
+Kullanıcı 14 Ekim 17:05'te, tur/keşif yokken proje kökünde bir kez çalıştırdı:
+
+```powershell
+& .\artifacts\ml_oncesi_inceleme_20261013\ek_redmi_note_13_pro_4g_512gb\ham_kayit.ps1
+```
+
+Normal beklenen checked_listings=2/errors=[]; kimlikler
+hepsiburada_hbcv00005pzuwe ve hepsiburada_hbcv00005pzuwg. Her durumda
+başarılı gözlem+errors iki farklı kimliği kapsamalı; çıkış kodu/fiyat veya
+errors=[] ağ doğrulaması değildir. Gerçek çıktı checked=2/errors=[]/çıkış 0,
+iki doğru kimlik/product_id=57; ek_kontrol_20261014_170540_981/ altında
+yanitlar/<listing_id>/, çalışma kaydı ve kaynak_incelemesi.json var.
+Çalışma hashleri hazırlıkla uyumlu; önceki 219 kanıt/92 kaynak dosyası aynı.
+
+Mor'un kendi SKU/başlık/JSON-LD/varyantı 512 GB/Mor ve GTIN 6941812762899;
+üretici kodu/ağ özelliği yok. Güncel API'lerde yalnız teknolojikapinda/9,7/
+34.999 TL teklifi var, üretim seçimiyle eşleşiyor. Önceki dogabilisim/21.999
+TL teklifi güncel listede yok; kaynak teklif kümesi değişti, aynı satıcının
+fiyat artırdığı veya scraper hatası olduğu çıkarılmadı. Yeşil'in kendi
+başlığı 512 GB/Yeşil, GTIN 6941812762776; üretici kodu/ağ özelliği yok.
+API 200/boş satıcı listesi, isInStock=false ve kullanıcı satılamama teyidi
+Tükendi ile uyumlu. JSON-LD 0.00/InStock stok/fiyat kanıtı sayılmadı.
+İki kaynakta NewCondition etiketi var; garanti/ürün durumu veya tanıtım
+işlemci metni, kesin üretici sürüm eşleşmesinin yerine kullanılmadı.
+
+**İlk grubun kararı: iki kanıt yetersiz.** Adaylar katalog dışında kalır;
+araştırma tamamlandı, fiziksel ağ türü kesinleştirilmedi. Stoksuzluk geçerli;
+kanıt eksikliğinde yeni tekrar döngüsü yok. Önceki karar/ham dosyaları aynı,
+ek inceleme tarih/SKU/kaynak/gerekçeyle grup_sonucu.json içinde ayrı tutulur.
+Toplam 15 doğrulandı/7 uyuşmazlık/3 kanıt yetersiz, katalog 59/334/332 aynı.
+Bu grubun commit/push ve aynı SHA CI kapanışında durulur. A1GTQO renk grubu
+kullanıcı devamından sonra ayrı yürütülür. Üretim/test/katalog değişmediği
+için tam pytest/Black/Flake8 tekrarlanmadı; ağsız yardımcı/kanıt kontrolleri
+bu araştırmanın doğrulamasıdır. Kod hatası bulunursa ayrı düzeltme planı.
+
 ### Piyasa geçmişi araştırması (Adım 8)
 
 Kaynak seçimi için örnekler: `apple_iphone_16_128gb`,
