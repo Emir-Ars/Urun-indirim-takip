@@ -1015,10 +1015,59 @@ araştırma tamamlandı, fiziksel ağ türü kesinleştirilmedi. Stoksuzluk geç
 kanıt eksikliğinde yeni tekrar döngüsü yok. Önceki karar/ham dosyaları aynı,
 ek inceleme tarih/SKU/kaynak/gerekçeyle grup_sonucu.json içinde ayrı tutulur.
 Toplam 15 doğrulandı/7 uyuşmazlık/3 kanıt yetersiz, katalog 59/334/332 aynı.
-Bu grubun commit/push ve aynı SHA CI kapanışında durulur. A1GTQO renk grubu
-kullanıcı devamından sonra ayrı yürütülür. Üretim/test/katalog değişmediği
+İlk ağ grubu c814f64 ile gönderildi, aynı SHA CI 38578897388 başarılı oldu.
+A1GTQO renk grubu kullanıcı devamından sonra ayrı yürütülür. Üretim/test/katalog değişmediği
 için tam pytest/Black/Flake8 tekrarlanmadı; ağsız yardımcı/kanıt kontrolleri
 bu araştırmanın doğrulamasıdır. Kod hatası bulunursa ayrı düzeltme planı.
+
+**Ek renk incelemesi (1b-2, 14 Ekim; araştırma tamam, gönderim onayı bekleniyor):**
+kullanıcı devam istedi. HBCV0000A1GTQO / product_id=51 / Redmi Note 13 Pro
+5G 256 GB için beklenen renk Mor. 13:29 kaydının kendi başlık/JSON-LD/ürün
+bağlamı renk içermiyor; variant_identity=None. Beyaz bilgisi başka SKU
+HBCV0000A1HQ64'e ait. MS.TEKNOd7131a24-2b4 gtin/barcode üretici barkodu
+sayılmaz. Genel üretici renk seçenekleri veya görsel tahmini kullanılmaz.
+Güncel kullanıcı yanıtında başlık ve satılamama mesajı var; renk bildirilmedi,
+bu yanıt renk teyidi olarak kaydedilmedi.
+
+ek_redmi_note_13_pro_5g_256gb_renk/ altında yalnız bu bağlantının geçici
+kataloğu ve mevcut manuel araç/capture yöntemini kullanan ham yardımcı hazır.
+Yeni PS UTF-8 BOM'lu; güncel parsing/HB/manuel araç/config/rapor/katalog/
+yardımcı için 10 hash koruması, NoClobber ve finally ortam geri alma var.
+AST/PowerShell sözdizimi/BOM/araçları yalnız yükleme/doğru kök/tam bir hedef
+ağsız doğrulandı; main/fetch çalıştırılmadı. Önceki 239 kanıt (ilk ek ağ
+grubu dahil) ve 92 kaynak dosyası aynı. Üretim/test/katalog/DB değişmedi.
+
+Kullanıcı 14 Ekim 17:48'te, tur/keşif yokken proje kökünde bir kez çalıştırdı:
+
+```powershell
+& .\artifacts\ml_oncesi_inceleme_20261013\ek_redmi_note_13_pro_5g_256gb_renk\ham_kayit.ps1
+```
+
+Normal beklenen checked_listings=1/errors=[] ve tek kimlik
+hepsiburada_hbcv0000a1gtqo. Başarılı sonuç ve errors birlikte bu kimliği
+kapsamalı; fiyat/çıkış kodu renk kabulü değildir. Kaynaklar yeni tarihli
+ek_kontrol_<zaman>/yanitlar/<listing_id>/ altında. Stoksuzluk geçerli;
+engelde/eksik renkte tekrar döngüsü yok. Aynı SKU'da beklenen renk için
+yeterli ve çelişkisiz kanıt varsa doğrulandı; açık farklı renk varsa
+uyuşmazlık; aksi hâlde kanıt yetersiz ve katalog dışında. Aday başka
+ürüne kendiliğinden taşınmaz.
+
+Gerçek çıktı ek_kontrol_20261014_174849_795/ altında checked=1/errors=[]/
+çıkış 0, beklenen tek kimlik ve product_id=51. Güncel kendi başlık/JSON-LD/
+ürün bağlamı 5G/256 GB içeriyor; renk alanı yok, variant_identity=None.
+Beyaz yine A1HQ64'e ait ve hedefe uygulanmadı. API 200/boş satıcı listesi,
+isInStock=false ve kullanıcı satılamama mesajı Tükendi ile uyumlu.
+Sıfır fiyatlı/InStock JSON-LD stok veya fiyat kanıtı sayılmadı.
+
+**Karar: kanıt yetersiz; HBCV0000A1GTQO katalog dışında kalır.** Araştırma
+tamamlandı; fiziksel renk tahmin edilmedi, yeni canlı tekrar yok. Kaynak/
+tarih/SKU/gerekçe grup_sonucu.json ve güncel kaynak_incelemesi.json içinde.
+Çalışma hashleri uyumlu, önceki 239 kanıt/92 kaynak ve yeni altı ham dosya
+aynı. Üretim/test/katalog değişmedi; tam yerel test paketi tekrarlanmadı.
+Üç eksik adayın ek araştırması bitti, toplam 15/7/3 ve katalog 59/334/332
+korundu. Dosya listesi/mesaj/doğrulama gösterilip ayrı açık kullanıcı onayı
+alınmadan commit/push yapılmaz; ardından aynı SHA CI kontrol edilir.
+Katalog seçimi/uygulaması sonraki ayrı adımdır; burada başlamadı.
 
 ### Piyasa geçmişi araştırması (Adım 8)
 

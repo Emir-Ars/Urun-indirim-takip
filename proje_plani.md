@@ -96,7 +96,13 @@ uygulaması ve yerel doğrulaması tamamlandı; 4eaf35e gönderildi ve aynı SHA
 CI 38569095383 completed/success oldu. Kullanıcı üç kanıt eksikliğinin
 iki grup halinde araştırılmasını onayladı. İlk 512 GB ağ incelemesi ve tek
 güncel kontrol tamamlandı: iki adayda da ağ kanıtı yetersiz, katalog dışında.
-Bu araştırma adımının gönderimi ve aynı SHA CI kapanışta doğrulanacak.
+Bu araştırma adımı c814f64 ile gönderildi; aynı SHA CI 38578897388 başarılı.
+Kullanıcı sonrasında gönderim kuralını netleştirdi: her commit/push için
+dosya listesi/mesaj gösterilip ayrı açık onay alınacak; genel yetki yok.
+Kullanıcının devam isteğiyle 256 GB adayın renk incelemesi ve tek güncel
+kontrol tamamlandı: kendi renk bilgisi yok, sonuç kanıt yetersiz. Üç adayın
+ek araştırması bitti; 15/7/3 toplamı aynı. Bu son adımın gönderimi ayrı
+açık kullanıcı onayı bekliyor; katalog kabulü başlamadı.
 Ayrıntı Bölüm 9 / ML öncesi bakım.
 
 **6 Ekim ikinci denetimi sonrası bakım (kullanıcı onayı):** Hepsiburada bozuk
@@ -572,6 +578,20 @@ combinedVariants içindeki Beyaz, HBCV0000A1HQ64 adlı başka SKU'ya ait;
 hedefin rengi sayılmadı. Tam 5G model/256 GB ve Tükendi kaynağı eşleşiyor,
 aynı üründe NewCondition etiketi var; katalog kabulü renk kanıtı yetersiz.
 Bu aday aynı SKU'nun rengi teyit edilmeden uygulanacak rapora alınmaz.
+
+**14 Ekim ek renk araştırması tamamlandı (1b-2):** kullanıcı ilk ağ grubunun
+kapanışından sonra devam istedi. HBCV0000A1GTQO'nun 13:29 kendi başlık,
+JSON-LD ve varyant kayıtları ağsız tekrar okundu; kendi renk alanı yok,
+variant_identity=None. Beyaz varyant HBCV0000A1HQ64 başka ürün kodudur;
+gtin/barcode MS.TEKNOd7131a24-2b4 üretici barkodu sayılmadı. Güncel tarayıcı
+yanıtı 5G/8 GB RAM/256 GB başlık ve satılamama mesajını içeriyor; renk
+bildirilmediği için güncel renk teyidi olarak kaydedilmedi. Kullanıcının
+17:48 tek güncel kontrolü checked=1/errors=[]/çıkış 0 ve doğru kimlik verdi.
+Kendi başlık/JSON-LD/ürün bağlamı rengi yine belirtmiyor; varyant okuyucusu
+None. Beyaz yine yalnız A1HQ64'e ait. API 200/boş satıcı listesi ve kendi
+ürün isInStock=false, Tükendi sonucunu destekliyor; 0.00/InStock JSON-LD
+fiyat/stok kanıtı sayılmadı. Aday sonucu kanıt yetersiz, katalog dışında;
+tek güncel kontrol tamamlandı, tekrar döngüsü yok. Kod/katalog ve 15/7/3 aynı.
 
 **14 Ekim başlık/özellik ağ çelişkisi (grup 11):** Trendyol 797850359
 aynı ürün kaynağında 5G/12 GB RAM başlığı ve 4G/8 GB RAM özellikleri taşıyor.
@@ -1592,7 +1612,7 @@ kararları Aşama 9'a aittir. Belge düzeltmeleri henüz commit edilmedi.
 
 | Konu | Durum |
 |---|---|
-| Kalan bakımın çalışma sırası | **Kullanıcı kararı (14 Ekim):** ağ kimliği koruması ve kanıt eksikleri → kabul edilen sayfaların katalog bakımı/normal tur SQL–API teyidi → toplama/erişim (S25/S25+ ve www3, doğal ağ ikinci okuma) → grafik → Cimri → ML veri yeterliliği. Her adım öncesi sorun, çözüm mühendisliği, dosyalar ve doğrulama sade Türkçeyle açıklanır; her tamamlanan adımda testler/biçim, dosya listesi/Türkçe mesaj, commit/push ve aynı SHA CI. Bu dizide gönderim yetkisi verildi; dar uygulama planı ve katalog kabulü ayrı netleşir. |
+| Kalan bakımın çalışma sırası | **Kullanıcı kararı (14 Ekim):** ağ kimliği koruması ve kanıt eksikleri → kabul edilen sayfaların katalog bakımı/normal tur SQL–API teyidi → toplama/erişim (S25/S25+ ve www3, doğal ağ ikinci okuma) → grafik → Cimri → ML veri yeterliliği. Her adım öncesi sorun, çözüm mühendisliği, dosyalar ve doğrulama sade Türkçeyle açıklanır; her tamamlanan adımda testler/biçim, dosya listesi/Türkçe mesaj, **ayrı açık gönderim onayı**, commit/push ve aynı SHA CI. Son kullanıcı netleştirmesiyle genel gönderim yetkisi yoktur; plan onayı commit/push onayı sayılmaz. Dar uygulama planı ve katalog kabulü ayrıca netleşir. |
 | ML öncesi bakım ve inceleme | **Plan onaylandı; yeni sayfa incelemesi tamam: 11 grup/25 sayfa (14 Ekim):** bütün açık konular, 25 sayfanın tamamında güncel kaynak doğrulaması ve her model/kapasite grubundan sonra durma. Sıra: keşif sayfaları → kabul edilen raporun kullanıcı tarafından uygulanması ve normal tur teyidi → erişim/grafik incelemesi → Cimri kapsamı/eşleştirmeleri → ML veri yeterliliği. Yeni model kodu, Docker veya dış erişim başlamaz. Canlı komutlar kullanıcı terminalinde; rapor uygulaması ve commit/push ayrı kabul/onay ister. iPhone 15 256 GB, iPhone 17 512 GB, iPhone 17 Pro Max 1 TB, Galaxy S24 Ultra 1 TB ve Xiaomi 14T Pro 256 GB sayfaları doğrulandı; Pro 128 GB ve Pro Max 256 GB gruplarındaki altı aday kapsam dışı: 15 doğrulandı / 7 uyuşmazlık / 3 kanıt yetersiz / 0 bekliyor. Gönderim kullanıcı kararıyla 11 grubun sonuna ertelendi. Dördüncü ve beşinci grupta JSON-LD NewCondition doğru SKU/URL/fiyatla eşleşti; beşinci grubun API/tarayıcı teklifi de teyit edildi. Altıncı grubun aynı kimlikli ProductGroup ana teklifinde NewCondition, 1 TB/Siyah, 95.000 TL/ALTINKOZA TEKNOLOJİM/8,2 ve Son 1 Ürün sinyali tarayıcıyla eşleşti; altıncı grupta duruldu. Yedinci grubun ikinci kaydında aynı ürün teklifinde NewCondition ve AYPA/9,4/54.999 TL/Son 1 Ürün kaynak/görüntü eşleşti; ilk stoksuz Ceppodium kaydı ayrı korundu, yedinci grupta duruldu. Sekizinci grubun 10:32 kaydında Xiaomi 14T Pro 512 GB/Titan Gri/SKU eşleşti, aynı üründe NewCondition etiketi var; başarılı boş satıcı API'si ve isInStock=false kullanıcı/HTML satılamama mesajıyla eşleşti. Tükendi geçerli sonuç; JSON-LD 0.00/InStock güncel stok/fiyat kanıtı sayılmadı. Dokuzuncu grubun 10:51 kaydında Mor iki teklif/en ucuz seçim ve Yeşil stoksuzluk kaynak/tarayıcıyla eşleşti; aynı ürünlerin NewCondition etiketi var. İki sayfada da 4G/5G alanı bulunmadığı için katalog kabul sonucu 2 kanıt yetersiz; Mor Snapdragon 7 metni ayrıca eşleştirme bekler. Onuncu grubun 13:29 kaydında 1/2/4 doğru SKU/5G/256 GB/renk/NewCondition ve teklif/tarayıcı eşleşmesiyle doğrulandı; üçüncü A1GTQO stoksuzluk doğru, fakat renk kanıtı yok: 1 kanıt yetersiz. Başka SKU'nun Beyaz rengi kullanılmadı. Son grubun 14:10 kaydı ve tarayıcı teyidi tamam: 6 doğrulandı/1 uyuşmazlık. Trendyol 797850359 başlığında 5G/12 GB RAM, aynı ürünün özelliklerinde 4G/8 GB RAM var; 5G hedefe kabul edilmedi. Başlık/özellik ağ çelişkisini reddeden dar koruma ayrı kullanıcı onayıyla uygulandı: ortak verify_model_network iki Trendyol yoluna bağlandı; 34 yeni regresyon, tam 1751 test/0 atlama, Black/Flake8 temiz. Kaynak çelişkisi ve kabul edilen adayların seçilmesi ayrı bakım olarak açık. Bütün gruplar bitti; mevcut Yenilio düzeltmesi ve belgelerin yedi dosyalı commit/push onayı 14 Ekim'de alındı; aynı SHA CI gönderim akışında doğrulanır. Özgün rapor uygulanmaz; toplu sonuç inceleme_ozeti.json, ayrıntı Bölüm 9. |
 | Keşif gruplarının commit/push sırası | **Kullanıcı kararı (13 Ekim):** 25 adayın 11 grup incelemesi bitene kadar commit/push yapılmaz. Gruplar arasında gönderim/CI bekleme kaldırıldı; her gruptan sonra durma ve yerel kontroller sürer. Sonunda güncel dosya listesi/Türkçe mesaj gösterilir, ayrı onayla gönderilir ve aynı SHA CI başarılı olmalıdır. Bu incelemeye özgü sıra değişikliğidir. **14 Ekim:** bütün gruplar bitince yedi dosya/Türkçe mesaj gösterildi; kullanıcı commit/push işlemini onayladı. Katalog uygulaması ve yeni ağ koruması bu onayın kapsamında değildir. |
 | Yenilio/kalite başlık koruması | **Uygulama ve canlı teyit tamam (13 Ekim), gönderim için kullanıcı onayı alındı (14 Ekim):** ortak parsing.EXCLUDED kuralında Yenilio + isteğe bağlı Outlet + A/B/C Kalite birleşimi elenir; keşif kartı/ürün ve scraper aynı kuralı kullanır. Tek outlet/kalite veya satıcı adına genel ret yok. 41 yeni regresyon; eski kodda 28 başarısız/13 başarılı, yeni kodda 41 geçti. Tam 1717 test/0 atlama, Black/Flake8 temiz; dört ham Yenilio HTML'inde identity ret, iki normal sayfanın teklifleri aynı. Kullanıcı 14:33'te üç özgün sayfada beklenen kapsam dışı retleri aldı; 0 başarılı + 3 ret = 3 kontrol, stderr boş, kaynak/kod hash aynı. Kullanıcı kararıyla commit/push 11 grubun sonuna ertelendi; son yedi dosya/Türkçe mesaj gösterildi ve 14 Ekim'de açık gönderim onayı alındı; aynı SHA CI gönderim akışında doğrulanır. Katalog/rapor seçme-uygulama çözümü sonraki ayrı karardır. |
@@ -2166,8 +2186,10 @@ yedi dosyayla gönderildi, aynı SHA Tests and style checks CI 38564530086
 completed/success; çalışma ağacı temizdi. Kullanıcı kalan bakımın önerilen
 sırada ilerlemesini, her adımdan önce sade sorun/çözüm açıklamasını ve her
 tamamlanan adımda commit/push istedi. Önceki 11 grup boyunca erteleme bu
-incelemeyle sona erdi. Gönderim yetkisi bu bakım dizisi için geçerlidir;
-uygulama planının ve katalog raporunun kabulü ayrıca netleşir.
+incelemeyle sona erdi. O sırada bakım dizisi için genel gönderim yetkisi
+olarak kaydedilen yorum, 14 Ekim 17:37 kullanıcı netleştirmesiyle kaldırıldı:
+her commit/push için dosya listesi/mesaj ve ayrı açık onay gerekir.
+Uygulama planının ve katalog raporunun kabulü ayrıca netleşir.
 
 **Eksik ağ/renk planı onayı (14 Ekim):** kullanıcı üç adayın eksik kanıtını
 tamamlama planını uygulatma talimatı verdi. Önce product_id=57 iki 512 GB
@@ -2226,6 +2248,61 @@ kaynak_incelemesi.json kayıtlarında. Üretim/test/katalog/DB değişmedi;
 tam test paketi tekrarlanmadı. Plan/teknik güncellendi, README sayıları aynı.
 Bu adım dosya listesi/Türkçe mesaj, commit/push ve aynı SHA CI ile kapatılır;
 sonra durulur. 1b-2 başlamadı; kullanıcı devam isteği beklenir.
+
+**1b-2 renk incelemesi hazırlığı (14 Ekim; güncel kontrol öncesi):**
+product_id=51 / Redmi Note 13 Pro 5G 256 GB / HBCV0000A1GTQO için kayıtlı
+kendi-SKU başlık/özellik/JSON-LD/varyant incelemesi yapıldı. Renk yok;
+başka SKU'nun Beyaz değeri, genel üretici renk seçenekleri ve görsel tahmini
+kullanılmadı. MS.TEKNO gtin/barcode üretici eşleştirme kanıtı sayılmadı.
+Güncel tarayıcı yanıtı başlık ve satılamama mesajını teyit ediyor; kullanıcı
+renk bildirmedi, bu alandan kesin sonuç çıkarılmadı.
+
+Git dışı ek_redmi_note_13_pro_5g_256gb_renk/ altında eski yöntemle
+ham_scraper.py, yalnız hedef sayfayı içeren kontrol_katalogu.json ve BOM'lu
+ham_kayit.ps1 hazırlandı. Ürün/platform mevcut katalogdan, tek aday eski
+10 grubundan alındı; kalıcı katalog uygulanmadı. Güncel parsing AA348...,
+HB/manuel araç/capture/config/rapor/katalog/yardımcı için 10 hash koruması
+sürüyor. Yeni tarihli çıktı, NoClobber, finally CATALOG_PATH/konum/konsol
+geri alma aynı. AST/PowerShell sözdizimi/BOM/yalnız import/doğru kök ve
+plan_listings ile tam bir kimlik/product_id=51/model/256 GB ağsız doğrulandı.
+Önceki 239 kanıt (ilk ağ ek grubu dahil) ve 92 app/tests/config dosyası aynı.
+
+Kullanıcı tur/keşif yokken yeni komutu bir kez çalıştırır; normal checked=1,
+errors=[], listing_id=hepsiburada_hbcv0000a1gtqo. Başarılı+errors birlikte
+beklenen tek kimliği kapsamalı; fiyat/çıkış kodu renk kanıtı değildir.
+Güncel kaynak sonrasında doğrulandı/uyuşmazlık/kanıt yetersiz gerekçesi
+verilir; eksik/erişim engelinde tekrar döngüsü yok. Kayıtlı inceleme,
+tarayıcı yanıtı, baseline ve hazırlık ayrı ek klasörde; eski kanıtlar aynı.
+Üretim/test/katalog/DB değişmedi; tam test paketi tekrarlanmadı.
+Güncel ham çıktı bekleniyor; adım kapanmadı, sonraki katalog işi başlamadı.
+Her commit/push için dosya listesi/mesaj/doğrulama ve ayrı açık kullanıcı
+onayı gerekir. Çalışma kuralı değişiklikleri de henüz gönderilmedi.
+
+**1b-2 güncel kontrol ve sonuç (14 Ekim 17:48):** kullanıcı tek hedefli yeni
+ham_kayit.ps1 komutunu bir kez çalıştırdı. ek_kontrol_20261014_174849_795/
+içinde checked_listings=1/errors=[]/çıkış 0 ve yalnız
+hepsiburada_hbcv0000a1gtqo/product_id=51. Çalışma, kaynak rapor/katalog,
+yardımcı/manuel araç/config ve güncel kod hashleri hazırlıkla uyumlu.
+Kendi SKU başlık/JSON-LD/ürün bağlamı açık 5G/256 GB içeriyor; renk yok,
+variant_identity=None. Kayıtlı Beyaz varyantın kodu A1HQ64; hedefe taşınmadı.
+MS.TEKNOd7131a24-2b4 gtin/barcode üretici barkodu sayılmadı. Satıcı API
+200/boş liste, isInStock=false ve tarayıcı satılamama mesajı Tükendi ile
+uyumlu. JSON-LD NewCondition etiketi var; 0.00/InStock güncel fiyat/stok
+kabulünde kullanılmadı. Fiziksel renk tahmin edilmedi.
+
+**Karar: HBCV0000A1GTQO için kanıt yetersiz; katalog dışında.** Tek kontrol
+tamamlandı, eksik renkte tekrar yok. Böylece üç adayın ek kanıt araştırması
+bitti: iki ağ adayı ve bir renk adayı için üç kanıt yetersiz kararı korunur.
+Toplam 25/15 doğrulandı/7 uyuşmazlık/3 kanıt yetersiz; katalog 59/334/332.
+Önceki 239 kanıt/92 app-tests-config dosyası ve yeni altı ham dosya korundu.
+Kaynak/tarih/SKU/gerekçe ek renk klasörünün grup_sonucu.json ve güncel
+kaynak_incelemesi.json içinde ayrı tutulur. Üretim/test/katalog/DB değişmedi;
+tam yerel pytest/Black/Flake8 tekrarlanmadı, yardımcı/kanıt/diff denetimleri
+tamamlandı. Plan/teknik/devir güncellendi; README sayıları aynı kaldı.
+AGENTS.md'deki ayrı gönderim onayı kuralı da yerelde bekliyor. Dosya listesi
+ve Türkçe mesaj gösterilip açık onay alınmadan commit/push yapılmaz;
+onaylı gönderim sonrası aynı SHA CI doğrulanır ve bu adımda durulur.
+Katalog seçimi/uygulaması sonraki ayrı adım; burada başlamadı.
 
 **İlk kalan iş — dar ağ kimliği koruma planı (14 Ekim; kullanıcı onayladı):**
 gerçek Trendyol797850359 başlığı/ürün özellikleri 5G/4G çelişkisini,
@@ -2301,8 +2378,8 @@ Bu adım kapandı; sonraki eksik kanıt incelemesi ayrı onayla başladı.
 
 | Adım | İnceleme ve kabul ölçütü | Durum |
 |---|---|---|
-| 1b-1. 512 GB ağ kanıtı | İki aynı Hepsiburada SKU'su için kayıt/model/GTIN/resmî kaynak ve gerekirse tek güncel ham kontrol; gerekçeli üçlü karar. | **İnceleme tamam (14 Ekim 17:05):** kayıt/resmî araştırma ve tek güncel ham kontrol kesin ağ kimliği sağlamadı; Mor/Yeşil için 2 kanıt yetersiz, katalog dışında. checked=2/errors=[]/çıkış 0; eski kanıt/kod/katalog korundu. Gönderim ve aynı SHA CI kapanışta doğrulanacak; ardından durma. |
-| 1b-2. 256 GB renk kanıtı | HBCV0000A1GTQO'nun kendi SKU'suna ait renk; başka SKU veya satıcı metni GTIN sayılmaz. | **Plan onaylandı, başlamadı:** ilk grubun kapanışı ve kullanıcı devam isteği sonrası. |
+| 1b-1. 512 GB ağ kanıtı | İki aynı Hepsiburada SKU'su için kayıt/model/GTIN/resmî kaynak ve gerekirse tek güncel ham kontrol; gerekçeli üçlü karar. | **Tamamlandı (14 Ekim):** kayıt/resmî araştırma ve tek güncel ham kontrol kesin ağ kimliği sağlamadı; Mor/Yeşil için 2 kanıt yetersiz, katalog dışında. checked=2/errors=[]/çıkış 0; eski kanıt/kod/katalog korundu. c814f64 gönderildi, aynı SHA CI 38578897388 başarılı; bu grupta duruldu. Sonraki gönderimler ayrı açık onay gerektirir. |
+| 1b-2. 256 GB renk kanıtı | HBCV0000A1GTQO'nun kendi SKU'suna ait renk; başka SKU veya satıcı metni GTIN sayılmaz. | **İnceleme tamam (14 Ekim 17:48):** tek güncel kontrolde checked=1/errors=[]/çıkış 0, doğru SKU/5G/256 GB ve Tükendi; kendi renk yok, başka SKU Beyaz kullanılmadı. Karar kanıt yetersiz, katalog dışında; 15/7/3 ve katalog aynı. Commit/push ayrı açık kullanıcı onayı bekliyor. |
 | 1a. Dar ağ kimliği koruması | Açık 5G model/açık 4G ürün özelliği çelişkisini Trendyol keşif ve scraper'da fiyat/adaydan önce ortak kuralla reddetmek; gerçek kötü örnek ve doğru iki kontrolün korunması. | **Tamamlandı (14 Ekim):** 34 yeni regresyon, 1751 test/0 atlama, Black/Flake8 temiz; üç tam HTML replay doğru. 4eaf35e gönderildi, aynı SHA CI 38569095383 başarılı. Kaynak çelişkisi ve üç kanıt eksikliği çözülmüş sayılmaz. |
 | 1. Yeni keşif sayfaları | 11 Ekim raporu/katalog ağsız eşleşmesi; 11 grubun 25 sayfasında güncel model/kapasite/renk/kimlik ve kapsam kontrolü; kapsam içi adaylarda geçici katalogla mevcut canlı scraper aracı, satıcı/teklif/stok ve tarayıcı karşılaştırması. Her sayfada doğrulandı/uyuşmazlık/kanıt yetersiz sonucu, her gruptan sonra durma. | **Tamamlandı: 11/11 grup ve 25/25 sayfa; 15 doğrulandı / 7 uyuşmazlık / 3 kanıt yetersiz / 0 bekliyor (14 Ekim).** Yenilio/kalite başlık boşluğu ayrı kullanıcı onayıyla düzeltildi; 41 regresyon ve tam 1717 test/0 atlama, Black/Flake8 temiz. İkinci grubun üç canlı reddi 14:33'te, üçüncü grubun üç canlı reddi 15:19'da doğrulandı. Kullanıcı gönderimi 11 grubun sonuna erteledi. Dördüncü grubun ham kaydı 15:54'te alındı: doğru SKU/URL/fiyatlı JSON-LD teklifinde NewCondition, 512 GB/Lavanta ve API/tarayıcı teklif eşleşmesi doğrulandı. Beşinci grubun 16:24 kaydında aynı SKU teklifinde NewCondition, 1024 GB/Kozmik Turuncu ve ENHIZLIBİZDE/9,9/Stokta Var/156.999 TL eşleşti; kullanıcı tarayıcı ve aktif Sepete Ekle teyidini verdi. Altıncı grubun 17:29 kaydında aynı kimlik/URL/fiyatlı ProductGroup ana teklifinde NewCondition, 1024 GB/Siyah ve ALTINKOZA TEKNOLOJİM/8,2/Kritik Stok/95.000 TL eşleşti; Son 1 Ürün ham HTML'de, kullanıcı tüm alanlar ve aktif Sepete Ekle'yi teyit etti. Yedinci grubun 14 Ekim 09:39 ikinci kaydında doğru kimlik/URL/256 GB/Mavi/fiyatlı Product teklifinde NewCondition ve AYPA/9,4/Kritik Stok/54.999 TL kullanıcı görüntüsüyle eşleşti; ilk Ceppodium/Tükendi kaydı ayrı korundu. Sekizinci grubun 10:32 kaydında Xiaomi 14T Pro 512 GB/Titan Gri/SKU eşleşti, aynı üründe NewCondition etiketi var; başarılı boş satıcı API'si ve isInStock=false kullanıcı/HTML satılamama mesajıyla eşleşti. Tükendi geçerli sonuç; JSON-LD 0.00/InStock güncel stok/fiyat kanıtı sayılmadı. Dokuzuncu grubun 10:51 kaydında Mor iki teklif/en ucuz seçim ve Yeşil stoksuzluk kaynak/tarayıcıyla eşleşti; aynı ürünlerin NewCondition etiketi var. İki sayfada da 4G/5G alanı bulunmadığı için katalog kabul sonucu 2 kanıt yetersiz; Mor Snapdragon 7 metni ayrıca eşleştirme bekler. Onuncu grubun 13:29 kaydında 1/2/4 doğru SKU/5G/256 GB/renk/NewCondition ve teklif/tarayıcı eşleşmesiyle doğrulandı; üçüncü A1GTQO stoksuzluk doğru, fakat renk kanıtı yok: 1 kanıt yetersiz. Başka SKU'nun Beyaz rengi kullanılmadı. Son grubun 14:10 kaydı ve tarayıcı teyidi tamamlandı: altı aday doğrulandı, Trendyol 797850359 başlık 5G/12 GB RAM ile özellik 4G/8 GB RAM çelişkisi nedeniyle uyuşmazlık. İlk incelemede kod bu çelişkiyi reddetmiyordu; sonradan ayrı kullanıcı onaylı dar ortak koruma uygulandı, yerelde doğrulandı (Adım 1a). Kaynak çelişkisi sürüyor. Son grupta duruldu. Özgün rapor uygulanmaz; inceleme_ozeti.json bütün 25 kararın kaynaklarını içerir. Katalog uygulaması ve ML öncesi diğer ana adımlar tamamlanmadı. |
 | 2. Katalog bakımı | Bütün adaylar doğrulanıp kullanıcı raporu kabul edince mevcut --apply-report; şüpheli/ret varsa rapor uygulanmaz, ayrı dar çözüm planlanır. Katalog aynı kalmış ve 25'i de kabul edilmişse 59 ürün/359 bağlantı/357 etkin, eski kimlikler korunur. Normal zamanlanmış tur sonrası salt okunur DB ve bağımsız SQL–API teyidi. | Planlandı; başlamadı. |
