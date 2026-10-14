@@ -18,6 +18,8 @@ from app.scraper.http import FetchError
 EXCLUDED = re.compile(
     r"\b(?:kilif|kilifi|kapak|kapagi|koruyucu|sarj|adaptor|adaptoru|kablo|"
     r"kulaklik|yenilenmis|refurbished|teshir|ikinci[ _-]*el|"
+    # Yenilio/kalite başlıkları normal telefon kategorisinde de görüldü.
+    r"yenilio[\s_-]+(?:outlet[\s_-]+)?[abc][\s_-]+kalite|"
     # Yurt dışı sürüm: Türkiye'de resmi servisi yok (karar, 27 Eylül 2026).
     r"international[ -]*version|global[ -]*(?:version|surum)|yurt[ -]*disi)\b"
 )

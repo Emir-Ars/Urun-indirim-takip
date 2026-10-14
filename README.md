@@ -12,7 +12,8 @@ hesaplamaktır.
 > ✅ **Keşif, fiyat toplama ve veritabanı aşamaları tamamlandı.**
 > Salt okunur yerel API, veriyi doğrulayan istemci ve fiyat istatistikleri hazır.
 > Streamlit ekranı gerçek verilerle SQL–API karşılaştırmasından ve tarayıcı
-> kontrolünden geçti. Aşama 7'nin kapanış gönderimi hazır. Tahmin modeli henüz yok.
+> kontrolünden geçti. Aşama 7 tamamlandı ve gönderildi; aynı commit'in CI'ı başarılı.
+> Tahmin modeli henüz yok.
 
 ## ✨ Tamamlanan özellikler
 
@@ -78,8 +79,8 @@ hata sonucunu kaydeder. Cimri geçmişi bu akışın gözlemleriyle birleştiril
 
 ## 📊 Doğrulanmış kapsam
 
-Cimri aktarımı 8 Ekim; güncel katalog/tur, otomatik testler, bütün ürünlerin
-SQL–API karşılaştırması ve gerçek ekran kontrolü 10 Ekim 2026:
+Cimri aktarımı 8 Ekim; katalog/tur, bütün ürünlerin SQL–API karşılaştırması
+ve gerçek ekran kontrolü 10 Ekim; son otomatik test paketi 14 Ekim 2026:
 
 | Alan | Sonuç |
 |---|---|
@@ -89,8 +90,12 @@ SQL–API karşılaştırması ve gerçek ekran kontrolü 10 Ekim 2026:
 | Toplama düzeni | Her gün 10:00 ve 22:00; haftalık keşif Pazar 14:00 |
 | Son doğrulanan fiyat turu | Tur 23: 332 sonuç; 235 fiyat, 97 Tükendi, 0 hata |
 | Cimri geçmişi | 57 ürün, 20.805 tarihli kayıt; 20.252 fiyat ve 553 eksik değer |
-| Otomatik testler | 1676 test; 434’ü PostgreSQL üzerinde |
+| Otomatik testler | 1717 test; 434’ü PostgreSQL üzerinde; 0 atlandı |
 | SQL–API ve ekran | 59 ürün eşleşti; üç temsilci ürün, dört grafik aralığı, yenileme ve hata sonrası dönüş doğrulandı |
+
+14 Ekim'de ML öncesi 25 yeni keşif sayfasının incelemesi tamamlandı:
+15 doğrulandı, 7 uyuşmazlık, 3 kanıt yetersiz. Özgün rapor uygulanmadı;
+katalog aynı kaldı. Ayrıntı ve sonraki kararlar `proje_plani.md` Bölüm 9'da.
 
 Katalogdaki **334 bağlantının markalara göre dağılımı** (iki pasif bağlantı dahil):
 
@@ -116,7 +121,7 @@ doğrulanamadı; eksik fiyatlar doldurulmadı. Kaynak ve işletim sınırları
 | Aşama | Durum |
 |---|---|
 | Fiyat okuma, keşif, katalog, veritabanı ve zamanlanmış toplama | ✅ Tamamlandı |
-| FastAPI ve Streamlit ile verileri sunma ve görüntüleme | ✅ Gerçek verilerle doğrulandı; kapanış gönderimi hazır |
+| FastAPI ve Streamlit ile verileri sunma ve görüntüleme | ✅ Tamamlandı; gerçek verilerle doğrulandı, gönderildi ve CI başarılı |
 | ML ile indirim olasılığı tahmini | 🔜 Planlandı |
 | Docker ve sürekli çalışma ortamı | 🔜 Planlandı |
 

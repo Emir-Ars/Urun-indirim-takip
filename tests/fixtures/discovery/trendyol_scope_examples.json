@@ -1,0 +1,1613 @@
+{
+  "source_recorded_at_utc": "2026-10-13T10:15:16.2364966Z",
+  "target": {
+    "key": "apple_iphone_15_pro",
+    "brand": "Apple",
+    "model": "iPhone 15 Pro"
+  },
+  "graded_cards": [
+    {
+      "source_file": "artifacts/ml_oncesi_inceleme_20261013/02_apple_iphone_15_pro_128gb/tani_20261013_131516_236/yanitlar/trendyol_apple_iphone_15_pro/0002.json",
+      "source_sha256": "38f5f657a1bcde47bb9ecc56ea28b4ed771d6c6ca458f1081b6e5f73887ad471",
+      "card": {
+        "id": 1212867268,
+        "name": "iPhone 15 Pro Natürel Titanyum 128GB MTUX3TU/A - Yenilio Outlet C Kalite",
+        "brand": "Apple",
+        "category": {
+          "name": "Yenilenmiş Cep Telefonu",
+          "id": 3720
+        },
+        "groupId": 933661100,
+        "url": "/apple/iphone-15-pro-naturel-titanyum-128gb-mtux3tu-a-yenilio-outlet-c-kalite-p-1212867268?boutiqueId=61&merchantId=848995"
+      }
+    },
+    {
+      "source_file": "artifacts/ml_oncesi_inceleme_20261013/02_apple_iphone_15_pro_128gb/tani_20261013_131516_236/yanitlar/trendyol_apple_iphone_15_pro/0002.json",
+      "source_sha256": "38f5f657a1bcde47bb9ecc56ea28b4ed771d6c6ca458f1081b6e5f73887ad471",
+      "card": {
+        "id": 1209732705,
+        "name": "iPhone 15 Pro Siyah titanyum 128GB MTUV3TU/A - Yenilio A Kalite",
+        "brand": "Apple",
+        "category": {
+          "name": "Yenilenmiş Cep Telefonu",
+          "id": 3720
+        },
+        "groupId": 931025691,
+        "url": "/apple/iphone-15-pro-siyah-titanyum-128gb-mtuv3tu-a-yenilio-a-kalite-p-1209732705?boutiqueId=61&merchantId=848995"
+      }
+    },
+    {
+      "source_file": "artifacts/ml_oncesi_inceleme_20261013/02_apple_iphone_15_pro_128gb/tani_20261013_131516_236/yanitlar/trendyol_apple_iphone_15_pro/0002.json",
+      "source_sha256": "38f5f657a1bcde47bb9ecc56ea28b4ed771d6c6ca458f1081b6e5f73887ad471",
+      "card": {
+        "id": 1212867392,
+        "name": "iPhone 15 Pro Mavi titanyum 128GB MTV03TU/A - Yenilio Outlet C Kalite",
+        "brand": "Apple",
+        "category": {
+          "name": "Yenilenmiş Cep Telefonu",
+          "id": 3720
+        },
+        "groupId": 933661220,
+        "url": "/apple/iphone-15-pro-mavi-titanyum-128gb-mtv03tu-a-yenilio-outlet-c-kalite-p-1212867392?boutiqueId=61&merchantId=848995"
+      }
+    },
+    {
+      "source_file": "artifacts/ml_oncesi_inceleme_20261013/02_apple_iphone_15_pro_128gb/tani_20261013_131516_236/yanitlar/trendyol_apple_iphone_15_pro/0006.json",
+      "source_sha256": "aa5bdfde45f2888d3efbebded90f5a06219b2dce8454605cb821ff1f128a6301",
+      "card": {
+        "id": 1212865279,
+        "name": "iPhone 15 Pro Beyaz titanyum 256GB MTV43TU/A - Yenilio A Kalite",
+        "brand": "Apple",
+        "category": {
+          "name": "IOS Cep Telefonları",
+          "id": 5473
+        },
+        "groupId": 933659267,
+        "url": "/apple/iphone-15-pro-beyaz-titanyum-256gb-mtv43tu-a-yenilio-a-kalite-p-1212865279?boutiqueId=61&merchantId=848995"
+      }
+    },
+    {
+      "source_file": "artifacts/ml_oncesi_inceleme_20261013/02_apple_iphone_15_pro_128gb/tani_20261013_131516_236/yanitlar/trendyol_apple_iphone_15_pro/0006.json",
+      "source_sha256": "aa5bdfde45f2888d3efbebded90f5a06219b2dce8454605cb821ff1f128a6301",
+      "card": {
+        "id": 1209732701,
+        "name": "iPhone 15 Pro Siyah titanyum 256GB MTV13TU/A - Yenilio A Kalite",
+        "brand": "Apple",
+        "category": {
+          "name": "IOS Cep Telefonları",
+          "id": 5473
+        },
+        "groupId": 931025687,
+        "url": "/apple/iphone-15-pro-siyah-titanyum-256gb-mtv13tu-a-yenilio-a-kalite-p-1209732701?boutiqueId=61&merchantId=848995"
+      }
+    },
+    {
+      "source_file": "artifacts/ml_oncesi_inceleme_20261013/02_apple_iphone_15_pro_128gb/tani_20261013_131516_236/yanitlar/trendyol_apple_iphone_15_pro/0006.json",
+      "source_sha256": "aa5bdfde45f2888d3efbebded90f5a06219b2dce8454605cb821ff1f128a6301",
+      "card": {
+        "id": 1212867888,
+        "name": "iPhone 15 Pro Natürel Titanyum 256GB MTV53TU/A - Yenilio Outlet C Kalite",
+        "brand": "Apple",
+        "category": {
+          "name": "IOS Cep Telefonları",
+          "id": 5473
+        },
+        "groupId": 933661634,
+        "url": "/apple/iphone-15-pro-naturel-titanyum-256gb-mtv53tu-a-yenilio-outlet-c-kalite-p-1212867888?boutiqueId=61&merchantId=848995"
+      }
+    },
+    {
+      "source_file": "artifacts/ml_oncesi_inceleme_20261013/02_apple_iphone_15_pro_128gb/tani_20261013_131516_236/yanitlar/trendyol_apple_iphone_15_pro/0006.json",
+      "source_sha256": "aa5bdfde45f2888d3efbebded90f5a06219b2dce8454605cb821ff1f128a6301",
+      "card": {
+        "id": 1209732692,
+        "name": "iPhone 15 Pro Siyah titanyum 256GB MTV13TU/A - Yenilio B Kalite",
+        "brand": "Apple",
+        "category": {
+          "name": "IOS Cep Telefonları",
+          "id": 5473
+        },
+        "groupId": 931025678,
+        "url": "/apple/iphone-15-pro-siyah-titanyum-256gb-mtv13tu-a-yenilio-b-kalite-p-1209732692?boutiqueId=61&merchantId=848995"
+      }
+    }
+  ],
+  "graded_products": [
+    {
+      "source_file": "artifacts/ml_oncesi_inceleme_20261013/02_apple_iphone_15_pro_128gb/tani_20261013_131516_236/yanitlar/trendyol_apple_iphone_15_pro/0015.html",
+      "source_sha256": "08ef3772e0cb991fa05725f9f958ac475a3ba648e616d9c963796818ab1c1fc8",
+      "url": "https://www.trendyol.com/apple/iphone-15-pro-beyaz-titanyum-256gb-mtv43tu-a-yenilio-a-kalite-p-1212865279",
+      "product": {
+        "id": 1212865279,
+        "name": "iPhone 15 Pro Beyaz titanyum 256GB MTV43TU/A - Yenilio A Kalite",
+        "brand": {
+          "id": 1617,
+          "name": "Apple"
+        },
+        "businessUnitData": {
+          "id": 100116,
+          "name": "Mobile Phone",
+          "isDigitalGoods": false,
+          "isSexualContent": false
+        },
+        "category": {
+          "id": 5473,
+          "name": "IOS Cep Telefonları",
+          "hierarchy": "Elektronik/Telefon/Akıllı Cep Telefonu/IOS Cep Telefonları",
+          "isVASEnabled": true,
+          "isCreditSuitable": true,
+          "bankType": {
+            "name": "MOBILE_PHONE",
+            "id": 3
+          }
+        },
+        "slicingAttributes": {
+          "DsmColor": "Beyaz titanyum",
+          "Internal Memory": "256 GB"
+        },
+        "attributes": [
+          {
+            "key": {
+              "id": 24,
+              "name": "Dahili Hafıza"
+            },
+            "value": {
+              "id": 215,
+              "name": "256 GB"
+            },
+            "searchable": true,
+            "type": "Internal Memory",
+            "isStarred": true,
+            "typeId": 29,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 523,
+              "name": "RAM Kapasitesi"
+            },
+            "value": {
+              "id": 24666,
+              "name": "8 GB"
+            },
+            "searchable": true,
+            "type": "Ram (System Memory)",
+            "isStarred": false,
+            "typeId": 227,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 292,
+              "name": "Cep Telefonu Modeli"
+            },
+            "value": {
+              "id": 1218520,
+              "name": "iPhone 15 Pro"
+            },
+            "searchable": true,
+            "type": "Cell Phone Model",
+            "isStarred": false,
+            "typeId": 285,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 348,
+              "name": "Renk"
+            },
+            "value": {
+              "id": 3,
+              "name": "Beyaz"
+            },
+            "searchable": true,
+            "type": "WebColor",
+            "isStarred": false,
+            "typeId": 4,
+            "description": "",
+            "mediaUrls": []
+          }
+        ],
+        "inStock": true,
+        "merchantListing": {
+          "merchant": {
+            "name": "Yenilio",
+            "sellerScore": {
+              "value": 8.2,
+              "color": "#3CCD7D"
+            }
+          },
+          "winnerVariant": {
+            "listingId": "c65dc3a55f5028852c6c3a36e3ef8bba",
+            "price": {
+              "currency": "TRY",
+              "discountedPrice": {
+                "value": 77599,
+                "text": "77.599 TL"
+              },
+              "sellingPrice": {
+                "value": 77599,
+                "text": "77.599 TL"
+              },
+              "originalPrice": {
+                "value": 77599,
+                "text": "77.599 TL"
+              },
+              "rrp": {
+                "text": "NaN TL"
+              },
+              "discountPercentage": 0,
+              "profitMargin": 0,
+              "couponApplicablePrice": {
+                "value": 77599,
+                "text": "77.599 TL"
+              },
+              "tyPlusCouponApplicablePrice": {
+                "value": 77599,
+                "text": "77.599 TL"
+              },
+              "discountedPriceAfterNoLimitPromotions": {
+                "value": 77599,
+                "text": "77.599 TL"
+              }
+            },
+            "sellable": true,
+            "isRunningOut": true,
+            "inStock": true
+          }
+        }
+      },
+      "listing": {
+        "listing_id": "trendyol_1212865279",
+        "product_id": 5,
+        "platform": "trendyol",
+        "url": "https://www.trendyol.com/apple/iphone-15-pro-beyaz-titanyum-256gb-mtv43tu-a-yenilio-a-kalite-p-1212865279",
+        "color": "",
+        "active": true,
+        "product_name": "Apple iPhone 15 Pro 256 GB",
+        "model": "iPhone 15 Pro",
+        "storage_gb": 256
+      }
+    },
+    {
+      "source_file": "artifacts/ml_oncesi_inceleme_20261013/02_apple_iphone_15_pro_128gb/tani_20261013_131516_236/yanitlar/trendyol_apple_iphone_15_pro/0016.html",
+      "source_sha256": "b7b74c15948e9221dab0a8cac94cb0f8d1c232a083cf0554a4a1b51ac841e979",
+      "url": "https://www.trendyol.com/apple/iphone-15-pro-siyah-titanyum-256gb-mtv13tu-a-yenilio-a-kalite-p-1209732701",
+      "product": {
+        "id": 1209732701,
+        "name": "iPhone 15 Pro Siyah titanyum 256GB MTV13TU/A - Yenilio A Kalite",
+        "brand": {
+          "id": 1617,
+          "name": "Apple"
+        },
+        "businessUnitData": {
+          "id": 100116,
+          "name": "Mobile Phone",
+          "isDigitalGoods": false,
+          "isSexualContent": false
+        },
+        "category": {
+          "id": 5473,
+          "name": "IOS Cep Telefonları",
+          "hierarchy": "Elektronik/Telefon/Akıllı Cep Telefonu/IOS Cep Telefonları",
+          "isVASEnabled": true,
+          "isCreditSuitable": true,
+          "bankType": {
+            "name": "MOBILE_PHONE",
+            "id": 3
+          }
+        },
+        "slicingAttributes": {
+          "DsmColor": "Siyah titanyum",
+          "Internal Memory": "256 GB"
+        },
+        "attributes": [
+          {
+            "key": {
+              "id": 24,
+              "name": "Dahili Hafıza"
+            },
+            "value": {
+              "id": 215,
+              "name": "256 GB"
+            },
+            "searchable": true,
+            "type": "Internal Memory",
+            "isStarred": true,
+            "typeId": 29,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 523,
+              "name": "RAM Kapasitesi"
+            },
+            "value": {
+              "id": 24666,
+              "name": "8 GB"
+            },
+            "searchable": true,
+            "type": "Ram (System Memory)",
+            "isStarred": false,
+            "typeId": 227,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 292,
+              "name": "Cep Telefonu Modeli"
+            },
+            "value": {
+              "id": 1218520,
+              "name": "iPhone 15 Pro"
+            },
+            "searchable": true,
+            "type": "Cell Phone Model",
+            "isStarred": false,
+            "typeId": 285,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 672,
+              "name": "Arka Kamera Sayısı"
+            },
+            "value": {
+              "id": 251768,
+              "name": "3"
+            },
+            "searchable": false,
+            "type": "Camera Resolution",
+            "isStarred": false,
+            "typeId": 30,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 677,
+              "name": "Ön Kamera Sayısı"
+            },
+            "value": {
+              "id": 251791,
+              "name": "1"
+            },
+            "searchable": true,
+            "type": "DEFAULT",
+            "isStarred": false,
+            "typeId": 0,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 348,
+              "name": "Renk"
+            },
+            "value": {
+              "id": 14,
+              "name": "Siyah"
+            },
+            "searchable": true,
+            "type": "WebColor",
+            "isStarred": false,
+            "typeId": 4,
+            "description": "",
+            "mediaUrls": []
+          }
+        ],
+        "inStock": true,
+        "merchantListing": {
+          "merchant": {
+            "name": "Yenilio",
+            "sellerScore": {
+              "value": 8.2,
+              "color": "#3CCD7D"
+            }
+          },
+          "winnerVariant": {
+            "listingId": "2040ceedb93905fdd1afd70ad9530455",
+            "price": {
+              "currency": "TRY",
+              "discountedPrice": {
+                "value": 77599,
+                "text": "77.599 TL"
+              },
+              "sellingPrice": {
+                "value": 77599,
+                "text": "77.599 TL"
+              },
+              "originalPrice": {
+                "value": 77599,
+                "text": "77.599 TL"
+              },
+              "rrp": {
+                "text": "NaN TL"
+              },
+              "discountPercentage": 0,
+              "profitMargin": 0,
+              "couponApplicablePrice": {
+                "value": 77599,
+                "text": "77.599 TL"
+              },
+              "tyPlusCouponApplicablePrice": {
+                "value": 77599,
+                "text": "77.599 TL"
+              },
+              "discountedPriceAfterNoLimitPromotions": {
+                "value": 77599,
+                "text": "77.599 TL"
+              }
+            },
+            "sellable": true,
+            "isRunningOut": true,
+            "inStock": true
+          }
+        }
+      },
+      "listing": {
+        "listing_id": "trendyol_1209732701",
+        "product_id": 5,
+        "platform": "trendyol",
+        "url": "https://www.trendyol.com/apple/iphone-15-pro-siyah-titanyum-256gb-mtv13tu-a-yenilio-a-kalite-p-1209732701",
+        "color": "",
+        "active": true,
+        "product_name": "Apple iPhone 15 Pro 256 GB",
+        "model": "iPhone 15 Pro",
+        "storage_gb": 256
+      }
+    },
+    {
+      "source_file": "artifacts/ml_oncesi_inceleme_20261013/02_apple_iphone_15_pro_128gb/tani_20261013_131516_236/yanitlar/trendyol_apple_iphone_15_pro/0017.html",
+      "source_sha256": "bd92d5438250c131d051c430400cbfd9ccdf04157ae4f7b71077e817e1a423d6",
+      "url": "https://www.trendyol.com/apple/iphone-15-pro-naturel-titanyum-256gb-mtv53tu-a-yenilio-outlet-c-kalite-p-1212867888",
+      "product": {
+        "id": 1212867888,
+        "name": "iPhone 15 Pro Natürel Titanyum 256GB MTV53TU/A - Yenilio Outlet C Kalite",
+        "brand": {
+          "id": 1617,
+          "name": "Apple"
+        },
+        "businessUnitData": {
+          "id": 100116,
+          "name": "Mobile Phone",
+          "isDigitalGoods": false,
+          "isSexualContent": false
+        },
+        "category": {
+          "id": 5473,
+          "name": "IOS Cep Telefonları",
+          "hierarchy": "Elektronik/Telefon/Akıllı Cep Telefonu/IOS Cep Telefonları",
+          "isVASEnabled": true,
+          "isCreditSuitable": true,
+          "bankType": {
+            "name": "MOBILE_PHONE",
+            "id": 3
+          }
+        },
+        "slicingAttributes": {
+          "DsmColor": "Natürel Titanyum",
+          "Internal Memory": "256 GB"
+        },
+        "attributes": [
+          {
+            "key": {
+              "id": 24,
+              "name": "Dahili Hafıza"
+            },
+            "value": {
+              "id": 215,
+              "name": "256 GB"
+            },
+            "searchable": true,
+            "type": "Internal Memory",
+            "isStarred": true,
+            "typeId": 29,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 523,
+              "name": "RAM Kapasitesi"
+            },
+            "value": {
+              "id": 24666,
+              "name": "8 GB"
+            },
+            "searchable": true,
+            "type": "Ram (System Memory)",
+            "isStarred": false,
+            "typeId": 227,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 292,
+              "name": "Cep Telefonu Modeli"
+            },
+            "value": {
+              "id": 1218520,
+              "name": "iPhone 15 Pro"
+            },
+            "searchable": true,
+            "type": "Cell Phone Model",
+            "isStarred": false,
+            "typeId": 285,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 672,
+              "name": "Arka Kamera Sayısı"
+            },
+            "value": {
+              "id": 251768,
+              "name": "3"
+            },
+            "searchable": false,
+            "type": "Camera Resolution",
+            "isStarred": false,
+            "typeId": 30,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 677,
+              "name": "Ön Kamera Sayısı"
+            },
+            "value": {
+              "id": 251791,
+              "name": "1"
+            },
+            "searchable": true,
+            "type": "DEFAULT",
+            "isStarred": false,
+            "typeId": 0,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 348,
+              "name": "Renk"
+            },
+            "value": {
+              "id": 686230,
+              "name": "Çok Renkli"
+            },
+            "searchable": true,
+            "type": "WebColor",
+            "isStarred": false,
+            "typeId": 4,
+            "description": "",
+            "mediaUrls": []
+          }
+        ],
+        "inStock": true,
+        "merchantListing": {
+          "merchant": {
+            "name": "Yenilio",
+            "sellerScore": {
+              "value": 8.2,
+              "color": "#3CCD7D"
+            }
+          },
+          "winnerVariant": {
+            "listingId": "b2094fa9e2b9e49cc74dfc5fba0c1136",
+            "price": {
+              "currency": "TRY",
+              "discountedPrice": {
+                "value": 73013,
+                "text": "73.013 TL"
+              },
+              "sellingPrice": {
+                "value": 73013,
+                "text": "73.013 TL"
+              },
+              "originalPrice": {
+                "value": 73013,
+                "text": "73.013 TL"
+              },
+              "rrp": {
+                "text": "NaN TL"
+              },
+              "discountPercentage": 0,
+              "profitMargin": 0,
+              "couponApplicablePrice": {
+                "value": 73013,
+                "text": "73.013 TL"
+              },
+              "tyPlusCouponApplicablePrice": {
+                "value": 73013,
+                "text": "73.013 TL"
+              },
+              "discountedPriceAfterNoLimitPromotions": {
+                "value": 73013,
+                "text": "73.013 TL"
+              }
+            },
+            "sellable": true,
+            "isRunningOut": true,
+            "inStock": true
+          }
+        }
+      },
+      "listing": {
+        "listing_id": "trendyol_1212867888",
+        "product_id": 5,
+        "platform": "trendyol",
+        "url": "https://www.trendyol.com/apple/iphone-15-pro-naturel-titanyum-256gb-mtv53tu-a-yenilio-outlet-c-kalite-p-1212867888",
+        "color": "",
+        "active": true,
+        "product_name": "Apple iPhone 15 Pro 256 GB",
+        "model": "iPhone 15 Pro",
+        "storage_gb": 256
+      }
+    },
+    {
+      "source_file": "artifacts/ml_oncesi_inceleme_20261013/02_apple_iphone_15_pro_128gb/tani_20261013_131516_236/yanitlar/trendyol_apple_iphone_15_pro/0018.html",
+      "source_sha256": "81b68dae81ba46efd50fa28f3f8ca2754d06490c1426af0e35b9e12251e40954",
+      "url": "https://www.trendyol.com/apple/iphone-15-pro-siyah-titanyum-256gb-mtv13tu-a-yenilio-b-kalite-p-1209732692",
+      "product": {
+        "id": 1209732692,
+        "name": "iPhone 15 Pro Siyah titanyum 256GB MTV13TU/A - Yenilio B Kalite",
+        "brand": {
+          "id": 1617,
+          "name": "Apple"
+        },
+        "businessUnitData": {
+          "id": 100116,
+          "name": "Mobile Phone",
+          "isDigitalGoods": false,
+          "isSexualContent": false
+        },
+        "category": {
+          "id": 5473,
+          "name": "IOS Cep Telefonları",
+          "hierarchy": "Elektronik/Telefon/Akıllı Cep Telefonu/IOS Cep Telefonları",
+          "isVASEnabled": true,
+          "isCreditSuitable": true,
+          "bankType": {
+            "name": "MOBILE_PHONE",
+            "id": 3
+          }
+        },
+        "slicingAttributes": {
+          "DsmColor": "Siyah titanyum",
+          "Internal Memory": "256 GB"
+        },
+        "attributes": [
+          {
+            "key": {
+              "id": 24,
+              "name": "Dahili Hafıza"
+            },
+            "value": {
+              "id": 215,
+              "name": "256 GB"
+            },
+            "searchable": true,
+            "type": "Internal Memory",
+            "isStarred": true,
+            "typeId": 29,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 523,
+              "name": "RAM Kapasitesi"
+            },
+            "value": {
+              "id": 24666,
+              "name": "8 GB"
+            },
+            "searchable": true,
+            "type": "Ram (System Memory)",
+            "isStarred": false,
+            "typeId": 227,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 292,
+              "name": "Cep Telefonu Modeli"
+            },
+            "value": {
+              "id": 1218520,
+              "name": "iPhone 15 Pro"
+            },
+            "searchable": true,
+            "type": "Cell Phone Model",
+            "isStarred": false,
+            "typeId": 285,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 672,
+              "name": "Arka Kamera Sayısı"
+            },
+            "value": {
+              "id": 251768,
+              "name": "3"
+            },
+            "searchable": false,
+            "type": "Camera Resolution",
+            "isStarred": false,
+            "typeId": 30,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 677,
+              "name": "Ön Kamera Sayısı"
+            },
+            "value": {
+              "id": 251791,
+              "name": "1"
+            },
+            "searchable": true,
+            "type": "DEFAULT",
+            "isStarred": false,
+            "typeId": 0,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 348,
+              "name": "Renk"
+            },
+            "value": {
+              "id": 14,
+              "name": "Siyah"
+            },
+            "searchable": true,
+            "type": "WebColor",
+            "isStarred": false,
+            "typeId": 4,
+            "description": "",
+            "mediaUrls": []
+          }
+        ],
+        "inStock": true,
+        "merchantListing": {
+          "merchant": {
+            "name": "Yenilio",
+            "sellerScore": {
+              "value": 8.2,
+              "color": "#3CCD7D"
+            }
+          },
+          "winnerVariant": {
+            "listingId": "bbcaf8966524385bb119fcd830ef8d0e",
+            "price": {
+              "currency": "TRY",
+              "discountedPrice": {
+                "value": 75271,
+                "text": "75.271 TL"
+              },
+              "sellingPrice": {
+                "value": 75271,
+                "text": "75.271 TL"
+              },
+              "originalPrice": {
+                "value": 75271,
+                "text": "75.271 TL"
+              },
+              "rrp": {
+                "text": "NaN TL"
+              },
+              "discountPercentage": 0,
+              "profitMargin": 0,
+              "couponApplicablePrice": {
+                "value": 75271,
+                "text": "75.271 TL"
+              },
+              "tyPlusCouponApplicablePrice": {
+                "value": 75271,
+                "text": "75.271 TL"
+              },
+              "discountedPriceAfterNoLimitPromotions": {
+                "value": 75271,
+                "text": "75.271 TL"
+              }
+            },
+            "sellable": true,
+            "isRunningOut": true,
+            "inStock": true
+          }
+        }
+      },
+      "listing": {
+        "listing_id": "trendyol_1209732692",
+        "product_id": 5,
+        "platform": "trendyol",
+        "url": "https://www.trendyol.com/apple/iphone-15-pro-siyah-titanyum-256gb-mtv13tu-a-yenilio-b-kalite-p-1209732692",
+        "color": "",
+        "active": true,
+        "product_name": "Apple iPhone 15 Pro 256 GB",
+        "model": "iPhone 15 Pro",
+        "storage_gb": 256
+      }
+    }
+  ],
+  "new_products": [
+    {
+      "source_file": "artifacts/ml_oncesi_inceleme_20261013/02_apple_iphone_15_pro_128gb/tani_20261013_131516_236/yanitlar/trendyol_apple_iphone_15_pro/0013.html",
+      "source_sha256": "e30eabb41eb2fdcda47d7d588dce662a2f2ae89fdf8bfe37d434399e69cb2c00",
+      "url": "https://www.trendyol.com/apple/iphone-15-pro-128-gb-naturel-titanyum-p-762254869",
+      "product": {
+        "id": 762254869,
+        "name": "iPhone 15 Pro 128 GB Natürel Titanyum",
+        "brand": {
+          "id": 1617,
+          "name": "Apple"
+        },
+        "businessUnitData": {
+          "id": 100116,
+          "name": "Mobile Phone",
+          "isDigitalGoods": false,
+          "isSexualContent": false
+        },
+        "category": {
+          "id": 5473,
+          "name": "IOS Cep Telefonları",
+          "hierarchy": "Elektronik/Telefon/Akıllı Cep Telefonu/IOS Cep Telefonları",
+          "isVASEnabled": true,
+          "isCreditSuitable": true,
+          "bankType": {
+            "name": "MOBILE_PHONE",
+            "id": 3
+          }
+        },
+        "slicingAttributes": {
+          "DsmColor": "Natürel Titanyum",
+          "Internal Memory": "128 GB"
+        },
+        "attributes": [
+          {
+            "key": {
+              "id": 290,
+              "name": "Garanti Tipi"
+            },
+            "value": {
+              "id": 19006,
+              "name": "Apple Türkiye Garantili"
+            },
+            "searchable": true,
+            "type": "Warranty Type",
+            "isStarred": true,
+            "typeId": 284,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 24,
+              "name": "Dahili Hafıza"
+            },
+            "value": {
+              "id": 214,
+              "name": "128 GB"
+            },
+            "searchable": true,
+            "type": "Internal Memory",
+            "isStarred": true,
+            "typeId": 29,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 25,
+              "name": "Kamera Çözünürlüğü"
+            },
+            "value": {
+              "id": 823,
+              "name": "20 MP ve üstü"
+            },
+            "searchable": false,
+            "type": "Camera Resolution",
+            "isStarred": true,
+            "typeId": 30,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 23,
+              "name": "Ekran Boyutu"
+            },
+            "value": {
+              "id": 841648,
+              "name": "6,1 inç"
+            },
+            "searchable": true,
+            "type": "Screen Size",
+            "isStarred": true,
+            "typeId": 28,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 700,
+              "name": "Ana Kamera Çözünürlük Aralığı"
+            },
+            "value": {
+              "id": 255918,
+              "name": "40 - 60 MP"
+            },
+            "searchable": false,
+            "type": "DEFAULT",
+            "isStarred": false,
+            "typeId": 0,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 523,
+              "name": "RAM Kapasitesi"
+            },
+            "value": {
+              "id": 24666,
+              "name": "8 GB"
+            },
+            "searchable": true,
+            "type": "Ram (System Memory)",
+            "isStarred": false,
+            "typeId": 227,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 226,
+              "name": "Pil Gücü (mAh)"
+            },
+            "value": {
+              "id": 2323,
+              "name": "3000 - 4000"
+            },
+            "searchable": false,
+            "type": "Battery Power (Mah)",
+            "isStarred": false,
+            "typeId": 221,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 292,
+              "name": "Cep Telefonu Modeli"
+            },
+            "value": {
+              "id": 1218522,
+              "name": "iPhone 15 Pro Max"
+            },
+            "searchable": true,
+            "type": "Cell Phone Model",
+            "isStarred": false,
+            "typeId": 285,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 678,
+              "name": "Ön Kamera Çözünürlük Aralığı"
+            },
+            "value": {
+              "id": 251808,
+              "name": "40 - 60 MP"
+            },
+            "searchable": true,
+            "type": "DEFAULT",
+            "isStarred": false,
+            "typeId": 0,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 433,
+              "name": "Garanti Süresi"
+            },
+            "value": {
+              "id": 20637,
+              "name": "2 Yıl"
+            },
+            "searchable": false,
+            "type": "Warranty Period",
+            "isStarred": false,
+            "typeId": 366,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 670,
+              "name": "Ekran Boyut Aralığı"
+            },
+            "value": {
+              "id": 249179,
+              "name": "6'' - 6.5''"
+            },
+            "searchable": false,
+            "type": "Screen Size",
+            "isStarred": false,
+            "typeId": 28,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 686,
+              "name": "Batarya Kapasitesi Aralığı"
+            },
+            "value": {
+              "id": 255849,
+              "name": "3000-3500 mAh"
+            },
+            "searchable": false,
+            "type": "DEFAULT",
+            "isStarred": false,
+            "typeId": 0,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 688,
+              "name": "Şarj Girişi"
+            },
+            "value": {
+              "id": 255857,
+              "name": "USB Type-C"
+            },
+            "searchable": false,
+            "type": "DEFAULT",
+            "isStarred": false,
+            "typeId": 0,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 348,
+              "name": "Renk"
+            },
+            "value": {
+              "id": 686230,
+              "name": "Çok Renkli"
+            },
+            "searchable": true,
+            "type": "WebColor",
+            "isStarred": false,
+            "typeId": 4,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 1152,
+              "name": "Yapay Zeka"
+            },
+            "value": {
+              "id": 1224021,
+              "name": "Var"
+            },
+            "searchable": false,
+            "type": "DEFAULT",
+            "isStarred": false,
+            "typeId": 0,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 1192,
+              "name": "Menşei"
+            },
+            "value": {
+              "id": 10617300,
+              "name": "CN"
+            },
+            "searchable": false,
+            "type": "Origin",
+            "isStarred": false,
+            "typeId": 372,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 49,
+              "name": "Özellik"
+            },
+            "value": {
+              "id": 1339,
+              "name": "Kablosuz"
+            },
+            "searchable": true,
+            "type": "Feature",
+            "isStarred": false,
+            "typeId": 53,
+            "description": "",
+            "mediaUrls": []
+          }
+        ],
+        "inStock": true,
+        "merchantListing": {
+          "merchant": {
+            "name": "SADET",
+            "sellerScore": {
+              "value": 9.5,
+              "color": "#049B24"
+            }
+          },
+          "winnerVariant": {
+            "listingId": "d42d99a1e13467c1f70ee3cb38544a18",
+            "price": {
+              "currency": "TRY",
+              "discountedPrice": {
+                "value": 114999,
+                "text": "114.999 TL"
+              },
+              "sellingPrice": {
+                "value": 114999,
+                "text": "114.999 TL"
+              },
+              "originalPrice": {
+                "value": 114999,
+                "text": "114.999 TL"
+              },
+              "rrp": {
+                "text": "NaN TL"
+              },
+              "discountPercentage": 0,
+              "profitMargin": 0,
+              "couponApplicablePrice": {
+                "value": 114999,
+                "text": "114.999 TL"
+              },
+              "tyPlusCouponApplicablePrice": {
+                "value": 114999,
+                "text": "114.999 TL"
+              },
+              "discountedPriceAfterNoLimitPromotions": {
+                "value": 114999,
+                "text": "114.999 TL"
+              }
+            },
+            "sellable": true,
+            "isRunningOut": true,
+            "inStock": true
+          }
+        }
+      },
+      "listing": {
+        "listing_id": "trendyol_762254869",
+        "product_id": 4,
+        "platform": "trendyol",
+        "url": "https://www.trendyol.com/apple/iphone-15-pro-128-gb-naturel-titanyum-p-762254869",
+        "color": "",
+        "active": true,
+        "product_name": "Apple iPhone 15 Pro 128 GB",
+        "model": "iPhone 15 Pro",
+        "storage_gb": 128
+      },
+      "expected_observation": {
+        "listing_id": "trendyol_762254869",
+        "product_id": 4,
+        "platform": "trendyol",
+        "product_name": "Apple iPhone 15 Pro 128 GB",
+        "product_url": "https://www.trendyol.com/apple/iphone-15-pro-128-gb-naturel-titanyum-p-762254869",
+        "current_price": 11499900,
+        "original_price": null,
+        "seller_name": "SADET",
+        "seller_rating": 9.5,
+        "seller_rating_scale": 10.0,
+        "stock_status": "Kritik Stok",
+        "currency": "TRY"
+      }
+    },
+    {
+      "source_file": "artifacts/ml_oncesi_inceleme_20261013/02_apple_iphone_15_pro_128gb/tani_20261013_131516_236/yanitlar/trendyol_apple_iphone_15_pro/0014.html",
+      "source_sha256": "9d0c8348a57ac06346ffbcb0ac1c68f0574bdcb7c74b32de7222f773451f2588",
+      "url": "https://www.trendyol.com/apple/iphone-15-pro-512-gb-beyaz-titanyum-p-762254875",
+      "product": {
+        "id": 762254875,
+        "name": "iPhone 15 Pro 512 GB Beyaz Titanyum",
+        "brand": {
+          "id": 1617,
+          "name": "Apple"
+        },
+        "businessUnitData": {
+          "id": 100116,
+          "name": "Mobile Phone",
+          "isDigitalGoods": false,
+          "isSexualContent": false
+        },
+        "category": {
+          "id": 5473,
+          "name": "IOS Cep Telefonları",
+          "hierarchy": "Elektronik/Telefon/Akıllı Cep Telefonu/IOS Cep Telefonları",
+          "isVASEnabled": true,
+          "isCreditSuitable": true,
+          "bankType": {
+            "name": "MOBILE_PHONE",
+            "id": 3
+          }
+        },
+        "slicingAttributes": {
+          "DsmColor": "Beyaz",
+          "Internal Memory": "512 GB"
+        },
+        "attributes": [
+          {
+            "key": {
+              "id": 290,
+              "name": "Garanti Tipi"
+            },
+            "value": {
+              "id": 19006,
+              "name": "Apple Türkiye Garantili"
+            },
+            "searchable": true,
+            "type": "Warranty Type",
+            "isStarred": true,
+            "typeId": 284,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 24,
+              "name": "Dahili Hafıza"
+            },
+            "value": {
+              "id": 7120,
+              "name": "512 GB"
+            },
+            "searchable": true,
+            "type": "Internal Memory",
+            "isStarred": true,
+            "typeId": 29,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 25,
+              "name": "Kamera Çözünürlüğü"
+            },
+            "value": {
+              "id": 823,
+              "name": "20 MP ve üstü"
+            },
+            "searchable": false,
+            "type": "Camera Resolution",
+            "isStarred": true,
+            "typeId": 30,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 23,
+              "name": "Ekran Boyutu"
+            },
+            "value": {
+              "id": 841648,
+              "name": "6,1 inç"
+            },
+            "searchable": true,
+            "type": "Screen Size",
+            "isStarred": true,
+            "typeId": 28,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 700,
+              "name": "Ana Kamera Çözünürlük Aralığı"
+            },
+            "value": {
+              "id": 255918,
+              "name": "40 - 60 MP"
+            },
+            "searchable": false,
+            "type": "DEFAULT",
+            "isStarred": false,
+            "typeId": 0,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 523,
+              "name": "RAM Kapasitesi"
+            },
+            "value": {
+              "id": 24666,
+              "name": "8 GB"
+            },
+            "searchable": true,
+            "type": "Ram (System Memory)",
+            "isStarred": false,
+            "typeId": 227,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 226,
+              "name": "Pil Gücü (mAh)"
+            },
+            "value": {
+              "id": 2323,
+              "name": "3000 - 4000"
+            },
+            "searchable": false,
+            "type": "Battery Power (Mah)",
+            "isStarred": false,
+            "typeId": 221,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 292,
+              "name": "Cep Telefonu Modeli"
+            },
+            "value": {
+              "id": 1218522,
+              "name": "iPhone 15 Pro Max"
+            },
+            "searchable": true,
+            "type": "Cell Phone Model",
+            "isStarred": false,
+            "typeId": 285,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 678,
+              "name": "Ön Kamera Çözünürlük Aralığı"
+            },
+            "value": {
+              "id": 251808,
+              "name": "40 - 60 MP"
+            },
+            "searchable": true,
+            "type": "DEFAULT",
+            "isStarred": false,
+            "typeId": 0,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 433,
+              "name": "Garanti Süresi"
+            },
+            "value": {
+              "id": 20637,
+              "name": "2 Yıl"
+            },
+            "searchable": false,
+            "type": "Warranty Period",
+            "isStarred": false,
+            "typeId": 366,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 670,
+              "name": "Ekran Boyut Aralığı"
+            },
+            "value": {
+              "id": 249179,
+              "name": "6'' - 6.5''"
+            },
+            "searchable": false,
+            "type": "Screen Size",
+            "isStarred": false,
+            "typeId": 28,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 686,
+              "name": "Batarya Kapasitesi Aralığı"
+            },
+            "value": {
+              "id": 255849,
+              "name": "3000-3500 mAh"
+            },
+            "searchable": false,
+            "type": "DEFAULT",
+            "isStarred": false,
+            "typeId": 0,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 688,
+              "name": "Şarj Girişi"
+            },
+            "value": {
+              "id": 255857,
+              "name": "USB Type-C"
+            },
+            "searchable": false,
+            "type": "DEFAULT",
+            "isStarred": false,
+            "typeId": 0,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 348,
+              "name": "Renk"
+            },
+            "value": {
+              "id": 3,
+              "name": "Beyaz"
+            },
+            "searchable": true,
+            "type": "WebColor",
+            "isStarred": false,
+            "typeId": 4,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 1152,
+              "name": "Yapay Zeka"
+            },
+            "value": {
+              "id": 1224021,
+              "name": "Var"
+            },
+            "searchable": false,
+            "type": "DEFAULT",
+            "isStarred": false,
+            "typeId": 0,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 1192,
+              "name": "Menşei"
+            },
+            "value": {
+              "id": 10617300,
+              "name": "CN"
+            },
+            "searchable": false,
+            "type": "Origin",
+            "isStarred": false,
+            "typeId": 372,
+            "description": "",
+            "mediaUrls": []
+          },
+          {
+            "key": {
+              "id": 49,
+              "name": "Özellik"
+            },
+            "value": {
+              "id": 1339,
+              "name": "Kablosuz"
+            },
+            "searchable": true,
+            "type": "Feature",
+            "isStarred": false,
+            "typeId": 53,
+            "description": "",
+            "mediaUrls": []
+          }
+        ],
+        "inStock": true,
+        "merchantListing": {
+          "merchant": {
+            "name": "Akarsu İletişim Teknoloji Ürünleri",
+            "sellerScore": {
+              "value": 8.5,
+              "color": "#08B449"
+            }
+          },
+          "winnerVariant": {
+            "listingId": "60d142c02f43c9be767cc060dc8257f9",
+            "price": {
+              "currency": "TRY",
+              "discountedPrice": {
+                "value": 119999,
+                "text": "119.999 TL"
+              },
+              "sellingPrice": {
+                "value": 119999,
+                "text": "119.999 TL"
+              },
+              "originalPrice": {
+                "value": 119999,
+                "text": "119.999 TL"
+              },
+              "rrp": {
+                "text": "NaN TL"
+              },
+              "discountPercentage": 0,
+              "profitMargin": 0,
+              "couponApplicablePrice": {
+                "value": 119999,
+                "text": "119.999 TL"
+              },
+              "tyPlusCouponApplicablePrice": {
+                "value": 119999,
+                "text": "119.999 TL"
+              },
+              "discountedPriceAfterNoLimitPromotions": {
+                "value": 119999,
+                "text": "119.999 TL"
+              }
+            },
+            "sellable": true,
+            "isRunningOut": true,
+            "inStock": true
+          }
+        }
+      },
+      "listing": {
+        "listing_id": "trendyol_762254875",
+        "product_id": 6,
+        "platform": "trendyol",
+        "url": "https://www.trendyol.com/apple/iphone-15-pro-512-gb-beyaz-titanyum-p-762254875",
+        "color": "",
+        "active": true,
+        "product_name": "Apple iPhone 15 Pro 512 GB",
+        "model": "iPhone 15 Pro",
+        "storage_gb": 512
+      },
+      "expected_observation": {
+        "listing_id": "trendyol_762254875",
+        "product_id": 6,
+        "platform": "trendyol",
+        "product_name": "Apple iPhone 15 Pro 512 GB",
+        "product_url": "https://www.trendyol.com/apple/iphone-15-pro-512-gb-beyaz-titanyum-p-762254875",
+        "current_price": 11999900,
+        "original_price": null,
+        "seller_name": "Akarsu İletişim Teknoloji Ürünleri",
+        "seller_rating": 8.5,
+        "seller_rating_scale": 10.0,
+        "stock_status": "Kritik Stok",
+        "currency": "TRY"
+      }
+    }
+  ]
+}

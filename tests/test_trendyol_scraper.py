@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
@@ -519,3 +520,56 @@ def test_rejects_wrong_product_identity(scraper, listing, name, product_id):
         scraper.parse(product_html(name=name, product_id=product_id), listing)
 
     assert error.value.code == "identity"
+
+
+SCOPE_EXAMPLES = json.loads(
+    (
+        Path(__file__).parent / "fixtures/discovery/trendyol_scope_examples.json"
+    ).read_text(encoding="utf-8")
+)
+
+
+def saved_scope_html(example):
+    return (
+        '<script>window["__envoy__SHARED_PROPS"] = '
+        f"{json.dumps({'product': example['product']})};</script>"
+    )
+
+
+@pytest.mark.parametrize(
+    "example",
+    SCOPE_EXAMPLES["graded_products"],
+    ids=lambda example: str(example["product"]["id"]),
+)
+def test_saved_yenilio_grade_rejected_before_price(scraper, monkeypatch, example):
+    def unexpected_price(price):
+        pytest.fail("Kapsam dışı ürünün fiyatı okunmamalı")
+
+    monkeypatch.setattr("app.scraper.trendyol_scraper._price", unexpected_price)
+    with pytest.raises(FetchError, match="kapsam dışında") as error:
+        scraper.parse(
+            saved_scope_html(example), ProductListing.model_validate(example["listing"])
+        )
+    assert error.value.code == "identity"
+    assert scraper._last_offers == []
+
+
+@pytest.mark.parametrize(
+    "example",
+    SCOPE_EXAMPLES["new_products"],
+    ids=lambda example: str(example["product"]["id"]),
+)
+def test_saved_new_phone_scope_preserves_offer(scraper, example):
+    observation = scraper.parse(
+        saved_scope_html(example), ProductListing.model_validate(example["listing"])
+    )
+    assert (
+        observation.model_dump(mode="json", exclude={"timestamp"})
+        == example["expected_observation"]
+    )
+
+
+def test_yenilio_seller_name_alone_preserves_offer(scraper, listing):
+    observation = scraper.parse(product_html(merchant={"name": "Yenilio"}), listing)
+    assert observation.seller_name == "Yenilio"
+    assert observation.current_price == 5_724_900

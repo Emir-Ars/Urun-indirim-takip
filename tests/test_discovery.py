@@ -2721,6 +2721,117 @@ def trendyol_identity_html(product):
     )
 
 
+TRENDYOL_SCOPE_EXAMPLES = fixture("trendyol_scope_examples.json")
+
+
+@pytest.mark.parametrize(
+    "example",
+    TRENDYOL_SCOPE_EXAMPLES["graded_cards"],
+    ids=lambda example: str(example["card"]["id"]),
+)
+def test_saved_yenilio_grade_titles_reject_identity(example):
+    name = example["card"]["name"]
+    capacity = title_storage(name)
+    assert capacity in (128, 256)
+    with pytest.raises(FetchError, match="kapsam dışında") as discovery_error:
+        identify([name], "iPhone 15 Pro", capacity)
+    with pytest.raises(FetchError, match="kapsam dışında") as scraper_error:
+        verify_identity([name], "iPhone 15 Pro", capacity, capacity)
+    assert discovery_error.value.code == scraper_error.value.code == "identity"
+
+
+@pytest.mark.parametrize(
+    "example",
+    TRENDYOL_SCOPE_EXAMPLES["graded_cards"],
+    ids=lambda example: str(example["card"]["id"]),
+)
+def test_trendyol_saved_yenilio_grade_cards_are_excluded(example):
+    discovery = TrendyolDiscovery(
+        DiscoveryTarget.model_validate(TRENDYOL_SCOPE_EXAMPLES["target"]),
+        DiscoveryConfig(targets=[]),
+        Runtime(),
+    )
+    try:
+        assert discovery._card_reason(example["card"]) == "excluded_word"
+    finally:
+        discovery.close()
+
+
+@pytest.mark.parametrize(
+    "example",
+    TRENDYOL_SCOPE_EXAMPLES["graded_products"],
+    ids=lambda example: str(example["product"]["id"]),
+)
+def test_trendyol_saved_yenilio_grade_product_is_rejected(monkeypatch, example):
+    discovery = TrendyolDiscovery(
+        DiscoveryTarget.model_validate(TRENDYOL_SCOPE_EXAMPLES["target"]),
+        DiscoveryConfig(targets=[]),
+        Runtime(),
+    )
+    monkeypatch.setattr(
+        discovery, "get", lambda url: trendyol_identity_html(example["product"])
+    )
+    try:
+        with pytest.raises(FetchError, match="kapsam dışında") as error:
+            discovery._candidate(example["url"], str(example["product"]["id"]))
+        assert error.value.code == "identity"
+    finally:
+        discovery.close()
+
+
+@pytest.mark.parametrize(
+    "example",
+    TRENDYOL_SCOPE_EXAMPLES["new_products"],
+    ids=lambda example: str(example["product"]["id"]),
+)
+def test_trendyol_saved_new_phone_scope_preserves_candidate(monkeypatch, example):
+    discovery = TrendyolDiscovery(
+        DiscoveryTarget.model_validate(TRENDYOL_SCOPE_EXAMPLES["target"]),
+        DiscoveryConfig(targets=[]),
+        Runtime(),
+    )
+    monkeypatch.setattr(
+        discovery, "get", lambda url: trendyol_identity_html(example["product"])
+    )
+    try:
+        candidate = discovery._candidate(example["url"], str(example["product"]["id"]))
+        assert candidate.platform_product_id == str(example["product"]["id"])
+        assert candidate.model == example["listing"]["model"]
+        assert candidate.storage_gb == example["listing"]["storage_gb"]
+        assert candidate.warranty_text == "Apple Türkiye Garantili"
+    finally:
+        discovery.close()
+
+
+@pytest.mark.parametrize("separator", [" ", "-", "_", "  ", "\t", "\n"])
+def test_yenilio_grade_scope_handles_title_separators(separator):
+    name = "iPhone 15 Pro 128 GB " + separator.join(
+        ["YENİLİO", "OUTLET", "C", "KALİTE"]
+    )
+    with pytest.raises(FetchError) as error:
+        identify([name], "iPhone 15 Pro", 128)
+    assert error.value.code == "identity"
+
+
+@pytest.mark.parametrize(
+    "label",
+    [
+        "Yenilio",
+        "Outlet",
+        "A Kalite",
+        "B Kalite",
+        "Yenilio sıfır",
+        "YenilioX A Kalite",
+        "Yenilio A Kaliteli",
+        "Yenilio A KaliteX",
+    ],
+)
+def test_generic_outlet_quality_or_seller_name_preserves_identity(label):
+    name = f"iPhone 15 Pro 128 GB {label}"
+    assert identify([name], "iPhone 15 Pro", 128) == 128
+    verify_identity([name], "iPhone 15 Pro", 128, 128)
+
+
 @pytest.mark.parametrize(
     "example",
     TRENDYOL_IDENTITY_EXAMPLES,
