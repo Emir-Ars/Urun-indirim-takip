@@ -6,6 +6,7 @@ import json
 import re
 import sys
 import types
+from copy import deepcopy
 from html import escape
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
@@ -48,6 +49,7 @@ from app.scraper.parsing import (
     storage_gb,
     title_storage,
     verify_identity,
+    verify_model_network,
 )
 from app.scrape_lock import scrape_lock
 from app.settings import Runtime, Settings
@@ -2722,6 +2724,104 @@ def trendyol_identity_html(product):
 
 
 TRENDYOL_SCOPE_EXAMPLES = fixture("trendyol_scope_examples.json")
+TRENDYOL_NETWORK_EXAMPLES = fixture("trendyol_network_examples.json")
+
+
+def test_trendyol_saved_network_conflict_rejects_candidate(monkeypatch):
+    example = TRENDYOL_NETWORK_EXAMPLES["conflicting_product"]
+    discovery = TrendyolDiscovery(
+        DiscoveryTarget.model_validate(TRENDYOL_NETWORK_EXAMPLES["target"]),
+        DiscoveryConfig(targets=[]),
+        Runtime(),
+    )
+    monkeypatch.setattr(
+        discovery, "get", lambda url: trendyol_identity_html(example["product"])
+    )
+    try:
+        assert discovery.target.network is None
+        with pytest.raises(FetchError, match="Ağ türü") as error:
+            discovery._candidate(example["url"], str(example["product"]["id"]))
+        assert error.value.code == "identity"
+    finally:
+        discovery.close()
+
+
+@pytest.mark.parametrize(
+    "example",
+    TRENDYOL_NETWORK_EXAMPLES["consistent_products"],
+    ids=lambda example: str(example["product"]["id"]),
+)
+def test_trendyol_saved_network_preserves_candidate(monkeypatch, example):
+    discovery = TrendyolDiscovery(
+        DiscoveryTarget.model_validate(TRENDYOL_NETWORK_EXAMPLES["target"]),
+        DiscoveryConfig(targets=[]),
+        Runtime(),
+    )
+    monkeypatch.setattr(
+        discovery, "get", lambda url: trendyol_identity_html(example["product"])
+    )
+    try:
+        candidate = discovery._candidate(example["url"], str(example["product"]["id"]))
+        assert candidate.model_dump(mode="json") == example["expected_candidate"]
+    finally:
+        discovery.close()
+
+
+@pytest.mark.parametrize(
+    "value, accepted",
+    [
+        (None, True),
+        ("", True),
+        ("3G", True),
+        ("5G", True),
+        ("5G+", True),
+        ("5G NR", True),
+        ("4G/5G", True),
+        ("4G", False),
+        ("4.5G", False),
+        ("4,5G", False),
+        ("LTE", False),
+        ("4G LTE", False),
+    ],
+)
+def test_trendyol_derived_network_values_control_candidate(
+    monkeypatch, value, accepted
+):
+    example = TRENDYOL_NETWORK_EXAMPLES["consistent_products"][0]
+    product = deepcopy(example["product"])
+    product["attributes"] = [
+        item
+        for item in product["attributes"]
+        if item["key"]["name"] != "Mobil Bağlantı Hızı"
+    ]
+    if value is not None:
+        product["attributes"].append(
+            {"key": {"name": "Mobil Bağlantı Hızı"}, "value": {"name": value}}
+        )
+    discovery = TrendyolDiscovery(
+        DiscoveryTarget.model_validate(TRENDYOL_NETWORK_EXAMPLES["target"]),
+        DiscoveryConfig(targets=[]),
+        Runtime(),
+    )
+    monkeypatch.setattr(discovery, "get", lambda url: trendyol_identity_html(product))
+    try:
+        if accepted:
+            candidate = discovery._candidate(example["url"], str(product["id"]))
+            assert candidate.model_dump(mode="json") == example["expected_candidate"]
+        else:
+            with pytest.raises(FetchError, match="Ağ türü") as error:
+                discovery._candidate(example["url"], str(product["id"]))
+            assert error.value.code == "identity"
+    finally:
+        discovery.close()
+
+
+@pytest.mark.parametrize(
+    "model", ["Redmi Note 13 Pro", "iPhone 15", "Phone 5GB RAM", "Phone 15G"]
+)
+def test_network_guard_does_not_infer_network_without_explicit_5g_model(model):
+    verify_model_network(model, "4G")
+    verify_model_network(model, "5G")
 
 
 @pytest.mark.parametrize(

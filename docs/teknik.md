@@ -74,7 +74,7 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 | Dosya | Ne işe yarar |
 |---|---|
 | `http.py` | İnternete açılan tek kapı. `curl_cffi` + `impersonate="chrome120"`; yalnızca izinli alan adları, zaman aşımı, sınırlı tekrar, istek aralığı (alan adı başına, bütün istemciler arasında ortak), yönlendirme kontrolü, indirme sırasında 8 MB gövde sınırı, istek bütçesi. 401/403/418/429 yanıtları `blocked` olarak sınıflanır. Playwright, Selenium veya `requests` kullanılmaz. |
-| `parsing.py` | Ortak yardımcılar: fiyatı kuruşa çevirme (`money`), metin normalleştirme, sayfaya gömülü JSON okuma ve **kimlik kuralları** (`identify`, `verify_identity`, `matches_model`, `network_type`). Keşif ve scraper aynı kuralları kullanır. |
+| `parsing.py` | Ortak yardımcılar: fiyatı kuruşa çevirme (`money`), metin normalleştirme, sayfaya gömülü JSON okuma ve **kimlik kuralları** (`identify`, `verify_identity`, `matches_model`, `network_type`, `verify_model_network`). Trendyol'un açık 5G model/4G özellik reddi de iki tüketicide aynı ortak kontroldür. |
 | `base.py` | Bütün sitelerin sözleşmesi: `fetch(listing) -> PriceObservation`. Ayrıştırma hatalarını ortak `FetchError`'a çevirir. |
 | `factory.py` | Platform adından (`trendyol`, `hepsiburada`) doğru scraper sınıfını yükler. |
 | `trendyol_scraper.py` | Trendyol sayfasını okur, satıcıları karşılaştırır. |
@@ -153,8 +153,8 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 | `tests/test_database_read.py` | Salt okunur sorgular (63 test, 49'u gerçek API test hesabıyla PostgreSQL'de): etkin/pasif ürün, ürüne özel completed tur, fiyat/stoksuz/hata/eksik kapsam, eşit teklif, gün aralıkları, ayrı Cimri/NULL, mevcut katalog bilgisi, iki bağlantıyla tutarlı görüntü, açık işlem reddi, yerel ayarlar, sorgu hatası/zaman aşımı sonrası yeniden okuma ve toplama kilidinden bağımsızlık. Altı yeni bütünleşme testi SQL'den gelen verilerle istatistikleri; tam 30 gün, dar grafik aralığı, pasif katalog, kısmi kapsam, scope sınırı, stoksuz tur, Cimri ayrımı ve completed ürün turu seçimini sınar. |
 | `tests/test_price_statistics.py` | 49 ağsız ve veritabanısız istatistik testi: tam kapsam dönemi, boş/stoksuz geçmiş, sayfa kümesi ve eksik cevap sınırları, 30 gün/14 geçiş/7 gün/18 saat eşikleri, gerçek kontrol zamanı/İstanbul günü, NULL üzerinden geçmeme, bağımsız analitik değişkenlik sonucu, kuruş hassasiyeti, değiştirilemez sonuç ve grafik aralığından bağımsızlık. |
 | `tests/test_contracts.py` | Pydantic sözleşmeleri (74 test): satılabilir teklif fiyat ve satıcı taşır, puan ölçeği aşamaz, üstü çizili fiyat güncel fiyattan büyüktür, katalog kimlik/referans/alan adı kuralları, `money()` kuruş çevirimi. |
-| `tests/test_trendyol_scraper.py`, `tests/test_hepsiburada_scraper.py` | Fiyat okuma (44 + 58 test): seçilen teklif, eşit fiyatta satıcı adı, çizili fiyat, Kritik Stok, Tükendi'nin yalnız açık sinyalle verilmesi, bozuk satıcı kayıtlarının reddi, ret nedenleri, `parse` dönüşümü. Sahte sayfa ve istemci; internete çıkmaz. |
-| `tests/test_discovery.py` | Keşif (247 test): kimlik kuralları, sayfalama ve uyarı türleri, katalog birleştirme (aynı adaylar hep aynı kimlikleri alır), dry-run'ın kataloğa yazmaması, LF satır sonu, BOM'lu ayar dosyaları, UTF-8 çıktı, çıkış kodları ve gerçek `config/*.json` dosyalarının sözleşmeye uyması. Ekli aksesuarlar model, başlık/yapısal kapasite, birden çok ürün adı ve kategori düzeyinde reddedilir; kayıtlı 21 telefonun kimlik kabulü korunur. Zamanlanmış keşif (log ve tarihli rapor, `--dry-run` zorunluluğu, konsolsuz çalışma, kilit meşgul, program hatası, log açılamaması, rapor klasörünün baştan denetimi, özet satırı) ve `--apply-report` (siteye gitmez, canlı yazmayla bayt bayt aynı katalog, ikinci uygulamada yazmama, önizleme olmayan/bozuk/sarmalı/yabancı alan adlı/önizlemeyi aşan rapor reddi) ağsız sınanır. Trendyol filtre uyarısının tek yazılması ve tarama sonrası yazma hatasının ("Tarama bitti ama sonuç yazılamadı", çıkış 1; log dahil) "başlatılamadı"dan ayrılması da burada denenir. |
+| `tests/test_trendyol_scraper.py`, `tests/test_hepsiburada_scraper.py` | Fiyat okuma (66 + 58 test): seçilen teklif, eşit fiyatta satıcı adı, çizili fiyat, Kritik Stok, Tükendi'nin yalnız açık sinyalle verilmesi, bozuk satıcı kayıtlarının reddi, ret nedenleri, `parse` dönüşümü. Sahte sayfa ve istemci; internete çıkmaz. |
+| `tests/test_discovery.py` | Keşif (300 test): kimlik kuralları, sayfalama ve uyarı türleri, katalog birleştirme (aynı adaylar hep aynı kimlikleri alır), dry-run'ın kataloğa yazmaması, LF satır sonu, BOM'lu ayar dosyaları, UTF-8 çıktı, çıkış kodları ve gerçek `config/*.json` dosyalarının sözleşmeye uyması. Ekli aksesuarlar model, başlık/yapısal kapasite, birden çok ürün adı ve kategori düzeyinde reddedilir; kayıtlı 21 telefonun kimlik kabulü korunur. Zamanlanmış keşif (log ve tarihli rapor, `--dry-run` zorunluluğu, konsolsuz çalışma, kilit meşgul, program hatası, log açılamaması, rapor klasörünün baştan denetimi, özet satırı) ve `--apply-report` (siteye gitmez, canlı yazmayla bayt bayt aynı katalog, ikinci uygulamada yazmama, önizleme olmayan/bozuk/sarmalı/yabancı alan adlı/önizlemeyi aşan rapor reddi) ağsız sınanır. Trendyol filtre uyarısının tek yazılması ve tarama sonrası yazma hatasının ("Tarama bitti ama sonuç yazılamadı", çıkış 1; log dahil) "başlatılamadı"dan ayrılması da burada denenir. |
 | `tests/test_collection.py` | Toplama turu (68 test; 63'ü gerçek PostgreSQL'de): sahte scraper'larla her sonuç türü, Ctrl+C, tur ortasında veritabanı hatası, yarım kalan tur, başka süreçteki tur, iki kilidin her durumda bırakılması, pasif sayfa/ürün/platform, ön ek, çıkış kodları (keşif ve `live_scraper_check` kilit meşgulken 3 verir) ve zamanlanmış turun log dosyası (ekran akışı yokken ve log açılamazken dahil). Kapanış sonrası özet SQL hatası, bağlantının kapatılması ve Ctrl+C, elle/zamanlanmış girişlerde sınanır; turun ve sonuçların bütün alanları, kilitler, log ve sonraki tur korunur (7 test). Tur sonu ikinci okuma (18 test): `network` düzelince satırın değişmesi, ikinci hatada ilk satırın (mesaj ve zaman damgasıyla) kalması, `network` dışındaki hataların hiç yeniden okunmaması, bir sayfanın en çok bir kez yeniden okunması, ardışık 5 hatada durma ve düzelmede sayaç sıfırlama, veritabanı reddi, Ctrl+C, tur notu (ön ekle birlikte), görünümde sahte "karşılaştırılamaz" oluşmaması ve `rewrite_network_result`'ın yalnız `network` satırına ve süren tura yazması. |
 | `tests/test_catalog_sync.py` | Katalog eşitleme (29 test; 13'ü gerçek PostgreSQL'de): kararlar veritabanısız, yazma/deneme/çakışma ve komut satırı veritabanında. |
 | `tests/test_database.py` | Migration koşucusu, şemanın bütün `CHECK`/`UNIQUE`/yabancı anahtar kuralları (her biri geçerli ve geçersiz örnekle), `migrate`/`status` komutları (yeniden adlandırılan migration dahil) ve iki emniyet kemerinin kendisi; 002'nin iki `CHECK` kuralı, silme/kimlik değişimi/yazılmış sonucu değiştirme tetikleyicileri (her tabloda), kodun gerçek güncellemelerinin hâlâ geçtiği ve "bilerek silme" yolu da burada denenir. 003 için kapanmış turun ilk sonuç yazımı, durum/bitiş zamanı koruması, not güncellemesi, eşzamanlı kapanış/yazım ve mevcut kayıtlarla migration geçişi sınanır (150 test; 138'i gerçek PostgreSQL'de). |
@@ -881,10 +881,11 @@ kullanıldı. 2/3 API satıcı puanı, aynı listingId fiyat yanıtı ve SKU ür
 bağlamı eşleşti; regular=current → original_price=null. Trendyol ürün
 verisi `__envoy__SHARED_PROPS.product` içindedir; 5/6 özellikleri 5G,
 7 özellikleri açık 4G bildirir. Yedi teknik scraper sonucu doğru olsa da
-7 başlık/özellik ağ çelişkisi nedeniyle kabul edilmez. Mevcut identify
-başlık/model/kapasiteyi sınar; yapısal ağ çelişkisini reddeden koruma yok.
-Gerçek örnekle ayrı dar düzeltme planı/regresyon onayı gerekir; bu grupta
-kod değiştirilmedi. Fiziksel ağ/RAM ve yanlış alanın hangisi kesinleşmedi;
+7 başlık/özellik ağ çelişkisi nedeniyle kabul edilmez. İlk incelemede identify
+başlık/model/kapasiteyi sınıyordu; bu yapısal ağ çelişkisi için koruma yoktu.
+Sonradan ayrı kullanıcı onaylı dar ortak koruma uygulandı; aşağıdaki
+uygulama kaydı esas alınır. Bu grubun kaynak incelemesinde kod değiştirilmedi.
+Fiziksel ağ/RAM ve yanlış alanın hangisi kesinleşmedi;
 RAM için yeni ürün grubu/şema kararı verilmedi.
 
 Grup ham_kaynak_dogrulama.json ve grup_sonucu.json sonucu 6 doğrulandı/
@@ -895,7 +896,8 @@ katalog parmak izleri değişmedi; katalog 59 ürün/334 bağlantı/332 etkin.
 Altı Yenilio adayı ve TY797850359 uyuşmazlık; HBCV00005PZUWE/5PZUWG ağ
 kanıtı, HBCV0000A1GTQO renk kanıtı yetersiz. Özgün 25 adaylı rapor
 uygulanmaz. Kabul edilen 15 adayı güvenle seçme çözümü, yeni ağ koruması
-ve katalog uygulaması ayrı plan/onay bekler. Yalnız 15 aday ileride kabul
+ve katalog uygulaması bu inceleme anında ayrı plan/onay bekliyordu; ağ
+koruması sonradan aşağıdaki kayıtla uygulandı. Yalnız 15 aday ileride kabul
 edilip uygulanırsa koşullu sayı 59/349/347; bu sayı uygulanmış durum değildir.
 Son grupta duruldu; Adım 1 inceleme tamam, katalog bakımı/ML öncesi diğer
 ana adımlar tamamlanmadı. Ham dosyalar/özet Git dışında kalır.
@@ -913,10 +915,51 @@ kapanis_testleri_20261014.xml ve kapanis_testleri_20261014_proje_temp.xml.
 Bu klasör geçicidir; aynı --basetemp yolu yeniden kullanılmadan önce
 pytest'in klasörü temizlediği dikkate alınmalıdır. Kaynak/katalog/test
 kodunda bu erişim sorunu için değişiklik yapılmadı. Bu kontroller Yenilio
-koruması ve mevcut kuralları sınar; yeni ağ çelişkisi henüz kodla korunmuyor.
+koruması ve mevcut kuralları sınar; bu gönderim öncesi kayıtta yeni ağ
+çelişkisi henüz kodla korunmuyordu. Sonraki uygulama kaydı aşağıdadır.
 Kullanıcı 14 Ekim'de gösterilen yedi dosya ve Türkçe mesajla commit/push
 işlemini onayladı; aynı yeni SHA CI gönderim akışında doğrulanır. Katalog
 uygulaması ve yeni ağ koruması için ayrı plan/onay gereksinimi sürer.
+
+**Dar ağ koruması (14 Ekim; kullanıcı onayıyla uygulandı):** Trendyol'da
+hedef/katalog modelinde bütün sözcük olarak açık 5G bulunurken aynı ürünün
+Mobil Bağlantı Hızı özelliği mevcut network_type ile 4G okunuyorsa,
+parsing.verify_model_network(model, value) identity hatası verir.
+4.5G/4,5G/LTE/4G LTE mevcut 4G yazımlarıdır; 5G+/5G NR/4G/5G desteği
+mevcut 5G tanımındadır. Özellik yok veya tanınmıyorsa yeni çıkarım yok;
+modelde 5G olmaması 4G kanıtı sayılmaz. Bu ek kontrol için keşif hedefinde
+network tanımı gerekmez; mevcut tanımlı network denetimi ayrıca sürer.
+
+Trendyol keşfinde model/kapasite sonrası ve adaydan önce; scraper'da
+model/kapasite/ürün kimliği sonrası ve satıcı fiyatından önce aynı ortak
+kontrol çağrılır. Ret fiyat gözlemi/Tükendi veya aday üretmez. Hata mesajı:
+"Ağ türü modelle eşleşmiyor (4G, beklenen 5G): Redmi Note 13 Pro 5G".
+fetch(listing) → PriceObservation, HTTP yolu, rapor/katalog/sözleşme ve
+şema korunur. Hepsiburada için yeni kimlik kuralı/RAM gruplaması eklenmedi.
+
+tests/fixtures/discovery/trendyol_network_examples.json, üç gerçek 14:10
+HTML'inin gereken ürün/teklif alanlarını kaynak SHA'larıyla tutar:
+797850359 çelişkili, 1066280208 ve 1097892676 doğru 5G kontrolleri.
+Eski kodda altı gerçek örnek testinden iki ret testi başarısız, dört doğru
+kontrol başarılıydı. Yeni kodda **34 regresyon geçti**: altı gerçek örnek,
+24 iki tüketicide türetilmiş ağ değeri, dört model sözcük sınırı/çıkarım
+koruması. Türetilmiş değerler test girdileridir, yeni canlı ürün kanıtı değil.
+Asıl üç tam HTML de HTTP'yi reddeden istemciyle yeniden okundu: sorunlu
+sayfa iki yolda identity, doğru iki gözlem ve aday bütün alanlarıyla aynı.
+Son grubun 23 ham dosyası/özgün rapor/config/katalog hashleri korundu.
+Bu kaynak/test doğrulamasıdır; siteye yeni canlı istek yapılmadı.
+
+Tam pytest **1751 passed/0 skipped/xfail**, 158,38 sn; Black 74 dosya temiz,
+Flake8 temiz. İki TEST_* adresi fiyat_takip_test; gerçek DATABASE_URL ve
+API_DATABASE_URL test sürecinden kaldırılıp sonunda geri alındı.
+Önceki Windows temp erişim nedeniyle yeni proje içi --basetemp izinli
+çalıştırıldı; cacheprovider kapatıldı. İki mevcut bağımlılık deprecation
+uyarısı var. Kanıtlar Git dışı ag_kimligi_koruma.json,
+ag_koruma_regresyon_once.xml/ag_koruma_regresyon_sonra.xml/
+ag_koruma_tam_testler.xml. İşlem verilen adım sonu gönderim yetkisiyle
+dosya listesi/Türkçe mesaj, commit/push ve aynı SHA CI ile kapatılır.
+Kaynak çelişkisi düzeltilmiş sayılmaz; TY797850359 aday kararı hâlâ
+uyuşmazlık, toplam 15 doğrulandı/7 uyuşmazlık/3 kanıt yetersiz değişmedi.
 
 ### Piyasa geçmişi araştırması (Adım 8)
 
@@ -3132,6 +3175,12 @@ böylece keşfin kabul ettiği sayfayı scraper aynı girdilerle reddetmez.
   Ultra sayılıyordu (canlıda `catalog_conflict` olarak yakalandı).
 - Hedefin `exclude_terms` ifadelerini içeren başlıklar reddedilir; hedefte
   `network` varsa sayfanın yapısal ağ türü hedefle çelişemez.
+- Trendyol'da model adında açık 5G varsa yapısal Mobil Bağlantı Hızı değeri
+  açık 4G olduğunda verify_model_network iki tüketicide de identity verir.
+  4.5G/4,5G/LTE/4G LTE mevcut network_type ile 4G sayılır. Değer eksik/
+  tanınmıyorsa bu koruma yeni çıkarım yapmaz; 5G+, 5G NR ve 4G/5G mevcut
+  5G tanımında kabul edilir. Kontrol fiyat/adaydan önce uygulanır; modelde
+  5G yazmaması 4G kabul kuralı değildir. Kaynak 797850359, 14 Ekim.
 
 6 Ekim ekli aksesuar bakımının kaynak kanıtları: `data/trace_s25.json` içindeki
 Hepsiburada `HBCV00007I6EKM` başlığında "Hızlı Sarj Adaptörü";
@@ -3186,7 +3235,7 @@ temiz. Gerçek DB, katalog ve uygulanmış migration dosyaları değişmedi.
 
 ## Testler ne kanıtlar, ne kanıtlamaz
 
-- **Otomatik testler (1717; 434'ü gerçek PostgreSQL'de):** Kuralların doğru
+- **Otomatik testler (1751; 434'ü gerçek PostgreSQL'de):** Kuralların doğru
   çalıştığını kayıtlı ve sahte yanıtlarla kanıtlar. Kimlik değişiklikleri gerçek
   kaynak örneği ve regresyon ister; 7 Ekim varyant ve adres bakımları kullanıcının
   her maddeye ayrı onayıyla yapay çelişkilere karşı önleyici koruma olarak uygulandı.

@@ -15,6 +15,7 @@ from app.scraper.parsing import (
     storage_gb,
     trendyol_product_id,
     verify_identity,
+    verify_model_network,
 )
 
 
@@ -145,6 +146,10 @@ class Scraper(BaseScraper):
         if _product_id(listing.url) != str(product["id"]):
             raise FetchError("identity", "Trendyol ürün kimliği değişmiş")
 
+        verify_model_network(
+            listing.model,
+            attribute(product.get("attributes") or [], "Mobil Bağlantı Hızı"),
+        )
         merchant_listing = product.get("merchantListing") or {}
         merchant = merchant_listing.get("merchant") or {}
         winner_variant = merchant_listing.get("winnerVariant") or {}

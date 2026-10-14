@@ -1,4 +1,5 @@
 import json
+from copy import deepcopy
 from pathlib import Path
 
 import pytest
@@ -573,3 +574,83 @@ def test_yenilio_seller_name_alone_preserves_offer(scraper, listing):
     observation = scraper.parse(product_html(merchant={"name": "Yenilio"}), listing)
     assert observation.seller_name == "Yenilio"
     assert observation.current_price == 5_724_900
+
+
+NETWORK_EXAMPLES = json.loads(
+    (
+        Path(__file__).parent / "fixtures/discovery/trendyol_network_examples.json"
+    ).read_text(encoding="utf-8")
+)
+
+
+def test_saved_network_conflict_rejected_before_price(scraper, monkeypatch):
+    example = NETWORK_EXAMPLES["conflicting_product"]
+
+    def unexpected_price(price):
+        pytest.fail("Ağ türü çelişen ürünün fiyatı okunmamalı")
+
+    monkeypatch.setattr("app.scraper.trendyol_scraper._price", unexpected_price)
+    with pytest.raises(FetchError, match="Ağ türü") as error:
+        scraper.parse(
+            saved_scope_html(example), ProductListing.model_validate(example["listing"])
+        )
+    assert error.value.code == "identity"
+    assert scraper._last_offers == []
+
+
+@pytest.mark.parametrize(
+    "example",
+    NETWORK_EXAMPLES["consistent_products"],
+    ids=lambda example: str(example["product"]["id"]),
+)
+def test_saved_network_preserves_offer(scraper, example):
+    observation = scraper.parse(
+        saved_scope_html(example), ProductListing.model_validate(example["listing"])
+    )
+    assert (
+        observation.model_dump(mode="json", exclude={"timestamp"})
+        == example["expected_observation"]
+    )
+
+
+@pytest.mark.parametrize(
+    "value, accepted",
+    [
+        (None, True),
+        ("", True),
+        ("3G", True),
+        ("5G", True),
+        ("5G+", True),
+        ("5G NR", True),
+        ("4G/5G", True),
+        ("4G", False),
+        ("4.5G", False),
+        ("4,5G", False),
+        ("LTE", False),
+        ("4G LTE", False),
+    ],
+)
+def test_derived_network_values_control_offer(scraper, value, accepted):
+    example = deepcopy(NETWORK_EXAMPLES["consistent_products"][0])
+    product = example["product"]
+    product["attributes"] = [
+        item
+        for item in product["attributes"]
+        if item["key"]["name"] != "Mobil Bağlantı Hızı"
+    ]
+    if value is not None:
+        product["attributes"].append(
+            {"key": {"name": "Mobil Bağlantı Hızı"}, "value": {"name": value}}
+        )
+    listing = ProductListing.model_validate(example["listing"])
+    if accepted:
+        observation = scraper.parse(saved_scope_html(example), listing)
+        assert (
+            observation.model_dump(mode="json", exclude={"timestamp"})
+            == example["expected_observation"]
+        )
+    else:
+        with pytest.raises(FetchError, match="Ağ türü") as error:
+            scraper.parse(saved_scope_html(example), listing)
+        assert error.value.code == "identity"
+        assert scraper._last_offers == []

@@ -57,6 +57,9 @@ eskisi düzeltilir; belge baştan yazılmaz.
 - Adım adım ilerle ve her adımdan sonra dur. Her değişiklikte amacı, akışa
   bağlantısını, doğrulamayı ve açık sınırları anlat; terimleri açıkla. Hızlı ve
   toplu değişiklik kullanıcıyı kaybettirir.
+- Her adıma başlamadan önce sorunu, çözüm yaklaşımını, ilgili dosyaları ve
+  nasıl doğrulanacağını basit Türkçeyle açıkla; kullanıcı mühendislik
+  kararının nedenini uygulamadan önce görebilsin (14 Ekim kullanıcı kararı).
 - Kararlar netleşmeden kod yazma: önce plan, sonra kullanıcının onayı. Plan veya
   açıklama istendiğinde kod üretme.
 - Yeni mimari seçimleri kullanıcıyla netleştir. Kullanıcının güncel kararı eski
@@ -131,6 +134,11 @@ eskisi düzeltilir; belge baştan yazılmaz.
   2. Dosya listesi ve Türkçe commit mesajı kullanıcıya gösterilir.
   3. Kullanıcı onaylarsa commit ve push yapılır.
   4. Push sonrası CI (GitHub Actions) yeşil olmalıdır.
+- 14 Ekim'de kullanıcı, ML öncesi kalan bakım dizisinin önerilen sırada
+  yürütülmesini ve tamamlanan her adımda commit/push yapılmasını istedi.
+  Bu dizi için gönderim yetkisi verilmiştir; dosya listesi/Türkçe mesaj ve
+  test sonuçları yine gösterilir, aynı SHA CI doğrulanır. Uygulama planının
+  ve katalog raporunun ayrı kabulü bu gönderim yetkisinden çıkarılmaz.
 - Commit'lerde ve PR'larda yazar yalnız kullanıcıdır (Emir-Ars).
   `Co-Authored-By` satırı veya herhangi bir yapay zekâ imzası (Claude, Codex…)
   eklenmez.

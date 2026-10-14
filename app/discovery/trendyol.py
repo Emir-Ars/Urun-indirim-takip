@@ -18,6 +18,7 @@ from app.scraper.parsing import (
     normalize,
     storage_gb,
     trendyol_product_id,
+    verify_model_network,
 )
 from app.scraper.trendyol_scraper import product_capacity
 
@@ -273,6 +274,7 @@ class Discovery(BaseDiscovery):
             exclude=self.target.exclude_terms,
         )
         attrs = product.get("attributes") or []
+        verify_model_network(self.target.model, attribute(attrs, "Mobil Bağlantı Hızı"))
         if self.target.network:
             self.verify_network(attribute(attrs, "Mobil Bağlantı Hızı"), [name])
         # Renk, sayfanın renk seçicisindeki addır (varyant listesi, ör. "Abis").

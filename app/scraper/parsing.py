@@ -172,6 +172,16 @@ def network_type(value) -> str | None:
     return None
 
 
+def verify_model_network(model: str, value) -> None:
+    """Model adında açık 5G varken ürün özelliği 4G diyorsa kimliği reddeder."""
+    # 5G modelde açık 4G çelişkidir; boş alan veya 5G'siz model ağ kanıtı değildir.
+    if excluded_term([model], ["5G"]) and network_type(value) == "4G":
+        raise FetchError(
+            "identity",
+            f"Ağ türü modelle eşleşmiyor (4G, beklenen 5G): {model[:160]}",
+        )
+
+
 def page_capacity(names: list[str], structured: int | None = None) -> int | None:
     """Yapısal kapasite ve başlıklardaki tekil kapasiteler çelişmiyorsa kapasite.
 

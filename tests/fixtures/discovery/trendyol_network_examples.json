@@ -1,0 +1,544 @@
+{
+  "source_recorded_at_utc": "2026-10-14T11:10:08.7680514Z",
+  "target": {
+    "key": "xiaomi_redmi_note_13_pro_5g",
+    "brand": "Xiaomi",
+    "model": "Redmi Note 13 Pro 5G",
+    "active": true,
+    "exclude_terms": [],
+    "network": null
+  },
+  "conflicting_product": {
+    "source_file": "artifacts/ml_oncesi_inceleme_20261013/11_xiaomi_redmi_note_13_pro_5g_512gb/tani_20261014_141008_752/yanitlar/trendyol_797850359/0001.html",
+    "source_sha256": "7e19ec3812af5b9cddf9cb7151984fdea6124a34a5bdc0dadf25d9c5707da59a",
+    "url": "https://www.trendyol.com/xiaomi/redmi-note-13-pro-5g-12-gb-ram-512-gb-mavi-cep-telefonu-xiaomi-turkiye-garantili-p-797850359",
+    "product": {
+      "id": 797850359,
+      "name": "Redmi Note 13 Pro 5G 12 GB RAM 512 GB Mavi Cep Telefonu (Xiaomi Türkiye Garantili)",
+      "brand": {
+        "id": 11079,
+        "name": "Xiaomi"
+      },
+      "businessUnitData": {
+        "id": 100116,
+        "name": "Mobile Phone",
+        "isDigitalGoods": false,
+        "isSexualContent": false
+      },
+      "category": {
+        "id": 5474,
+        "name": "Android Cep Telefonu",
+        "hierarchy": "Elektronik/Telefon/Akıllı Cep Telefonu/Android Cep Telefonu",
+        "isVASEnabled": true,
+        "isCreditSuitable": true,
+        "bankType": {
+          "name": "MOBILE_PHONE",
+          "id": 3
+        }
+      },
+      "slicingAttributes": {
+        "DsmColor": "Mavi",
+        "Internal Memory": "512 GB"
+      },
+      "inStock": true,
+      "attributes": [
+        {
+          "key": {
+            "id": 24,
+            "name": "Dahili Hafıza"
+          },
+          "value": {
+            "id": 7120,
+            "name": "512 GB"
+          },
+          "type": "Internal Memory"
+        },
+        {
+          "key": {
+            "id": 290,
+            "name": "Garanti Tipi"
+          },
+          "value": {
+            "id": 165569,
+            "name": "Xiaomi Türkiye Garantili"
+          },
+          "type": "Warranty Type"
+        },
+        {
+          "key": {
+            "id": 523,
+            "name": "RAM Kapasitesi"
+          },
+          "value": {
+            "id": 24666,
+            "name": "8 GB"
+          },
+          "type": "Ram (System Memory)"
+        },
+        {
+          "key": {
+            "id": 691,
+            "name": "Mobil Bağlantı Hızı"
+          },
+          "value": {
+            "id": 255873,
+            "name": "4G"
+          },
+          "type": "DEFAULT"
+        },
+        {
+          "key": {
+            "id": 348,
+            "name": "Renk"
+          },
+          "value": {
+            "id": 9,
+            "name": "Mavi"
+          },
+          "type": "WebColor"
+        }
+      ],
+      "merchantListing": {
+        "merchant": {
+          "name": "Doğa Bilişim",
+          "sellerScore": {
+            "value": 9,
+            "color": "#049B24"
+          }
+        },
+        "winnerVariant": {
+          "listingId": "08b6068a4fa467b2537d3cc31eb0e529",
+          "price": {
+            "currency": "TRY",
+            "discountedPrice": {
+              "value": 23999,
+              "text": "23.999 TL"
+            },
+            "sellingPrice": {
+              "value": 23999,
+              "text": "23.999 TL"
+            },
+            "originalPrice": {
+              "value": 23999,
+              "text": "23.999 TL"
+            },
+            "rrp": {
+              "text": "NaN TL"
+            },
+            "discountPercentage": 0,
+            "profitMargin": 0,
+            "couponApplicablePrice": {
+              "value": 23999,
+              "text": "23.999 TL"
+            },
+            "tyPlusCouponApplicablePrice": {
+              "value": 23999,
+              "text": "23.999 TL"
+            },
+            "discountedPriceAfterNoLimitPromotions": {
+              "value": 23999,
+              "text": "23.999 TL"
+            }
+          },
+          "inStock": true,
+          "sellable": true,
+          "isRunningOut": true
+        }
+      }
+    },
+    "listing": {
+      "listing_id": "trendyol_797850359",
+      "product_id": 52,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/xiaomi/redmi-note-13-pro-5g-12-gb-ram-512-gb-mavi-cep-telefonu-xiaomi-turkiye-garantili-p-797850359",
+      "color": "Mavi",
+      "active": true,
+      "product_name": "Xiaomi Redmi Note 13 Pro 5G 512 GB",
+      "model": "Redmi Note 13 Pro 5G",
+      "storage_gb": 512
+    },
+    "expected_observation": {
+      "listing_id": "trendyol_797850359",
+      "product_id": 52,
+      "platform": "trendyol",
+      "product_name": "Xiaomi Redmi Note 13 Pro 5G 512 GB",
+      "product_url": "https://www.trendyol.com/xiaomi/redmi-note-13-pro-5g-12-gb-ram-512-gb-mavi-cep-telefonu-xiaomi-turkiye-garantili-p-797850359",
+      "current_price": 2399900,
+      "original_price": null,
+      "seller_name": "Doğa Bilişim",
+      "seller_rating": 9.0,
+      "seller_rating_scale": 10.0,
+      "stock_status": "Kritik Stok",
+      "currency": "TRY"
+    },
+    "expected_candidate": {
+      "target_key": "xiaomi_redmi_note_13_pro_5g",
+      "platform": "trendyol",
+      "platform_product_id": "797850359",
+      "url": "https://www.trendyol.com/xiaomi/redmi-note-13-pro-5g-12-gb-ram-512-gb-mavi-cep-telefonu-xiaomi-turkiye-garantili-p-797850359",
+      "brand": "Xiaomi",
+      "model": "Redmi Note 13 Pro 5G",
+      "storage_gb": 512,
+      "color": "Mavi",
+      "ram_gb": 8,
+      "warranty_text": "Xiaomi Türkiye Garantili",
+      "warranty_source": "product.attributes"
+    }
+  },
+  "consistent_products": [
+    {
+      "source_file": "artifacts/ml_oncesi_inceleme_20261013/11_xiaomi_redmi_note_13_pro_5g_512gb/tani_20261014_141008_752/yanitlar/trendyol_1066280208/0001.html",
+      "source_sha256": "179e266dd3b732c99586626264fa428fb52e44f87ad6b9540d7a99c4b529a602",
+      "url": "https://www.trendyol.com/xiaomi/redmi-note-13-pro-5g-12-gb-ram-512-gb-beyaz-cep-telefonu-turkiye-garantili-p-1066280208",
+      "product": {
+        "id": 1066280208,
+        "name": "Redmi Note 13 Pro 5G 12 GB RAM 512 GB BEYAZ Cep Telefonu (Türkiye Garantili)",
+        "brand": {
+          "id": 11079,
+          "name": "Xiaomi"
+        },
+        "businessUnitData": {
+          "id": 100116,
+          "name": "Mobile Phone",
+          "isDigitalGoods": false,
+          "isSexualContent": false
+        },
+        "category": {
+          "id": 5474,
+          "name": "Android Cep Telefonu",
+          "hierarchy": "Elektronik/Telefon/Akıllı Cep Telefonu/Android Cep Telefonu",
+          "isVASEnabled": true,
+          "isCreditSuitable": true,
+          "bankType": {
+            "name": "MOBILE_PHONE",
+            "id": 3
+          }
+        },
+        "slicingAttributes": {
+          "DsmColor": "Beyaz",
+          "Internal Memory": "512 GB"
+        },
+        "inStock": true,
+        "attributes": [
+          {
+            "key": {
+              "id": 24,
+              "name": "Dahili Hafıza"
+            },
+            "value": {
+              "id": 7120,
+              "name": "512 GB"
+            },
+            "type": "Internal Memory"
+          },
+          {
+            "key": {
+              "id": 523,
+              "name": "RAM Kapasitesi"
+            },
+            "value": {
+              "id": 24667,
+              "name": "12 GB"
+            },
+            "type": "Ram (System Memory)"
+          },
+          {
+            "key": {
+              "id": 691,
+              "name": "Mobil Bağlantı Hızı"
+            },
+            "value": {
+              "id": 255875,
+              "name": "5G"
+            },
+            "type": "DEFAULT"
+          },
+          {
+            "key": {
+              "id": 290,
+              "name": "Garanti Tipi"
+            },
+            "value": {
+              "id": 7206,
+              "name": "KVK Garantili"
+            },
+            "type": "Warranty Type"
+          },
+          {
+            "key": {
+              "id": 348,
+              "name": "Renk"
+            },
+            "value": {
+              "id": 3,
+              "name": "Beyaz"
+            },
+            "type": "WebColor"
+          }
+        ],
+        "merchantListing": {
+          "merchant": {
+            "name": "Doğa Bilişim",
+            "sellerScore": {
+              "value": 9,
+              "color": "#049B24"
+            }
+          },
+          "winnerVariant": {
+            "listingId": "d6cdf3cce68eb2f1f756829df2eb69a2",
+            "price": {
+              "currency": "TRY",
+              "discountedPrice": {
+                "value": 23999,
+                "text": "23.999 TL"
+              },
+              "sellingPrice": {
+                "value": 23999,
+                "text": "23.999 TL"
+              },
+              "originalPrice": {
+                "value": 23999,
+                "text": "23.999 TL"
+              },
+              "rrp": {
+                "text": "NaN TL"
+              },
+              "discountPercentage": 0,
+              "profitMargin": 0,
+              "couponApplicablePrice": {
+                "value": 23999,
+                "text": "23.999 TL"
+              },
+              "tyPlusCouponApplicablePrice": {
+                "value": 23999,
+                "text": "23.999 TL"
+              },
+              "discountedPriceAfterNoLimitPromotions": {
+                "value": 23999,
+                "text": "23.999 TL"
+              }
+            },
+            "inStock": true,
+            "sellable": true,
+            "isRunningOut": true
+          }
+        }
+      },
+      "listing": {
+        "listing_id": "trendyol_1066280208",
+        "product_id": 52,
+        "platform": "trendyol",
+        "url": "https://www.trendyol.com/xiaomi/redmi-note-13-pro-5g-12-gb-ram-512-gb-beyaz-cep-telefonu-turkiye-garantili-p-1066280208",
+        "color": "Beyaz",
+        "active": true,
+        "product_name": "Xiaomi Redmi Note 13 Pro 5G 512 GB",
+        "model": "Redmi Note 13 Pro 5G",
+        "storage_gb": 512
+      },
+      "expected_observation": {
+        "listing_id": "trendyol_1066280208",
+        "product_id": 52,
+        "platform": "trendyol",
+        "product_name": "Xiaomi Redmi Note 13 Pro 5G 512 GB",
+        "product_url": "https://www.trendyol.com/xiaomi/redmi-note-13-pro-5g-12-gb-ram-512-gb-beyaz-cep-telefonu-turkiye-garantili-p-1066280208",
+        "current_price": 2399900,
+        "original_price": null,
+        "seller_name": "Doğa Bilişim",
+        "seller_rating": 9.0,
+        "seller_rating_scale": 10.0,
+        "stock_status": "Kritik Stok",
+        "currency": "TRY"
+      },
+      "expected_candidate": {
+        "target_key": "xiaomi_redmi_note_13_pro_5g",
+        "platform": "trendyol",
+        "platform_product_id": "1066280208",
+        "url": "https://www.trendyol.com/xiaomi/redmi-note-13-pro-5g-12-gb-ram-512-gb-beyaz-cep-telefonu-turkiye-garantili-p-1066280208",
+        "brand": "Xiaomi",
+        "model": "Redmi Note 13 Pro 5G",
+        "storage_gb": 512,
+        "color": "Beyaz",
+        "ram_gb": 12,
+        "warranty_text": "KVK Garantili",
+        "warranty_source": "product.attributes"
+      }
+    },
+    {
+      "source_file": "artifacts/ml_oncesi_inceleme_20261013/11_xiaomi_redmi_note_13_pro_5g_512gb/tani_20261014_141008_752/yanitlar/trendyol_1097892676/0001.html",
+      "source_sha256": "04336673b235ee76df41428bccea3a199b8b216f44ff75eefab96d941055c17c",
+      "url": "https://www.trendyol.com/xiaomi/redmi-note-13-pro-5g-16gb-ram-512-gb-akilli-cep-telefonu-turkiye-garantili-p-1097892676",
+      "product": {
+        "id": 1097892676,
+        "name": "Redmi Note 13 Pro 5g 16GB Ram 512 GB Akıllı Cep Telefonu (Türkiye Garantili)",
+        "brand": {
+          "id": 11079,
+          "name": "Xiaomi"
+        },
+        "businessUnitData": {
+          "id": 100116,
+          "name": "Mobile Phone",
+          "isDigitalGoods": false,
+          "isSexualContent": false
+        },
+        "category": {
+          "id": 5474,
+          "name": "Android Cep Telefonu",
+          "hierarchy": "Elektronik/Telefon/Akıllı Cep Telefonu/Android Cep Telefonu",
+          "isVASEnabled": true,
+          "isCreditSuitable": true,
+          "bankType": {
+            "name": "MOBILE_PHONE",
+            "id": 3
+          }
+        },
+        "slicingAttributes": {
+          "DsmColor": "Siyah",
+          "Internal Memory": "512 GB"
+        },
+        "inStock": true,
+        "attributes": [
+          {
+            "key": {
+              "id": 24,
+              "name": "Dahili Hafıza"
+            },
+            "value": {
+              "id": 7120,
+              "name": "512 GB"
+            },
+            "type": "Internal Memory"
+          },
+          {
+            "key": {
+              "id": 523,
+              "name": "RAM Kapasitesi"
+            },
+            "value": {
+              "id": 255826,
+              "name": "16 GB"
+            },
+            "type": "Ram (System Memory)"
+          },
+          {
+            "key": {
+              "id": 691,
+              "name": "Mobil Bağlantı Hızı"
+            },
+            "value": {
+              "id": 255875,
+              "name": "5G"
+            },
+            "type": "DEFAULT"
+          },
+          {
+            "key": {
+              "id": 290,
+              "name": "Garanti Tipi"
+            },
+            "value": {
+              "id": 7206,
+              "name": "KVK Garantili"
+            },
+            "type": "Warranty Type"
+          },
+          {
+            "key": {
+              "id": 348,
+              "name": "Renk"
+            },
+            "value": {
+              "id": 14,
+              "name": "Siyah"
+            },
+            "type": "WebColor"
+          }
+        ],
+        "merchantListing": {
+          "merchant": {
+            "name": "Doğa Bilişim",
+            "sellerScore": {
+              "value": 9,
+              "color": "#049B24"
+            }
+          },
+          "winnerVariant": {
+            "listingId": "570a6bb44016051bedcd74ab45efb7d6",
+            "price": {
+              "currency": "TRY",
+              "discountedPrice": {
+                "value": 27999,
+                "text": "27.999 TL"
+              },
+              "sellingPrice": {
+                "value": 27999,
+                "text": "27.999 TL"
+              },
+              "originalPrice": {
+                "value": 27999,
+                "text": "27.999 TL"
+              },
+              "rrp": {
+                "text": "NaN TL"
+              },
+              "discountPercentage": 0,
+              "profitMargin": 0,
+              "couponApplicablePrice": {
+                "value": 27999,
+                "text": "27.999 TL"
+              },
+              "tyPlusCouponApplicablePrice": {
+                "value": 27999,
+                "text": "27.999 TL"
+              },
+              "discountedPriceAfterNoLimitPromotions": {
+                "value": 27999,
+                "text": "27.999 TL"
+              }
+            },
+            "inStock": true,
+            "sellable": true,
+            "isRunningOut": true
+          }
+        }
+      },
+      "listing": {
+        "listing_id": "trendyol_1097892676",
+        "product_id": 52,
+        "platform": "trendyol",
+        "url": "https://www.trendyol.com/xiaomi/redmi-note-13-pro-5g-16gb-ram-512-gb-akilli-cep-telefonu-turkiye-garantili-p-1097892676",
+        "color": "Siyah",
+        "active": true,
+        "product_name": "Xiaomi Redmi Note 13 Pro 5G 512 GB",
+        "model": "Redmi Note 13 Pro 5G",
+        "storage_gb": 512
+      },
+      "expected_observation": {
+        "listing_id": "trendyol_1097892676",
+        "product_id": 52,
+        "platform": "trendyol",
+        "product_name": "Xiaomi Redmi Note 13 Pro 5G 512 GB",
+        "product_url": "https://www.trendyol.com/xiaomi/redmi-note-13-pro-5g-16gb-ram-512-gb-akilli-cep-telefonu-turkiye-garantili-p-1097892676",
+        "current_price": 2799900,
+        "original_price": null,
+        "seller_name": "Doğa Bilişim",
+        "seller_rating": 9.0,
+        "seller_rating_scale": 10.0,
+        "stock_status": "Kritik Stok",
+        "currency": "TRY"
+      },
+      "expected_candidate": {
+        "target_key": "xiaomi_redmi_note_13_pro_5g",
+        "platform": "trendyol",
+        "platform_product_id": "1097892676",
+        "url": "https://www.trendyol.com/xiaomi/redmi-note-13-pro-5g-16gb-ram-512-gb-akilli-cep-telefonu-turkiye-garantili-p-1097892676",
+        "brand": "Xiaomi",
+        "model": "Redmi Note 13 Pro 5G",
+        "storage_gb": 512,
+        "color": "Siyah",
+        "ram_gb": 16,
+        "warranty_text": "KVK Garantili",
+        "warranty_source": "product.attributes"
+      }
+    }
+  ]
+}
