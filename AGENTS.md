@@ -60,6 +60,12 @@ eskisi düzeltilir; belge baştan yazılmaz.
 - Her adıma başlamadan önce sorunu, çözüm yaklaşımını, ilgili dosyaları ve
   nasıl doğrulanacağını basit Türkçeyle açıkla; kullanıcı mühendislik
   kararının nedenini uygulamadan önce görebilsin (14 Ekim kullanıcı kararı).
+- Yeni keşif bağlantılarını kullanıcıya tek tek tarayıcıda doğrulatmak rutin
+  iş akışı değildir (14 Ekim kullanıcı kararı). Bakımın sonuna yeterli kimlik
+  kanıtlı adayların otomatik kabulü, eksik/çelişkili adayların katalog dışında
+  tutulması planlandı; henüz uygulanmadı. Manuel kaynak incelemesi yeni bir
+  kaynak/kod sorununun hedefli araştırması için kullanılır. Bu karar ajanın
+  canlı komut çalıştırma veya onaysız commit/push yetkisini değiştirmez.
 - Kararlar netleşmeden kod yazma: önce plan, sonra kullanıcının onayı. Plan veya
   açıklama istendiğinde kod üretme.
 - Yeni mimari seçimleri kullanıcıyla netleştir. Kullanıcının güncel kararı eski

@@ -1069,6 +1069,22 @@ korundu. Dosya listesi/mesaj/doğrulama gösterilip ayrı açık kullanıcı ona
 alınmadan commit/push yapılmaz; ardından aynı SHA CI kontrol edilir.
 Katalog seçimi/uygulaması sonraki ayrı adımdır; burada başlamadı.
 
+**Planlanan son bakım adımı (14 Ekim; uygulanmadı):** kullanıcı rutin yeni
+bağlantıların model/ağ/renk bilgilerini tek tek tarayıcıda kontrol etmek
+istemiyor. Bakımın 2–5 adımları sonrasında yeterli, kendi SKU'suna bağlı ve
+çelişkisiz kimlik kanıtlı adayların otomatik katalog kabulü yapılacak;
+eksik/çelişkili adaylar gerekçeyle dışarıda kalacak. Bir sürenin dolması
+kabul kanıtı değildir. Kullanıcı “1 gün” ile manuel incelemede harcanan
+zamanı kastettiğini netleştirdi; 24 saat bekleme/günlük tekrar görevi yok,
+mevcut haftalık keşif periyodu korunacak. Mevcut görev hâlâ dry-run
+rapor üretir, otomatik katalog yazma devreye alınmadı. Ayrıntılı kurallar/
+rapor/yazma/Git politikası ve gerçek örnek testleri için ayrı uygulama planı
+hazırlanacak; yalnız dry-run bayrağı kaldırılmayacak. Kaynak/kod hatası için
+hedefli canlı araştırma sürebilir; yeni adayların rutin manuel kabulü hedef
+akış değildir. Bu değişiklik API kapanışını yeniden açmaz; diğer bakım,
+ML veri yeterliliği ve sonraki işletim aşamalarını tamamlanmış saymaz.
+Commit/push her seferinde ayrı açık onay ister.
+
 ### Piyasa geçmişi araştırması (Adım 8)
 
 Kaynak seçimi için örnekler: `apple_iphone_16_128gb`,
