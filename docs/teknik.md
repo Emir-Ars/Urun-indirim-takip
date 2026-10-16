@@ -1085,6 +1085,127 @@ akış değildir. Bu değişiklik API kapanışını yeniden açmaz; diğer bak�
 ML veri yeterliliği ve sonraki işletim aşamalarını tamamlanmış saymaz.
 Commit/push her seferinde ayrı açık onay ister.
 
+### Doğrulanan 15 adayın seçili raporu (15–16 Ekim; teknik doğrulama tamam, gönderim bekleniyor)
+
+Bu tek seferlik bakım mevcut --apply-report yolunu kullanır; üretim kodunda
+yeni seçenek yoktur. Özgün 25 adaylı rapor ve inceleme kanıtları korunur.
+Git dışı ml_oncesi_inceleme_20261013/katalog_kabul_15/ altında seçili rapor,
+seçim/parmak izi kaydı, son liste, başlangıç/beklenen katalog kopyası ve
+korumalı uygulama yardımcısı vardır. results[].candidates dahil bütün aday
+listeleri yalnız doğrulanmış 15 kimliği içerir. 7 uyuşmazlık ve 3 kanıt
+yetersiz aday dışarıdadır. Özgün keşif zamanı/tarama uyarıları tarihsel
+bilgidir; ekleme/platform/renk özetleri seçilen 15 aday için yeniden üretilir.
+
+Kopyada 7 ağsız kontrol geçti: mevcut CLI ilkinde 15 bağlantı/sıfır ürün
+ekledi, ikinci kez hiçbir şey yazmadı; mevcut kayıtlar aynı, dışlananlar yok.
+Değiştirilmiş rapor, dışlanmış aday ekleme ve katalog hash uyuşmazlığı durdu.
+AST, sözleşme, tarih, LF/BOM, PowerShell sözdizimi ve -CheckOnly sonunda ortam/
+konum/konsol geri alma sınandı. CLI gerçek HTTP/DB/yeni keşif çağırmadı.
+Kanıt agisiz_dogrulama_20261015_094751_600948/ içinde. Doğrulama alt sürecinde
+betik ilkesi için geçici Process/Bypass kullanıldı; kalıcı ayar değiştirilmedi.
+
+Yardımcının tam akışı kopyada ayrıca iki kez sınandı; kilit meşgulken ve
+bozuk katalogda alt süreç başlamadı, ana süreç ortamı korundu. Bu ek 4
+kontrol ek_dogrulama_20261015_095131/ içinde; toplam 11 yerel kontrol geçti.
+Hazırlık sonrası tam pytest **1751 passed/0 skipped/xfail**, 158,32 sn;
+Black app/tests ve iki yerel yardımcıda 76 dosya, Flake8 temiz. İki mevcut
+bağımlılık uyarısı var. Yalnız TEST_* _test adresleri kullanıldı; gerçek DB
+ortam değişkenleri test alt sürecinden kaldırıldı. Tam kayıtlar
+tam_kontroller_20261015_095034/ altında. Katalog uygulamasından sonra aynı
+kontroller tekrarlandı; sonuç aşağıdaki uygulama kaydındadır.
+
+**Uygulama öncesi katalog 59 ürün/334 bağlantı/332 etkindi.** Hazırlanan fark
+yalnız 15 yeni etkin bağlantı ekler; beklenen 59/349/347. Son liste kullanıcıya
+gösterilip ayrıca kabul edilmeden uygulanmaz. Uygula yardımcısı yalnız
+kabulden sonra kullanıcı terminalinde çalıştırılır; önce ortak scrape.lock,
+kaynak/rapor/katalog/kod hashleri ve aday/ürün eşleşmeleri denetlenir.
+Katalog yalnız başlangıç veya tam beklenen sonuç durumundaysa devam edilir.
+Başka değişiklikte durur; beklenmeyen sonuçta otomatik geri alma yapılmaz.
+Önceki katalog ve stdout/stderr/sonuç yeni tarihli klasörde korunur.
+CATALOG_PATH yalnız işlem süresince ayarlanır, finally ile geri alınır.
+Uygulama siteye gitmez/DB yazmaz; sonraki normal fiyat turu yeni bağlantıları
+eşitler. Normal turdan sonra salt okunur kimlik/sonuç ve bağımsız SQL–API
+teyidi yapılır. Kimlik hatası adım kapanışını engeller; stoksuzluk geçerlidir.
+Tam pytest/Black/Flake8, README sayıları ve gönderim/aynı SHA CI kapanışı
+katalog uygulamasından sonra tamamlanır. Commit ve push ayrı açık onay ister.
+
+**15 Ekim 10:38:** kullanıcı son listedeki 15 bağlantıyı ayrıca kabul etti.
+Kaynak/rapor/katalog hashleri aynı; ortak kilit kontrol anında boştu.
+Kabul ayrı katalog_kabulu_20261015_1038.json kaydındadır; tarihsel hazırlık
+kayıtları yeniden yazılmadı. Gerçek uygulama kullanıcı terminalinde, toplama/
+keşif çalışmıyorken proje kökünde yapılır:
+
+```powershell
+& .\artifacts\ml_oncesi_inceleme_20261013\katalog_kabul_15\uygula.ps1
+```
+
+Beklenen çıkış 0, “Eklendi: 0 ürün, 15 sayfa” ve 59 ürün/349 bağlantı/347
+etkin doğrulamasıdır. Yardımcı uygulama_<zaman>/ altında log ve önceki katalog
+kopyası tutar. Kullanıcı çıktısından sonra gerçek fark doğrulanır. Sabah turu
+33 zaten tamamlandığından normal takvimde sonraki tur 22:00'dir; uygulama
+kendi başına fiyat toplamaz. Kullanıcı komutu 10:41'de çalıştırdı; sonuç aşağıda.
+
+**15 Ekim 10:41 uygulama sonucu:** uygulama_20261015_104152_141915/ altında
+çıkış 0/0 yeni ürün/15 bağlantı, boş stderr ve önceki katalog yedeği var.
+Gerçek katalog beklenen dosyayla birebir aynı: **59 ürün/349 bağlantı/347 etkin**.
+Eski 59 ürün ve 334 bağlantı değişmedi; dışlanan 10 aday eklenmedi. Yeni
+bağlantılar 8 mevcut ürüne bağlıdır. Marka toplamları Apple 174, Samsung 105,
+Xiaomi 66, POCO 4. katalog_dogrulama.json gerçek fark/hash/kimlik kontrolünü
+kaydeder; Git farkı yalnız 120 ek satırdır.
+
+Tur öncesi DB, fiyat_takip_api hesabıyla READ ONLY oturum/transaction içinde
+okundu: hâlâ 59/334/332, son completed tur 33; yeni 15 bağlantı henüz yok.
+Bu beklenen durumdur; DB'yi yalnız normal toplama eşitleyecek. Eski kimlikler
+başlangıç kataloğuyla aynı; db_tur_oncesi_salt_okunur.json başlangıç kanıtıdır.
+Normal takvimde sonraki 22:00 turu bitince yeni 15 kayıt/doğru 8 ürün/kontrol
+sonuçları ve eski kimliklerin korunması salt okunur doğrulanacak. Ardından
+mevcut SQL–API kontrolünü kullanıcı terminalinde çalıştıracak; eski API/ekran
+doğrulaması yeni bağlantıların bu teyidinin yerine geçmez. Bu kapanış bekliyor.
+
+Uygulama sonrası tam pytest **1751 passed/0 skipped/xfail**, 152,83 sn;
+Black app/tests 74 dosya temiz, Flake8 temiz. İki mevcut bağımlılık uyarısı
+var. Test sürecine yalnız TEST_* _test adresleri aktarıldı; gerçek DB adresleri
+kaldırıldı. Kayıt uygulama_sonrasi_kontroller_20261015_104255/ altında.
+README güncel katalog sayılarıyla yenilendi. Normal tur/SQL–API ve adım sonu
+gönderim/CI bu tarihli kayıtta bekleniyordu; doğal tur teyidi aşağıdadır.
+
+**16 Ekim normal tur teyidi:** tur 34 (15 Ekim 22:00) ve tur 35 (16 Ekim
+10:00) 347'şer sayfayla completed. Tur 34: 253 fiyat/93 Tükendi/1 identity;
+tur 35: 251 fiyat/95 Tükendi/1 identity. Yeni 15 sayfada her iki turda
+10 fiyat/5 Tükendi/0 hata. Tek hata eski HB08BCY51 S25/S25+ sayfasıdır;
+bu kabul grubuna ait değildir ve bakım Adım 3'te açık kalır.
+
+READ ONLY API hesabıyla DB ve katalog eşitliği 59/349/347 doğrulandı; eski
+59 ürün/334 bağlantının bütün alanları aynı, yeni 15 kimlik doğru 8 üründe,
+dışlanan 10 aday yok. İki turun bütün log sonuçları DB ile, 59'ar ürünün
+minimumları ve kapsam karşılaştırması ham kayıt hesabıyla eşleşti. Hata
+metni logda mevcut kural gereği 100 karakterdir; DB tam metni korur.
+8 üründe ilk yeni kapsam turu 34 karşılaştırılamıyor, tur 35 karşılaştırılabilir.
+Kanıt normal_tur_kontrolu_20261016_104451/dogrulama.json. Bu işlem DB'ye
+yazmadı; ek fiyat turu veya kaynak isteği yapılmadı.
+
+Bağımsız SQL–API kontrolü bu tur teyidi anında bekliyordu. Kullanıcı mevcut API'yi ayrı
+terminalde yalnız 127.0.0.1:8000 üzerinde, gerçek API okuma hesabıyla başlatır;
+ikinci terminalde tests/manual/api_ui_check.py --output-dir <yeni_klasor>
+çalıştırır. Araç dosyasının SHA'sı F65D36E18D977D2C1AC335F367135DDD42FF2654B2640C865C6B7AA8EE26268D;
+başlangıç hazırlığındakiyle aynı. Normal tur/keşif çalışmıyorken 59 ürün,
+status=verified, exit_code=0 ve sekiz nesnede değişmeyen önce/sonra parmak
+izleri beklenir. Kaynak değişirse inconclusive kesin başarı sayılmaz.
+
+**16 Ekim 11:14 bağımsız SQL–API sonucu:** kullanıcı aracı çalıştırdı;
+sql_api_20261016_111434_728/report.json içinde status=verified, exit_code=0.
+59 ürünün tamamı matched=true/differences=[], current run_id=35;
+endpoint_differences=[] ve changed_relations=[]. schema_migrations, platforms,
+products, listings, collection_runs, listing_checks, market_history ve
+product_run_prices nesnelerinin önce/sonra parmak izleri aynı. Hesap
+fiyat_takip_api, read_only=true. Rapor SHA
+250f23e117f2492b97e9ae77eba6e4a58dde428697e5033030dfd1769dbc74b5.
+Araç ve katalog hashleri hazırlık/uygulamayla eşleşti. Böylece bu 15 bağlantının
+katalog → toplama → DB → API akışı teknik olarak doğrulandı. Yeni ekran
+incelemesi veya pazaryeri isteği yapılmadı. Eski S25/S25+ vakası ayrı açık.
+Gönderilecekler yalnız katalog/README/plan/teknik rehber; yerel kanıtlar Git
+dışında. Ayrı commit ve push onayları ile aynı SHA CI henüz bekleniyor.
+
 ### Piyasa geçmişi araştırması (Adım 8)
 
 Kaynak seçimi için örnekler: `apple_iphone_16_128gb`,

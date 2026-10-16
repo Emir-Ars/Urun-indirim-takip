@@ -79,34 +79,40 @@ hata sonucunu kaydeder. Cimri geçmişi bu akışın gözlemleriyle birleştiril
 
 ## 📊 Doğrulanmış kapsam
 
-Cimri aktarımı 8 Ekim; katalog/tur, bütün ürünlerin SQL–API karşılaştırması
-ve gerçek ekran kontrolü 10 Ekim; son otomatik test paketi 14 Ekim 2026:
+Cimri aktarımı 8 Ekim; gerçek ekran kontrolü 10 Ekim; katalog bakımı ve son
+otomatik test paketi 15 Ekim; yeni katalogla iki normal turun log–DB ve
+59 ürünün bağımsız SQL–API doğrulaması 16 Ekim 2026:
 
 | Alan | Sonuç |
 |---|---|
 | Fiyat kaynakları | Trendyol ve Hepsiburada |
 | Model aileleri | 24; Apple, Samsung, Xiaomi ve POCO |
-| Katalog | 59 ürün, 334 bağlantı; 332 etkin bağlantı |
+| Katalog | 59 ürün, 349 bağlantı; 347 etkin bağlantı |
 | Toplama düzeni | Her gün 10:00 ve 22:00; haftalık keşif Pazar 14:00 |
-| Son doğrulanan fiyat turu | Tur 23: 332 sonuç; 235 fiyat, 97 Tükendi, 0 hata |
+| Son doğrulanan fiyat turu | Tur 35: 347 sonuç; 251 fiyat, 95 Tükendi, 1 önceden bilinen kimlik hatası |
 | Cimri geçmişi | 57 ürün, 20.805 tarihli kayıt; 20.252 fiyat ve 553 eksik değer |
 | Otomatik testler | 1751 test; 434’ü PostgreSQL üzerinde; 0 atlandı |
-| SQL–API ve ekran | 59 ürün eşleşti; üç temsilci ürün, dört grafik aralığı, yenileme ve hata sonrası dönüş doğrulandı |
+| SQL–API ve ekran | SQL–API: 16 Ekim'de 59 ürün eşleşti; ekran: 10 Ekim'de üç temsilci ürün, dört aralık, yenileme ve hata sonrası dönüş doğrulandı |
 
 14 Ekim'de ML öncesi 25 yeni keşif sayfasının incelemesi tamamlandı:
-15 doğrulandı, 7 uyuşmazlık, 3 kanıt yetersiz. Özgün rapor uygulanmadı;
-katalog aynı kaldı. Ayrıntı ve sonraki kararlar `proje_plani.md` Bölüm 9'da.
-Ardından Trendyol'da açık 5G model ile 4G ürün özelliği çelişkisini,
-fiyat ve keşif adayı üretilmeden reddeden ortak koruma eklendi.
+15 doğrulandı, 7 uyuşmazlık, 3 kanıt yetersiz. Özgün rapor uygulanmadı.
+15 Ekim'de yalnız doğrulanan 15 bağlantı, ayrı seçili rapor ve kullanıcı
+kabulüyle mevcut 8 ürüne eklendi; eski kimlikler korundu. Yeni bağlantılar
+15 Ekim 22:00 ve 16 Ekim 10:00 normal turlarında toplandı: her turda 10 fiyat,
+5 Tükendi ve bu 15 bağlantıda 0 hata. DB eşitlemesi/loglar ve 16 Ekim'de
+59 ürünün bağımsız SQL–API eşleşmesi doğrulandı; kontrol boyunca sekiz
+veritabanı nesnesinin parmak izi aynı kaldı. Ayrıntı `proje_plani.md` Bölüm 9'da.
+İnceleme sırasında Trendyol'da açık 5G model ile 4G ürün özelliği çelişkisini,
+fiyat ve keşif adayı üretilmeden reddeden ortak koruma da eklenmişti.
 
-Katalogdaki **334 bağlantının markalara göre dağılımı** (iki pasif bağlantı dahil):
+Katalogdaki **349 bağlantının markalara göre dağılımı** (iki pasif bağlantı dahil):
 
 ```mermaid
 pie showData
-    title Katalogdaki bağlantılar — 8 Ekim 2026
-    "Apple" : 171
-    "Samsung" : 104
-    "Xiaomi" : 55
+    title Katalogdaki bağlantılar — 15 Ekim 2026
+    "Apple" : 174
+    "Samsung" : 105
+    "Xiaomi" : 66
     "POCO" : 4
 ```
 
