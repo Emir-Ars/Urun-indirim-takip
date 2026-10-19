@@ -149,10 +149,17 @@ doğrulanamadı; onaylı plan gereği yeni geçmiş alımı ve aktarımına geç
 Mevcut veriler korundu. 4.1, 14d70b2 ile gönderildi; aynı commit'in CI'ı
 başarılı. İki eksik ürünün kimlik araştırması (4.2) tamamlandı: altı arama
 ve dört aday incelemesiyle iki hedefte de **kanıt yetersiz** sonucu verildi.
+4.2, 0bc26a6 ile gönderildi; aynı commit'in CI'ı başarılı.
 Yeni eşleştirme eklenmedi; mevcut 57 ürün eşleştirmesi korundu.
 [Kullanım değerlendirmesi](docs/teknik.md#cimri-kullanım-değerlendirmesi-bakım-41-19-ekim)
 ve [kimlik araştırması](docs/teknik.md#iki-eksik-cimri-kimliği-bakım-42-19-ekim)
-ayrı kaydedildi. 4.3 alım/aktarım koşulları sağlanmadı; bakım 4 henüz kapanmadı.
+ayrı kaydedildi. 4.3 alım/aktarım kararı **koşullar sağlanmadığı için uygulanmadı**
+olarak [kapanış kaydına](docs/teknik.md#cimri-koşullu-alım-kararı-bakım-43-19-ekim)
+işlendi. Kullanım belirsizliği ve iki eksik eşleştirme sürüyor.
+**Bakım 4 teknik incelemesi tamam.** Kullanıcı kapanışın commit/push işlemini
+açıkça istedi; aynı commit'in CI sonucu gönderim kaydında izlenir.
+Cimri geçmişi eksik ürünler katalogda korunur; ML için veri yeterliliği
+sonraki adımda değerlendirilecek.
 
 ## 🗺️ Yol haritası
 

@@ -1550,9 +1550,46 @@ aktarım, geçmiş API isteği ve DB sorgusu/yazımı yapılmadı. Katalog ve ko
 aynı; üretim kodunda yeni hata kanıtlanmadı. Yalnız belgeler için tam test
 paketi tekrarlanmadı; ağsız kayıt sayımı, mevcut eşleştirme doğrulayıcısı ve
 git diff --check kullanıldı. 4.2 tamamlandı; kullanıcı 4.3 öncesinde bu
-alt adım için commit ve pushu ayrıca açıkça istedi. Üç belgenin gönderimi
-ve aynı SHA CI sonucu Git dışı 42_kimlik gönderim kaydına işlenir.
-4.3 hazırlanmadı, bütün bakım 4 kapanmadı.
+alt adım için commit ve pushu ayrıca açıkça istedi. Üç belge 0bc26a6 ile
+origin/main'e gönderildi; aynı SHA
+[CI39223564598](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/39223564598)
+başarılı. Git dışı 42_kimlik/gonderim_kaydi.json sonucu saklar. 4.3'ün
+sonraki karar kaydı aşağıdadır.
+
+### Cimri koşullu alım kararı (bakım 4.3; 19 Ekim)
+
+Onaylı kapanış planıyla 4.1/4.2 kanıtları ve başarılı gönderim kayıtları
+karşılaştırıldı. Kullanım uygunluğu ve doğru hedef kimlikleri doğrulanmadı;
+4.3 alım/aktarım kararı **koşullar sağlanmadığı için uygulanmadı**.
+
+| Ürün | Eşleştirme | Geçmiş alımı | Aktarım |
+|---|---|---|---|
+| Galaxy S25 512 GB, ürün 58 | Kanıt yetersiz | Yapılmadı | Yapılmadı |
+| Redmi Note 14 Pro 5G 256 GB, ürün 59 | Kanıt yetersiz | Yapılmadı | Yapılmadı |
+
+Önerilen/uygulanan yeni eşleştirme 0; bu adımda aktarılan yeni geçmiş satırı 0.
+Mevcut 57 eşleştirme ve katalog 59/348/346 aynı. Yeni araştırma, capture,
+import/dry-run, DB okuması/yazımı veya API işlemi yapılmadı. 20.805 kayıt/
+553 NULL, bakım 3.4'ün 19 Ekim 09:36 tarihli önceki salt okunur doğrulamasının
+referansıdır; yeni DB doğrulaması olarak sunulmaz. Mevcut veriye işlem
+uygulanmadı; gösterim, sözleşmeler, şema ve zamanlayıcılar korundu.
+
+Git dışı artifacts/bakim_4_20261019/43_kapanis/ altında başlangıç parmak
+izleri, iki ürünün ayrı sonuçları ve ağsız doğrulama kaydı tutulur. Eski
+kanıtlar değişmedi. Yalnız belge değiştiği için tam pytest, Black, Flake8
+ve SQL–API yerelde tekrarlanmadı; JSON/UTF-8, belge bağlantıları, kayıt
+tutarlılığı, dosya parmak izleri ve git diff --check denetlendi.
+
+**Bakım 4 teknik incelemesi tamam.** Kullanıcı bu kapanış için commit ve
+pushu açıkça istedi; aynı gönderilen SHA'nın CI sonucu Git dışı
+43_kapanis/gonderim_kaydi.json ve yerel devir notunda izlenir.
+Kullanım belirsizliği ve iki eşleştirme eksikliği sürer; giderilmiş veya
+veri alımı başarılı sayılmadı. Aynı commit'in CI sonucu başarılı olunca
+bütün bakım 4 kapanır; sonraki Git işlemleri ayrı açık onay ister.
+ML veri yeterliliği ayrı planlanır; Cimri'nin ML kullanımı belirsizliği
+o aşamaya taşınır, model eğitimi başlatılmadı. Cimri geçmişi eksik olması
+tek başına ürünü katalogdan çıkarma nedeni değildir; veri yeterliliği
+ve ML'e dahil edilmesi sonraki adımlarda ayrı değerlendirilir.
 
 ### Piyasa geçmişi araştırması (Adım 8)
 
