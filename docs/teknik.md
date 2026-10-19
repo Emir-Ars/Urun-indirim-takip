@@ -1505,7 +1505,7 @@ Bu, kesin hukuki izin kararı değildir. İncelenen belgelerden projeye uygun
 kullanım dayanağı doğrulanamadı. Kullanıcının onayladığı bakım 4 planındaki
 koşul gereği yeni alım/aktarım aşamasına geçilmez. Mevcut veri ve gösterim
 davranışı korundu; ML eğitimi başlatılmadı. İki ürünün kimliği kullanım
-değerlendirmesinden ayrı araştırılabilir; 4.2 henüz başlamadı.
+değerlendirmesinden ayrı araştırıldı; 4.2 sonucu sonraki bölümdedir.
 
 29 Eylül araştırmasında kaydedilmiş kısıt başlıkları güncel metinde de var;
 eski tam metin kopyası bulunmadığından birebir metin karşılaştırması yapılmadı.
@@ -1518,8 +1518,41 @@ başlangıç sayılarıdır. 4.1'de DB sorgusu veya fiyat geçmişi isteği yap�
 eşleştirme, katalog, kod, şema ve zamanlayıcı değişmedi. Yalnız belgeler
 güncellendiğinden tam test paketi tekrarlanmadı. 4.1'de duruldu; bakım 4'ün
 tamamı henüz bitmedi. Kullanıcı 4.1 için commit ve pushu ayrıca açıkça istedi;
-üç belgenin gönderimi bu alt adımda yapılır, aynı commit'in CI sonucu yerel
-gönderim kaydına işlenir. Onaylı kalan akış proje planı Bölüm 9'dadır.
+üç belge 14d70b2 ile gönderildi, aynı SHA
+[CI39216850461](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/39216850461)
+başarılı. Onaylı kalan akış proje planı Bölüm 9'dadır.
+
+### İki eksik Cimri kimliği (bakım 4.2; 19 Ekim)
+
+Onaylı dar planla önce 8 Ekim araştırmaları ve 57 eşleştirme karşılaştırıldı;
+ardından S25 ve Redmi için üçer Cimri alan adı sınırlı arama yapıldı. Her
+üründe iki farklı doğrudan aday incelendi. Sonuçlar:
+
+| Hedef | Aday kararı | Hedefin sonucu |
+|---|---|---|
+| Galaxy S25 512 GB, ürün 58 | [512 GB aday](https://www.cimri.com/cep-telefonlari/en-ucuz-samsung-galaxy-s25-plus-512gb-12gb-ram-fiyatlari,a2445851637) Plus; [normal S25](https://www.cimri.com/cep-telefonlari/en-ucuz-samsung-galaxy-s25-256gb-12gb-ram-fiyatlari,a2430825219) 256 GB, görünen seçenekleri 128/256. İkisi uyuşmazlık. | **Kanıt yetersiz** |
+| Redmi Note 14 Pro 5G 256 GB, ürün 59 | [5G aday](https://www.cimri.com/cep-telefonlari/en-ucuz-xiaomi-redmi-note-14-pro-5g-fiyatlari,a2428710429) başlık ve depolama tablosunda 512 GB; [256 GB aday](https://www.cimri.com/cep-telefonlari/en-ucuz-xiaomi-redmi-note-14-pro-fiyatlari,a2372365369) kendi ağ tablosunda 4G. İkisi uyuşmazlık. | **Kanıt yetersiz** |
+
+512 GB Redmi'nin karşılaştırma yazısındaki 256 ifadesi hedef kimlik kanıtı
+sayılmadı. Araştırmada sonuç bulunmaması, hedefin Cimri'de bulunmadığını
+kanıtlamaz. Dört aday için marka/başlık ve ilgili kendi alanları okundu;
+URL kimliği bağımsız gömülü ürün kimliği doğrulaması sayılmadı. Doğru hedef
+olmadığından eşleştirme önerisi hazırlanmadı; mevcut 57 eşleştirme korundu.
+
+Kaynak erişim tarihi 19 Ekim 2026. Web aracı 512 GB Redmi metnini üç gün önce,
+diğer üç sayfayı aynı gün taranmış gösterdi. Tam HTML/gömülü JSON arşivi
+yok; doğrulanan ham HTML veya parser replay iddiası yok. Git dışı kayıtlar:
+artifacts/bakim_4_20261019/42_kimlik/ altında baslangic.json, arastirma.json,
+inceleme.md ve dogrulama.json. Önceki kanıtlar değişmedi.
+
+4.1 kullanım koşulu ve doğru kimlik koşulu sağlanmadı. Yeni geçmiş alımı,
+aktarım, geçmiş API isteği ve DB sorgusu/yazımı yapılmadı. Katalog ve kod
+aynı; üretim kodunda yeni hata kanıtlanmadı. Yalnız belgeler için tam test
+paketi tekrarlanmadı; ağsız kayıt sayımı, mevcut eşleştirme doğrulayıcısı ve
+git diff --check kullanıldı. 4.2 tamamlandı; kullanıcı 4.3 öncesinde bu
+alt adım için commit ve pushu ayrıca açıkça istedi. Üç belgenin gönderimi
+ve aynı SHA CI sonucu Git dışı 42_kimlik gönderim kaydına işlenir.
+4.3 hazırlanmadı, bütün bakım 4 kapanmadı.
 
 ### Piyasa geçmişi araştırması (Adım 8)
 

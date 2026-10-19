@@ -146,9 +146,13 @@ doğrulanamadı; eksik fiyatlar doldurulmadı. Kaynak ve işletim sınırları
 
 19 Ekim bakım 4.1 incelemesinde Cimri verisinin projedeki kullanım uygunluğu
 doğrulanamadı; onaylı plan gereği yeni geçmiş alımı ve aktarımına geçilmedi.
-Mevcut veriler korundu. İki eksik ürünün kimlik araştırması (4.2) bekliyor;
-[kullanım değerlendirmesi](docs/teknik.md#cimri-kullanım-değerlendirmesi-bakım-41-19-ekim)
-ayrı kaydedildi.
+Mevcut veriler korundu. 4.1, 14d70b2 ile gönderildi; aynı commit'in CI'ı
+başarılı. İki eksik ürünün kimlik araştırması (4.2) tamamlandı: altı arama
+ve dört aday incelemesiyle iki hedefte de **kanıt yetersiz** sonucu verildi.
+Yeni eşleştirme eklenmedi; mevcut 57 ürün eşleştirmesi korundu.
+[Kullanım değerlendirmesi](docs/teknik.md#cimri-kullanım-değerlendirmesi-bakım-41-19-ekim)
+ve [kimlik araştırması](docs/teknik.md#iki-eksik-cimri-kimliği-bakım-42-19-ekim)
+ayrı kaydedildi. 4.3 alım/aktarım koşulları sağlanmadı; bakım 4 henüz kapanmadı.
 
 ## 🗺️ Yol haritası
 
