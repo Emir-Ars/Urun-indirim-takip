@@ -129,8 +129,15 @@ host izni aynı.37'de55 ağ hatası doğal ikinci okumada55/55 düzeldi.
 3.3 grafik alt adımı7a2d4ec ile gönderildi, aynı SHA CI39209741592
 başarılı.3.4'te bağımsız SQL–API59 ürün/0 fark/8 değişmeyen nesne/
 çıkış0 doğrulandı. Son tam1758 test/0 atlama, Black/Flake8 temiz.
-**Teknik doğrulamalar tamam; kalan beş dosyanın ayrı commit/push
-onayları ve aynı SHA CI bekleniyor.** Ayrıntı Bölüm9.
+**Bakım 3 tamamlandı ve gönderildi:** açık kullanıcı onayıyla kalan beş
+dosya b4d223f ile gönderildi; aynı SHA CI 39211825501 başarılı. 3.1–3.4
+kapandı. Cimri/ML yeterliliği/otomatik kabul sonraki adımlar. Ayrıntı Bölüm9.
+
+**19 Ekim bakım 4:** koşullu alım içeren uygulama planı onaylandı. 4.1'de
+resmî kullanım belgeleri incelendi; yeni alım/saklama, yerel gösterim ve ML
+eğitimi için proje kullanımının uygunluğu doğrulanamadı. Planın alım koşulu
+  sağlanmadı; yeni alım/aktarım hazırlanmadı, mevcut veriler korundu. 4.1'de
+duruldu; iki ürünün kimlik araştırması (4.2) henüz başlamadı. Bakım 4 sürüyor.
 
 **6 Ekim ikinci denetimi sonrası bakım (kullanıcı onayı):** Hepsiburada bozuk
 satıcı yanıtı düzeltildi (552 test). İki SQL koruması `003_closed_run_guards.sql`
@@ -531,6 +538,11 @@ Bu adımda alınan kararlar:
   30 Eylül kullanıcı kararıyla Cimri'nin bir defalık aktarımı Adım 9 olarak
   planlandı; önceki kullanım koşulu bulgusu bu kararla doğrulanmış veya
   çözülmüş sayılmaz, aktarım adımında ele alınır.
+  **19 Ekim bakım 4.1:** güncel resmî belgeler yeniden incelendi; proje için
+  uygun kullanım doğrulanamadı. Kullanıcının onayladığı koşullu alım planı
+  gereği yeni alım/aktarım aşamasına geçilmedi. Mevcut kayıtlar ve uygulama
+  davranışı korunuyor; bu teknik inceleme kesin hukuki izin kararı değildir.
+  Kullanım amaçlarının ayrı sonuçları teknik rehberde ve Bölüm 9'dadır.
 - İlk Akakçe teknik denemesi (29 Eylül, iPhone 16 128 GB ürün sayfası) tek
   istekte HTTP 403 `blocked` verdi (`artifacts/market_history_probe/` yerel
   raporu). Ürün eşleşmesi veya geçmiş biçimi okunamadı. Aynı adrese tekrar
@@ -1677,7 +1689,8 @@ kararları Aşama 9'a aittir. Belge düzeltmeleri henüz commit edilmedi.
 | Konu | Durum |
 |---|---|
 | Kalan bakımın çalışma sırası | **Kullanıcı kararı (14 Ekim):** ağ kimliği koruması ve kanıt eksikleri → doğrulanan 15 sayfanın katalog bakımı/normal tur SQL–API teyidi → toplama/erişim (S25/S25+ ve www3, doğal ağ ikinci okuma) → grafik → Cimri → ML veri yeterliliği → **otomatik güvenli aday kabulü ve bakım kapanışı (son adım)**. Her adım öncesi sorun/yöntem/dosyalar/doğrulama sade açıklanır; sonunda dosya listesi/Türkçe mesaj, ayrı açık gönderim onayı, commit/push ve aynı SHA CI. Genel gönderim yetkisi yok; uygulama planı ve katalog kabulü ayrıca netleşir. |
-| Bakım 3 uygulama sınırı | **19 Ekim:** kullanıcı3.4 kapanış planını onayladı. S25 bağlantısı yalnız katalogdan çıkarıldı; normal tur DB'de pasifleştirdi, ürün/geçmiş korundu.3.3 kullanıcı talebiyle ayrı7a2d4ec/başarılı CI ile gönderildi.3.1/3.2 ve3.4 teknik doğrulamaları tamam; kalan katalog/belge/kural değişiklikleri için önce commit, ardından push onayı ayrı alınacak. Gerçek DB yalnız okundu, yeni manuel toplama/kaynak araması/host değişikliği yapılmadı. |
+| Bakım 3 uygulama sınırı | **19 Ekim:** kullanıcı3.4 kapanış planını onayladı. S25 bağlantısı yalnız katalogdan çıkarıldı; normal tur DB'de pasifleştirdi, ürün/geçmiş korundu.3.3 kullanıcı talebiyle ayrı7a2d4ec/başarılı CI ile gönderildi.3.1/3.2 ve3.4 teknik doğrulamaları tamam; kullanıcı bu gönderim için commit ve pushu açıkça istedi. Kalan beş dosya b4d223f ile gönderildi, aynı SHA CI39211825501 başarılı. Gerçek DB yalnız okundu, yeni manuel toplama/kaynak araması/host değişikliği yapılmadı. |
+| Bakım 4 kullanım ve kapsam sınırı | **19 Ekim:** koşullu alım dahil plan onaylandı; her alt bölüm sonunda durulur. 4.1 incelemesi tamamlandı, proje için kullanım uygunluğu doğrulanamadı; onaylı planın yeni alım/aktarım koşulu sağlanmadı. Mevcut veriler korunur. 4.2 kimlik araştırması ayrı sonuçlandırılabilir; henüz başlamadı. Kod/katalog/şema/zamanlayıcı değişmez. Bütün adım sonunda dosya listesi ve Türkçe mesaj gösterilir; önce commit, sonra push için ayrı açık onay alınır. |
 | Rutin keşif adaylarının otomatik kabulü | **Kullanıcı yönü onayladı (14 Ekim); uygulanmadı:** yeni bağlantılar her hafta elle tek tek kontrol edilmeyecek. Yeterli, kendi ürün koduna bağlı ve çelişkisiz model/kapasite/renk/ağ/kapsam kanıtı olan adaylar kodla kabul edilecek; eksik/çelişkili adaylar gerekçesiyle katalog dışında kalacak. Kullanıcı “1 gün” ile bu elle kontrollerin zaman yükünü kastettiğini netleştirdi; 24 saat bekleme veya yeni günlük tekrar görevi istenmedi. Mevcut haftalık keşif düzeni korunur; kabul için düzelmiş ve yeterli kimlik kanıtı gerekir. A1 rapor+elle uygulama görevi son adım uygulanana kadar korunur. Ayrıntılı uygulama/kayıt/Git politikası son adımın dar planında netleşir; otomatik katalog kabulü otomatik Git gönderimi değildir. |
 | ML öncesi bakım ve inceleme | **Plan onaylandı; yeni sayfa incelemesi tamam: 11 grup/25 sayfa (14 Ekim):** bütün açık konular, 25 sayfanın tamamında güncel kaynak doğrulaması ve her model/kapasite grubundan sonra durma. Sıra: keşif sayfaları → kabul edilen raporun kullanıcı tarafından uygulanması ve normal tur teyidi → erişim/grafik incelemesi → Cimri kapsamı/eşleştirmeleri → ML veri yeterliliği. Yeni model kodu, Docker veya dış erişim başlamaz. Canlı komutlar kullanıcı terminalinde; rapor uygulaması ve commit/push ayrı kabul/onay ister. iPhone 15 256 GB, iPhone 17 512 GB, iPhone 17 Pro Max 1 TB, Galaxy S24 Ultra 1 TB ve Xiaomi 14T Pro 256 GB sayfaları doğrulandı; Pro 128 GB ve Pro Max 256 GB gruplarındaki altı aday kapsam dışı: 15 doğrulandı / 7 uyuşmazlık / 3 kanıt yetersiz / 0 bekliyor. Gönderim kullanıcı kararıyla 11 grubun sonuna ertelendi. Dördüncü ve beşinci grupta JSON-LD NewCondition doğru SKU/URL/fiyatla eşleşti; beşinci grubun API/tarayıcı teklifi de teyit edildi. Altıncı grubun aynı kimlikli ProductGroup ana teklifinde NewCondition, 1 TB/Siyah, 95.000 TL/ALTINKOZA TEKNOLOJİM/8,2 ve Son 1 Ürün sinyali tarayıcıyla eşleşti; altıncı grupta duruldu. Yedinci grubun ikinci kaydında aynı ürün teklifinde NewCondition ve AYPA/9,4/54.999 TL/Son 1 Ürün kaynak/görüntü eşleşti; ilk stoksuz Ceppodium kaydı ayrı korundu, yedinci grupta duruldu. Sekizinci grubun 10:32 kaydında Xiaomi 14T Pro 512 GB/Titan Gri/SKU eşleşti, aynı üründe NewCondition etiketi var; başarılı boş satıcı API'si ve isInStock=false kullanıcı/HTML satılamama mesajıyla eşleşti. Tükendi geçerli sonuç; JSON-LD 0.00/InStock güncel stok/fiyat kanıtı sayılmadı. Dokuzuncu grubun 10:51 kaydında Mor iki teklif/en ucuz seçim ve Yeşil stoksuzluk kaynak/tarayıcıyla eşleşti; aynı ürünlerin NewCondition etiketi var. İki sayfada da 4G/5G alanı bulunmadığı için katalog kabul sonucu 2 kanıt yetersiz; Mor Snapdragon 7 metni ayrıca eşleştirme bekler. Onuncu grubun 13:29 kaydında 1/2/4 doğru SKU/5G/256 GB/renk/NewCondition ve teklif/tarayıcı eşleşmesiyle doğrulandı; üçüncü A1GTQO stoksuzluk doğru, fakat renk kanıtı yok: 1 kanıt yetersiz. Başka SKU'nun Beyaz rengi kullanılmadı. Son grubun 14:10 kaydı ve tarayıcı teyidi tamam: 6 doğrulandı/1 uyuşmazlık. Trendyol 797850359 başlığında 5G/12 GB RAM, aynı ürünün özelliklerinde 4G/8 GB RAM var; 5G hedefe kabul edilmedi. Başlık/özellik ağ çelişkisini reddeden dar koruma ayrı kullanıcı onayıyla uygulandı: ortak verify_model_network iki Trendyol yoluna bağlandı; 34 yeni regresyon, tam 1751 test/0 atlama, Black/Flake8 temiz. Kaynak çelişkisi ve kabul edilen adayların seçilmesi ayrı bakım olarak açık. Bütün gruplar bitti; mevcut Yenilio düzeltmesi ve belgelerin yedi dosyalı commit/push onayı 14 Ekim'de alındı; aynı SHA CI gönderim akışında doğrulanır. Özgün rapor uygulanmaz; toplu sonuç inceleme_ozeti.json, ayrıntı Bölüm 9. |
 | Keşif gruplarının commit/push sırası | **Kullanıcı kararı (13 Ekim):** 25 adayın 11 grup incelemesi bitene kadar commit/push yapılmaz. Gruplar arasında gönderim/CI bekleme kaldırıldı; her gruptan sonra durma ve yerel kontroller sürer. Sonunda güncel dosya listesi/Türkçe mesaj gösterilir, ayrı onayla gönderilir ve aynı SHA CI başarılı olmalıdır. Bu incelemeye özgü sıra değişikliğidir. **14 Ekim:** bütün gruplar bitince yedi dosya/Türkçe mesaj gösterildi; kullanıcı commit/push işlemini onayladı. Katalog uygulaması ve yeni ağ koruması bu onayın kapsamında değildir. |
@@ -2461,8 +2474,8 @@ Bu adım kapandı; sonraki eksik kanıt incelemesi ayrı onayla başladı.
 | 1a. Dar ağ kimliği koruması | Açık 5G model/açık 4G ürün özelliği çelişkisini Trendyol keşif ve scraper'da fiyat/adaydan önce ortak kuralla reddetmek; gerçek kötü örnek ve doğru iki kontrolün korunması. | **Tamamlandı (14 Ekim):** 34 yeni regresyon, 1751 test/0 atlama, Black/Flake8 temiz; üç tam HTML replay doğru. 4eaf35e gönderildi, aynı SHA CI 38569095383 başarılı. Kaynak çelişkisi ve üç kanıt eksikliği çözülmüş sayılmaz. |
 | 1. Yeni keşif sayfaları | 11 Ekim raporu/katalog ağsız eşleşmesi; 11 grubun 25 sayfasında güncel model/kapasite/renk/kimlik ve kapsam kontrolü; kapsam içi adaylarda geçici katalogla mevcut canlı scraper aracı, satıcı/teklif/stok ve tarayıcı karşılaştırması. Her sayfada doğrulandı/uyuşmazlık/kanıt yetersiz sonucu, her gruptan sonra durma. | **Tamamlandı: 11/11 grup ve 25/25 sayfa; 15 doğrulandı / 7 uyuşmazlık / 3 kanıt yetersiz / 0 bekliyor (14 Ekim).** Yenilio/kalite başlık boşluğu ayrı kullanıcı onayıyla düzeltildi; 41 regresyon ve tam 1717 test/0 atlama, Black/Flake8 temiz. İkinci grubun üç canlı reddi 14:33'te, üçüncü grubun üç canlı reddi 15:19'da doğrulandı. Kullanıcı gönderimi 11 grubun sonuna erteledi. Dördüncü grubun ham kaydı 15:54'te alındı: doğru SKU/URL/fiyatlı JSON-LD teklifinde NewCondition, 512 GB/Lavanta ve API/tarayıcı teklif eşleşmesi doğrulandı. Beşinci grubun 16:24 kaydında aynı SKU teklifinde NewCondition, 1024 GB/Kozmik Turuncu ve ENHIZLIBİZDE/9,9/Stokta Var/156.999 TL eşleşti; kullanıcı tarayıcı ve aktif Sepete Ekle teyidini verdi. Altıncı grubun 17:29 kaydında aynı kimlik/URL/fiyatlı ProductGroup ana teklifinde NewCondition, 1024 GB/Siyah ve ALTINKOZA TEKNOLOJİM/8,2/Kritik Stok/95.000 TL eşleşti; Son 1 Ürün ham HTML'de, kullanıcı tüm alanlar ve aktif Sepete Ekle'yi teyit etti. Yedinci grubun 14 Ekim 09:39 ikinci kaydında doğru kimlik/URL/256 GB/Mavi/fiyatlı Product teklifinde NewCondition ve AYPA/9,4/Kritik Stok/54.999 TL kullanıcı görüntüsüyle eşleşti; ilk Ceppodium/Tükendi kaydı ayrı korundu. Sekizinci grubun 10:32 kaydında Xiaomi 14T Pro 512 GB/Titan Gri/SKU eşleşti, aynı üründe NewCondition etiketi var; başarılı boş satıcı API'si ve isInStock=false kullanıcı/HTML satılamama mesajıyla eşleşti. Tükendi geçerli sonuç; JSON-LD 0.00/InStock güncel stok/fiyat kanıtı sayılmadı. Dokuzuncu grubun 10:51 kaydında Mor iki teklif/en ucuz seçim ve Yeşil stoksuzluk kaynak/tarayıcıyla eşleşti; aynı ürünlerin NewCondition etiketi var. İki sayfada da 4G/5G alanı bulunmadığı için katalog kabul sonucu 2 kanıt yetersiz; Mor Snapdragon 7 metni ayrıca eşleştirme bekler. Onuncu grubun 13:29 kaydında 1/2/4 doğru SKU/5G/256 GB/renk/NewCondition ve teklif/tarayıcı eşleşmesiyle doğrulandı; üçüncü A1GTQO stoksuzluk doğru, fakat renk kanıtı yok: 1 kanıt yetersiz. Başka SKU'nun Beyaz rengi kullanılmadı. Son grubun 14:10 kaydı ve tarayıcı teyidi tamamlandı: altı aday doğrulandı, Trendyol 797850359 başlık 5G/12 GB RAM ile özellik 4G/8 GB RAM çelişkisi nedeniyle uyuşmazlık. İlk incelemede kod bu çelişkiyi reddetmiyordu; sonradan ayrı kullanıcı onaylı dar ortak koruma uygulandı, yerelde doğrulandı (Adım 1a). Kaynak çelişkisi sürüyor. Son grupta duruldu. Özgün rapor uygulanmaz; inceleme_ozeti.json bütün 25 kararın kaynaklarını içerir. Katalog uygulaması ve ML öncesi diğer ana adımlar tamamlanmadı. |
 | 2. Katalog bakımı | Doğrulanan 15 aday ayrı seçili raporla mevcut --apply-report yoluna verilir. Özgün 25 adaylı rapor uygulanmaz; 7 uyuşmazlık/3 kanıt yetersiz dışarıda kalır. Mevcut kabul kanıtları kullanılır; son liste/katalog uygulaması ayrıca kullanıcı kabulü ister. Eski kimlikler korunur. Normal tur sonrası salt okunur DB ve bağımsız SQL–API teyidi. | **Tamamlandı (16 Ekim):** katalog/DB 59/349/347. İki normal turda yeni 15 sayfa 10 fiyat/5 Tükendi/0 hata; eski kayıtlar aynı, dışlanan 10 aday yok. Bağımsız SQL–API 59 ürün/0 fark/sekiz değişmeyen nesne/çıkış 0. Son tam test 1751/0 atlama, Black/Flake8 temiz. Açık kullanıcı onayıyla 96d42a6 gönderildi; aynı SHA CI 38873185491 başarılı. Eski S25/S25+ hatası Adım 3'te açık. |
-| 3. Kimlik, erişim ve grafik | S25/S25+ kimliğinin kaynak incelemesi, yanlış bağlantının katalogdan çıkarılması ve normal tur eşitlemesi; erişim/ağ kayıtları; grafik düzeltmesi ve gerçek ekran; bağımsız SQL–API ile kapanış. | **19 Ekim teknik doğrulama tamam, kalan gönderim/CI bekleniyor:**3.1 katalog59/348/346, DB59/349/346;36–40'ta hedef yok,34 tarihsel kontrol/diğer kimlikler aynı.3.2 eski www3 hedefi başarılı, farklı iki SKU'daki37/38 hatası bilinen sınır; host izni aynı.37'de doğal ikinci okuma55/55 düzeldi.3.3 tamam/gönderildi7a2d4ec, aynı SHA CI39209741592 başarılı.3.4 bağımsız SQL–API59 ürün/0 fark/8 nesne aynı/çıkış0; tam1758 test/0 atlama, Black/Flake8 temiz. Beş dosyanın ayrı commit/push onayları ve yeni SHA CI bekleniyor; gönderim kapanmadan bütün adım kapalı sayılmaz. |
-| 4. Cimri açıkları | Güncel resmî koşullarda yerel öğrenme/eğitim kullanım kapsamı ve belirsizlikler; iki eksik ürünün mevcut/yeni eşleştirme kanıtı. Doğru kimlik yoksa eksik korunur; doğrulanırsa alım/aktarım ayrıca gösterilip kullanıcı terminalinde yapılır. | Planlandı; başlamadı. |
+| 3. Kimlik, erişim ve grafik | S25/S25+ kimliğinin kaynak incelemesi, yanlış bağlantının katalogdan çıkarılması ve normal tur eşitlemesi; erişim/ağ kayıtları; grafik düzeltmesi ve gerçek ekran; bağımsız SQL–API ile kapanış. | **Tamamlandı ve gönderildi (19 Ekim):**3.1 katalog59/348/346, DB59/349/346;36–40'ta hedef yok,34 tarihsel kontrol/diğer kimlikler aynı.3.2 eski www3 hedefi başarılı, farklı iki SKU'daki37/38 hatası bilinen sınır; host izni aynı.37'de doğal ikinci okuma55/55 düzeldi.3.3 tamam/gönderildi7a2d4ec, aynı SHA CI39209741592 başarılı.3.4 bağımsız SQL–API59 ürün/0 fark/8 nesne aynı/çıkış0; tam1758 test/0 atlama, Black/Flake8 temiz. Kalan beş dosya açık kullanıcı onayıyla b4d223f üzerinden gönderildi; aynı SHA CI39211825501 başarılı.3.1–3.4 kapandı. |
+| 4. Cimri açıkları | Kullanım kapsamı ve iki eksik ürünün kimliği ayrı değerlendirilir. Yeni alım ancak kullanım uygunluğu ve doğru kimlik doğrulanırsa, ayrı kabul ve kullanıcı terminaliyle yapılır. Eksikliğin gerekçeli korunması geçerli sonuçtur. | **Plan onaylandı, sürüyor (19 Ekim):** 4.1 belge incelemesi tamam; uygun kullanım doğrulanamadı, alım/aktarım koşulu sağlanmadı. Mevcut veriler korundu; bu alt adımda duruldu. 4.2 kimlik araştırması başlamadı; 4.3 hazırlanmadı. |
 | 5. ML veri yeterliliği | Gerçek DB yalnız okuma: kendi/Cimri serileri ayrı; dönem, fiyat/tur/gün/eksik ve kapsam boşlukları; 30 gün geçmiş+7 gün gelecek uygunluğu ve %5 düşüş hedefinin olumlu/olumsuz örnekleri. Gösterge yeterlilik eşikleri ML şartı sayılmaz; sonuçtan sonra ayrı model uygulama planı. | Planlandı; başlamadı. |
 | 6. Otomatik güvenli kabul ve bakım kapanışı (son adım) | Haftalık keşfin yeterli kimlik kanıtlı adayları kendiliğinden kataloğa alması; eksik/çelişkili adayların gerekçeyle dışarıda tutulması. Rutin manuel model/ağ/renk kontrolü yok. Süre dolması otomatik kabul değildir. Gerçek kayıt örnekleriyle regresyonlar, ağsız rapor/katalog/kimlik koruması, tam test/biçim; kullanıcı terminalinde devreye alma ve doğal tur SQL–API teyidi. Diğer bakım sonuçlarıyla birlikte giderilen/korunan/ertelenen açıklar belirtilir; API sözleşmeleri korunur. | **Planın sonuna eklendi (14 Ekim; kullanıcı yönü onayladı), başlamadı.** Yeterli kanıt kuralları ve atomik yazma/rapor/Git politikası dar uygulama planında netleşecek. “1 gün” manuel iş yükünü ifade ediyor; yeni bekleme/günlük tekrar yok, mevcut haftalık keşif periyodu korunur. Zamanlayıcı/katalog değiştirilmedi; kod yazma/devreye alma ve commit/push ayrı onayla ilerler. |
 
@@ -2941,6 +2954,71 @@ Git dışı kanıt kökü artifacts/bakim_3_4_20261019/: db_20261019_093605_7830
 sonuc.json, sql_api_20261019_093838_877/report.json, s25_api_sonucu.json,
 kontroller/sonuc.json ve kapanis_ozeti.json. Önceki kanıtlar değiştirilmedi.
 Bu teknik kapanış Cimri, ML yeterlilik veya otomatik aday kabulünü başlatmaz.
+
+**19 Ekim gönderim kapanışı:** kullanıcı beş dosya ve Türkçe mesaj
+gösterildikten sonra “tamamdır commit push at” diyerek iki işlemi de
+açıkça istedi. Yalnız AGENTS.md, README.md, config/catalog.json,
+docs/teknik.md ve proje_plani.md b4d223f ile origin/main'e gönderildi.
+Yazar yalnız Emir-Ars; yapay zekâ imzası yok. Aynı SHA için
+[CI 39211825501](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/39211825501)
+completed/success; testler, Black ve Flake8 başarılı. Bakım 3.1–3.4
+tamamlandı ve bu adımda duruldu. Git dışı ci_sonucu.json ve
+gonderim_kaydi.json gönderim kanıtlarıdır. Cimri/ML yeterliliği/otomatik
+güvenli kabul sonraki adımlarda kalır; bunlar için genel gönderim yetkisi yok.
+
+**4. adımın onaylı uygulama planı ve 4.1 sonucu (19 Ekim):** koşullu alım
+dahil kapsam onaylandı. Başlangıç, 3.4'ün salt okunur doğrulamasındaki 57
+ürün/20.805 Cimri kaydı/553 eksik fiyattır; 4.1'de DB yeniden sorgulanmadı.
+Galaxy S25 512 GB ve Redmi Note 14 Pro 5G 256 GB ayrı incelenecek. Başarı,
+mutlaka yeni geçmiş bulmak değil, eşleştirme/alım/aktarım sonuçlarını ayrı
+gerekçelendirmektir. API/scraper sözleşmeleri, şema, pazaryeri kataloğu ve
+zamanlayıcılar değişmeyecek; her alt bölüm sonunda sonuç açıklanıp durulacak.
+
+- **4.1 tamamlanan inceleme:** resmî belgeler 19 Ekim'de web aracıyla okundu.
+  Yeni alım/saklama kısıtlı, mevcut yerel gösterim ve ML eğitimi belirsiz
+  olarak kaydedildi; üç amaçta da proje için uygun kullanım doğrulanamadı.
+  Eğitim/staj amacı izin kanıtı sayılmadı. Onaylı planın alım koşulu
+  sağlanmadığından yeni alım ve aktarım hazırlanmadı. Mevcut veri ve uygulama
+  davranışı korundu. Bu teknik inceleme kesin hukuki izin kararı değildir.
+  Madde/kaynak ayrımı, üyelik kapsamı ve eski araştırmayla karşılaştırmanın
+  sınırı teknik rehberin bakım 4.1 bölümündedir.
+- **4.2 sıradaki iş, başlamadı:** önce yerel araştırma, ardından ürün başına
+  en fazla üç hedefli arama ve doğrudan aday sayfa/aynı ürün varyantı.
+  Aynı sayfada tam model, kapasite, gerekli 5G ayrımı, telefon kategorisi ve
+  Cimri kimliği çelişkisiz olmalı. Önceki S25 Plus/512 GB adayları yerine
+  kullanılmaz; arama özeti/URL tek başına kanıt değildir. Her ürüne ayrı
+  doğrulandı/uyuşmazlık/kanıt yetersiz kararı verilir; tekrar döngüsü yok.
+  Kimlik araştırması kullanım uygunluğundan ayrı sonuçlandırılabilir.
+- **4.3 koşullu, hazırlanmadı:** ancak 4.1 uygunluğu ve 4.2 kimliği
+  doğrulanırsa geçici eşleştirme dosyasıyla yalnız seçilen bir/iki ürünün
+  mevcut capture yolu kullanılır; 57 ürün yeniden alınmaz. Ham kimlikler,
+  tarihler/kuruş/NULL ve parmak izleri ağsız karşılaştırılır. import dry-run
+  ardından eşleştirme ve gerçek DB farkı birlikte gösterilip ayrı kabul
+  alınır; canlı alımı ve gerçek aktarımı kullanıcı yapar. Eski 20.805 kaydın
+  korunması, yeni satırlar/NULL, ikinci dry-run'da ekleme kalmaması ve 59
+  ürünün bağımsız SQL–API eşleşmesi doğrulanır. Yeni fiyat turu beklenmez.
+
+Git dışı kayıt: artifacts/bakim_4_20261019/41_kullanim/sonuc.json ve
+inceleme.md; korunan_dosyalar.json belge dışındaki izlenen dosyaların
+başlangıç parmak izlerini içerir. Eski tam koşul kopyası bulunmadığından
+29 Eylül ile birebir metin eşitliği ileri sürülmedi. Fiyat geçmişi isteği,
+DB erişimi/yazımı, eşleştirme/katalog/kod değişikliği yapılmadı. Yalnız belge
+değiştiği için tam test paketi tekrar edilmez; eşleştirme veya kod değişirse
+izinli test DB'leriyle pytest/Black/Flake8 çalıştırılır. Yeni kod hatası
+kanıtlanırsa ayrı dar plan yapılır. 4.1 sonunda duruldu; bütün bakım 4'ün
+kapanışı ve commit/push henüz yapılmadı. Sonunda dosyalar, kontroller ve
+sonuca uygun Türkçe mesaj sunulur; commit ve push ayrı açık onay, aynı SHA
+başarılı CI ister. Önceki bakım 3'ün başarılı gönderim kaydı korundu.
+
+**4.1 için ayrı gönderim kararı (19 Ekim):** kullanıcı “4.1 bittiğine göre
+commit push at” diyerek bu alt adımın iki Git işlemini de açıkça istedi.
+Bütün bakım 4 sonunda gönderim sırası, bu alt adım için güncellendi.
+Gönderim kapsamı README.md, docs/teknik.md ve proje_plani.md; mesaj
+“Cimri kullanım kapsamı değerlendirmesini belgele”. Belge dışındaki 105
+izlenen dosya başlangıç parmak izleriyle aynı; git diff --check temiz.
+Yalnız belge değiştiği için tam test paketi tekrar edilmedi. Aynı commit'in
+CI sonucu Git dışı gönderim kaydına ve devir notuna yazılacak. Bu talep
+4.2'yi başlatmaz veya sonraki adımlara genel gönderim yetkisi vermez.
 
 **6. adımın kapsamı ve sınırı:** keşif zaten ürün sayfasını okuyup model,
 kapasite, renk ve kapsam kurallarını değerlendirir; yalnız görevin dry-run

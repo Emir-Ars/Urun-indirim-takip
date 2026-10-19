@@ -1475,6 +1475,52 @@ sonuc.json, sql_api_20261019_093838_877/report.json, s25_api_sonucu.json,
 kontroller/sonuc.json ve kapanis_ozeti.json. Önceki kanıtlar değiştirilmedi.
 Bu teknik kapanış Cimri, ML yeterlilik veya otomatik aday kabulünü başlatmaz.
 
+**19 Ekim gönderim kapanışı:** kullanıcı beş dosya ve Türkçe mesaj
+gösterildikten sonra “tamamdır commit push at” diyerek iki işlemi de
+açıkça istedi. Yalnız AGENTS.md, README.md, config/catalog.json,
+docs/teknik.md ve proje_plani.md b4d223f ile origin/main'e gönderildi.
+Yazar yalnız Emir-Ars; yapay zekâ imzası yok. Aynı SHA için
+[CI 39211825501](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/39211825501)
+completed/success; testler, Black ve Flake8 başarılı. Bakım 3.1–3.4
+tamamlandı ve bu adımda duruldu. Git dışı ci_sonucu.json ve
+gonderim_kaydi.json gönderim kanıtlarıdır. Cimri/ML yeterliliği/otomatik
+güvenli kabul sonraki adımlarda kalır; bunlar için genel gönderim yetkisi yok.
+
+### Cimri kullanım değerlendirmesi (bakım 4.1; 19 Ekim)
+
+19 Ekim 2026'da [kullanım koşulları](https://www.cimri.com/kullanim-kosullari)
+(2.2, 3.1, 4.12) ve [kullanıcı sözleşmesi](https://www.cimri.com/kullanici-sozlesmesi)
+(5.6, 7.1) web aracıyla incelendi. İlk belgede kullanım amacı, kopyalama/işleme
+ve başka mecrada kullanım sınırları var. İkinci belge üyelik sözleşmesidir;
+kullanıcının üyelik durumu araştırılmadı, üyeliğe bağlı hükümler otomatik
+genellenmedi. Eğitim/staj amacı tek başına izin kanıtı sayılmadı.
+
+| Projedeki amaç | Teknik inceleme sonucu | Uygun kullanım doğrulandı mı? |
+|---|---|---|
+| Yeni geçmişi indirme ve saklama | Kısıtlı | Hayır |
+| Mevcut geçmişi yerel uygulamada gösterme | Belirsiz | Hayır |
+| ML eğitiminde kullanma | Belirsiz | Hayır |
+
+Bu, kesin hukuki izin kararı değildir. İncelenen belgelerden projeye uygun
+kullanım dayanağı doğrulanamadı. Kullanıcının onayladığı bakım 4 planındaki
+koşul gereği yeni alım/aktarım aşamasına geçilmez. Mevcut veri ve gösterim
+davranışı korundu; ML eğitimi başlatılmadı. İki ürünün kimliği kullanım
+değerlendirmesinden ayrı araştırılabilir; 4.2 henüz başlamadı.
+
+29 Eylül araştırmasında kaydedilmiş kısıt başlıkları güncel metinde de var;
+eski tam metin kopyası bulunmadığından birebir metin karşılaştırması yapılmadı.
+Belgelerin sürüm/yayın tarihi saptanmadı; verilen tarih erişim tarihidir.
+Kayıt, kaynak adreslerini ve değerlendirmeyi içerir; tam HTML arşivi değildir.
+Git dışı kanıt: artifacts/bakim_4_20261019/41_kullanim/sonuc.json.
+
+57 ürün/20.805 kayıt/553 eksik fiyat, 3.4'ün önceki salt okunur doğrulamasının
+başlangıç sayılarıdır. 4.1'de DB sorgusu veya fiyat geçmişi isteği yapılmadı;
+eşleştirme, katalog, kod, şema ve zamanlayıcı değişmedi. Yalnız belgeler
+güncellendiğinden tam test paketi tekrarlanmadı. 4.1'de duruldu; bakım 4'ün
+tamamı henüz bitmedi. Kullanıcı 4.1 için commit ve pushu ayrıca açıkça istedi;
+üç belgenin gönderimi bu alt adımda yapılır, aynı commit'in CI sonucu yerel
+gönderim kaydına işlenir. Onaylı kalan akış proje planı Bölüm 9'dadır.
+
 ### Piyasa geçmişi araştırması (Adım 8)
 
 Kaynak seçimi için örnekler: `apple_iphone_16_128gb`,

@@ -84,7 +84,8 @@ Cimri aktarımı 8 Ekim; gerçek ekran kabulü 10 Ekim, grafik bakımı teyidi
 SQL–API doğrulaması 16 Ekim 2026.
 S25/S25+ uyuşmazlığı doğrulanan tek bağlantı 16 Ekim'de katalogdan çıkarıldı.
 19 Ekim'de 36–40 normal turlarının eşitlemesi ve yeni bağımsız SQL–API
-doğrulaması tamamlandı; katalog değişikliğinin gönderimi ayrı onay bekliyor:
+doğrulaması tamamlandı. Katalog/bakım kayıtları b4d223f ile gönderildi;
+aynı commit'in CI kontrolü başarılı:
 
 | Alan | Sonuç |
 |---|---|
@@ -121,7 +122,8 @@ ağsız önizleme ve üç gerçek telefonda dört aralık/yenilemeler doğruland
 konsol temiz, eksik fiyatlar ve çizgi boşlukları korunuyor. Gerçek ekran
 kontrolünde sekiz veritabanı nesnesinin parmak izi değişmedi. 3.3 düzeltmesi
 19 Ekim'de 7a2d4ec ile gönderildi, aynı SHA CI başarılı. S25 katalog bakımı
-ve kalan bakım 3 belgelerinin gönderimi için ayrı onay/CI kapanışı bekleniyor.
+ve kalan bakım 3 belgeleri de b4d223f ile gönderildi; aynı SHA CI başarılı.
+Bakımın 3. adımı tamamlandı; kalan erişim sınırları teknik rehberde kayıtlı.
 
 Katalogdaki **348 bağlantının markalara göre dağılımı** (iki pasif bağlantı dahil):
 
@@ -141,6 +143,12 @@ Otomatik testler canlı ağa çıkmaz; veritabanı testleri yalnız test veritab
 Katalog pazaryerlerinin tamamını kapsamaz. Cimri’de iki ürünün eşleştirmesi
 doğrulanamadı; eksik fiyatlar doldurulmadı. Kaynak ve işletim sınırları
 [teknik rehberde](docs/teknik.md#bilinen-sınırlar) açıklanır.
+
+19 Ekim bakım 4.1 incelemesinde Cimri verisinin projedeki kullanım uygunluğu
+doğrulanamadı; onaylı plan gereği yeni geçmiş alımı ve aktarımına geçilmedi.
+Mevcut veriler korundu. İki eksik ürünün kimlik araştırması (4.2) bekliyor;
+[kullanım değerlendirmesi](docs/teknik.md#cimri-kullanım-değerlendirmesi-bakım-41-19-ekim)
+ayrı kaydedildi.
 
 ## 🗺️ Yol haritası
 
