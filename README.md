@@ -79,20 +79,23 @@ hata sonucunu kaydeder. Cimri geçmişi bu akışın gözlemleriyle birleştiril
 
 ## 📊 Doğrulanmış kapsam
 
-Cimri aktarımı 8 Ekim; gerçek ekran kontrolü 10 Ekim; katalog bakımı ve son
-otomatik test paketi 15 Ekim; yeni katalogla iki normal turun log–DB ve
-59 ürünün bağımsız SQL–API doğrulaması 16 Ekim 2026:
+Cimri aktarımı 8 Ekim; gerçek ekran kabulü 10 Ekim, grafik bakımı teyidi
+16 Ekim; 15 bağlantılık katalog bakımının log–DB ve 59 ürünün bağımsız
+SQL–API doğrulaması 16 Ekim 2026.
+S25/S25+ uyuşmazlığı doğrulanan tek bağlantı 16 Ekim'de katalogdan çıkarıldı.
+19 Ekim'de 36–40 normal turlarının eşitlemesi ve yeni bağımsız SQL–API
+doğrulaması tamamlandı; katalog değişikliğinin gönderimi ayrı onay bekliyor:
 
 | Alan | Sonuç |
 |---|---|
 | Fiyat kaynakları | Trendyol ve Hepsiburada |
 | Model aileleri | 24; Apple, Samsung, Xiaomi ve POCO |
-| Katalog | 59 ürün, 349 bağlantı; 347 etkin bağlantı |
+| Katalog | 59 ürün, 348 bağlantı; 346 etkin bağlantı |
 | Toplama düzeni | Her gün 10:00 ve 22:00; haftalık keşif Pazar 14:00 |
-| Son doğrulanan fiyat turu | Tur 35: 347 sonuç; 251 fiyat, 95 Tükendi, 1 önceden bilinen kimlik hatası |
+| Son doğrulanan fiyat turu | Tur 40: 346 sonuç; 240 fiyat, 106 Tükendi, 0 hata. 36–40 log–DB eşleşti |
 | Cimri geçmişi | 57 ürün, 20.805 tarihli kayıt; 20.252 fiyat ve 553 eksik değer |
-| Otomatik testler | 16 Ekim:1758 geçti;434’ü PostgreSQL üzerinde;0 atlandı; Black/Flake8 temiz |
-| SQL–API ve ekran | SQL–API: 16 Ekim'de 59 ürün eşleşti; ekran: 10 Ekim'de üç temsilci ürün, dört aralık, yenileme ve hata sonrası dönüş doğrulandı |
+| Otomatik testler | 19 Ekim: 1758 geçti; 434’ü PostgreSQL üzerinde; 0 atlandı; Black ve Flake8 temiz |
+| SQL–API ve ekran | 19 Ekim SQL–API: 59 ürün/0 fark, 8 nesne aynı. 16 Ekim grafik bakımında 3 gerçek ürün/12 aralık/yenilemeler temiz; tam ekran kabulü 10 Ekim |
 
 14 Ekim'de ML öncesi 25 yeni keşif sayfasının incelemesi tamamlandı:
 15 doğrulandı, 7 uyuşmazlık, 3 kanıt yetersiz. Özgün rapor uygulanmadı.
@@ -105,21 +108,28 @@ veritabanı nesnesinin parmak izi aynı kaldı. Ayrıntı `proje_plani.md` Böl�
 İnceleme sırasında Trendyol'da açık 5G model ile 4G ürün özelliği çelişkisini,
 fiyat ve keşif adayı üretilmeden reddeden ortak koruma da eklenmişti.
 
+16 Ekim'de S25 512 GB için kayıtlı Hepsiburada sayfasının kendi ürün
+verilerinde S25+ 512 GB gösterdiği doğrulandı. Bağlantı katalogdan çıkarıldı;
+S25 ürünü ve geçmişi korundu, bu ürünün etkin takip sayfası kalmadı.
+Normal tur bağlantıyı DB'de silmeden pasifleştirdi: katalog 348/346 etkin,
+tarihsel DB 349/346 etkin. 36–40 turlarında bu bağlantı yok; 34 eski kontrol
+ve diğer kimlikler korundu. Değişiklik sonrası bağımsız SQL–API teyidi tamam.
+
 16 Ekim'de grafiklerin boş ilk çizimindeki `Infinite extent` uyarısı,
 mevcut verilerden eksen sınırları hazırlanarak düzeltildi. Altı regresyon,
 ağsız önizleme ve üç gerçek telefonda dört aralık/yenilemeler doğrulandı;
 konsol temiz, eksik fiyatlar ve çizgi boşlukları korunuyor. Gerçek ekran
-kontrolünde sekiz veritabanı nesnesinin parmak izi değişmedi. Kullanıcının
-19 Ekim kararıyla3.3 ayrı gönderilir; S25 katalog değişikliği ve bütün
-bakım3 kapanışı, DB eşitlemesi/bağımsız SQL–API teyidiyle ayrıca sonuçlanacak.
+kontrolünde sekiz veritabanı nesnesinin parmak izi değişmedi. 3.3 düzeltmesi
+19 Ekim'de 7a2d4ec ile gönderildi, aynı SHA CI başarılı. S25 katalog bakımı
+ve kalan bakım 3 belgelerinin gönderimi için ayrı onay/CI kapanışı bekleniyor.
 
-Katalogdaki **349 bağlantının markalara göre dağılımı** (iki pasif bağlantı dahil):
+Katalogdaki **348 bağlantının markalara göre dağılımı** (iki pasif bağlantı dahil):
 
 ```mermaid
 pie showData
-    title Katalogdaki bağlantılar — 15 Ekim 2026
+    title Katalogdaki bağlantılar — 16 Ekim 2026
     "Apple" : 174
-    "Samsung" : 105
+    "Samsung" : 104
     "Xiaomi" : 66
     "POCO" : 4
 ```

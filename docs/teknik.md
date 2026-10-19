@@ -1085,7 +1085,7 @@ akış değildir. Bu değişiklik API kapanışını yeniden açmaz; diğer bak�
 ML veri yeterliliği ve sonraki işletim aşamalarını tamamlanmış saymaz.
 Commit/push her seferinde ayrı açık onay ister.
 
-### Doğrulanan 15 adayın seçili raporu (15–16 Ekim; teknik doğrulama tamam, gönderim bekleniyor)
+### Doğrulanan 15 adayın seçili raporu (15–16 Ekim; tamamlandı)
 
 Bu tek seferlik bakım mevcut --apply-report yolunu kullanır; üretim kodunda
 yeni seçenek yoktur. Özgün 25 adaylı rapor ve inceleme kanıtları korunur.
@@ -1203,8 +1203,99 @@ fiyat_takip_api, read_only=true. Rapor SHA
 Araç ve katalog hashleri hazırlık/uygulamayla eşleşti. Böylece bu 15 bağlantının
 katalog → toplama → DB → API akışı teknik olarak doğrulandı. Yeni ekran
 incelemesi veya pazaryeri isteği yapılmadı. Eski S25/S25+ vakası ayrı açık.
-Gönderilecekler yalnız katalog/README/plan/teknik rehber; yerel kanıtlar Git
-dışında. Ayrı commit ve push onayları ile aynı SHA CI henüz bekleniyor.
+Bu teknik kontrol anında gönderim bekleniyordu. Kullanıcının açık onayıyla
+yalnız katalog/README/plan/teknik rehber 96d42a6 ile gönderildi; aynı SHA
+CI 38873185491 completed/success (pytest/Black/Flake8 başarılı). Yerel
+kanıtlar Git dışında, 2. bakım adımı kapandı.
+
+### S25/S25+ tek sayfalık kaynak kontrolü (bakım 3; 16 Ekim hazırlığı)
+
+Hedef hepsiburada_hbcv00008bcy51, product_id=58 / samsung_galaxy_s25_512gb.
+Mevcut tur 30–35 kayıtlarında S25+ başlığı identity hatasıdır; fiyat NULL.
+Bu, güncel ham sayfa kanıtının yerine geçmez. Git dışındaki
+artifacts/ml_oncesi_inceleme_20261013/bakim_03_20261016/ geçici kataloğu
+mevcut ürün/platform kaydını ve yalnız hedef bağlantıyı içerir. Kullanıcı,
+toplama/keşif çalışmıyorken proje kökünde şu komutu çalıştırır:
+
+```powershell
+& .\artifacts\ml_oncesi_inceleme_20261013\bakim_03_20261016\ham_kayit.ps1
+```
+
+Yardımcı 52 girdi parmak izini doğrular; farklı katalog/kod/yardımcıda
+başlamaz. Mevcut live_scraper_check.py ve live_discovery_check.py yanıt
+kaydetme yöntemi kullanılır; aynı HTTP ve ortak tarama kilidi korunur.
+CATALOG_PATH yalnız süreçte geçici kataloğa alınır ve finally içinde önceki
+değerine döner. BOM'lu PowerShell yeni s25_kontrol_<zaman>/ klasörüne
+scraper.json, stderr.log, calisma.json ve yanitlar/<listing_id>/ ham
+baytlarını yazar; önceki kaynaklar değişmez, katalog/DB'ye yazılmaz.
+
+Başarılı sonuçlarla errors birlikte hedef kimliği tam bir kez kapsamalı.
+S25+ sürüyorsa checked_listings=0, platform_results=[] ve aynı kimlikli
+tek model uyuşmazlığı beklenir; aracın 0 çıkışı ürün kabulü değildir.
+Kilit doluysa çıkış 3, boş/eksik sonuç kesin kaynak kararı sayılmaz.
+Kendi SKU'sunun başlığı/JSON-LD'si incelenmeden sayfa pasifleştirilmez.
+Kaynak S25+ doğrulanırsa tek active=false farkı ayrıca kullanıcı kabulüne
+sunulur. Ürün/geçmiş korunur; S25+ fiyatı S25'e taşınmaz, ürün Tükendi
+sayılmaz. Normal tur eşitlemesi ve SQL–API doğrulaması sonra gelir.
+
+**16 Ekim 13:38 kaynak sonucu:** kullanıcı komutu çalıştırdı; tek GET
+yanıtında aynı HBCV00008BCY51 için H1, JSON-LD Product ve ana ürün verisi
+S25+ 512 GB. Ana productId HBC00007MIDNM. Tek identity hatasıyla
+checked=0/errors=1/çıkış 0 beklenen tanılama; bu kayıt için mevcut koruma
+doğru çalıştı. HTML SHA
+a41a019250fd394442fd4bdb3751e23e9e88a86f9122fa0b765583d8818d5478.
+Girdi parmak izleri aynı; ağsız tam scraper replay aynı hatayı üretip
+satıcı/fiyat isteğine geçmedi. Ajan yeni site isteği yapmadı.
+
+Git dışı s25_degerlendirme_20261016_134043 kayıtları yalnız HB08BCY51'in
+active=false önizlemesini içerir; ürün58 etkin, geçmiş/kimlik ve diğer
+alanlar aynı. Kabul edilirse 59/349/346; şu an gerçek katalog 59/349/347.
+Bu önizleme o anda uygulanmamıştı. **16 Ekim kullanıcının son kararı:**
+active=false kaydı yerine bağlantının katalogdan doğrudan kaldırılması
+istendi; yalnız HB08BCY51 çıkarıldı. Şimdiki dosya59 ürün/348 bağlantı/
+346 etkin; ürün58 etkin ve geçmiş aynı, bu ürünün etkin takip sayfası yok.
+
+Mevcut catalog_sync davranışı dosyada bulunmayan bağlantıyı DB'den silmez;
+sonraki normal turda active=false yapar. Dolayısıyla turdan sonra DB'de
+349 toplam/346 etkin, katalogda348 toplam/346 etkin beklenir. Ajan gerçek
+DB'ye yazmadı. Salt okunur DB görüntüsüne karşı ağsız plan_sync hesabı yalnız
+hedef kaydın pasifleştirilmesini gösterdi; yeni ürün/bağlantı/başka alan farkı
+yok. Kimlik/geçmiş taşınmaz, yeni manuel fiyat turu başlatılmaz. Güncel
+katalog SHA3b1615cf6ef186ad1ab87e5df3874ed5189b08ef323aafc804b7bc5da879a94a;
+önceki/beklenen dosyalar ve karar Git dışı katalogdan_cikarma_20261016 içinde.
+Yerel kontroller tamam: son tam paket1751 geçti/0 atlama/xfail, Black74 ve
+Flake8 temiz. İlk koşudaki tek AppTest3sn süre aşımı aynı test ve tam paket
+kod/süre sınırı değişmeden yeniden çalıştırılarak kontrol edildi; hedefli1
+ve tam1751 geçti. İlk kayıt ve başarılı tekrarlar ayrı korundu. Testler
+yalnız fiyat_takip_test üzerinde, gerçek DB ortam değişkenleri çıkarılarak
+çalıştı; iki mevcut Starlette/AnyIO uyarısı kaldı.
+
+Değişiklik sonrası gerçek DB'de katalog alanları ve hedefin34 geçmiş
+kontrolü salt okunur tekrar karşılaştırıldı, aynı. Ağsız ikinci eşitleme
+planı değişiklik üretmiyor. Gerçek normal tur/SQL–API teyidi hâlâ bekliyor.
+Bu3.1 yerel kapanışında erişim/ağ ve grafik başlamamıştı;3.2 sonucu aşağıda.
+Eski ham kontrol yardımcıları
+eski katalog hash'ini bekler; korumaları kaldırılarak tekrar çalıştırılmamalı.
+
+### Erişim ve ağ gözlemi (bakım 3.2; 16 Ekim tamamlandı)
+
+Git dışı bakim_03_20261016/erisim_ag_20261016/sonuc.json, salt okunur DB
+sonuçlarını kayıtlı logların SHA'larıyla birleştirir. HB0DHXKTI tur28'de
+www3.hepsiburada.com/ için invalid_host verdi; sonraki altı normal
+tamamlanmış tur29–34 ve ek35'te aynı sayfa22.999 TL teklif/0 hata.
+Sonuç: neden/yönlendirme zinciri kesinleşmedi, yedi turda tekrarlamadı.
+İzinli host yalnız www.hepsiburada.com; ayar veya HTTP kodu değiştirilmedi.
+
+Tur16–35'in20 tamamlanmış zamanlanmış turunda network/tekrar logu yok,
+tur notları NULL, kayıtlı kalan network hatası yok. Canlı ikinci okuma
+gözlemi oluşmadı. Son tam paketin XML'indeki18 ilgili PostgreSQL sınaması
+başarılı; yeni test koşusu gerekmedi, üretim kodu aynı. Otomatik sınama
+kanıtı canlı gözlem yerine geçmez. Kasıtlı kesinti yapılmadı; yeni bir
+arıza oluşmasını beklemek bu incelemenin kapanış şartı değil.
+
+Bu kayıt kontrolü yeni site isteği veya DB yazması yapmaz. 3.3 grafik
+sonucu aşağıdadır; katalogdan çıkarma sonrası normal tur/SQL–API teyidi ayrı
+bekliyor; bütün3.adım veya gönderim kapanmış sayılmaz.
 
 ### Grafik başlangıç uyarısı (bakım 3.3; 16 Ekim tamamlandı)
 
@@ -1319,6 +1410,70 @@ testleri ve ilgili belgelerle sınırlıdır. S25 katalog değişikliği ve
 artık gerçekleşti; loglarda tur36 ve40 çıkış0 ile tamam. Bağlantının
 DB etkinliği/geçmişi ve bağımsız SQL–API denetimi henüz doğrulanmadı;
 bunlar3.1/3.4 kapanışında kalır. Bütün bakım3 tamamlanmış sayılmaz.
+
+**19 Ekim3.3 gönderimi tamamlandı:** altı dosyanın yalnız grafik kapsamı
+7a2d4ec ile origin/main'e gönderildi. Aynı SHA için CI39209741592
+completed/success; yerel1758 test/0 atlama ve Black/Flake8 temiz.
+S25 katalog değişikliği, erişim kayıtları ve bütün bakım3 kapanışı ayrı
+çalışma değişiklikleri olarak korundu; DB/bağımsız SQL–API teyidi açık.
+
+### Adım 3.4 kapanış doğrulaması (19 Ekim; teknik çalışma tamam)
+
+Kullanıcı 3.4 planını onayladı. Ajan fiyat_takip_api hesabıyla açık
+REPEATABLE READ READ ONLY işlemlerinde inceleme yaptı; üretim DB'sine
+yazılmadı. Kabul edilmiş katalog SHA 3b1615cf… ile aynı. Katalog 59 ürün/
+348 bağlantı/346 etkin; DB 59 ürün/349 bağlantı/346 etkin. Yalnız
+hepsiburada_hbcv00008bcy51 active=false; ürün 58 etkin/0 etkin sayfa.
+Önceki platform/ürün/bağlantı alanları bu tek etkinlik farkı dışında aynı.
+Hedefin 34 tarihsel kontrolü tüm alanlarıyla korundu,36'dan sonra 0 kayıt.
+Saf plan_sync değişiklik üretmiyor; sync-catalog veya yeni tur çalıştırılmadı.
+
+| Normal tur | Fiyat | Tükendi | Hata | Doğal ikinci okuma |
+|---|---:|---:|---:|---|
+| 36 | 249 | 97 | 0 | yok |
+| 37 | 247 | 98 | 1 invalid_host | 55/55 düzeldi |
+| 38 | 243 | 102 | 1 invalid_host | yok |
+| 39 | 243 | 103 | 0 | yok |
+| 40 | 240 | 106 | 0 | yok |
+
+Beş normal turun 346'şar tekil kimliği, katalog parmak izi, fiyat/satıcı/stok
+veya hata sonuçları, özet ve çıkış kodları log–DB karşılaştırmasında aynı.
+S25 bağlantısı bu planların dışında. 37'nin ilk 55 network hatası, aynı
+55 kimlikli tur sonu okumada uygun fiyat/stok sonucuna döndü; 0 network
+hatası kaldı. Kasıtlı kesinti oluşturulmadı. Eski DHXKTI www3 hedefi bu
+beş turda 22.999 TL teklif/0 hata. 37'nin tek hatası PZUWB, 38'inki 9Z3XZZ
+sayfalarında www3 invalid_host; farklı SKU'lar ve sonraki 39/40 hatasız.
+Yönlendirme nedeni bilinmiyor; host koruması korunuyor, düzeltildi denmiyor.
+
+16 Ekim gerçek ekran başlangıç kanıtındaki önceki 11.252 listing_checks,
+2.007 ürün-tur özeti,35 tur ve 20.805 Cimri satırının parmak izleri aynı.
+Şema/platform/ürün kayıtları aynı; bağlantılarda yalnız beklenen pasiflik
+farkı var. 19 Ekim salt okunur incelemenin önce/sonra 8 nesnesi de aynı.
+
+Kullanıcı yerel API'yi kendi terminalinde başlattı; mevcut bağımsız
+tests/manual/api_ui_check.py aracını 09:38'de yeni çıktı klasörüyle çalıştırdı.
+Rapor verified/exit 0; 59 ürünün hepsi matched, uç nokta/ürün farkı yok,
+changed_relations=[] ve 8 nesnenin önce/sonra parmak izi aynı. Okuma hesabı
+fiyat_takip_api/read_only=true; araç/katalog kanıtları kaydedildi.
+
+S25 API yanıtı ayrıca mevcut istemciyle okundu: product.active=true,
+state=unverified, best_offer=null. Son ürün turu35'teki kimlik hatası,
+yeni genel tur 40 ile karıştırılmadı. 29. turun 79.699 TL eski teklifi
+last_successful_offer içinde, listing_active=false olarak korunuyor;
+güncel teklif veya Tükendi sayılmıyor. Grafik matrisi tekrar çalıştırılmadı.
+
+Son tam paket 1758 geçti/0 atlama/xfail (165,084sn); Black/Flake8 temiz.
+Yalnız iki izinli _test hesabı kullanıldı; gerçek DB adresleri test
+sürecinden çıkarıldı. 434 PostgreSQL sınaması ve önceki iki bağımlılık
+uyarısı var. Üretim/test/katalog parmak izleri kontroller boyunca aynı;
+sonrasında yalnız belgeler güncellendi. Grafik 3.3 ayrı 7a2d4ec ile gönderildi,
+aynı SHA CI 39209741592 başarılı. Kalan beş dosya katalog/README/plan/
+teknik rehber/AGENTS; commit ve push için ayrı onay ve yeni SHA CI bekleniyor.
+
+Git dışı kanıt kökü artifacts/bakim_3_4_20261019/: db_20261019_093605_783046/
+sonuc.json, sql_api_20261019_093838_877/report.json, s25_api_sonucu.json,
+kontroller/sonuc.json ve kapanis_ozeti.json. Önceki kanıtlar değiştirilmedi.
+Bu teknik kapanış Cimri, ML yeterlilik veya otomatik aday kabulünü başlatmaz.
 
 ### Piyasa geçmişi araştırması (Adım 8)
 

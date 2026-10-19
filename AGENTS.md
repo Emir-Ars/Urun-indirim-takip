@@ -54,6 +54,9 @@ eskisi düzeltilir; belge baştan yazılmaz.
 
 - Kullanıcı projeyi öğrenerek geliştiren bir stajyer. Bütün mesajlar Türkçe
   yazılır, kısa durum satırları dahil.
+- Çalışma ve durum mesajlarında hangi ana adım ve alt adımda olunduğunu
+  açıkça belirt (ör. “Adım 3.2 — Erişim ve ağ kontrolü”). Tamamlanan,
+  sürdürülen ve bekleyen işleri ayır (16 Ekim kullanıcı kararı).
 - Adım adım ilerle ve her adımdan sonra dur. Her değişiklikte amacı, akışa
   bağlantısını, doğrulamayı ve açık sınırları anlat; terimleri açıkla. Hızlı ve
   toplu değişiklik kullanıcıyı kaybettirir.
