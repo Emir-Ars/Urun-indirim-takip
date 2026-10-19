@@ -170,6 +170,8 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 | `tests/manual/live_discovery_check.py` | Keşfi kataloğa yazmadan canlı çalıştırır; `--trace` ile her kararın nedenini gösterir. Normalde raporu `data/discovery_report.json` dosyasının üzerine yazar. `--save-responses KLASOR`, tek hedefin ham HTML/JSON yanıtlarını ve raporunu yeni klasöre kaydeder; karar izini de basar. |
 | `tests/manual/market_history_probe.py` | Akakçe için tek örnek sayfayı, Cimri için ürün sayfası ve grafik API'sini ortak HTTP katmanı ve tarama kilidiyle okur. Cimri'nin tarihli fiyat noktalarını Git dışındaki yerel JSON raporuna yazar; ham HTML'yi ve veritabanını yazmaz. |
 | `tests/manual/ui_preview.py` | Aynı Streamlit ekranını ağsız test istemcisiyle gösterir; kalıcı test verisi uyarısı vardır. API/DB veya canlı site gerekmez; kullanıcı görünüm/yenileme kontrolünü burada yapar. |
+| `tests/manual/ml_data_check.py` | Yalnız okuma hesabıyla günlük 30+7 ML pencereleri, %5 hedefi, eksik/kapsam nedenleri ve zaman bölümlerini hesaplar. Kendi/Cimri ayrı; `--snapshot` ile ağsız tekrar. Model eğitmez, API/site çağırmaz. |
+| `tests/test_ml_data_check.py` | Gün/tur/fiyat/kapsam sınırları, tam %5, NULL etiket, geleceğe taşmayan bölümleme; okuma hesabı, kaynak değişimi, güvenli çıktı ve tekrar sınamaları. Gerçek DB kullanılmaz. |
 | `.github/workflows/ci.yml` | Her push/pull request'te geçici PostgreSQL 17 (`C.UTF-8`) açar, `dev,web` bağımlılıklarını kurar; yalnız `_test` DB'de API rolünü hazırlar ve Black/Flake8/tam testleri çalıştırır. `ci_only` şifresi yalnız o işte açılıp silinen sunucunundur. |
 | `.github/workflows/bulut-deneme.yml` | Elle tetiklenen bulut denemesi (zamanlama, veritabanı ve gizli anahtar yok): `tests/manual/live_scraper_check.py samsung_galaxy_a55_128gb` ile 4 sayfayı (Trendyol ve Hepsiburada) GitHub'ın makinesinden okur; her iki site de hatasız okunduysa başarılı, aksi hâlde başarısız biter ve sonucu çalışmanın özet sayfasına yazar. Soru: siteler bulut adreslerini engelliyor mu ([proje_plani.md](../proje_plani.md) Bölüm 8). **İlk sonuç (6 Ekim):** Hepsiburada'nın 3 sayfası okundu, Trendyol'un sayfası HTTP 403 (`blocked`) verdi; tek örnek (bkz. "Bilinen sınırlar"). Tetiklemek: GitHub → Actions → "Bulut deneme (canlı okuma)" → Run workflow. Bilgisayardaki tur saatlerinde (10:00–10:40, 22:00–22:40) tetiklenmemelidir: `data/scrape.lock` bu makineye özgüdür, GitHub'daki çalışma onu almaz ve aynı siteye iki yerden gidilir (iş tanımı bunu denetlemez, yalnız yorumda uyarır). |
 
@@ -1590,6 +1592,163 @@ ML veri yeterliliği ayrı planlanır; Cimri'nin ML kullanımı belirsizliği
 o aşamaya taşınır, model eğitimi başlatılmadı. Cimri geçmişi eksik olması
 tek başına ürünü katalogdan çıkarma nedeni değildir; veri yeterliliği
 ve ML'e dahil edilmesi sonraki adımlarda ayrı değerlendirilir.
+
+### ML veri denetimi (Bakım 5)
+
+**19 Ekim, teknik çalışma tamam:** yeniden kullanılabilir araç kullanıcı
+tarafından çalıştırıldı; gerçek sonuçlar aşağıdadır. Tam 1829 test/0 atlama,
+Black/Flake8 temiz. Kullanıcı bu gönderimin commit ve pushunu açıkça onayladı;
+aynı SHA CI sonucu ve güncel kapanış yerel gönderim kaydında izlenir.
+Bakım 4 kapanışı 978faa6 ve aynı SHA CI39225290241 başarılı olarak gönderildi;
+kullanım belirsizliği sürer.
+
+Araç, mevcut tests/manual/api_ui_check.py içindeki configured_url/read_dataset
+hesap/şema denetimlerini kullanır. Yalnız API_DATABASE_URL ve SELECT hesabı;
+her görüntü REPEATABLE READ / READ ONLY, 5 saniye sorgu sınırı ve UTC ile alınır.
+Analiz önceki tek görüntüde yapılır; sonunda sekiz nesne yeniden okunup parmak
+izleri karşılaştırılır. Devam eden tur varsa başlanmaz; kaynak değişirse
+hesaplanan sayılar kesin kabul edilmez. API, internete HTTP, migration,
+katalog eşitlemesi veya gerçek DB yazması yoktur.
+
+Toplama ve keşif çalışmıyorken proje kökünde kullanıcı terminalinden:
+
+```powershell
+$env:API_DATABASE_URL = "postgresql://fiyat_takip_api@localhost:5432/fiyat_takip"
+$mlAuditOut = "artifacts\bakim_5_$(Get-Date -Format yyyyMMdd)\denetim_$(Get-Date -Format HHmmss_fff)"
+.venv\Scripts\python.exe tests/manual/ml_data_check.py --output-dir $mlAuditOut
+$LASTEXITCODE
+```
+
+Şifre pgpass'ten okunur, komuta yazılmaz. API sunucusunu açmak veya yeni tur
+başlatmak gerekmez. Araç otomatik zamanlanmaz; eski çıktı klasörü kabul edilmez.
+Yerel hazırlıkta verilen BOM'lu denetimi_calistir.ps1, kod/config parmak
+izlerini ve çalışan zamanlanmış işleri denetler, API_DATABASE_URL değerini
+yalnız işlem boyunca seçip sonunda geri alır.
+
+| Çıkış | Anlamı |
+|---|---|
+| 0 | Denetim doğrulandı; kullanılabilir örnek sayısı sıfır olabilir. ML hazır veya kullanım izni var anlamına gelmez. |
+| 1 | Hesap/şema/girdi/DB/çıktı hatası; denetim tamamlanmadı. Ham hata ve bağlantı adresi yazdırılmaz. |
+| 2 | Kaynak değişti; sonuç kesin kabul edilmedi. Bu görüntünün ağsız tekrarı da 2 kalır. |
+| 130 | Kullanıcı durdurdu; tamamlanmış sonuç değildir. |
+
+Başarılı veya kaynak değişen denetim; snapshot.json, rules.json, report.json,
+source_check.json, windows.jsonl, daily.jsonl, report.md ve dosya parmak
+izlerini içeren manifest.json üretir. snapshot.json yalnız gereken alanları
+taşır; DSN/parola/tur notu/satıcı/ham hata metni içermez. Çıktı yazımı kesilirse
+failure.json varsa önceki kısmi dosyalar kesin sonuç sayılmaz. Yerel hash
+bütünlük kontrolüdür, kaynağın dijital imzası değildir. Görüntüdeki ilk
+hesaplayıcı SHA'sı ve source_check.json içindeki analysis_verifier_sha256
+ayrıdır; başka kod sürümüyle tekrar alınırsa hangi hesaplayıcının kullanıldığı bellidir.
+
+Kaydedilmiş görüntünün ağsız tekrarı da kullanıcı terminalinden:
+
+```powershell
+.venv\Scripts\python.exe tests/manual/ml_data_check.py --snapshot "$mlAuditOut\snapshot.json" --output-dir "${mlAuditOut}_tekrar"
+$LASTEXITCODE
+```
+
+Tekrar DB adresini okumaz/bağlanmaz ve görüntünün sabit tarihiyle hesaplar;
+aynı hesaplayıcı sürümü ve kurallarıyla
+report.json/windows.jsonl/daily.jsonl aynı olmalıdır. source_check.json içindeki
+çalışma biçimi farklıdır. Dışarıdan eklenen alanlar, tekrarlı/bozuk kimlikler,
+plan–kontrol veya sonuç–fiyat çelişkisi ve bozuk hash reddedilir.
+
+**Günlük kurallar:** kendi verimizde başlangıç fiyatı akşam turunun ürün
+minimumu, gelecek sonucu günün iki turunda gözlenen minimumdur. Akşam fiyatı
+yoksa sabah fiyatı başlangıca taşınmaz. Her scheduled tur, başlangıcından
+önceki en yakın İstanbul 10.00/22.00 dilimine aittir; örneğin ertesi gün
+09.00 başlangıcı önceki 22.00 dilimidir. Eksik/tekrarlı dilim, kesilen tur,
+günü aşan tamamlanma, ürünün planlanmaması ve eksik/hatalı sayfa cevabı kalite
+kusurudur. İki turun ürün sayfa kimlikleri aynı olmalı; başka ürünün değişen
+kataloğu etkilemez. Manuel turlar envanterde kalır, örneklere katılmaz.
+Cimri günlük fiyatları ayrı kalır; ürün kimliği değişimi pencereyi eler,
+tarihsel satıcı kapsamının aynı olduğu varsayılmaz.
+
+Geçmiş d−29…d, gelecek d+1…d+7'dir; d başlangıç günüdür. İlk 30 günde her gün
+başlangıç fiyatı ve sonraki yedi günde her gün minimum fiyat gerekir. Kendi
+37 günlük kapsamı sabit ve cevapları tam olmalı. Tükendi geçerli kaynak
+sonucudur; bütün gün fiyatsızsa doldurulmaz. Sabah fiyatı olan, akşam stoksuz
+bir gün gelecek minimumu sağlayabilir; geçmiş başlangıç fiyatını sağlayamaz.
+Eksik gelecekte gözlenen düşüş olsa dahi sıkı temel sayımda pencere dışarıda
+kalır; olumsuz etiket üretilmez. Tam sayı kuruşla
+100×gelecek_minimum ≤ 95×başlangıç ise 1, değilse 0; kullanılamayan etiket NULL.
+İçinde bulunduğumuz İstanbul günü elenir. API'nin 18 saat/14 geçiş/7 gün gibi
+gösterge eşikleri ML denetimine aktarılmaz.
+
+Rapor ürün/kaynak bazında tur/sonuç sayıları, süre, eksik gün/fiyat aralıkları,
+kapsam dönemleri, azami tur boşluğu, aday/elenen/kullanılabilir pencere ve
+sınıfları verir. calendar_days takvim uzunluğu, observed_days en az bir
+kontrol sonucu/kaydı bulunan nominal gün sayısıdır; boş hazırlanan satır
+gözlem sayılmaz. Cimri'de NULL fiyatlı tarih kaydı gözlemdir, fiyat değildir.
+Elenme nedenleri birden fazla olabilir; neden sayıları
+toplamı elenen pencere sayısına eşit olmak zorunda değildir. Güncel etkin
+sayfalar değişmişse bekleme hesabı eski kapsamı sürüyormuş gibi saymaz.
+Koşullu ilk pencere sonu ve ertesi gün yapılabilecek denetim tarihi verilir;
+bu vaat değildir. Takip sayfası yoksa veya ürün pasifse tarih hesaplanmaz.
+
+Kaynak başına kullanılabilir ortak referans tarihlerinde ilk floor(%70),
+sonraki floor(%85)'e kadar doğrulama, kalanı testtir. Bütün ürünler aynı
+tarih bölümünü paylaşır. Önceki bölümün hedef sonu sonraki dolu bölümün ilk
+referansına eşit/sonraysa purged olarak ayrılır. first_anchor/last_anchor,
+ayırmadan önceki bölüm sınırlarıdır; distinct_anchor_days kalan günleri sayar.
+Ürün/sınıf/gün sayıları ve
+boş/tek sınıflı bölümler belirtilir; model eğitilmez, puan üretilmez.
+Çakışmayan 37 günlük pencereler en erken olandan açgözlü seçilir; bunlar da
+ürünler arası istatistiksel bağımsızlık kanıtı değildir. numerical_candidate
+yalnız bu sayımlarda engel bulunmadığıdır; yayın yeterliliği değildir.
+Mevcut Cimri serisinin eski kalması ve ML kullanım belirsizliği ayrıca gösterilir.
+
+**5.3 gerçek veri sonucu:** kullanıcı 19 Ekim 13:14'te
+artifacts/bakim_5_20261019/gercek_20261019_131458_922/ çıktısını aldı;
+59 ürün/8 değişmeyen nesne/çıkış 0. Sonraki bütün hesaplar aynı görüntüde
+ağsız yapıldı. DB 59 ürün/349 bağlantı/346 etkin; katalog 59/348/346 ve 57
+eşleştirme değişmedi. 41 tur (39 scheduled/2 manual) envanterde;
+günlük örnek hesabı yalnız 18 Ekim sonuna kadar.
+
+| Kaynak | Pencere | Olumlu | Olumsuz | Kullanım sonucu |
+|---|---:|---:|---:|---|
+| Kendi geçmişimiz | 0 | 0 | 0 | 28 Eylül–18 Ekim 21 takvim günü; 37 günlük pencere yok, veri beklenir |
+| Cimri 57 ürün | 17.668 | 1.792 | 15.876 | Sayısal aday; ML kullanım uygunluğu doğrulanmadı, eğitim başlamaz |
+
+Cimri 20.805 satır/553 NULL, 2025-10-09–2026-10-08; arada kayıtsız tarih yok.
+43 üründe 329'ar pencere, 14 üründe 156–322 pencere. 56 ürünün iki sınıfı da var;
+iPhone 16 Pro 512 GB'ın 189 penceresi yalnız olumsuz. Ortak model taslağında
+ürünü otomatik silme nedeni değildir. İki eşleştirmesiz ürün hâlâ S25 512 GB
+ve Redmi Note 14 Pro 5G 256 GB. Kendi serileri de henüz örnek sağlamaz.
+494 çakışmayan 37 günlük pencere ve 329 farklı referans günü var; 17.668
+bağımsız gözlem varsayılmaz. Olumlu oranı yaklaşık %10,14; sınıflar dengesiz.
+
+| Cimri bölümü | Pencere | Olumlu | Olumsuz |
+|---|---:|---:|---:|
+| Eğitim | 12.333 | 1.180 | 11.153 |
+| Doğrulama | 2.172 | 207 | 1.965 |
+| Test | 2.431 | 298 | 2.133 |
+| Hedef taşmasıyla ayrılan | 732 | 107 | 625 |
+
+Ayırma sonrası 16.936 pencere kalır; bu model başarısı veya kullanım izni
+değildir. Kendi serimizde hatalı/eksik cevap, geç tamamlanma ve sayfa kapsamı
+değişimleri ayrıca raporlanır. Tam/fiyatlı iki tur ve güncel kapsam sürerse
+48 ürün 24 Kasım, 10 ürün 25 Kasım'da ilk kullanılabilir pencereyi denetleyebilir;
+yeni kusur tarihi değiştirir. Beş üründe 21 günün tamamında akşam fiyatı yok;
+tarihler onların da fiyat üretmeye başlaması koşuluna bağlıdır. Etkin sayfası
+olmayan S25'e tarih verilmez. Bunlar bugünkü teklif durumunu veya API'yi değiştirmez.
+
+71 yeni testin iki tanesi, boş nominal günün gözlem sayılmasını önleyen rapor
+düzeltmesidir. İlk gerçek rapor ve ham görüntü değişmedi; kabul edilen
+agsiz_tekrar_20261019_2/report.json, aynı veriyi düzeltilmiş hesaplayıcıyla
+yeniden sayar. S25'in 21 takvim gününde 19 gözlemli/2 kayıtsız günü vardır.
+Örnek/sınıf/bölüm sayıları ve bekleme tarihleri aynı kaldı; bağımsız Cimri
+hesabı ve gün dökümü doğrulandı. Ajan yeni gerçek DB okuması yapmadı.
+**5.4 doğrulaması:** 71 yeni testin 4'ü test PostgreSQL üzerinde; tam paket
+1829 geçti/0 atlandı/xfail (438 PostgreSQL), 156,55 sn. Black 76 dosyada ve
+Flake8 temiz. Gün sayımı düzeltmesi sonrası son tam paket yeniden çalıştırıldı;
+yalnız izinli test hesapları kullanıldı, üretim DB değişkenleri aktarılmadı.
+Mevcut iki Starlette/AnyIO uyarısı sürüyor. Üretim/config parmak izleri aynı;
+API/scraper/şema/zamanlayıcı değişmedi. Beş dosya ve Türkçe mesaj sunulduktan
+sonra kullanıcı “commit push atabilirsin” diyerek iki işlemi de onayladı.
+Aynı SHA CI başarılı olmadan gönderim kapanışı tamamlanmaz; sonuç Git dışı
+artifacts/bakim_5_20261019/gonderim_kaydi.json ve devir notunda izlenir.
 
 ### Piyasa geçmişi araştırması (Adım 8)
 
@@ -3865,7 +4024,7 @@ temiz. Gerçek DB, katalog ve uygulanmış migration dosyaları değişmedi.
 
 ## Testler ne kanıtlar, ne kanıtlamaz
 
-- **Otomatik testler (1751; 434'ü gerçek PostgreSQL'de):** Kuralların doğru
+- **Otomatik testler (1829; 438'i test PostgreSQL'inde):** Kuralların doğru
   çalıştığını kayıtlı ve sahte yanıtlarla kanıtlar. Kimlik değişiklikleri gerçek
   kaynak örneği ve regresyon ister; 7 Ekim varyant ve adres bakımları kullanıcının
   her maddeye ayrı onayıyla yapay çelişkilere karşı önleyici koruma olarak uygulandı.

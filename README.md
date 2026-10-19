@@ -95,7 +95,7 @@ aynı commit'in CI kontrolü başarılı:
 | Toplama düzeni | Her gün 10:00 ve 22:00; haftalık keşif Pazar 14:00 |
 | Son doğrulanan fiyat turu | Tur 40: 346 sonuç; 240 fiyat, 106 Tükendi, 0 hata. 36–40 log–DB eşleşti |
 | Cimri geçmişi | 57 ürün, 20.805 tarihli kayıt; 20.252 fiyat ve 553 eksik değer |
-| Otomatik testler | 19 Ekim: 1758 geçti; 434’ü PostgreSQL üzerinde; 0 atlandı; Black ve Flake8 temiz |
+| Otomatik testler | 19 Ekim: 1829 geçti; 438’i PostgreSQL üzerinde; 0 atlandı; Black ve Flake8 temiz |
 | SQL–API ve ekran | 19 Ekim SQL–API: 59 ürün/0 fark, 8 nesne aynı. 16 Ekim grafik bakımında 3 gerçek ürün/12 aralık/yenilemeler temiz; tam ekran kabulü 10 Ekim |
 
 14 Ekim'de ML öncesi 25 yeni keşif sayfasının incelemesi tamamlandı:
@@ -156,10 +156,20 @@ ve [kimlik araştırması](docs/teknik.md#iki-eksik-cimri-kimliği-bakım-42-19-
 ayrı kaydedildi. 4.3 alım/aktarım kararı **koşullar sağlanmadığı için uygulanmadı**
 olarak [kapanış kaydına](docs/teknik.md#cimri-koşullu-alım-kararı-bakım-43-19-ekim)
 işlendi. Kullanım belirsizliği ve iki eksik eşleştirme sürüyor.
-**Bakım 4 teknik incelemesi tamam.** Kullanıcı kapanışın commit/push işlemini
-açıkça istedi; aynı commit'in CI sonucu gönderim kaydında izlenir.
-Cimri geçmişi eksik ürünler katalogda korunur; ML için veri yeterliliği
-sonraki adımda değerlendirilecek.
+**Bakım 4 kapandı:** 978faa6 gönderildi; aynı commit'in
+[CI kontrolü](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/39225290241)
+başarılı. Cimri geçmişi eksik ürünler katalogda korunur.
+
+**Bakım 5 veri denetimi tamam:** tekrar kullanılabilir, salt okunur
+[ML veri denetimi](docs/teknik.md#ml-veri-denetimi-bakım-5) kullanıcı tarafından
+çalıştırıldı. 18 Ekim sonuna kadar kendi serimizde 21 takvim günü ve **0**
+kullanılabilir 30+7 penceresi var. Cimri'nin 57 ürününde **17.668 pencere**
+(1.792 olumlu / 15.876 olumsuz) bulundu; örtüşen pencereler bağımsız örnek
+sayılmaz. Cimri'nin ML kullanım uygunluğu doğrulanmadığı için eğitim
+başlatılmadı. Kendi serimizde veri bekleniyor; katalogdaki 59 ürün korunuyor.
+71 yeni test dahil tam 1829 test/0 atlama, Black ve Flake8 temiz.
+Teknik çalışma tamam; kullanıcı bu beş dosyanın commit ve push işlemlerini
+açıkça onayladı. Aynı commit'in CI ve gönderim sonucu yerel kapanış kaydında izlenir.
 
 ## 🗺️ Yol haritası
 
