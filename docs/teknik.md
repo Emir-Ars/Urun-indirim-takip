@@ -1206,6 +1206,120 @@ incelemesi veya pazaryeri isteği yapılmadı. Eski S25/S25+ vakası ayrı açı
 Gönderilecekler yalnız katalog/README/plan/teknik rehber; yerel kanıtlar Git
 dışında. Ayrı commit ve push onayları ile aynı SHA CI henüz bekleniyor.
 
+### Grafik başlangıç uyarısı (bakım 3.3; 16 Ekim tamamlandı)
+
+8502 ağsız önizlemesinde kullanıcı dört Infinite extent uyarısını yeniden
+gördü. Streamlit1.65.0 `_marshall_chart_data`, satırları Altair tanımından
+çıkarıp ayrı Arrow yüküne taşır; ön yüz grafik motorunu satırlar yüklenmeden
+başlatır. Kurulu motorla aynı Vega6.4.0 üzerinde boş başlangıç dört sonsuz
+eksen uyarısı üretti; satırlar eklendiğinde uyarı oluşmadı.
+
+`app/ui/presentation.py::price_chart` mevcut satırlardan sonlu eksen
+sınırları hazırlar. Tarih sınırı UTC milisaniye sabit ifadesidir; tek
+tarihte derleyicinin iki sınırı tek elemana indirmesi böyle önlenir.
+Fiyat sınırları NULL olmayan fiyatlardan gelir; nice=True eski yuvarlamayı
+korur. Satırlar, eksik fiyatlar, segmentler, zaman/kapsam boşlukları,
+etkileşim ve iki ayrı kaynak değiştirilmez. Ekran tamamen fiyatsız/boş
+seriyi zaten çizmez; sıfır fiyat veya sahte gözlem eklenmez. Konsol uyarısı
+susturulmadı, üretim bağımlılığı eklenmedi.
+
+`tests/test_ui.py` içindeki altı yeni regresyon gerçek Arrow ayırımında
+tek nokta/NULL uçlar/boşluk durumlarında eksenlerin satırlardan önce hazır
+olmasını ve satırların aynen taşınmasını sınar. `tests/ui_samples.py`
+önizlemesine “Tek fiyat gözlemi” eklendi. Ağsız Vega matrisinde 30 çizimde
+boş başlangıç ve iki veri yenilemesi temiz; 20 eski/yeni grafiğin eksenleri
+ve çizim yolları aynı. Dört boş/fiyatsız durum ekran koşuluyla atlanır.
+Tanılama aracı vl-convert1.9.0/Vega-Lite6.4 ailesindedir; kurulu ön yüzün
+Vega-Lite6.4.3 derleyicisiyle aynı olduğu iddia edilmez. Tarayıcısız
+ortamın window olay kaynağı uyarıları ayrı kaydedilir.
+
+Yerel kanıt `bakim_03_20261016/grafik_20261016/` altında. Son tam pytest
+**1758 geçti/0 atlama/xfail** (156,10sn; 434 PostgreSQL); yalnız test DB'si,
+gerçek DB adresleri test sürecinden çıkarıldı. Black'ın bulduğu iki uzun
+satır biçimlendirildikten sonra Black74/Flake8 temiz. İki önceki bağımlılık
+uyarısı aynı; ilk biçim hatası ve son kontroller ayrı saklanır. Düzeltme
+sonrası ilk kullanıcı F5 görüntüsünde dört gruplanmış Infinite extent
+satırı sürüyor; her sayaç2. Tarayıcı kontrolü geçmedi. Açık önizleme süreci
+değişiklikten önce15:16'da başladı; yeni Python sürecinde güncel sonlu
+eksenler/12 senaryo doğrulandı. Açık sunucunun yüklü modülünü ayırmak için
+yalnız8502 önizlemesinin kullanıcı tarafından yeniden başlatılması ve
+temiz konsol teyidi bekleniyor; önbellek nedeni henüz kanıtlanmadı. Yeni
+kod değişmedi.
+
+16 Ekim15:52'de kullanıcı önizlemeyi yeniden başlattıktan sonra yeni
+“Tek fiyat gözlemi” seçeneğinin bulunduğunu ve konsolda uyarı oluşmadığını
+bildirdi. İlk güncel önizleme konsol teyidi geçti; önceki F5 başarısızlığı
+ayrı kanıt olarak tutulur. Dosya izleyicisinin neden yenilemediği henüz
+kesinleşmedi; ilave kod değişmedi. Dört veri durumu, dört aralık/ürün
+değişimi/yenilemeler ve gerçek ekran teyidi bekliyor. Yerel kanıt
+browser_restart_no_warning.json. Ardından16:06'da kullanıcı tek fiyat
+senaryosunda9 Ekim kendi/8 Ekim Cimri noktalarını, fiyatsız durumda kendi
+geçmişinin fiyat bulunmadığı açıklamasını, kısmi kapsamın elmas/boşluklarını
+ve Cimri yokluğunda kendi grafiği/Cimri yokluğu açıklamasını teyit etti.
+Fiyatsız Cimri açıklaması ve bu geçişlerin konsol sonucu ayrıca yazılmadı;
+raporda varsayılmadı. Aralık/ürün/elle yenileme ve iki otomatik yenileme
+teyidi isteniyor. Kanıt browser_scenarios_user.json; gerçek ekran ayrı
+bekliyor. Tarihsel10 Ekim ekran kaydı bu düzeltmenin doğrulaması sayılmaz.
+
+Kullanıcı kalan kontrolleri ajana devretti. 16 Ekim'de erişilebilir hale
+gelen dahili tarayıcıdan çalışan8502 önizlemesinde iki grafik × dört aralık
+(7/30/90/366 gün) doğrulandı. Kendi serisi altı fiyat noktası; Cimri7 gün
+beş, diğer aralıklar sekiz nokta. SVG etiketleri ve çizgi yolları kaydedildi;
+NULL çizilmedi, kısmi kapsamın iki elması ve çizgi boşlukları korundu.
+Normal boşluklu, tek fiyatlı, tamamen fiyatsız, kısmi, Cimri'siz ve yalnız
+Cimri'li altı durum geçti; fiyatsız Cimri açıklaması da ayrıca görüldü.
+Ekrana uygulanmayan otomasyon seçimleri başarı sayılmadı.
+
+Telefon/gün tercihleri korundu. Girdisiz otomatik cevaplar16:17:40 →
+16:18:10 → 16:18:40; iki ardışık30sn aralıkta grafikler aynı, warn/error
+günlüğü boş. Daha sonra elle yenileme16:19:10 → 16:19:29 ilerledi.
+Varsayılan ilk telefon/30–366 gün/normal senaryo geri alındı. Üretim/test
+kodu değişmedi; tam paket tekrarlanmadı. Yerel kanıtlar browser_preview_agent.json,
+browser_preview_result.json ve browser_preview_agent.jpg. Yardımcı PNG
+indirme olayı araçta zaman aşımına uğradı; PNG başarısı iddia edilmez,
+ekran görüntüsü JPEG ile kaydedildi. Gerçek API8000/UI8501 kapalı bulundu;
+üç temsilciyle gerçek ekran ve normal tur/SQL–API teyidi hâlâ bekliyor.
+Bu önizleme kapanışında gerçek ekran henüz bekliyordu; gerçek sonuç aşağıdadır.
+
+Kullanıcı API/UI'yi başlattıktan sonra gerçek8501 ekranında iPhone16 128GB,
+iPhone16 256GB ve GalaxyS25 512GB için7/30/90/366 gün seçimleri sınandı.
+12 aralık ve üç30/366 varsayılan görünümde SVG fiyatları, İstanbul
+zamanları, kapsam şekilleri ve çizgi parçaları API referansıyla eşleşti.
+Karşılaştırma betiği sunum yardımcılarını kullanmaz; bu çalışma tam bağımsız
+SQL–API denetiminin yerine geçmez. 128GB72.399 TL teklif;256GB6/6 stok yok;
+S25 fiyat doğrulanamadı durumunda. S25'in79.699 TL/13 Ekim eski teklifi
+ayrı bölümde, güncel teklif veya Tükendi yerine kullanılmıyor.
+
+Kendi30gün/Cimri366gün fiyat–NULL sayıları sırasıyla128GB32–2/365–0,
+256GB16–18/262–103,S2528–6/Cimri yok. 256GB7gün kendi serisindeki14 NULL
+grafik yerine açıklama üretir. Eksik fiyat, kapsam ve zaman boşlukları
+üzerinden çizgi geçmedi; sahte sıfır/ek nokta yok. Gerçek otomatik cevaplar
+17:06:47 →17:07:17 →17:07:47 (30/30sn);elle17:08:17 →17:08:29.
+Tercihler korundu, konsolda sıfır warn/error, test verisi uyarısı yok.
+
+Gerçek DB, fiyat_takip_api hesabıyla REPEATABLE READ READ ONLY okunarak
+sekiz nesnenin önce/sonra satır sayısı ve SHA'ları karşılaştırıldı: aynı.
+35 tur/11.252 kontrol/2.007 ürün-tur/20.805 Cimri kaydı korunur. Test/üretim
+kodu son1758/0 atlama koşusuyla aynı; tam test tekrarlanmadı. Ajan oturumu
+iPhone16 128GB/30–366 günle bırakıldı; kullanıcı süreçleri kapatılmadı.
+Kanıtlar grafik_20261016/real_reference_before.json, real_reference_after.json,
+real_browser_agent.json, real_browser_result.json, real_iphone16_128_graphs.jpg
+ve real_s25_historical_offer.jpg. **3.3 tamamlandı; normal tur eşitlemesi,
+bağımsız SQL–API ve bütün bakım3 gönderim kapanışı henüz bekliyor.**
+
+19 Ekim'de gönderilecek altı dosyayla ayrı oluşturulan ağaçta tam paket
+yeniden doğrulandı:1758 geçti/0 atlama/xfail,174,08sn; Black/Flake8
+temiz. Yalnız test veritabanları kullanıldı; gerçek DB adresleri test
+sürecinden çıkarıldı. Sonrasında yalnız bu doğrulama kaydı belgelere eklendi.
+
+**19 Ekim gönderim kararı:** kullanıcı tamamlanan3.3 grafik alt adımının
+ayrı commit/push ile gönderilmesini istedi. Bu gönderim grafik kodu,
+testleri ve ilgili belgelerle sınırlıdır. S25 katalog değişikliği ve
+3.1/3.2 kayıtları sonraki kapanışta gönderilecek. Beklenen normal turlar
+artık gerçekleşti; loglarda tur36 ve40 çıkış0 ile tamam. Bağlantının
+DB etkinliği/geçmişi ve bağımsız SQL–API denetimi henüz doğrulanmadı;
+bunlar3.1/3.4 kapanışında kalır. Bütün bakım3 tamamlanmış sayılmaz.
+
 ### Piyasa geçmişi araştırması (Adım 8)
 
 Kaynak seçimi için örnekler: `apple_iphone_16_128gb`,

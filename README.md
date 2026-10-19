@@ -91,7 +91,7 @@ otomatik test paketi 15 Ekim; yeni katalogla iki normal turun log–DB ve
 | Toplama düzeni | Her gün 10:00 ve 22:00; haftalık keşif Pazar 14:00 |
 | Son doğrulanan fiyat turu | Tur 35: 347 sonuç; 251 fiyat, 95 Tükendi, 1 önceden bilinen kimlik hatası |
 | Cimri geçmişi | 57 ürün, 20.805 tarihli kayıt; 20.252 fiyat ve 553 eksik değer |
-| Otomatik testler | 1751 test; 434’ü PostgreSQL üzerinde; 0 atlandı |
+| Otomatik testler | 16 Ekim:1758 geçti;434’ü PostgreSQL üzerinde;0 atlandı; Black/Flake8 temiz |
 | SQL–API ve ekran | SQL–API: 16 Ekim'de 59 ürün eşleşti; ekran: 10 Ekim'de üç temsilci ürün, dört aralık, yenileme ve hata sonrası dönüş doğrulandı |
 
 14 Ekim'de ML öncesi 25 yeni keşif sayfasının incelemesi tamamlandı:
@@ -104,6 +104,14 @@ kabulüyle mevcut 8 ürüne eklendi; eski kimlikler korundu. Yeni bağlantılar
 veritabanı nesnesinin parmak izi aynı kaldı. Ayrıntı `proje_plani.md` Bölüm 9'da.
 İnceleme sırasında Trendyol'da açık 5G model ile 4G ürün özelliği çelişkisini,
 fiyat ve keşif adayı üretilmeden reddeden ortak koruma da eklenmişti.
+
+16 Ekim'de grafiklerin boş ilk çizimindeki `Infinite extent` uyarısı,
+mevcut verilerden eksen sınırları hazırlanarak düzeltildi. Altı regresyon,
+ağsız önizleme ve üç gerçek telefonda dört aralık/yenilemeler doğrulandı;
+konsol temiz, eksik fiyatlar ve çizgi boşlukları korunuyor. Gerçek ekran
+kontrolünde sekiz veritabanı nesnesinin parmak izi değişmedi. Kullanıcının
+19 Ekim kararıyla3.3 ayrı gönderilir; S25 katalog değişikliği ve bütün
+bakım3 kapanışı, DB eşitlemesi/bağımsız SQL–API teyidiyle ayrıca sonuçlanacak.
 
 Katalogdaki **349 bağlantının markalara göre dağılımı** (iki pasif bağlantı dahil):
 

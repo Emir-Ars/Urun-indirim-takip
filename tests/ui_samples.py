@@ -37,6 +37,7 @@ PRODUCTS = (
 )
 SCENARIOS = (
     "Teklif ve grafik boşlukları",
+    "Tek fiyat gözlemi",
     "Eski teklif",
     "Kısmi kapsam",
     "Bütün sayfalar stoksuz",
@@ -222,6 +223,17 @@ def sample_product(
         )
     elif scenario == "Cimri geçmişi yok":
         market = ()
+    elif scenario == "Tek fiyat gözlemi":
+        current = current.model_copy(
+            update=dict(
+                previous_run_id=None,
+                previous_best_price=None,
+                hours_since_previous=None,
+                comparable_with_previous=False,
+            )
+        )
+        history = (current,)
+        market = market[-1:]
     if scenario == "Fiyatların hepsi eksik":
         history = tuple(
             point.model_copy(

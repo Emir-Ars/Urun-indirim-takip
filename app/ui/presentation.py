@@ -124,6 +124,18 @@ def market_rows(points: tuple[MarketResponse, ...]) -> list[dict]:
 def price_chart(rows: list[dict], *, market: bool = False) -> alt.LayerChart:
     field = "day" if market else "istanbul_time"
     color = "#0f766e" if market else "#2563eb"
+    times = [
+        datetime.fromisoformat(row[field]).replace(tzinfo=timezone.utc).timestamp()
+        * 1000
+        for row in rows
+    ]
+    prices = [row["price_tl"] for row in rows if row["price_tl"] is not None]
+    # Streamlit satırları ayrı yükler; eksenler boş ilk çizimde de tanımlı olmalı.
+    # Sabit ifade, tek tarihli katmanlarda iki sınırın teke düşmesini önler.
+    time_domain = (
+        alt.ExprRef(expr=f"[{min(times)}, {max(times)}]") if times else alt.Undefined
+    )
+    price_domain = [min(prices), max(prices)] if prices else alt.Undefined
     tooltip = (
         [alt.Tooltip("day_text:N", title="Gün")]
         if market
@@ -138,10 +150,14 @@ def price_chart(rows: list[dict], *, market: bool = False) -> alt.LayerChart:
         x=alt.X(
             f"{field}:T",
             title="Gün" if market else "Tur başlangıcı (İstanbul)",
-            scale=alt.Scale(type="utc"),
+            scale=alt.Scale(type="utc", domain=time_domain),
             axis=alt.Axis(format="%d.%m.%Y" if market else "%d.%m %H:%M"),
         ),
-        y=alt.Y("price_tl:Q", title="Fiyat (TL)", scale=alt.Scale(zero=False)),
+        y=alt.Y(
+            "price_tl:Q",
+            title="Fiyat (TL)",
+            scale=alt.Scale(zero=False, nice=True, domain=price_domain),
+        ),
         tooltip=tooltip,
     )
     line = base.mark_line(color=color, invalid="break-paths-show-domains").encode(

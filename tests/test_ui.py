@@ -1,12 +1,14 @@
 """Telefon ekranını, veri boşluklarını ve kaynak bırakmayı ağsız sınar."""
 
 import json
-from datetime import date, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+import pyarrow.ipc as arrow_ipc
 import streamlit as st
+from streamlit.elements.vega_charts import VegaLiteChartProto, _marshall_chart_data
 from streamlit.testing.v1 import AppTest
 
 from app.ui import api_client
@@ -232,6 +234,43 @@ def test_chart_spec_breaks_paths_and_preserves_single_or_null_rows(market):
     assert spec["layer"][0]["encoding"]["y"]["scale"]["zero"] is False
     assert spec["layer"][0]["encoding"]["x"]["scale"]["type"] == "utc"
     assert "impute" not in json.dumps(spec)
+
+
+@pytest.mark.parametrize("market", [False, True])
+@pytest.mark.parametrize("case", ["single", "null_edges", "gaps"])
+def test_chart_axes_are_ready_before_streamlit_delivers_arrow_rows(market, case):
+    snapshot = sample_product()
+    points = snapshot.cimri_history if market else snapshot.history
+    if case == "single":
+        points = points[-1:]
+    elif case == "null_edges":
+        missing = {"price_kurus": None} if market else {"best_price": None}
+        points = (
+            points[0].model_copy(update=missing),
+            points[1],
+            points[-1].model_copy(update=missing),
+        )
+    rows = market_rows(points) if market else history_rows(points)
+    original = json.dumps(rows)
+    spec = price_chart(rows, market=market).to_dict(validate=True)
+    proto = VegaLiteChartProto()
+    _marshall_chart_data(proto, spec)
+
+    # Streamlit satırları ayrı gönderir; ilk çizimde yalnız eksen tanımı vardır.
+    assert "data" not in spec
+    field = "day" if market else "istanbul_time"
+    times = [
+        datetime.fromisoformat(row[field]).replace(tzinfo=timezone.utc).timestamp()
+        * 1000
+        for row in rows
+    ]
+    prices = [row["price_tl"] for row in rows if row["price_tl"] is not None]
+    for layer in spec["layer"]:
+        time_domain = layer["encoding"]["x"]["scale"]["domain"]
+        assert json.loads(time_domain["expr"]) == [min(times), max(times)]
+        assert layer["encoding"]["y"]["scale"]["domain"] == [min(prices), max(prices)]
+    assert arrow_ipc.open_stream(proto.data.data).read_all().to_pylist() == rows
+    assert json.dumps(rows) == original
 
 
 def test_initial_screen_reads_fresh_data_and_separates_global_run(screen):

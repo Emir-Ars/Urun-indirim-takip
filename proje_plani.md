@@ -122,6 +122,22 @@ sekiz nesnenin parmak izi aynı. Katalog bakımının teknik işi tamam;
 dosya listesi/mesaj için ayrı gönderim onayları ve aynı SHA CI bekliyor.
 Ayrıntı Bölüm 9.
 
+**3.3 grafik incelemesi tamamlandı:** kullanıcı önizlemede dört Infinite extent
+uyarısını gördü; aynı boş başlangıç ağsız Vega kontrolünde yeniden üretildi.
+Sunum katmanında gerçek satırlardan sabit eksen sınırları hazırlandı; fiyat,
+NULL ve çizgi boşlukları korunuyor. 30 ağsız çizim/iki veri yenilemesi temiz,
+20 eski/yeni grafiğin eksen ve çizim yolları aynı. Tam test1758 geçti/0 atlama;
+Black74/Flake8 temiz. Kullanıcı önizlemeyi yeniden başlattıktan sonra
+“Tek fiyat gözlemi” seçeneğini gördü ve konsolda uyarı olmadığını bildirdi;
+ilk güncel önizleme teyidi geçti. Ardından ajan çalışan önizlemeye tarayıcıyla
+erişip sekiz aralık kontrolünü, altı grafik durumunu, telefon/elle yenilemeyi
+ve iki ardışık 30 saniyelik otomatik çevrimi doğruladı; konsol temiz.
+Gerçek API ekranında da üç temsilci ürünün12 aralığı ve üç varsayılan
+görünümü fiyat/zaman/kapsam/çizgi parçalarıyla API'ye eşleşti; iki30sn
+otomatik çevrim ve elle yenileme temiz. Sekiz DB nesnesinin parmak izi
+değişmedi. Kullanıcının19 Ekim kararıyla3.3 ayrı gönderilir; kalan
+bakım3 doğrulamaları ve gönderimi ayrıca tamamlanacak. Ayrıntı Bölüm 9.
+
 **6 Ekim ikinci denetimi sonrası bakım (kullanıcı onayı):** Hepsiburada bozuk
 satıcı yanıtı düzeltildi (552 test). İki SQL koruması `003_closed_run_guards.sql`
 ile test edildi (571 test), kullanıcı 6 Ekim'de gerçek veritabanına uyguladı;
@@ -458,6 +474,13 @@ Bu adımda alınan kararlar:
   henüz karşılaştırılmadı; neden veya katalog düzeltmesi kesinleşmedi.
   Önceki pasif S25 256 GB sayfası farklı kimliktir. Yeni hata ayrı bakım
   incelemesi bekler; mevcut kimlik kuralı ve katalog değiştirilmedi.
+- **Grafik başlangıç uyarısı (16 Ekim; çözüldü):** Streamlit'in satırları ayrı
+  yüklediği boş ilk çizimde Infinite extent yeniden üretildi. Sunum katmanı
+  mevcut satırlardan sonlu eksen sınırları hazırlar; NULL ve kapsam/zaman
+  boşlukları korunur. Altı regresyon,1758 test/0 atlama, önizleme ve gerçek
+  API ekranında üç ürün/12 aralık/yenilemeler temiz. Konsol susturulmadı;
+  sekiz DB nesnesi değişmedi. Bu grafik düzeltmesi sonraki normal turda
+  beklenen S25 bağlantısı eşitlemesiyle karıştırılmaz; ayrıntı Bölüm9.
 - GitHub'ın bulut makineleri Trendyol'a erişemiyor görünüyor (ön bulgu, 6 Ekim): bulut
   denemesinde Trendyol sayfası HTTP 403 verdi, Hepsiburada sayfaları sorunsuz okundu
   (tek örnek; Bölüm 8, "Bulutta çalıştırma"). Bilgisayardaki turlarda Trendyol hiç
@@ -2413,7 +2436,7 @@ Bu adım kapandı; sonraki eksik kanıt incelemesi ayrı onayla başladı.
 | 1a. Dar ağ kimliği koruması | Açık 5G model/açık 4G ürün özelliği çelişkisini Trendyol keşif ve scraper'da fiyat/adaydan önce ortak kuralla reddetmek; gerçek kötü örnek ve doğru iki kontrolün korunması. | **Tamamlandı (14 Ekim):** 34 yeni regresyon, 1751 test/0 atlama, Black/Flake8 temiz; üç tam HTML replay doğru. 4eaf35e gönderildi, aynı SHA CI 38569095383 başarılı. Kaynak çelişkisi ve üç kanıt eksikliği çözülmüş sayılmaz. |
 | 1. Yeni keşif sayfaları | 11 Ekim raporu/katalog ağsız eşleşmesi; 11 grubun 25 sayfasında güncel model/kapasite/renk/kimlik ve kapsam kontrolü; kapsam içi adaylarda geçici katalogla mevcut canlı scraper aracı, satıcı/teklif/stok ve tarayıcı karşılaştırması. Her sayfada doğrulandı/uyuşmazlık/kanıt yetersiz sonucu, her gruptan sonra durma. | **Tamamlandı: 11/11 grup ve 25/25 sayfa; 15 doğrulandı / 7 uyuşmazlık / 3 kanıt yetersiz / 0 bekliyor (14 Ekim).** Yenilio/kalite başlık boşluğu ayrı kullanıcı onayıyla düzeltildi; 41 regresyon ve tam 1717 test/0 atlama, Black/Flake8 temiz. İkinci grubun üç canlı reddi 14:33'te, üçüncü grubun üç canlı reddi 15:19'da doğrulandı. Kullanıcı gönderimi 11 grubun sonuna erteledi. Dördüncü grubun ham kaydı 15:54'te alındı: doğru SKU/URL/fiyatlı JSON-LD teklifinde NewCondition, 512 GB/Lavanta ve API/tarayıcı teklif eşleşmesi doğrulandı. Beşinci grubun 16:24 kaydında aynı SKU teklifinde NewCondition, 1024 GB/Kozmik Turuncu ve ENHIZLIBİZDE/9,9/Stokta Var/156.999 TL eşleşti; kullanıcı tarayıcı ve aktif Sepete Ekle teyidini verdi. Altıncı grubun 17:29 kaydında aynı kimlik/URL/fiyatlı ProductGroup ana teklifinde NewCondition, 1024 GB/Siyah ve ALTINKOZA TEKNOLOJİM/8,2/Kritik Stok/95.000 TL eşleşti; Son 1 Ürün ham HTML'de, kullanıcı tüm alanlar ve aktif Sepete Ekle'yi teyit etti. Yedinci grubun 14 Ekim 09:39 ikinci kaydında doğru kimlik/URL/256 GB/Mavi/fiyatlı Product teklifinde NewCondition ve AYPA/9,4/Kritik Stok/54.999 TL kullanıcı görüntüsüyle eşleşti; ilk Ceppodium/Tükendi kaydı ayrı korundu. Sekizinci grubun 10:32 kaydında Xiaomi 14T Pro 512 GB/Titan Gri/SKU eşleşti, aynı üründe NewCondition etiketi var; başarılı boş satıcı API'si ve isInStock=false kullanıcı/HTML satılamama mesajıyla eşleşti. Tükendi geçerli sonuç; JSON-LD 0.00/InStock güncel stok/fiyat kanıtı sayılmadı. Dokuzuncu grubun 10:51 kaydında Mor iki teklif/en ucuz seçim ve Yeşil stoksuzluk kaynak/tarayıcıyla eşleşti; aynı ürünlerin NewCondition etiketi var. İki sayfada da 4G/5G alanı bulunmadığı için katalog kabul sonucu 2 kanıt yetersiz; Mor Snapdragon 7 metni ayrıca eşleştirme bekler. Onuncu grubun 13:29 kaydında 1/2/4 doğru SKU/5G/256 GB/renk/NewCondition ve teklif/tarayıcı eşleşmesiyle doğrulandı; üçüncü A1GTQO stoksuzluk doğru, fakat renk kanıtı yok: 1 kanıt yetersiz. Başka SKU'nun Beyaz rengi kullanılmadı. Son grubun 14:10 kaydı ve tarayıcı teyidi tamamlandı: altı aday doğrulandı, Trendyol 797850359 başlık 5G/12 GB RAM ile özellik 4G/8 GB RAM çelişkisi nedeniyle uyuşmazlık. İlk incelemede kod bu çelişkiyi reddetmiyordu; sonradan ayrı kullanıcı onaylı dar ortak koruma uygulandı, yerelde doğrulandı (Adım 1a). Kaynak çelişkisi sürüyor. Son grupta duruldu. Özgün rapor uygulanmaz; inceleme_ozeti.json bütün 25 kararın kaynaklarını içerir. Katalog uygulaması ve ML öncesi diğer ana adımlar tamamlanmadı. |
 | 2. Katalog bakımı | Doğrulanan 15 aday ayrı seçili raporla mevcut --apply-report yoluna verilir. Özgün 25 adaylı rapor uygulanmaz; 7 uyuşmazlık/3 kanıt yetersiz dışarıda kalır. Mevcut kabul kanıtları kullanılır; son liste/katalog uygulaması ayrıca kullanıcı kabulü ister. Eski kimlikler korunur. Normal tur sonrası salt okunur DB ve bağımsız SQL–API teyidi. | **Teknik çalışma tamam, gönderim/CI bekleniyor (16 Ekim):** katalog/DB 59/349/347. İki normal turda yeni 15 sayfa 10 fiyat/5 Tükendi/0 hata; eski kayıtlar aynı, dışlanan 10 aday yok. Bağımsız SQL–API 59 ürün/0 fark/sekiz değişmeyen nesne/çıkış 0. Son tam test 1751/0 atlama, Black/Flake8 temiz. Eski S25/S25+ hatası Adım 3'te açık. Dosya listesi/Türkçe mesaj ve ayrı commit/push onayı, ardından aynı SHA CI bekleniyor. |
-| 3. Erişim ve grafik | invalid_host vakasının sonraki altı normal tamamlanmış turda gözlemi; tekrarda kaynak/yönlendirme kanıtı, ayrı düzeltme planı. Vega uyarısı gerçek ekran ve ağsız önizlemede fiyatlı/fiyatsız/kısmi/Cimri eksikliği, seçim ve yenileme ile incelenir; üç temsilci ürün önceki 7.7 ile aynı. | Planlandı; yeni kontrol başlamadı. |
+| 3. Erişim ve grafik | invalid_host ve kimlik bakımının ayrı kapanışı; grafik uyarısının önizleme/gerçek ekran ve dört aralık/yenilemeyle kontrolü. | **3.3 tamamlandı (16 Ekim):** boş ilk çizim eksenleri düzeltildi; altı regresyon, 1758 test/0 atlama, Black/Flake8 temiz. Önizlemede8 aralık/6 durum ve gerçek ekranda3 ürün/12 aralık; iki otomatik çevrim ve elle yenileme temiz. 19 Ekim kullanıcı kararıyla yalnız3.3 ayrı gönderilir;3.1/3.2 ve bütün bakım3 kapanışı bu gönderimin kapsamında değildir. |
 | 4. Cimri açıkları | Güncel resmî koşullarda yerel öğrenme/eğitim kullanım kapsamı ve belirsizlikler; iki eksik ürünün mevcut/yeni eşleştirme kanıtı. Doğru kimlik yoksa eksik korunur; doğrulanırsa alım/aktarım ayrıca gösterilip kullanıcı terminalinde yapılır. | Planlandı; başlamadı. |
 | 5. ML veri yeterliliği | Gerçek DB yalnız okuma: kendi/Cimri serileri ayrı; dönem, fiyat/tur/gün/eksik ve kapsam boşlukları; 30 gün geçmiş+7 gün gelecek uygunluğu ve %5 düşüş hedefinin olumlu/olumsuz örnekleri. Gösterge yeterlilik eşikleri ML şartı sayılmaz; sonuçtan sonra ayrı model uygulama planı. | Planlandı; başlamadı. |
 | 6. Otomatik güvenli kabul ve bakım kapanışı (son adım) | Haftalık keşfin yeterli kimlik kanıtlı adayları kendiliğinden kataloğa alması; eksik/çelişkili adayların gerekçeyle dışarıda tutulması. Rutin manuel model/ağ/renk kontrolü yok. Süre dolması otomatik kabul değildir. Gerçek kayıt örnekleriyle regresyonlar, ağsız rapor/katalog/kimlik koruması, tam test/biçim; kullanıcı terminalinde devreye alma ve doğal tur SQL–API teyidi. Diğer bakım sonuçlarıyla birlikte giderilen/korunan/ertelenen açıklar belirtilir; API sözleşmeleri korunur. | **Planın sonuna eklendi (14 Ekim; kullanıcı yönü onayladı), başlamadı.** Yeterli kanıt kuralları ve atomik yazma/rapor/Git politikası dar uygulama planında netleşecek. “1 gün” manuel iş yükünü ifade ediyor; yeni bekleme/günlük tekrar yok, mevcut haftalık keşif periyodu korunur. Zamanlayıcı/katalog değiştirilmedi; kod yazma/devreye alma ve commit/push ayrı onayla ilerler. |
@@ -2560,6 +2583,152 @@ config/catalog.json, README.md, proje_plani.md, docs/teknik.md; Türkçe mesaj
 ve aynı commit'in başarılı CI sonucu tamamlanmadan gönderim kapatılmaz.
 Sonraki bakım adımı başlamadı; bu başlıkta durulur. Eski S25/S25+ vakası,
 erişim/grafik/Cimri/ML yeterliliği/otomatik kabul işleri açık kalır.
+
+**3.3 grafik incelemesi (16 Ekim; tamamlandı):** kullanıcı 8502 önizlemesini
+kendi terminalinde açtı; “Teklif ve grafik boşlukları” seçiliyken F12
+konsolunda bir dakikadan önce dört Infinite extent uyarısı bildirdi.
+Bağlı tarayıcı aracı bulunmadığından gerçek ekranın konsol teyidi kullanıcıdan
+alındı; otomatik tarayıcı kontrolü yapılmış gibi sunulmadı.
+
+Yerel Streamlit1.65.0, Altair satırlarını grafik tanımından çıkarıp ayrı
+Arrow yükü olarak gönderiyor. Ön yüz Vega'yı satırlar eklenmeden başlatıyor.
+Aynı kurulu Vega6.4.0 motorunda sıfır satırlı başlangıç dört sonsuz eksen
+uyarısı üretti; yedi yapay satır yüklenince uyarı kesildi. Sorun
+eksik fiyatın kendisi değil, başlangıçtaki eksen hesabı olarak yeniden üretildi.
+Git dışı grafik_20261016/root_cause_before.json kaynak ve sürüm kaydıdır.
+
+Onaylı sınır içinde yalnız app/ui/presentation.py price_chart değişti:
+tarih sınırları mevcut satırlardan UTC milisaniye sabit ifadesiyle, fiyat
+sınırları yalnız dolu fiyatlardan hazırlanır. Sabit ifade tek tarihli iki
+sınırın derleyicide tek elemana düşmesini önler; fiyat ekseninin önceki
+yuvarlaması nice=True ile korunur. Fiyat/NULL satırları, sıralama, segment,
+kapsam şekli, iki kaynağın ayrılığı ve etkileşim korunur. Tamamen fiyatsız
+ve boş serileri mevcut ekran koşulu çizmez; sahte sıfır veya eksen eklenmez.
+Uyarı günlüğü susturulmadı; üretim bağımlılığı eklenmedi.
+
+Altı yeni regresyon, iki kaynakta tek fiyat/NULL uçlar/boşluk durumunu gerçek
+Streamlit Arrow ayırımıyla sınar. Düzeltmeden önce altısı da eksik domain
+nedeniyle başarısız; ilk düzeltmede ilgili sekiz sınama geçti. Ortak yapay
+önizlemeye “Tek fiyat gözlemi” eklendi. Son ağsız matriste 30 çizilebilir
+durumda boş başlangıç/veri yükleme/iki veri yenilemesi Infinite extent veya
+hata üretmedi; dört fiyatsız/boş durum ekranın mevcut koşuluyla çizilmez.
+20 eski/yeni grafikte fiyat çizim yolları ve eksen sınırları aynı.
+Derleme yerel vl-convert1.9.0/Vega-Lite6.4 ailesiyle; kurulu ön yüzün
+Vega-Lite6.4.3 sürümüyle birebir derleyici kontrolü sayılmaz. Tarayıcısız
+motordaki iki window olay kaynağı uyarısı ortam sınırı olarak ayrıca kaydedildi.
+Kanıtlar grafik_20261016/matrix_after.json. Son tam paket **1758 geçti/
+0 atlama/xfail** (156,10sn; 434 PostgreSQL), yalnız test veritabanında ve
+gerçek DB adresleri çıkarılarak çalıştı. İlk biçim denetiminde iki uzun
+satır bulundu; Black yalnız biçim düzenledi, sonra Black74/Flake8 temiz.
+Önceki iki Starlette/AnyIO bağımlılık uyarısı aynı; loglar korunur.
+Düzeltme sonrası kullanıcı F5 görüntüsünde dört gruplanmış uyarı satırı
+gönderdi: istanbul_time/price_tl/day/price_tl, her birinin sayacı2. Bu
+tarayıcı kontrolü geçmedi; ağsız başarı tarayıcı başarısı sayılmadı.
+Açık Python önizleme süreci15:16'da, kod değişikliğinden önce başlamış.
+Yeni Python sürecinde dosyanın sonlu eksenleri ve12 önizleme senaryosu
+doğrulandı; açık sunucunun yüklü modülü henüz doğrulanmadı. İlk dar kontrol,
+kullanıcının yalnız8502 önizlemesini aynı komutla yeniden başlatması ve
+temiz konsol/iki yenileme teyidi. Önbellek nedeni kesinleşmiş sayılmaz;
+ek kod değişikliği yapılmadı.
+
+**16 Ekim15:52 kullanıcı teyidi:** önizleme yeniden başlatıldıktan sonra
+“Tek fiyat gözlemi” seçeneği mevcut, konsolda uyarı yok. Böylece güncel
+önizlemenin ilk tarayıcı kontrolü geçti. Önceki F5 görüntüsü ayrı başarısız
+kanıt olarak korunur; yeniden başlatma ihtiyacı dosya izleyicisinin kesin
+bir hatasını kanıtlamaz. Başlangıç/yenileme koduna ek değişiklik yapılmadı.
+Tek fiyat, tamamen fiyatsız, kısmi kapsam ve Cimri yokluğu için dört
+görünümün kullanıcı teyidi istendi; dört aralık/ürün değişimi/elle ve iki
+otomatik yenileme ile gerçek ekran kontrolü henüz tamamlanmış sayılmaz.
+Git dışı browser_restart_no_warning.json güncel kaynak parmak izleri ve
+kullanıcı bildirimiyle ilk geçişi kaydeder. Gerçek ekran teyidi hâlâ bekliyor.
+
+**16 Ekim16:06 önizleme görünümleri:** kullanıcı tek fiyat senaryosunda
+kendi kaydını9 Ekim, Cimri kaydını8 Ekim olarak gördü; ayrı kaynakların
+tarihleri mevcut yapay veriyle eşleşir. Tamamen fiyatsız senaryoda kendi
+geçmişimizin “fiyat gözlemi bulunmuyor” açıklaması teyit edildi; Cimri'nin
+aynı senaryodaki açıklaması cevapta ayrıca yazılmadı. Kısmi kapsamda
+beklenen elmas/boşluk davranışı, Cimri yokluğunda kendi grafiği ve Cimri
+yokluğu açıklaması teyit edildi. Bu geçişlerin konsol sonucu ayrıca
+belirtilmedi; sonraki aralık/ürün/elle yenileme sorusuna dahil edildi.
+İki otomatik yenileme için üç API cevap saati istendi. Kaynak yanıtları
+browser_scenarios_user.json içinde; bütün3.3 veya bakım3 kapanmış sayılmaz.
+
+**16 Ekim, ajanın tarayıcı önizlemesi tamamlandı:** kullanıcı kalan
+kontrolleri ajana devretti. Araç envanterinde dahili tarayıcı erişilebilir
+oldu; ajan çalışan8502 önizlemesine ayrı oturumla bağlandı. Sunucu veya
+kullanıcı tarayıcısı kapatılmadı. İki grafikte 7/30/90/366 gün seçimleri
+ayrı ayrı doğrulandı: sekiz kontrol. Kendi serisinde altı fiyat noktası;
+Cimri'de7 gün beş, diğer aralıklarda sekiz nokta göründü. SVG etiketleri,
+eksenler ve çizgi yolları kaydedildi; NULL nokta çizilmedi.
+
+Normal boşluklu, tek fiyatlı, tamamen fiyatsız, kısmi kapsamlı, Cimri'siz
+ve yalnız Cimri'li altı durum geçti. Fiyatsız iki grafiğin açıklamaları
+ekran metninde görüldü; kullanıcının önceki cevabında ayrıca bulunmayan
+Cimri açıklaması tamamlandı. Kısmi kapsamın iki elması ve ayrı çizgileri
+korundu. Menüde ekrana uygulanmayan otomasyon seçimleri başarı sayılmadı;
+görünür seçim ve bitmiş çizim ayrıca teyit edildi.
+
+Telefon değişimi gün tercihlerini korudu. Girdisiz otomatik cevap saatleri
+16:17:40 → 16:18:10 → 16:18:40; iki ardışık aralık30 ve30 saniye.
+İki grafikte altı/sekiz nokta korundu, warn/error günlüğü boş kaldı.
+Daha sonra elle yenilemede16:19:10 → 16:19:29 ve aynı telefon/gün seçimleri
+doğrulandı. Varsayılan ilk telefon/30–366 gün/normal senaryo geri alındı.
+Üretim/test kodu değişmedi; tam paket gereksiz tekrarlanmadı. Yerel kanıtlar
+grafik_20261016/browser_preview_agent.json, browser_preview_result.json
+ve browser_preview_agent.jpg. Gerçek API8000/UI8501 kapalı bulundu;
+iPhone16 128/256 ve GalaxyS25 512 gerçek ekran kontrolü ayrı bekliyor.
+Önizleme gerçek veri doğrulaması değildir; bu önizleme kapanışında3.3 ve
+bütün bakım3 henüz kapanmamıştı. Gerçek ekranın sonucu aşağıdadır.
+
+**16 Ekim, gerçek ekran ve3.3 kapanışı:** kullanıcı API8000/UI8501'i kendi
+terminallerinde açtı; ajan aynı dahili tarayıcıdan gerçek8501 ekranını
+kontrol etti. Test verisi uyarısı yok. Üç ürün ×7/30/90/366 gün:12 aralık,
+ayrıca her üründe30/366 gün varsayılanı: üç ek görünüm API'yle eşleşti.
+API referansları yalnız sabit localhost GET istemcisinden alındı; çizilen
+SVG fiyatları, İstanbul zamanları, kapsam şekilleri ve çizgi grupları
+sunum yardımcıları kullanılmadan kaydedilmiş API alanlarıyla karşılaştırıldı.
+
+| Temsilci | Son ürün turu | Kendi30gün fiyat/NULL | Cimri366gün fiyat/NULL |
+|---|---|---:|---:|
+| iPhone16 128GB | 72.399,00 TL teklif | 32/2 | 365/0 |
+| iPhone16 256GB | 6/6 sayfada stok yok | 16/18 | 262/103 |
+| GalaxyS25 512GB | Son fiyat doğrulanamadı; eski teklif ayrı | 28/6 | geçmiş yok |
+
+iPhone16 256GB'ın7 günlük kendi geçmişinde14 NULL var, fiyat grafiği yerine
+açıklama gösterildi. Cimri'nin103 eksik günü ve kendi serilerimizin
+fiyat/kapsam/zaman boşlukları bağlanmadı; sahte sıfır veya ek nokta yok.
+S25'in79.699 TL/13 Ekim son başarılı teklifi ayrı bölümde doğrulandı;
+güncel teklif veya Tükendi yapılmadı. Bağlantının DB etkinliği bu kontrol
+anında eski tur35 kopyasıdır; normal tur teyidi yerine geçmez.
+
+Girdisiz gerçek otomatik cevaplar17:06:47 →17:07:17 →17:07:47:30/30sn.
+Elle yenileme17:08:17 →17:08:29, düğme zamanı17:08:29 ve yeni cevap
+bir saniye içinde gözlendi. Telefon/30–366 gün seçimi korundu; konsolda
+sıfır warn/error. Ajan oturumu ilk temsilci iPhone16 128GB/30–366 günle
+bırakıldı; kullanıcının süreçleri ve tarayıcısı kapatılmadı.
+
+fiyat_takip_api hesabıyla açık REPEATABLE READ READ ONLY işleminde sekiz
+nesnenin önce/sonra satır sayısı ve SHA'ları aynı; 35 tur/11.252 kontrol/
+2.007 ürün-tur/20.805 Cimri kaydı değişmedi. API–DOM karşılaştırması mevcut
+bağımsız tam SQL–API aracının yerine sayılmadı; o denetim normal turdan
+sonra ayrıca bekliyor. Kaynak kodu son1758/0 atlama test koşusuyla aynı;
+API/scraper sözleşmeleri, şema ve zamanlayıcılar değişmedi.
+Kanıtlar grafik_20261016/real_reference_before.json, real_reference_after.json,
+real_browser_agent.json, real_browser_result.json ve iki gerçek ekran JPEG'i.
+**3.3 tamamlandı; bakım3'ün normal tur/SQL–API/gönderim kapanışı bekliyor.**
+
+19 Ekim'de gönderilecek altı dosyayla ayrı oluşturulan ağaçta tam paket
+yeniden doğrulandı:1758 geçti/0 atlama/xfail,174,08sn; Black/Flake8
+temiz. Yalnız test veritabanları kullanıldı; gerçek DB adresleri test
+sürecinden çıkarıldı. Sonrasında yalnız bu doğrulama kaydı belgelere eklendi.
+
+**19 Ekim gönderim kararı:** kullanıcı tamamlanan3.3 grafik alt adımının
+ayrı commit/push ile gönderilmesini istedi. Bu gönderim grafik kodu,
+testleri ve ilgili belgelerle sınırlıdır. S25 katalog değişikliği ve
+3.1/3.2 kayıtları sonraki kapanışta gönderilecek. Beklenen normal turlar
+artık gerçekleşti; loglarda tur36 ve40 çıkış0 ile tamam. Bağlantının
+DB etkinliği/geçmişi ve bağımsız SQL–API denetimi henüz doğrulanmadı;
+bunlar3.1/3.4 kapanışında kalır. Bütün bakım3 tamamlanmış sayılmaz.
 
 **6. adımın kapsamı ve sınırı:** keşif zaten ürün sayfasını okuyup model,
 kapasite, renk ve kapsam kurallarını değerlendirir; yalnız görevin dry-run
