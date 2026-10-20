@@ -12,6 +12,13 @@ Bu klasördeki dosyalar **20 Ekim 2026'da dondurulmuştur** ve değiştirilmez.
 göreli bağlantılar eski konumlarına göre yazıldığı için bu klasörden açıldığında
 çalışmayabilir.
 
+**Kanıt dosyaları:** belgelerde anılan Git dışı `artifacts/...`, `data/...`
+(eski kayıtlar) ve `.scratch/...` yolları 20 Ekim 2026'da proje dışındaki
+`C:\Users\Emir\Desktop\Staj_arsiv\2026-10-20\` klasörüne taşındı
+(`artifacts\`, `data\`, `scratch\`). Her dosyanın eski yolu, boyutu ve SHA-256
+parmak izi oradaki `MANIFEST.json` içindedir. Test fixture'larındaki
+`source_file` alanları da bu yollara göre okunur.
+
 Güncel belgeler:
 
 - Kararlar ve durum: [proje_plani.md](../../proje_plani.md)

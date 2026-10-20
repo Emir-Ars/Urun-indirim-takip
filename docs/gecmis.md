@@ -95,7 +95,8 @@ Bu dosyanın kendi güncellemesi bir sonraki adımın commit'ine girer.
 
 | Tarih (2026) | Commit | Ne yapıldı | CI |
 |---|---|---|---|
-| 20.10 | (bekliyor) | Adım 1: belgeler yeniden düzenlendi; eski plan ve rehber arşivlendi | — |
+| 20.10 | `6ad6fcd` | Adım 1: belgeleri sadeleştir; planı ve teknik rehberi yeniden düzenle, eski hâllerini arşivle | [39410273669](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/39410273669) |
+| 20.10 | (bekliyor) | Adım 2: Git dışı inceleme kanıtları (12.038 dosya, ~330 MB) `Desktop\Staj_arsiv\2026-10-20\` klasörüne taşındı; belge notları | — |
 
 ## Eylül 2026 ayrıntıları
 
