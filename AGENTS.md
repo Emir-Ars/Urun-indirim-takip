@@ -66,9 +66,19 @@ eskisi düzeltilir; belge baştan yazılmaz.
 - Yeni keşif bağlantılarını kullanıcıya tek tek tarayıcıda doğrulatmak rutin
   iş akışı değildir (14 Ekim kullanıcı kararı). Bakımın sonuna yeterli kimlik
   kanıtlı adayların otomatik kabulü, eksik/çelişkili adayların katalog dışında
-  tutulması planlandı; henüz uygulanmadı. Manuel kaynak incelemesi yeni bir
+  tutulması Bakım 6 kapsamında uygulandı; 19 Ekim'de ayrı kullanıcı kabulüyle
+  haftalık otomatik kabul görevi kuruldu. Manuel kaynak incelemesi yeni bir
   kaynak/kod sorununun hedefli araştırması için kullanılır. Bu karar ajanın
   canlı komut çalıştırma veya onaysız commit/push yetkisini değiştirmez.
+- Bakım 6 kararı (19 Ekim): etkin keşif hedeflerinin doğrulanan yeni
+  kapasiteleri ürün oluşturabilir. Katalog Git'te kalır; otomatik eklemeler
+  yerelde birikir, commit/push ayrı kullanıcı onayı ister. İlk katalog ve
+  otomasyon kabulünden sonra haftalık eklemeler için tek tek kabul aranmaz.
+  Kalıcı kaldırılan bağlantının eski ürün bağı `config/discovery.json`
+  `retired_listing_bindings` içinde korunur. Tam yeni kanıtla yalnız eski
+  ürününe eski listing_id ile dönebilir; başka ürüne taşınamaz. Katalogda
+  bulunan pasif kayıt kendiliğinden açılmaz. Gelecekte hedefli bağlantı
+  kaldırırken bu kimlik kaydını da güncelle.
 - Kararlar netleşmeden kod yazma: önce plan, sonra kullanıcının onayı. Plan veya
   açıklama istendiğinde kod üretme.
 - Yeni mimari seçimleri kullanıcıyla netleştir. Kullanıcının güncel kararı eski
@@ -89,8 +99,13 @@ eskisi düzeltilir; belge baştan yazılmaz.
   aktarır; o saatlerde `app/` altındaki dosyaları yarım bırakma.
 - Zamanlanmış keşif her Pazar 14:00'te başlar ve yaklaşık 35 dakika sürer
   (`\FiyatTakip\HaftalikKesif`; logları `data/logs/kesif_*.log`, raporları
-  `data/discovery/`). Katalog yazmaz; yeni sayfalar kullanıcı raporu inceleyip
-  `python -m app.discovery --apply-report <rapor>` çalıştırınca girer. O sırada
+  `data/discovery/`). Seçeneksiz görev kurulumu önizleme (`--dry-run`), açık
+  `-OtomatikKabul` kurulumu `--auto-accept` kullanır. 19 Ekim'de kullanıcı
+  kabulüyle otomatik mod kuruldu: yeterli kimlik kanıtlı adaylar otomatik
+  eklenir; eksik/çelişkili olanlar dışarıda kalır. Seçeneksiz yeniden kurulum
+  önizleme moduna dönüş sağlar.
+  Önizleme raporu ayrıca `python -m app.discovery --apply-report <rapor>`
+  ile uygulanabilir; eski kanıtsız rapor yeni ekleme yapamaz. O sırada
   canlı komut çalıştırma ve `app/discovery/` ile ortak dosyaları yarım bırakma.
 - Gerçek kaynakta bulunmayan fiyat, stok, kimlik veya kapsam bilgisini uydurma.
 - Gerçek veritabanına (`fiyat_takip`) yalnız okuma sorgusuyla bak. Testler

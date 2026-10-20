@@ -22,7 +22,8 @@ hesaplamaktır.
 - 🏷️ **Teklif seçimi:** ürün sayfasındaki uygun satıcı tekliflerini karşılaştırır;
   seçilen fiyatı, satıcıyı ve stok durumunu kaydeder.
 - ⏰ **Düzenli toplama:** Windows Görev Zamanlayıcı ile günde iki fiyat turu ve
-  haftalık keşif raporu üretir. Yeni bağlantılar incelenen rapordan kataloğa alınır.
+  haftalık keşif çalışır. 19 Ekim'de haftalık keşfin kanıta dayalı otomatik
+  katalog kabulü etkinleştirildi; eksik/çelişkili adaylar dışarıda kalır.
 - 🗄️ **Kalıcı kayıt:** sonuçları tur ve sayfa düzeyinde saklar; tekrar kayıtları
   ve kapanmış sonuçların değiştirilmesini veritabanı kurallarıyla engeller.
 - ⚖️ **Güvenli karşılaştırma:** cevap veren sayfa kümesi değişen turları fiyat
@@ -87,16 +88,22 @@ S25/S25+ uyuşmazlığı doğrulanan tek bağlantı 16 Ekim'de katalogdan çıka
 doğrulaması tamamlandı. Katalog/bakım kayıtları b4d223f ile gönderildi;
 aynı commit'in CI kontrolü başarılı:
 
+19 Ekim 15:48'de kullanıcı kabulüyle 1 ürün/8 bağlantı eklendi ve haftalık
+otomatik kabul görevi kuruldu. 19 Ekim 22.00 ve 20 Ekim 10.00 normal turlarının
+log–DB eşleşmesi doğrulandı. 20 Ekim bağımsız SQL–API denetiminde 60 ürün
+eşleşti, uyuşmazlık yok ve sekiz nesnenin parmak izleri aynı.
+
 | Alan | Sonuç |
 |---|---|
 | Fiyat kaynakları | Trendyol ve Hepsiburada |
 | Model aileleri | 24; Apple, Samsung, Xiaomi ve POCO |
-| Katalog | 59 ürün, 348 bağlantı; 346 etkin bağlantı |
+| Katalog | 60 ürün, 356 bağlantı; 354 etkin bağlantı |
+| Veritabanı kataloğu | 60 ürün, 357 bağlantı; 354 etkin. Katalogdan kaldırılan bir tarihsel bağlantı DB'de pasif korunur |
 | Toplama düzeni | Her gün 10:00 ve 22:00; haftalık keşif Pazar 14:00 |
-| Son doğrulanan fiyat turu | Tur 40: 346 sonuç; 240 fiyat, 106 Tükendi, 0 hata. 36–40 log–DB eşleşti |
+| Son doğrulanan fiyat turu | Tur 43: 354 sonuç; 240 fiyat, 113 Tükendi, 1 kimlik hatası. Yeni sekiz bağlantı iki turda da 7 fiyat/1 Tükendi/0 hata; 42–43 log–DB eşleşti |
 | Cimri geçmişi | 57 ürün, 20.805 tarihli kayıt; 20.252 fiyat ve 553 eksik değer |
-| Otomatik testler | 19 Ekim: 1829 geçti; 438’i PostgreSQL üzerinde; 0 atlandı; Black ve Flake8 temiz |
-| SQL–API ve ekran | 19 Ekim SQL–API: 59 ürün/0 fark, 8 nesne aynı. 16 Ekim grafik bakımında 3 gerçek ürün/12 aralık/yenilemeler temiz; tam ekran kabulü 10 Ekim |
+| Otomatik testler | 19 Ekim: 1903 geçti; 438’i PostgreSQL üzerinde; 0 atlandı; Black ve Flake8 temiz |
+| SQL–API ve ekran | 20 Ekim SQL–API: 60 ürün/0 fark, 8 nesne aynı, çıkış 0. 16 Ekim grafik bakımında 3 gerçek ürün/12 aralık/yenilemeler temiz; tam ekran kabulü 10 Ekim |
 
 14 Ekim'de ML öncesi 25 yeni keşif sayfasının incelemesi tamamlandı:
 15 doğrulandı, 7 uyuşmazlık, 3 kanıt yetersiz. Özgün rapor uygulanmadı.
@@ -125,14 +132,14 @@ kontrolünde sekiz veritabanı nesnesinin parmak izi değişmedi. 3.3 düzeltmes
 ve kalan bakım 3 belgeleri de b4d223f ile gönderildi; aynı SHA CI başarılı.
 Bakımın 3. adımı tamamlandı; kalan erişim sınırları teknik rehberde kayıtlı.
 
-Katalogdaki **348 bağlantının markalara göre dağılımı** (iki pasif bağlantı dahil):
+Katalogdaki **356 bağlantının markalara göre dağılımı** (iki pasif bağlantı dahil):
 
 ```mermaid
 pie showData
-    title Katalogdaki bağlantılar — 16 Ekim 2026
-    "Apple" : 174
-    "Samsung" : 104
-    "Xiaomi" : 66
+    title Katalogdaki bağlantılar — 19 Ekim 2026
+    "Apple" : 176
+    "Samsung" : 109
+    "Xiaomi" : 67
     "POCO" : 4
 ```
 
@@ -141,7 +148,8 @@ Her push’ta CI, testler ile Black ve Flake8 denetimlerini çalıştırır.
 Otomatik testler canlı ağa çıkmaz; veritabanı testleri yalnız test veritabanını kullanır.
 
 Katalog pazaryerlerinin tamamını kapsamaz. Cimri’de iki ürünün eşleştirmesi
-doğrulanamadı; eksik fiyatlar doldurulmadı. Kaynak ve işletim sınırları
+doğrulanamadı; yeni Galaxy S24 FE 128 GB'ın da eşleştirmesi yok.
+Mevcut 57 eşleştirme korundu, eksik fiyatlar doldurulmadı. Kaynak ve işletim sınırları
 [teknik rehberde](docs/teknik.md#bilinen-sınırlar) açıklanır.
 
 19 Ekim bakım 4.1 incelemesinde Cimri verisinin projedeki kullanım uygunluğu
@@ -166,19 +174,49 @@ başarılı. Cimri geçmişi eksik ürünler katalogda korunur.
 kullanılabilir 30+7 penceresi var. Cimri'nin 57 ürününde **17.668 pencere**
 (1.792 olumlu / 15.876 olumsuz) bulundu; örtüşen pencereler bağımsız örnek
 sayılmaz. Cimri'nin ML kullanım uygunluğu doğrulanmadığı için eğitim
-başlatılmadı. Kendi serimizde veri bekleniyor; katalogdaki 59 ürün korunuyor.
+başlatılmadı. Kendi serimizde veri bekleniyor; denetim o sıradaki 59 ürünü kapsıyor.
 71 yeni test dahil tam 1829 test/0 atlama, Black ve Flake8 temiz.
-Teknik çalışma tamam; kullanıcı bu beş dosyanın commit ve push işlemlerini
-açıkça onayladı. Aynı commit'in CI ve gönderim sonucu yerel kapanış kaydında izlenir.
+Bakım 5, f600bc8 ile gönderildi; aynı commit'in
+[CI kontrolü](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/39237984848)
+başarılı ve adım kapalı.
+
+**Bakım 6 — otomatik güvenli kabul:** keşfin kendi ürün koduna bağlı model,
+kapasite, renk, gerekli ağ ayrımı ve yeni ürün kanıtını birlikte değerlendiren
+kabul katmanı ve güvenli yazımı hazır. 74 yeni test dahil 1903 test/0 atlama,
+Black/Flake8 temiz. Eksik/çelişkili adaylar gerekçeyle dışarıda kalır;
+stoksuzluk tek başına ret nedeni değildir. Etkin tanımlı hedeflerin yeni
+kapasiteleri ürün oluşturabilir. Kaldırılmış bağlantının eski ürün bağı
+korunur; otomatik Git gönderimi yoktur. 19 Ekim toplu önizlemesi tamamlandı:
+236 doğrulandı / 248 uyuşmazlık / 11 kanıt yetersiz. Kısmi tarama (çıkış 2),
+yeterli kendi ürün kanıtı bulunan **1 yeni ürün / 8 bağlantı** önerdi.
+Katalog kopyasında eklemeler, eski kayıtların korunması ve ikinci uygulamanın
+değişiklik yapmaması doğrulandı. Kullanıcı ayrı kabulden sonra raporu uyguladı:
+gerçek katalog **60/356/354**, eski 59 ürün/348 bağlantı korundu.
+Haftalık görev `--scheduled --auto-accept` ile kuruldu; sonraki çalışma
+25 Ekim 14.00. Fiyat toplama görevinin parmak izi aynı. Katalog sonrası tam
+1903 test/0 atlama, Black/Flake8 yeniden temiz. 20 Ekim'de normal tur DB
+eşitlemesi doğrulandı: DB 60/357/354, eski kimlikler ve geçmiş korundu,
+kalan eşitleme farkı yok. Bağımsız SQL–API denetiminde 60 ürün/0 fark,
+sekiz değişmeyen nesne ve çıkış 0 doğrulandı. Bakım 6.1–6.4 tamam;
+6.5 için kullanıcı 20 Ekim'de commit ve push işlemlerini açıkça onayladı.
+Gönderilen aynı commit'in başarılı CI sonucu kapanış şartıdır; gönderim/CI
+kaydı yerel devir notunda ve Git dışı kapanış klasöründe tutulur. Ayrıntı
+[teknik rehberde](docs/teknik.md#otomatik-güvenli-keşif-kabulü-bakım-6).
 
 ## 🗺️ Yol haritası
+
+19 Ekim kararı: Bakım 6 kapandıktan sonra sürekli işletim, ML eğitiminden
+önce ele alınacak. Günlük **10.00 ve 22.00** toplama korunur; tek günlük
+tahmin örneği, tek ölçüm gerektirmez. Akşam fiyatı başlangıç; iki turda
+gözlenen minimum gelecek günlerin sonucudur. Veri biriktiğinde sabah
+ölçümünün katkısı ayrıca değerlendirilecek. Şu anda görev ayarları aynı.
 
 | Aşama | Durum |
 |---|---|
 | Fiyat okuma, keşif, katalog, veritabanı ve zamanlanmış toplama | ✅ Tamamlandı |
 | FastAPI ve Streamlit ile verileri sunma ve görüntüleme | ✅ Tamamlandı; gerçek verilerle doğrulandı, gönderildi ve CI başarılı |
-| ML ile indirim olasılığı tahmini | 🔜 Planlandı |
-| Docker ve sürekli çalışma ortamı | 🔜 Planlandı |
+| Docker ve sürekli çalışma ortamı | 🔜 Sürekli işletim bölümü ML eğitiminden önce ayrıca planlanacak; başlanmadı |
+| ML ile indirim olasılığı tahmini | 🔜 Sürekli işletim ve veri yeterliliği sonrasında; başlanmadı |
 
 ## 📚 Belgeler
 

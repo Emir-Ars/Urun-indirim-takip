@@ -5,6 +5,7 @@ from urllib.parse import parse_qsl, urlencode, urljoin, urlsplit, urlunsplit
 from bs4 import BeautifulSoup
 
 from app.contracts import DiscoveryCandidate, DiscoveryResult
+from app.discovery.acceptance import trendyol_evidence
 from app.discovery.base import RECOVERABLE, BaseDiscovery, error_code
 from app.discovery.matching import phone_category
 from app.scraper.http import FetchError
@@ -240,9 +241,11 @@ class Discovery(BaseDiscovery):
         if trendyol_product_id(url) != expected_id:
             raise FetchError("identity", "Trendyol adres kimliği kaynakla uyuşmuyor")
         html = self.get(url)
-        state = assigned_json(
-            BeautifulSoup(html, "html.parser"), "__envoy__SHARED_PROPS"
+        soup = BeautifulSoup(html, "html.parser")
+        decision = self.record_evidence(
+            trendyol_evidence(soup, html, url, expected_id, variant_color)
         )
+        state = assigned_json(soup, "__envoy__SHARED_PROPS")
         product = (state or {}).get("product")
         # HTTP izinli alan adlarında yönlendirmeyi izleyebilir; açılan sayfanın
         # kendi kimliği de kaynakla eşleşmelidir.
@@ -261,6 +264,8 @@ class Discovery(BaseDiscovery):
             category=category,
             in_stock=product.get("inStock"),
         )
+        if decision.status == "verified":
+            return decision.candidate
         if normalize(brand) != normalize(self.target.brand) or not phone_category(
             category
         ):
@@ -365,11 +370,13 @@ class Discovery(BaseDiscovery):
                     url, product_id, colors.get(product_id)
                 )
             except RECOVERABLE as exc:
+                self.record_failure(url, product_id)
                 self.issue("candidate_rejected", f"{product_id}: {exc}")
         return DiscoveryResult(
             platform=self.platform,
             target_key=self.target.key,
             candidates=list(found.values()),
+            decisions=self.decisions,
             issues=self.issues,
             # complete yalnız arama aşamasını kapsar; varyant, ürün sınırı ve
             # candidate_rejected gibi sonradan eklenen uyarılar da taramayı kısmi

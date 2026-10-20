@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-  Haftalık keşfi Görev Zamanlayıcı'ya kurar: her Pazar 14:00, katalog yazmadan.
+  Haftalık keşfi Görev Zamanlayıcı'ya kurar: her Pazar 14:00, önizleme veya otomatik kabul.
 
 .DESCRIPTION
   Görev `python -m app.discovery --scheduled --dry-run` komutunu penceresiz çalıştırır:
@@ -9,18 +9,28 @@
   sonra kataloğa eklemek için (siteye gitmeden):
     .venv\Scripts\python.exe -m app.discovery --apply-report data\discovery\kesif_<tarih-saat>.json
 
+  -OtomatikKabul seçilirse görev --scheduled --auto-accept çalıştırır: yeterli
+  kimlik kanıtı olan adaylar otomatik kataloğa eklenir; eksik/çelişkili olanlar
+  dışarıda kalır. İlk geçiş ayrı kullanıcı kabulü ister. Git işlemi yapılmaz.
+  Seçeneksiz yeniden kurulum önizleme moduna döndürür.
+
   Görev bu kullanıcı adına ve yalnızca oturum açıkken çalışır; Windows şifresi saklanmaz.
   Yönetici izni gerekmez. Keşif veritabanı kullanmaz. Tekrar çalıştırmak görevi aynı
   ayarlarla yeniden kurar. Fiyat toplama görevine (zamanlayici_kur.ps1) dokunmaz.
 
   Kurulum:  powershell -ExecutionPolicy Bypass -File scripts\kesif_zamanlayici_kur.ps1
+  Otomatik: powershell -ExecutionPolicy Bypass -File scripts\kesif_zamanlayici_kur.ps1 -OtomatikKabul
   Kaldırma: powershell -ExecutionPolicy Bypass -File scripts\kesif_zamanlayici_kur.ps1 -Kaldir
 #>
-param([switch]$Kaldir)
+param([switch]$Kaldir, [switch]$OtomatikKabul)
 
 $ErrorActionPreference = 'Stop'
 $taskPath = '\FiyatTakip\'
 $taskName = 'HaftalikKesif'
+
+if ($Kaldir -and $OtomatikKabul) {
+    throw '-Kaldir ve -OtomatikKabul birlikte kullanılamaz.'
+}
 
 if ($Kaldir) {
     # Görev yoksa (ör. arayüzden silinmiş) Unregister-ScheduledTask 'Stop'
@@ -44,8 +54,14 @@ if (-not (Test-Path $pythonw)) {
 
 # pythonw.exe konsol penceresi açmaz; çıktı data\logs altındaki log dosyasına yazılır.
 # Çalışma klasörü proje klasörüdür: config\ ve data\ yolları buna göre bulunur.
+$arguments = '-m app.discovery --scheduled --dry-run'
+$description = 'Haftalık keşif önizlemesi; katalog yazılmaz'
+if ($OtomatikKabul) {
+    $arguments = '-m app.discovery --scheduled --auto-accept'
+    $description = 'Haftalık keşif; kimlik kanıtı yeterli adaylar otomatik kataloğa eklenir'
+}
 $action = New-ScheduledTaskAction -Execute $pythonw `
-    -Argument '-m app.discovery --scheduled --dry-run' -WorkingDirectory $root
+    -Argument $arguments -WorkingDirectory $root
 $trigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Sunday -At '14:00'
 # Varsayılan saati UTC'ye çevirir; yerel saat olarak yazılır (saat dilimi veya yaz
 # saati değişse de keşif yerel Pazar 14:00'te başlar).
@@ -54,7 +70,7 @@ $trigger.StartBoundary = (Get-Date '14:00').ToString('s')
 # bir bilgisayarda telafi keşfi (~35 dk) ortak kilidi tutup 22:00 fiyat turunu
 # atlatabilirdi; kaçan hafta elle çalıştırılır. WakeToRun da yok: bilgisayar
 # uyandırılmaz. Çalışırken gelen ikinci tetikleme atılır (IgnoreNew); takılan keşif
-# 2 saatte durdurulur ve o durumda rapor oluşmaz.
+# 2 saatte durdurulur; hazırlık kaydı varsa sonraki başlangıç uzlaştırır.
 $settings = New-ScheduledTaskSettingsSet `
     -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
     -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Hours 2)
@@ -63,11 +79,12 @@ $principal = New-ScheduledTaskPrincipal -UserId $user -LogonType Interactive -Ru
 
 Register-ScheduledTask -TaskPath $taskPath -TaskName $taskName -Action $action `
     -Trigger $trigger -Settings $settings -Principal $principal -Force `
-    -Description 'Haftalık keşif önizlemesi (python -m app.discovery --scheduled --dry-run); log: data\logs, rapor: data\discovery' |
+    -Description "$description ($arguments); log: data\logs, rapor: data\discovery" |
     Out-Null
 
 $task = Get-ScheduledTask -TaskPath $taskPath -TaskName $taskName
 $info = Get-ScheduledTaskInfo -TaskPath $taskPath -TaskName $taskName
 Write-Host "Görev kuruldu: $taskPath$taskName ($user)"
+Write-Host "Komut: $arguments"
 Write-Host "StartWhenAvailable: $($task.Settings.StartWhenAvailable) (False: kaçan çalışma telafi edilmez)"
 Write-Host "Sonraki çalışma: $($info.NextRunTime)"

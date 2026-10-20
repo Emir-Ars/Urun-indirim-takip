@@ -489,6 +489,14 @@
       "model": "Redmi Note 14 Pro 5G",
       "storage_gb": 256,
       "active": true
+    },
+    {
+      "product_id": 60,
+      "product_key": "samsung_galaxy_s24_fe_128gb",
+      "brand": "Samsung",
+      "model": "Galaxy S24 FE",
+      "storage_gb": 128,
+      "active": true
     }
   ],
   "listings": [
@@ -3273,6 +3281,70 @@
       "product_id": 52,
       "platform": "trendyol",
       "url": "https://www.trendyol.com/xiaomi/redmi-note-13-pro-5g-16gb-ram-512-gb-akilli-cep-telefonu-turkiye-garantili-p-1097892676",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_1212833893",
+      "product_id": 22,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-17-512-gb-akilli-telefon-sis-mavisi-mg6t4tu-a-p-1212833893",
+      "color": "Mavi",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_985256829",
+      "product_id": 22,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-17-512gb-sis-mavisi-p-985256829",
+      "color": "Blue",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_820686108",
+      "product_id": 43,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-a55-5g-128-gb-8-gb-ram-siyah-uyumlu-samsung-turkiye-garantili-p-820686108",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_792775313",
+      "product_id": 36,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s24-256-gb-mor-p-792775313",
+      "color": "Mor",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_857140583",
+      "product_id": 60,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s24-fe-8-gb-ram-128-gb-mavi-p-857140583",
+      "color": "Mavi",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00005mll3p",
+      "product_id": 38,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s24-ultra-512-gb-12-gb-ram-samsung-turkiye-garantili-mor-p-HBCV00005MLL3P",
+      "color": "Mor",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00008pzf40",
+      "product_id": 34,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s25-ultra-12gb-ram-1tb-titanyum-gece-siyahi-p-HBCV00008PZF40",
+      "color": "Gece Siyahı",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv0000mgp8l9",
+      "product_id": 50,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/xiaomi-redmi-note-14-pro-5g-12-512-gb-siyah-p-HBCV0000MGP8L9",
       "color": "Siyah",
       "active": true
     }

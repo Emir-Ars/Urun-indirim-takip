@@ -2,7 +2,10 @@
 
 from abc import ABC, abstractmethod
 
-from app.contracts import DiscoveryIssue
+import hashlib
+
+from app.contracts import DiscoveryEvidence, DiscoveryIssue, utc_now
+from app.discovery.acceptance import decide
 from app.scraper.http import FetchError, PageClient
 from app.scraper.parsing import network_type
 
@@ -31,6 +34,7 @@ class BaseDiscovery(ABC):
         self.config = config
         self.pages = PageClient(self.hosts, runtime, request_budget=config.max_requests)
         self.issues = []
+        self.decisions = []
         self.trace = []
         self.search_pages = 0
         self.product_pages = 0
@@ -56,6 +60,26 @@ class BaseDiscovery(ABC):
     def note(self, kind, **fields):
         """Sessiz kararların tanılama izi; rapora ve kataloğa yazılmaz."""
         self.trace.append({"kind": kind, **fields})
+
+    def record_evidence(self, evidence):
+        decision = decide(evidence, self.target)
+        self.decisions.append(decision)
+        return decision
+
+    def record_failure(self, url, product_id):
+        if not any(
+            d.evidence.platform_product_id.upper() == product_id.upper()
+            for d in self.decisions
+        ):
+            self.record_evidence(
+                DiscoveryEvidence(
+                    platform=self.platform,
+                    platform_product_id=product_id,
+                    url=url,
+                    captured_at=utc_now(),
+                    html_sha256=hashlib.sha256(b"").hexdigest(),
+                )
+            )
 
     def verify_network(self, value, names):
         """Sayfanın yapısal ağ türü hedefle çelişiyorsa reddet.

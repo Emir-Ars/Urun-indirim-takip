@@ -19,11 +19,15 @@ from app.contracts import (
     Catalog,
     DiscoveryCandidate,
     DiscoveryConfig,
+    DiscoveryEvidence,
+    DiscoveryFact,
     DiscoveryIssue,
     DiscoveryReport,
     DiscoveryResult,
     DiscoveryTarget,
+    utc_now,
 )
+from app.discovery.acceptance import decide
 from app.discovery.__main__ import main as discovery_main
 from app.discovery.base import BaseDiscovery
 from app.discovery.hepsiburada import Discovery as HepsiburadaDiscovery
@@ -1372,10 +1376,41 @@ def fixed_adapter(platform, found):
         hosts = ["www.example.com"]
 
         def discover(self):
+            decisions = []
+            for candidate in found:
+                facts = {
+                    "source_id": candidate.platform_product_id,
+                    "name": (
+                        f"{candidate.brand} {candidate.model} "
+                        f"{candidate.storage_gb} GB"
+                    ),
+                    "brand": candidate.brand,
+                    "category": "Cep Telefonu",
+                    "color": candidate.color,
+                    "condition": "https://schema.org/NewCondition",
+                }
+                evidence = DiscoveryEvidence(
+                    platform=platform,
+                    platform_product_id=candidate.platform_product_id,
+                    url=candidate.url,
+                    captured_at=utc_now(),
+                    html_sha256="0" * 64,
+                    facts=[
+                        DiscoveryFact(
+                            field=key,
+                            value=value,
+                            owner_id=candidate.platform_product_id,
+                            source="synthetic_test",
+                        )
+                        for key, value in facts.items()
+                    ],
+                )
+                decisions.append(decide(evidence, self.target))
             return DiscoveryResult(
                 platform=platform,
                 target_key=self.target.key,
                 candidates=found,
+                decisions=decisions,
                 complete=True,
             )
 
@@ -2010,7 +2045,12 @@ def test_catalog_write_failure_after_scan_is_reported_and_logged(
     with pytest.raises(DiscoveryWriteError, match="disk dolu"):
         run()
     assert scan_env.read_bytes() == catalog_before  # yarım katalog kalmaz
-    assert not (tmp_path / "data" / "discovery_report.json").exists()
+    saved = DiscoveryReport.model_validate_json(
+        (tmp_path / "data" / "discovery_report.json").read_bytes()
+    )
+    assert (
+        saved.application.state == "prepared"
+    )  # yazılmayan katalog için karar izi korunur
 
 
 def test_scheduled_discovery_logs_unwritten_result_with_exit_1(

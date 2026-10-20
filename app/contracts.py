@@ -181,9 +181,16 @@ class DiscoveryTarget(Contract):
     exclude_terms: list[Annotated[str, Field(min_length=1)]] = Field(
         default_factory=list
     )
-    # Başlığı ağ türünü söylemeyen modeller için (ör. Redmi Note 14 Pro 4G): sayfanın
-    # yapısal "Mobil Bağlantı Hızı" değeri bununla çelişirse ret; alan boşsa geçer.
+    # 4G/5G kardeşleri ayırır; keşif kabulünde eksik kanıt 4G sayılmaz.
     network: Literal["4G", "5G"] | None = None
+
+
+class RetiredListingBinding(Contract):
+    platform: Key
+    platform_product_id: str = Field(min_length=1)
+    listing_id: str = Field(min_length=1)
+    product_id: int = Field(gt=0)
+    product_key: str = Field(min_length=1)
 
 
 class DiscoveryConfig(Contract):
@@ -191,11 +198,18 @@ class DiscoveryConfig(Contract):
     max_search_pages: int = Field(default=20, ge=1, le=100)
     max_product_pages: int = Field(default=100, ge=1, le=500)
     max_requests: int = Field(default=200, ge=1, le=1000)
+    retired_listing_bindings: list[RetiredListingBinding] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def unique_targets(self):
         if len({target.key for target in self.targets}) != len(self.targets):
             raise ValueError("Keşif hedefleri benzersiz olmalı")
+        bindings = self.retired_listing_bindings
+        keys = [(b.platform, b.platform_product_id.upper()) for b in bindings]
+        if len(set(keys)) != len(keys) or len({b.listing_id for b in bindings}) != len(
+            bindings
+        ):
+            raise ValueError("Kaldırılmış bağlantı kimlikleri benzersiz olmalı")
         return self
 
 
@@ -220,6 +234,41 @@ class DiscoveryIssue(Contract):
     detail: str = ""
 
 
+class DiscoveryFact(Contract):
+    field: Literal[
+        "name",
+        "brand",
+        "category",
+        "storage",
+        "color",
+        "network",
+        "ram",
+        "condition",
+        "warranty",
+        "source_id",
+    ]
+    value: str = Field(min_length=1)
+    owner_id: str = Field(min_length=1)
+    source: str = Field(min_length=1)
+
+
+class DiscoveryEvidence(Contract):
+    platform: Key
+    platform_product_id: str = Field(min_length=1)
+    url: URL
+    captured_at: AwareDatetime
+    html_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
+    facts: list[DiscoveryFact] = Field(default_factory=list)
+
+
+class DiscoveryDecision(Contract):
+    target_key: Key
+    evidence: DiscoveryEvidence
+    status: Literal["verified", "mismatch", "insufficient"]
+    reasons: list[str]
+    candidate: DiscoveryCandidate | None = None
+
+
 class DiscoveryResult(Contract):
     platform: Key
     target_key: Key
@@ -228,6 +277,17 @@ class DiscoveryResult(Contract):
     complete: bool = False
     search_pages: int = 0
     product_pages: int = 0
+    decisions: list[DiscoveryDecision] = Field(default_factory=list)
+
+
+class DiscoveryApplication(Contract):
+    version: Literal[1] = 1
+    state: Literal["preview", "prepared", "applied", "unchanged", "not_applied"]
+    catalog_path: str
+    catalog_before: str = Field(pattern=r"^[a-f0-9]{64}$")
+    catalog_after: str = Field(pattern=r"^[a-f0-9]{64}$")
+    config_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
+    payload_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
 
 
 class DiscoveryReport(Contract):
@@ -236,6 +296,7 @@ class DiscoveryReport(Contract):
     # Raporun üretildiği an; --apply-report hangi taramanın uygulandığını bununla
     # gösterir. Alan eklenmeden önce yazılmış raporlarda yoktur (None).
     generated_at: AwareDatetime | None = None
+    application: DiscoveryApplication | None = None
     results: list[DiscoveryResult]
     added_products: list[str] = Field(default_factory=list)
     added_listings: list[str] = Field(default_factory=list)

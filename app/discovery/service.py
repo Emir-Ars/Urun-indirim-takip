@@ -2,23 +2,28 @@
 
 import importlib
 import inspect
+import hashlib
 import json
 import os
 import re
 import tempfile
 from collections import Counter
 from pathlib import Path
+from urllib.parse import urlsplit
 
-from filelock import FileLock
+from filelock import FileLock, Timeout
 
 from app.contracts import (
     Catalog,
+    DiscoveryApplication,
+    DiscoveryConfig,
     DiscoveryIssue,
     DiscoveryReport,
     Listing,
     Product,
     utc_now,
 )
+from app.discovery.acceptance import color_key, decide
 from app.discovery.base import BaseDiscovery
 from app.scraper.parsing import hepsiburada_sku, trendyol_product_id
 from app.settings import Settings
@@ -37,7 +42,8 @@ class DiscoveryWriteError(RuntimeError):
 
     Nedeni disk, kilit zaman aşımı ya da taramadan sonra bozulmuş bir katalog
     olabilir; çıkış kodu 1'dir ama "keşif başlatılamadı"dan farklıdır: tarama
-    yapılmıştır ve bu çalışmanın sonucu kaybolmuştur.
+    yapılmıştır. Kalıcı hazırlık kaydı varsa sonraki başlangıçta uzlaştırılır;
+    hata tek başına kataloğun değişmediğini söylemez.
     """
 
 
@@ -82,7 +88,7 @@ def _conflict(candidate, detail: str) -> DiscoveryIssue:
     )
 
 
-def merge_catalog(catalog: Catalog, candidates):
+def merge_catalog(catalog: Catalog, candidates, bindings=()):
     """Salt veri dönüşümü; var olan ürün ve bağlantı kimliklerine dokunmaz.
 
     Katalogla çelişen aday (ör. kayıtlı SKU'nun başka kapasite olarak görülmesi)
@@ -101,10 +107,40 @@ def merge_catalog(catalog: Catalog, candidates):
     next_id = max((product.product_id for product in products), default=0) + 1
     product_names = {product.product_id: product.name for product in products}
     listing_ids = {item.listing_id for item in listings}
+    platforms = {item.key: item for item in catalog.platforms}
     added_products = []
     added_listings = []
     existing_listings = []
     conflicts = []
+    reserved = {(b.platform, b.platform_product_id.upper()): b for b in bindings}
+    for binding in bindings:
+        owner = next((p for p in products if p.product_id == binding.product_id), None)
+        if owner is None or owner.product_key != binding.product_key:
+            raise ValueError("Kaldırılmış bağlantının eski ürün bağı doğrulanamadı")
+        old = next(
+            (item for item in listings if item.listing_id == binding.listing_id), None
+        )
+        if old and (
+            old.product_id != binding.product_id
+            or old.platform != binding.platform
+            or _url_identity(old.platform, old.url)
+            != binding.platform_product_id.upper()
+        ):
+            raise ValueError("Kaldırılmış bağlantı kimliği katalogla çelişiyor")
+    grouped = {}
+    declared_ram = {}
+    for candidate in candidates:
+        key = (candidate.platform, candidate.platform_product_id.upper())
+        grouped.setdefault(key, set()).add(
+            (
+                candidate.brand.casefold(),
+                candidate.model.casefold(),
+                candidate.storage_gb,
+                color_key(candidate.color),
+            )
+        )
+        if candidate.ram_gb is not None:
+            declared_ram.setdefault(key, set()).add(candidate.ram_gb)
     # Sıralama kimlik atamasını belirleyici yapar: yeni product_id'ler next_id'den
     # sırayla verilir. Adaylar sitenin döndürdüğü sırayla değil sabit anahtarla
     # işlendiği için aynı aday kümesi her zaman aynı kimlikleri ve katalog sırasını
@@ -126,8 +162,35 @@ def merge_catalog(catalog: Catalog, candidates):
         product = identities.get(identity)
         # Çakışma ürün oluşturmadan önce denetlenir; böylece bağlantısız ürün kalmaz.
         listing_key = (candidate.platform, candidate.platform_product_id.upper())
+        if len(grouped[listing_key]) > 1 or len(declared_ram.get(listing_key, ())) > 1:
+            conflicts.append(_conflict(candidate, "aynı taramada çelişkili kimlikler"))
+            continue
+        binding = reserved.get(listing_key)
+        if binding and (product is None or product.product_id != binding.product_id):
+            conflicts.append(
+                _conflict(candidate, "kaldırılmış bağlantı başka ürüne taşınamaz")
+            )
+            continue
+        if product and not product.active:
+            conflicts.append(
+                _conflict(candidate, "ürün katalogda pasif; yeni sayfa eklenmedi")
+            )
+            continue
+        if (
+            candidate.platform not in platforms
+            or not platforms[candidate.platform].active
+        ):
+            conflicts.append(_conflict(candidate, "platform katalogda pasif"))
+            continue
         old = existing.get(listing_key)
         if old is not None:
+            if binding and old.listing_id != binding.listing_id:
+                conflicts.append(
+                    _conflict(
+                        candidate, "kaldırılmış bağlantının eski kimliği korunmalı"
+                    )
+                )
+                continue
             if product is None or old.product_id != product.product_id:
                 conflicts.append(
                     _conflict(
@@ -140,7 +203,11 @@ def merge_catalog(catalog: Catalog, candidates):
                 continue
             existing_listings.append(old.listing_id)
             continue
-        listing_id = f"{candidate.platform}_{candidate.platform_product_id.lower()}"
+        listing_id = (
+            binding.listing_id
+            if binding
+            else f"{candidate.platform}_{candidate.platform_product_id.lower()}"
+        )
         if listing_id in listing_ids:
             conflicts.append(
                 _conflict(
@@ -264,28 +331,231 @@ def _report_candidates(results):
     return [candidate for result in results for candidate in result.candidates]
 
 
-def _merge_into_catalog_file(catalog_path, candidates, check=None):
-    """Kataloğu kilit altında okur, birleştirir ve yalnız değiştiyse yazar.
+def _guard_results(results, config):
+    targets = {t.key: t for t in config.targets if t.active}
+    guarded = []
+    for result in results:
+        target = targets.get(result.target_key)
+        if target is None:
+            raise ReportMismatch("Raporun hedefi etkin keşif ayarlarında bulunamadı")
+        decisions = {}
+        for decision in result.decisions:
+            evidence = decision.evidence
+            if (
+                decision.target_key != result.target_key
+                or evidence.platform != result.platform
+            ):
+                raise ReportMismatch("Kanıtın hedef/platform bağı değişmiş")
+            if decide(evidence, target) != decision:
+                raise ReportMismatch(
+                    "Raporun kimlik kararı kanıttan yeniden üretilemiyor"
+                )
+            key = evidence.platform_product_id.upper()
+            if key in decisions:
+                raise ReportMismatch("Bir sayfa için tekrarlanan karar var")
+            decisions[key] = decision
+        accepted, issues = [], list(result.issues)
+        for candidate in result.candidates:
+            decision = decisions.get(candidate.platform_product_id.upper())
+            if not decision:
+                issues.append(
+                    DiscoveryIssue(
+                        platform=result.platform,
+                        target_key=target.key,
+                        reason="evidence_missing",
+                        detail=candidate.platform_product_id,
+                    )
+                )
+                continue
+            if decision.status != "verified":
+                continue
+            proven = decision.candidate
+            if (
+                candidate.target_key != target.key
+                or candidate.platform != result.platform
+                or candidate.brand != proven.brand
+                or candidate.model != proven.model
+                or candidate.storage_gb != proven.storage_gb
+                or _url_identity(candidate.platform, candidate.url)
+                != proven.platform_product_id
+                or urlsplit(candidate.url).hostname != urlsplit(proven.url).hostname
+                or color_key(candidate.color) != color_key(proven.color)
+            ):
+                raise ReportMismatch("Adayın kimliği kaydedilen kanıtla çelişiyor")
+            accepted.append(proven)
+        for decision in result.decisions:
+            if decision.status != "verified":
+                issues.append(
+                    DiscoveryIssue(
+                        platform=result.platform,
+                        target_key=target.key,
+                        reason=(
+                            "identity_mismatch"
+                            if decision.status == "mismatch"
+                            else "evidence_missing"
+                        ),
+                        detail=(
+                            f"{decision.evidence.platform_product_id}: "
+                            f"{', '.join(decision.reasons)}"
+                        ),
+                    )
+                )
+        issues = list(dict.fromkeys(issues))
+        guarded.append(
+            result.model_copy(
+                update={
+                    "candidates": accepted,
+                    "issues": issues,
+                    "complete": result.complete and not issues,
+                }
+            )
+        )
+    return guarded
 
-    Bu kilit yalnız kataloğun oku-birleştir-yaz anını korur; siteye gidişi sıraya
-    koyan data/scrape.lock çağıran tarafta (__main__, canlı araç) alınır. Tarama
-    dakikalar sürdüğü için katalog kilit altında yeniden okunur: bu arada dosya
-    değişmiş olabilir. İçerik değişmediyse dosya hiç yazılmaz; tekrar çalıştırmada
-    bayt düzeyinde aynı kalır. `check`, yazmadan önce eklenecek ürün ve bağlantı
-    kimlikleriyle çağrılır; istisna atarsa hiçbir şey yazılmaz.
-    """
+
+def _digest(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def _json_bytes(value):
+    return (json.dumps(value, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
+
+
+def _payload_digest(report):
+    payload = report.model_dump(mode="json")
+    if payload.get("application"):
+        payload["application"].pop("payload_sha256")
+        payload["application"].pop("state")
+    return _digest(_json_bytes(payload))
+
+
+def _seal_report(report):
+    return report.model_copy(
+        update={
+            "application": report.application.model_copy(
+                update={"payload_sha256": _payload_digest(report)}
+            )
+        }
+    )
+
+
+def _atomic_json(path, value):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            dir=path.parent, suffix=".tmp", delete=False
+        ) as handle:
+            temporary = Path(handle.name)
+            handle.write(_json_bytes(value))
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, path)
+    finally:
+        if temporary:
+            temporary.unlink(missing_ok=True)
+
+
+def _atomic_report(path, report):
+    _atomic_json(path, report.model_dump(mode="json"))
+
+
+def _journal_path(catalog_path):
+    # Elle ve zamanlayıcıyla başlatılan işler aynı kataloğun yarım yazımını görür.
+    key = _digest(str(catalog_path.resolve()).casefold().encode())[:20]
+    return Settings().discovery_report_dir / f"pending_{key}.json"
+
+
+def _recover_pending(catalog_path):
+    journal = _journal_path(catalog_path)
+    if not journal.exists():
+        return
     with FileLock(str(catalog_path) + ".lock", timeout=30):
-        latest = Catalog.model_validate_json(
-            catalog_path.read_text(encoding="utf-8-sig")
+        if not journal.exists():
+            return
+        saved = json.loads(journal.read_text(encoding="utf-8"))
+        report = DiscoveryReport.model_validate_json(json.dumps(saved["report"]))
+        application = report.application
+        if (
+            application is None
+            or application.state != "prepared"
+            or application.catalog_path != str(catalog_path.resolve())
+            or application.payload_sha256 != _payload_digest(report)
+        ):
+            raise ReportMismatch(
+                "Yarım keşif yazımının kaydı geçersiz; yeni yazma durduruldu"
+            )
+        current = _digest(catalog_path.read_bytes())
+        if current == application.catalog_after:
+            state = "unchanged" if application.catalog_before == current else "applied"
+        elif current == application.catalog_before:
+            state = "not_applied"
+        else:
+            raise ReportMismatch(
+                "Yarım keşif yazımı belirsiz; katalog beklenen iki parmak "
+                "izinden farklı"
+            )
+        recovered = report.model_copy(
+            update={"application": application.model_copy(update={"state": state})}
         )
-        updated, products, listings, existing, conflicts = merge_catalog(
-            latest, candidates
+        _atomic_report(Path(saved["report_path"]), recovered)
+        journal.unlink()
+
+
+def _persist(catalog_path, config_path, report_path, report, updated):
+    application = report.application
+    with FileLock(str(catalog_path) + ".lock", timeout=30):
+        if (
+            _digest(catalog_path.read_bytes()) != application.catalog_before
+            or _digest(config_path.read_bytes()) != application.config_sha256
+        ):
+            raise ReportMismatch(
+                "Katalog veya keşif ayarları önizlemeden sonra değişmiş; "
+                "hiçbir şey yazılmadı"
+            )
+        prepared = report.model_copy(
+            update={"application": application.model_copy(update={"state": "prepared"})}
         )
-        if check is not None:
-            check(products, listings)
-        if updated != latest:
+        _atomic_report(report_path, prepared)
+        journal = _journal_path(catalog_path)
+        _atomic_json(
+            journal,
+            {
+                "report_path": str(report_path.resolve()),
+                "report": prepared.model_dump(mode="json"),
+            },
+        )
+        if (
+            _digest(catalog_path.read_bytes()) != application.catalog_before
+            or _digest(config_path.read_bytes()) != application.config_sha256
+        ):
+            raise ReportMismatch(
+                "Hazırlık sırasında katalog/ayar değişmiş; katalog yazılmadı"
+            )
+        changed = application.catalog_before != application.catalog_after
+        if changed:
             _atomic_catalog(catalog_path, updated)
-    return products, listings, existing, conflicts
+        if _digest(catalog_path.read_bytes()) != application.catalog_after:
+            raise DiscoveryWriteError(
+                "Katalog yazma sonucu beklenen parmak iziyle uyuşmuyor; "
+                "kayıt korunuyor, yeni yazma durdurulmalı"
+            )
+        final = report.model_copy(
+            update={
+                "application": application.model_copy(
+                    update={"state": "applied" if changed else "unchanged"}
+                )
+            }
+        )
+        try:
+            _atomic_report(report_path, final)
+            journal.unlink()
+        except OSError as exc:
+            raise DiscoveryWriteError(
+                "Katalog yazma aşaması tamamlandı; sonuç raporu tamamlanamadı. "
+                "Katalog değişmiş olabilir; sonraki başlangıç kaydı uzlaştıracak."
+            ) from exc
+    return final
 
 
 def apply_report(report: DiscoveryReport, catalog_path: Path):
@@ -302,23 +572,90 @@ def apply_report(report: DiscoveryReport, catalog_path: Path):
         raise ValueError(
             "Rapor bir önizleme (--dry-run) değil; bu çalışma kataloğu zaten yazdı"
         )
-    preview_products = set(report.added_products)
-    preview_listings = set(report.added_listings)
-
-    def within_preview(products, listings):
-        extra = sorted(
-            (set(products) - preview_products) | (set(listings) - preview_listings)
-        )
-        if extra:
-            raise ReportMismatch(
-                "Katalog önizlemeden sonra değişmiş; önizlemede olmayan eklemeler "
-                f"çıktı ({', '.join(extra)}). Hiçbir şey yazılmadı; yeni bir "
-                "önizleme alın (--dry-run)."
+    settings = Settings()
+    try:
+        _recover_pending(catalog_path)
+        raw = catalog_path.read_bytes()
+        catalog = Catalog.model_validate_json(raw.decode("utf-8-sig"))
+        config_raw = settings.discovery_path.read_bytes()
+        config = DiscoveryConfig.model_validate_json(config_raw.decode("utf-8-sig"))
+        application = report.application
+        if application is None:
+            merged = merge_catalog(
+                catalog,
+                _report_candidates(report.results),
+                config.retired_listing_bindings,
             )
-
-    return _merge_into_catalog_file(
-        catalog_path, _report_candidates(report.results), within_preview
-    )
+            if merged[1] or merged[2]:
+                raise ReportMismatch(
+                    "Eski raporda yeni eklemeyi destekleyen kimlik kanıtı yok; "
+                    "yeni önizleme gerekli"
+                )
+            return merged[1:]
+        if (
+            application.state != "preview"
+            or application.payload_sha256 != _payload_digest(report)
+        ):
+            raise ReportMismatch(
+                "Rapor önizlemeden sonra değişmiş; kanıt/ekleme parmak izi uyuşmuyor"
+            )
+        if (
+            application.catalog_path != str(catalog_path.resolve())
+            or _digest(config_raw) != application.config_sha256
+            or _digest(raw)
+            not in {application.catalog_before, application.catalog_after}
+        ):
+            raise ReportMismatch(
+                "Katalog veya keşif ayarları önizlemeden sonra değişmiş"
+            )
+        guarded = _guard_results(report.results, config)
+        updated, products, listings, existing, conflicts = merge_catalog(
+            catalog, _report_candidates(guarded), config.retired_listing_bindings
+        )
+        if not set(products).issubset(report.added_products) or not set(
+            listings
+        ).issubset(report.added_listings):
+            raise ReportMismatch(
+                "Katalog önizlemeden sonra değişmiş; beklenmeyen ekleme"
+            )
+        after = (
+            _digest(_json_bytes(updated.model_dump(mode="json")))
+            if updated != catalog
+            else _digest(raw)
+        )
+        if after != application.catalog_after:
+            raise ReportMismatch(
+                "Önizlemenin beklenen katalog sonucu yeniden üretilemiyor"
+            )
+        if listings:
+            actual = report.model_copy(
+                update={
+                    "dry_run": False,
+                    "added_products": products,
+                    "added_listings": listings,
+                    "existing_listings": existing,
+                }
+            )
+            actual = actual.model_copy(
+                update={
+                    "application": application.model_copy(
+                        update={
+                            "catalog_before": _digest(raw),
+                        }
+                    )
+                }
+            )
+            actual = _seal_report(actual)
+            path = (
+                settings.discovery_report_dir
+                / f"kabul_{utc_now():%Y%m%d_%H%M%S_%f}.json"
+            )
+            _persist(catalog_path, settings.discovery_path, path, actual, updated)
+        return products, listings, existing, conflicts
+    except Timeout as exc:
+        raise DiscoveryWriteError(
+            "Katalog kilidi alınamadı; hiçbir şey yazılmadı"
+        ) from exc
 
 
 def summarize_report(report: DiscoveryReport) -> str:
@@ -352,15 +689,33 @@ def summarize_report(report: DiscoveryReport) -> str:
                 f"{reason} {count}" for reason, count in sorted(warnings.items())
             )
         )
+    if report.application is not None:
+        counts = Counter(
+            d.status for result in report.results for d in result.decisions
+        )
+        parts.append(
+            f"kimlik doğrulandı {counts['verified']}, uyuşmazlık {counts['mismatch']}, "
+            f"kanıt yetersiz {counts['insufficient']}"
+        )
+        parts.append(f"yazma {report.application.state}")
     return "Özet: " + " · ".join(parts)
 
 
 def run(*, dry_run=False, target_key=None, adapters=None, report_path=None):
     settings = Settings()
-    config = settings.discovery()
+    try:
+        _recover_pending(settings.catalog_path)
+    except (OSError, ValueError, KeyError, Timeout) as exc:
+        raise DiscoveryWriteError(str(exc)) from exc
+    config_raw = settings.discovery_path.read_bytes()
+    config = DiscoveryConfig.model_validate_json(config_raw.decode("utf-8-sig"))
+    config_sha = _digest(config_raw)
     catalog_path = settings.catalog_path
     # utf-8-sig: Windows düzenleyicilerinin koyduğu BOM da okunur; BOM'suz dosya aynı.
-    catalog = Catalog.model_validate_json(catalog_path.read_text(encoding="utf-8-sig"))
+    catalog_raw = catalog_path.read_bytes()
+    catalog = Catalog.model_validate_json(catalog_raw.decode("utf-8-sig"))
+    catalog_sha = _digest(catalog_raw)
+    merge_catalog(catalog, [], config.retired_listing_bindings)
     runtime = settings.runtime()
     targets = [
         item
@@ -385,24 +740,42 @@ def run(*, dry_run=False, target_key=None, adapters=None, report_path=None):
             finally:
                 discovery.close()
     try:
-        return _conclude(catalog, catalog_path, targets, results, dry_run, report_path)
-    except (OSError, ValueError) as exc:
+        return _conclude(
+            catalog,
+            catalog_path,
+            targets,
+            results,
+            dry_run,
+            report_path,
+            config,
+            settings.discovery_path,
+            config_sha,
+            catalog_sha,
+        )
+    except (OSError, ValueError, Timeout) as exc:
         # Tarama bitti; yazılamayan şey sonucudur. Çağıran taraf bunu "keşif
         # başlatılamadı" (ayar/katalog okunamadı) hatasından ayırır.
         raise DiscoveryWriteError(str(exc)) from exc
 
 
-def _conclude(catalog, catalog_path, targets, results, dry_run, report_path):
+def _conclude(
+    catalog,
+    catalog_path,
+    targets,
+    results,
+    dry_run,
+    report_path,
+    config,
+    config_path,
+    config_sha,
+    catalog_sha,
+):
     """Tarama sonuçlarını kataloğa birleştirir (dry-run değilse) ve raporu yazar."""
+    results = _guard_results(results, config)
     candidates = _report_candidates(results)
-    if dry_run:
-        # Önizleme: birleştirme sonucu yalnız rapora girer; katalog kilidi alınmaz,
-        # dosya hiç yazılmaz.
-        _, products, listings, existing, conflicts = merge_catalog(catalog, candidates)
-    else:
-        products, listings, existing, conflicts = _merge_into_catalog_file(
-            catalog_path, candidates
-        )
+    updated, products, listings, existing, conflicts = merge_catalog(
+        catalog, candidates, config.retired_listing_bindings
+    )
     report = DiscoveryReport(
         complete=bool(results)
         and all(result.complete for result in results)
@@ -420,27 +793,48 @@ def _conclude(catalog, catalog_path, targets, results, dry_run, report_path):
             issue
             for result in results
             for issue in result.issues
-            if issue.reason != "candidate_rejected"
+            if issue.reason not in {"candidate_rejected", "identity_mismatch"}
         ],
         rejected=[
             issue
             for result in results
             for issue in result.issues
-            if issue.reason == "candidate_rejected"
+            if issue.reason in {"candidate_rejected", "identity_mismatch"}
         ]
         + conflicts,
         coverage_changes={
             platform.key: sum(
-                listing_id.startswith(platform.key + "_") for listing_id in listings
+                item.platform == platform.key and item.listing_id in listings
+                for item in updated.listings
             )
             for platform in catalog.platforms
         },
         observed_colors=observed_colors(candidates),
     )
     report_path = report_path if report_path is not None else DEFAULT_REPORT_PATH
-    report_path.parent.mkdir(parents=True, exist_ok=True)
-    report_path.write_text(
-        json.dumps(report.model_dump(mode="json"), ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
+    if (
+        _digest(catalog_path.read_bytes()) != catalog_sha
+        or _digest(config_path.read_bytes()) != config_sha
+    ):
+        raise ReportMismatch(
+            "Katalog veya keşif ayarları tarama sırasında değişmiş; "
+            "yeni önizleme gerekli"
+        )
+    application = DiscoveryApplication(
+        state="preview" if dry_run else "prepared",
+        catalog_path=str(catalog_path.resolve()),
+        catalog_before=catalog_sha,
+        catalog_after=(
+            _digest(_json_bytes(updated.model_dump(mode="json")))
+            if updated != catalog
+            else catalog_sha
+        ),
+        config_sha256=config_sha,
+        payload_sha256="0" * 64,
     )
-    return report
+    report = report.model_copy(update={"application": application})
+    report = _seal_report(report)
+    if dry_run:
+        _atomic_report(report_path, report)
+        return report
+    return _persist(catalog_path, config_path, report_path, report, updated)

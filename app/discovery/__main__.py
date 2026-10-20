@@ -1,7 +1,8 @@
 """Komutla keşif önizlemesi, katalog güncellemesi ve incelenmiş raporun uygulanması.
 
 python -m app.discovery [--dry-run] [--target KEY]    tarar (siteye gider)
-python -m app.discovery --scheduled --dry-run         Görev Zamanlayıcı'nın komutu
+python -m app.discovery --scheduled --dry-run         zamanlanmış önizleme
+python -m app.discovery --scheduled --auto-accept     zamanlanmış otomatik kabul
 python -m app.discovery --apply-report RAPOR          siteye gitmeden raporu uygular
 
 Tarama çıkış kodları: 0 tarama tam; 2 tarama kısmi (Hepsiburada arama API'si
@@ -10,7 +11,8 @@ okunamadı, hedef bulunamadı, adaptör sözleşmeye uymuyor) ya da tarama bitti
 sonuç kataloğa/rapora yazılamadı (mesaj hangisi olduğunu söyler); 3 başka bir
 fiyat turu, keşif veya canlı kontrol sürüyor (ortak kilit), keşif başlatılmadı.
 
---scheduled yalnız --dry-run ile kullanılır: katalog yazılmaz, bütün çıktı
+--scheduled açıkça --dry-run veya --auto-accept ister. İlki katalog yazmaz;
+ikincisi yalnız yeterli kimlik kanıtı olan adayları ekler. Bütün çıktı
 data/logs/kesif_<yerel tarih-saat>.log dosyasına da yazılır ve rapor aynı damgayla
 data/discovery/ altına kaydedilir. Görev pythonw.exe ile penceresiz çalışır; ekran
 olmadığı için çalışmanın tek yazılı kaydı log dosyasıdır. Log dosyası açılamazsa
@@ -18,8 +20,8 @@ keşif hiç başlamaz ve kod 1 döner.
 
 --apply-report çıkış kodları: 0 katalog güncellendi ya da eklenecek bir şey
 kalmadı; 2 güncellendi ama katalogla çelişen aday (catalog_conflict) atlandı; 1
-hiçbir şey yazılmadı (rapor okunamadı, önizleme değil, katalog önizlemeden sonra
-değişmiş...).
+rapor/ayar/yazma hatası. Yazma öncesi uyuşmazlıkta katalog değişmez; son rapor
+hatasında katalog değişmiş olabilir ve kalıcı hazırlık kaydı uzlaştırılır.
 """
 
 import argparse
@@ -47,11 +49,17 @@ from app.settings import Settings
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Telefon bağlantılarını keşfet")
     parser.add_argument("--dry-run", action="store_true", help="Kataloğu değiştirme")
+    parser.add_argument(
+        "--auto-accept",
+        action="store_true",
+        help="Kanıtı yeterli adayları otomatik ekle",
+    )
     parser.add_argument("--target", help="Yalnızca bu hedefi çalıştır")
     parser.add_argument(
         "--scheduled",
         action="store_true",
-        help="Görev Zamanlayıcı başlattı (yalnız --dry-run ile): çıktı data/logs "
+        help="Görev Zamanlayıcı başlattı (--dry-run veya --auto-accept): "
+        "çıktı data/logs "
         "altına, rapor tarihli adla data/discovery altına da yazılır",
     )
     parser.add_argument(
@@ -62,11 +70,13 @@ def main(argv=None):
     )
     args = parser.parse_args(argv)
     if args.apply_report is not None and (
-        args.dry_run or args.target or args.scheduled
+        args.dry_run or args.auto_accept or args.target or args.scheduled
     ):
         parser.error("--apply-report başka seçeneklerle birlikte kullanılmaz")
-    if args.scheduled and not args.dry_run:
-        parser.error("--scheduled yalnız --dry-run ile kullanılır")
+    if args.dry_run and args.auto_accept:
+        parser.error("--auto-accept ve --dry-run birlikte kullanılamaz")
+    if args.scheduled and not (args.dry_run or args.auto_accept):
+        parser.error("--scheduled için --dry-run veya --auto-accept seçilmeli")
     utf8_output()
     if args.apply_report is not None:
         return apply(args.apply_report)
@@ -79,14 +89,15 @@ def main(argv=None):
         print(f"Log dosyası açılamadı: {exc}", file=sys.stderr)
         return 1
     with log, tee_output(log):
+        mode = "önizleme" if args.dry_run else "otomatik kabul"
         print(
-            f"Zamanlanmış keşif (önizleme) · {datetime.now():%Y-%m-%d %H:%M:%S} "
+            f"Zamanlanmış keşif ({mode}) · {datetime.now():%Y-%m-%d %H:%M:%S} "
             "(yerel saat)"
         )
         # Rapor, logla aynı zaman damgasını taşır: ikisi birlikte aranır.
         report_path = settings.discovery_report_dir / f"{Path(log.name).stem}.json"
         try:
-            code = scan(True, args.target, report_path, print_json=False)
+            code = scan(args.dry_run, args.target, report_path, print_json=False)
         except Exception:
             # Program hatası: ayrıntısı ekransız çalışmada da kaybolmasın.
             traceback.print_exc()
@@ -146,7 +157,7 @@ def apply(path):
         products, listings, existing, conflicts = apply_report(
             report, Settings().catalog_path
         )
-    except (OSError, ValueError) as exc:
+    except (OSError, ValueError, DiscoveryWriteError) as exc:
         print(f"Rapor uygulanamadı: {exc}", file=sys.stderr)
         return 1
     made = (

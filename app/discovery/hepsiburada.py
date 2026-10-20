@@ -6,6 +6,7 @@ from urllib.parse import urlencode, urljoin, urlsplit
 from bs4 import BeautifulSoup
 
 from app.contracts import DiscoveryCandidate, DiscoveryResult
+from app.discovery.acceptance import hepsiburada_evidence
 from app.discovery.base import RECOVERABLE, BaseDiscovery, error_code
 from app.discovery.matching import phone_category
 from app.scraper.hepsiburada_scraper import product_names, variant_identity
@@ -46,18 +47,6 @@ def _variants(soup) -> list:
             ):
                 variants = node["allVariantCombinations"]
     return variants
-
-
-def _network(soup) -> str | None:
-    """Sayfanın ürün özelliklerindeki "Mobil Bağlantı Hızı" değeri (ör. "4.5G")."""
-    expected = normalize("Mobil Bağlantı Hızı")
-    for root in embedded_json(soup):
-        for node in nested_dicts(root):
-            if normalize(str(node.get("name", ""))) == expected and node.get(
-                "property"
-            ):
-                return str(node["property"])
-    return None
 
 
 class Discovery(BaseDiscovery):
@@ -185,7 +174,11 @@ class Discovery(BaseDiscovery):
 
     def _product(self, url, expected_sku):
         self.product_pages += 1
-        soup = BeautifulSoup(self.get(url), "html.parser")
+        html = self.get(url)
+        soup = BeautifulSoup(html, "html.parser")
+        decision = self.record_evidence(
+            hepsiburada_evidence(soup, html, url, expected_sku)
+        )
         names = product_names(soup, expected_sku)
         details = [
             node
@@ -202,6 +195,8 @@ class Discovery(BaseDiscovery):
             definitions=[item.get("definitionName") for item in details],
             variants=len(variants),
         )
+        if decision.status == "verified":
+            return decision.candidate, variants
         detail = next(
             (item for item in details if phone_category(item["definitionName"])),
             None,
@@ -224,7 +219,10 @@ class Discovery(BaseDiscovery):
             exclude=self.target.exclude_terms,
         )
         if self.target.network:
-            self.verify_network(_network(soup), names)
+            # Genel JSON taraması başka SKU'nun ağ alanını ödünç alamaz.
+            for fact in decision.evidence.facts:
+                if fact.field == "network":
+                    self.verify_network(fact.value, names)
         canonical = soup.select_one('link[rel="canonical"][href]')
         if canonical is not None:
             canonical_url = canonical["href"]
@@ -305,11 +303,14 @@ class Discovery(BaseDiscovery):
                 self.note("variant_queue", sku=key, added=queued)
             except RECOVERABLE as exc:
                 # Tek sayfanın beklenmeyen yapısı bütün taramayı durdurmaz; raporlanır.
+                if not GROUP_PATTERN.search(url):
+                    self.record_failure(url, key)
                 self.issue("candidate_rejected", f"{key}: {exc}")
         return DiscoveryResult(
             platform=self.platform,
             target_key=self.target.key,
             candidates=list(found.values()),
+            decisions=self.decisions,
             issues=self.issues,
             # Arama API'si canlıda kalıcı olarak engelli (HTTP 403, search_api
             # uyarısı); bu yüzden Hepsiburada taraması bugün her zaman kısmi sayılır

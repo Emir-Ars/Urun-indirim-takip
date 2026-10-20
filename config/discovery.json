@@ -157,5 +157,14 @@
     ],
     "max_search_pages": 20,
     "max_product_pages": 100,
-    "max_requests": 200
+    "max_requests": 200,
+    "retired_listing_bindings": [
+        {
+            "platform": "hepsiburada",
+            "platform_product_id": "HBCV00008BCY51",
+            "listing_id": "hepsiburada_hbcv00008bcy51",
+            "product_id": 58,
+            "product_key": "samsung_galaxy_s25_512gb"
+        }
+    ]
 }
