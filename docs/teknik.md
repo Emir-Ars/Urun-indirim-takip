@@ -1,30 +1,36 @@
 # Teknik rehber
 
-Bu belge, [README](../README.md)’de tanıtılan sistemin kurulum, çalıştırma
-ve bakım rehberidir. Dosyaların görevlerini, komutları, keşif ve fiyat okuma
-adımlarını, kimlik kurallarını, rapor alanlarını, bilinen sınırları ve
-geliştirme geçmişini açıklar. Kararların ve aşama durumunun ana kaynağı
-[proje_plani.md](../proje_plani.md) dosyasıdır.
+Bu belge, [README](../README.md)'de tanıtılan sistemin başvuru rehberidir:
+dosyaların görevleri, komutlar, keşif ve fiyat okuma kuralları, veritabanı,
+API ve ekran sözleşmeleri, hata kodları ve bilinen sınırlar. Yalnız sistemin
+**bugünkü davranışını** anlatır; tarihli oturum kaydı tutmaz.
+
+- Kararlar, aşama durumu ve açık kararlar: [proje_plani.md](../proje_plani.md)
+- Adım adım geçmiş (tarih, commit, CI): [gecmis.md](gecmis.md)
+- 20 Ekim 2026'ya kadarki ayrıntılı oturum kayıtları: [arsiv/](arsiv/)
 
 ## İçindekiler
 
 - [Dosyalar ve sorumlulukları](#dosyalar-ve-sorumlulukları)
-- [Komutların ayrıntısı](#komutların-ayrıntısı)
+- [Komutlar](#komutlar)
 - [Yeni telefon ekleme: bütün kurallar](#yeni-telefon-ekleme-bütün-kurallar)
 - [Eklenti yükleyicilerinin sözleşmesi](#eklenti-yükleyicilerinin-sözleşmesi)
 - [Keşif nasıl çalışır](#keşif-nasıl-çalışır)
 - [Fiyat okuma nasıl çalışır](#fiyat-okuma-nasıl-çalışır)
-- [Veritabanı (PostgreSQL)](#veritabanı-postgresql)
-- [Yerel API hazırlığı](#yerel-api-hazırlığı-aşama-71)
-- [Salt okunur veritabanı okumaları](#salt-okunur-veritabanı-okumaları-aşama-72)
-- [Fiyat istatistikleri](#fiyat-istatistikleri-aşama-73)
-- [Salt okunur FastAPI](#salt-okunur-fastapi-aşama-74)
-- [Yerel API istemcisi](#yerel-api-istemcisi-aşama-75)
-- [Streamlit ekranı](#streamlit-ekranı-aşama-76)
 - [Kimlik kuralları](#kimlik-kuralları)
+- [Veritabanı (PostgreSQL)](#veritabanı-postgresql)
+- [Cimri geçmişi (bir defalık alım ve aktarım)](#cimri-geçmişi-bir-defalık-alım-ve-aktarım)
+- [Yerel API: kurulum ve okuma hesabı](#yerel-api-kurulum-ve-okuma-hesabı)
+- [Salt okunur veritabanı okumaları](#salt-okunur-veritabanı-okumaları)
+- [Fiyat istatistikleri](#fiyat-istatistikleri)
+- [Salt okunur FastAPI](#salt-okunur-fastapi)
+- [Yerel API istemcisi](#yerel-api-istemcisi)
+- [Streamlit ekranı](#streamlit-ekranı)
+- [SQL–API–Streamlit bağımsız denetimi](#sqlapistreamlit-bağımsız-denetimi)
+- [ML veri denetimi](#ml-veri-denetimi)
+- [Piyasa geçmişi araştırma aracı](#piyasa-geçmişi-araştırma-aracı)
 - [Testler ne kanıtlar, ne kanıtlamaz](#testler-ne-kanıtlar-ne-kanıtlamaz)
 - [Bilinen sınırlar](#bilinen-sınırlar)
-- [Geliştirme geçmişi](#geliştirme-geçmişi)
 
 ## Dosyalar ve sorumlulukları
 
@@ -32,9 +38,12 @@ geliştirme geçmişini açıklar. Kararların ve aşama durumunun ana kaynağı
 
 | Dosya | Görevi |
 |---|---|
-| `README.md` | Projenin amacı, tamamlanan özellikler, teknolojiler, doğrulanmış kapsam ve yol haritası. |
-| `proje_plani.md` | Kararların ve aşama durumlarının ana kaynağı; geliştirme tarihçesi. |
-| `docs/teknik.md` | Kurulum, komutlar, veri kuralları, bakım ve kaynak sınırları. |
+| `README.md` | Projenin tanıtımı: amaç, özellikler, akış, teknolojiler, güncel kapsam, yol haritası. |
+| `proje_plani.md` | Kararların, aşama durumunun, açık kararların ve sıradaki işin tek kaynağı. |
+| `AGENTS.md` | Projede çalışan yapay zekâ araçlarının (Claude Code, Codex) ortak çalışma kuralları. |
+| `docs/teknik.md` | Bu rehber: bugünkü davranışın başvuru belgesi. |
+| `docs/gecmis.md` | Her plan adımı için kısa geçmiş satırı (tarih, ne yapıldı, commit, CI). |
+| `docs/arsiv/` | 20 Ekim 2026'da dondurulmuş eski plan ve rehber, Aşama 7 araştırma raporları. Değiştirilmez. |
 | `pyproject.toml` | Bağımlılıklar, Python sürümü, paketleme ve test/biçim araçlarının ayarları. |
 
 Eski veritabanı, API, ML, arayüz ve Docker taslakları yerel
@@ -48,7 +57,7 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 | `discovery.json` | Takip edilecek telefonlar ve tarama sınırları | Kullanıcı |
 | `catalog.json` | Keşfin doğruladığı ürünler ve sayfalar | Keşif (elle yazılmaz) |
 | `runtime.json` | Zaman aşımı, tekrar deneme, istekler arası bekleme (3 sn) | Kullanıcı, nadiren |
-| `market_history.json` | Bir defalık Cimri alımı: `product_key`, URL ve beklenen Cimri kimliği. 59 ürünün 57 ana adresi doğrulandı ve geçmişleri 9.3’te aktarıldı; iki eşleştirme açık. İlk alımdaki dört fiyat farkı kaynakta doğrulanan ilk teklif dönüşümüyle çözüldü. | Araştırma ve gerçek çıktı kontrolüyle |
+| `market_history.json` | Bir defalık Cimri alımı: `product_key`, URL ve beklenen Cimri kimliği. 57 ürünün ana adresi doğrulandı; Galaxy S25 512 GB ve Redmi Note 14 Pro 5G 256 GB eşleştirmesiz, yeni eklenen Galaxy S24 FE 128 GB için eşleştirme yapılmadı. | Araştırma ve gerçek çıktı kontrolüyle |
 
 ### Ortak parçalar: `app/`
 
@@ -64,7 +73,7 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 
 | Dosya | Ne işe yarar |
 |---|---|
-| `cimri.py` | Gömülü ürün ve grafik yanıtını ağsız okur; marka/model/kapasite, kategori ve kimlik doğrulaması yapar. Adım 8 araştırma aracı da aynı grafik ayrıştırıcısını kullanır; araştırmanın TL çıktısı korunur. Yeni alım ayrıca fiyatı mevcut `money` ile kuruşa doğrular. |
+| `cimri.py` | Gömülü ürün ve grafik yanıtını ağsız okur; marka/model/kapasite, kategori ve kimlik doğrulaması yapar. Piyasa geçmişi araştırma aracı da aynı grafik ayrıştırıcısını kullanır; araştırmanın TL çıktısı korunur. Yeni alım ayrıca fiyatı mevcut `money` ile kuruşa doğrular. |
 | `capture.py` | Eşleştirmeleri doğrular; seçilen ürünlerin HTML ve API JSON yanıtlarını yeni klasöre, parmak izlerini ve sonucu rapora yazar. Veritabanına bağlanmaz. |
 | `importer.py` | Sonlandırılmış alım raporunu ve kaynak parmak izlerini doğrular; aynı baytlardan kimlik/geçmişi yeniden hesaplar. Katalog kimliği ve rapor eşitliği zorunludur. Dosya/veritabanı yazmaz, ağa çıkmaz. |
 | `__main__.py` | `capture` ve ağsız `import`/`--dry-run` girişidir; ortak kilidi alır, Türkçe sonucu basar, çıkış kodlarını yönetir. `capture` veritabanına bağlanmaz; `import` HTTP çalışma ayarlarını okumaz. |
@@ -136,46 +145,54 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 | Dosya | Ne işe yarar |
 |---|---|
 | `zamanlayici_kur.ps1` | Fiyat toplama turunu Windows Görev Zamanlayıcı'ya kurar (her gün 10:00 ve 22:00, penceresiz); `-Kaldir` ile siler. Ayarları [Zamanlanmış tur](#zamanlanmış-tur-görev-zamanlayıcı) bölümündedir. |
-| `kesif_zamanlayici_kur.ps1` | Haftalık keşfi Görev Zamanlayıcı'ya kurur (her Pazar 14:00, katalog yazmadan, penceresiz, kaçan çalışmayı telafi etmez); `-Kaldir` ile siler. Ayarları [Zamanlanmış keşif](#zamanlanmış-keşif-görev-zamanlayıcı) bölümündedir. |
+| `kesif_zamanlayici_kur.ps1` | Haftalık keşfi Görev Zamanlayıcı'ya kurar (her Pazar 14:00, penceresiz, kaçan çalışmayı telafi etmez). Seçeneksiz kurulum önizleme (`--dry-run`), `-OtomatikKabul` otomatik kabul (`--auto-accept`) modunu kurar; `-Kaldir` siler. Ayarları [Zamanlanmış keşif](#zamanlanmış-keşif-görev-zamanlayıcı) bölümündedir. |
 | `api_okuma_rolu.sql` | Yönetici hesabıyla çalıştırılan, tek işlemde rol/SELECT izinlerini hazırlayan ortam kurulumu. Yeni tablo veya migration oluşturmaz; fiyat/katalog satırlarını değiştirmez. Üretimde `fiyat_takip_api`, `_test` DB'de `fiyat_takip_api_test`; mevcut ayrıcalıklı/üye/sahip veya yazma yetkili rolü reddeder. |
 
 ### Testler ve CI
 
-| Yer | Ne işe yarar |
+Test sayıları burada tutulmaz; güncel sayı `pytest -q` çıktısındadır.
+
+| Yer | Ne sınar |
 |---|---|
 | `tests/conftest.py` | Her testte gerçek curl_cffi ve HTTPX ağ transport'ları kesilir; ASGI/TestClient/MockTransport süreç içinde çalışır. Kalıcı `DATABASE_URL` ve `API_DATABASE_URL` silinir. `db` yalnız `TEST_DATABASE_URL`'deki `_test` DB'yi her testte boşaltır; ortak test kilidi en çok 30 sn bekler. `api_db` ayrıca `TEST_API_DATABASE_URL` ve `fiyat_takip_api_test` ister; iki bağlantının aynı `_test` DB olduğunu denetleyip test şemasında SELECT izinlerini yeniden kurar. Eksik test adresleri yerelde atlama, CI'da hata üretir. |
-| `tests/test_http.py` | HTTP katmanı (117 test): hata kodları (`invalid_host` mesajı hedef alan adını yazar, sorgu metnini yazmaz), indirme sırasında 8 MB sınırı (parçalı/tek parça taşma, tam eşik, aktarımın durması, UTF-8 parçaları, boş yanıt, yarım gövdenin tekrar öncesi atılması), büyük hata/yönlendirme yanıtlarında aynı sınıflandırma ve istek bütçesi, yönlendirme kuralları, 5xx tekrarı ve bekleme süreleri, istekler arası bekleme, factory. Mimari kuralda yalnız `app/ui/api_client.py` için HTTPX izni var; başka dosya veya başka kütüphane bu izni kullanamaz (9 test). 13 ek sınama UI'nin DB/havuz/sunucu uygulamasını yüklemesini reddeder; göreli importlar da çözülür. `curl_cffi` hâlâ yalnız `http.py`'de. |
-| `tests/test_api_foundation.py` | 7.1 hazırlığı (51 test, 43'ü PostgreSQL): gerçek HTTPX isteklerinin engeli, sahte/süreç içi istemcilerin çalışması, iki üretim adresinin testlerden silinmesi, gerçek API test hesabının sekiz nesneyi okuması, varsayılan READ ONLY kapatılsa da yazma/kalıcı nesne kuramaması, tekrar rol kurulumu ve hatada izinlerin geri alınması. Gerçek API veya UI özelliği testi değildir. |
-| `tests/test_api.py` | 85 API testi, 44'ü gerçek okuma hesabıyla PostgreSQL'de: dört adres ve OpenAPI, kuruş/UTC/NULL, fiyat yaşı, kapsam/istatistik ve ayrı Cimri; rol/yazma/SELECT/migration hataları, dört bağlantı sınırı, başlangıç/kullanım kesintisi ve yeniden bağlantı, gerçek 5 sn sorgu zaman aşımı, iki bağlantıyla tutarlı cevap ve kayıtların korunması. |
-| `tests/test_api_client.py` | 108 ağsız istemci testi: dört işlev, katı girdi/JSON ve alan tamlığı, kuruş/UTC/NULL, sabit hedef/proxy/yönlendirme sınırı, güvenli hatalar, tekrar/önbellek olmaması, kaynak bırakma ve Ctrl+C; MockTransport ile süreç içi gerçek API köprüsü. Import/kurulumun DB ve ağ açmaması ayrı süreçte sınanır. |
-| `tests/test_ui.py` | 74 ağsız ekran/grafik/biçim sınaması; AppTest ile seçim/aralık/durum/hata sonrası dönüş, kaynak bırakma ve ayrı Cimri; 18 saat/NULL/sayfa kümesi sınırları ve Altair tanımı. Gerçek tarayıcı görünümü veya otomatik zamanlama kanıtı değildir. |
-| `tests/ui_samples.py` | AppTest/önizlemenin ortak yapay örnekleri ve MockTransport istemcisi; gerçek fiyat/veri kanıtı değildir. |
-| `tests/test_database_read.py` | Salt okunur sorgular (63 test, 49'u gerçek API test hesabıyla PostgreSQL'de): etkin/pasif ürün, ürüne özel completed tur, fiyat/stoksuz/hata/eksik kapsam, eşit teklif, gün aralıkları, ayrı Cimri/NULL, mevcut katalog bilgisi, iki bağlantıyla tutarlı görüntü, açık işlem reddi, yerel ayarlar, sorgu hatası/zaman aşımı sonrası yeniden okuma ve toplama kilidinden bağımsızlık. Altı yeni bütünleşme testi SQL'den gelen verilerle istatistikleri; tam 30 gün, dar grafik aralığı, pasif katalog, kısmi kapsam, scope sınırı, stoksuz tur, Cimri ayrımı ve completed ürün turu seçimini sınar. |
-| `tests/test_price_statistics.py` | 49 ağsız ve veritabanısız istatistik testi: tam kapsam dönemi, boş/stoksuz geçmiş, sayfa kümesi ve eksik cevap sınırları, 30 gün/14 geçiş/7 gün/18 saat eşikleri, gerçek kontrol zamanı/İstanbul günü, NULL üzerinden geçmeme, bağımsız analitik değişkenlik sonucu, kuruş hassasiyeti, değiştirilemez sonuç ve grafik aralığından bağımsızlık. |
-| `tests/test_contracts.py` | Pydantic sözleşmeleri (74 test): satılabilir teklif fiyat ve satıcı taşır, puan ölçeği aşamaz, üstü çizili fiyat güncel fiyattan büyüktür, katalog kimlik/referans/alan adı kuralları, `money()` kuruş çevirimi. |
-| `tests/test_trendyol_scraper.py`, `tests/test_hepsiburada_scraper.py` | Fiyat okuma (66 + 58 test): seçilen teklif, eşit fiyatta satıcı adı, çizili fiyat, Kritik Stok, Tükendi'nin yalnız açık sinyalle verilmesi, bozuk satıcı kayıtlarının reddi, ret nedenleri, `parse` dönüşümü. Sahte sayfa ve istemci; internete çıkmaz. |
-| `tests/test_discovery.py` | Keşif (300 test): kimlik kuralları, sayfalama ve uyarı türleri, katalog birleştirme (aynı adaylar hep aynı kimlikleri alır), dry-run'ın kataloğa yazmaması, LF satır sonu, BOM'lu ayar dosyaları, UTF-8 çıktı, çıkış kodları ve gerçek `config/*.json` dosyalarının sözleşmeye uyması. Ekli aksesuarlar model, başlık/yapısal kapasite, birden çok ürün adı ve kategori düzeyinde reddedilir; kayıtlı 21 telefonun kimlik kabulü korunur. Zamanlanmış keşif (log ve tarihli rapor, açık önizleme/otomatik mod seçimi, konsolsuz çalışma, kilit meşgul, program hatası, log açılamaması, rapor klasörünün baştan denetimi, özet satırı) ve `--apply-report` (siteye gitmez, canlı yazmayla bayt bayt aynı katalog, ikinci uygulamada yazmama, önizleme olmayan/bozuk/sarmalı/yabancı alan adlı/önizlemeyi aşan rapor reddi) ağsız sınanır. Trendyol filtre uyarısının tek yazılması ve tarama sonrası yazma hatasının ("Tarama bitti ama sonuç yazılamadı", çıkış 1; log dahil) "başlatılamadı"dan ayrılması da burada denenir. |
-| `tests/test_collection.py` | Toplama turu (68 test; 63'ü gerçek PostgreSQL'de): sahte scraper'larla her sonuç türü, Ctrl+C, tur ortasında veritabanı hatası, yarım kalan tur, başka süreçteki tur, iki kilidin her durumda bırakılması, pasif sayfa/ürün/platform, ön ek, çıkış kodları (keşif ve `live_scraper_check` kilit meşgulken 3 verir) ve zamanlanmış turun log dosyası (ekran akışı yokken ve log açılamazken dahil). Kapanış sonrası özet SQL hatası, bağlantının kapatılması ve Ctrl+C, elle/zamanlanmış girişlerde sınanır; turun ve sonuçların bütün alanları, kilitler, log ve sonraki tur korunur (7 test). Tur sonu ikinci okuma (18 test): `network` düzelince satırın değişmesi, ikinci hatada ilk satırın (mesaj ve zaman damgasıyla) kalması, `network` dışındaki hataların hiç yeniden okunmaması, bir sayfanın en çok bir kez yeniden okunması, ardışık 5 hatada durma ve düzelmede sayaç sıfırlama, veritabanı reddi, Ctrl+C, tur notu (ön ekle birlikte), görünümde sahte "karşılaştırılamaz" oluşmaması ve `rewrite_network_result`'ın yalnız `network` satırına ve süren tura yazması. |
-| `tests/test_catalog_sync.py` | Katalog eşitleme (29 test; 13'ü gerçek PostgreSQL'de): kararlar veritabanısız, yazma/deneme/çakışma ve komut satırı veritabanında. |
-| `tests/test_database.py` | Migration koşucusu, şemanın bütün `CHECK`/`UNIQUE`/yabancı anahtar kuralları (her biri geçerli ve geçersiz örnekle), `migrate`/`status` komutları (yeniden adlandırılan migration dahil) ve iki emniyet kemerinin kendisi; 002'nin iki `CHECK` kuralı, silme/kimlik değişimi/yazılmış sonucu değiştirme tetikleyicileri (her tabloda), kodun gerçek güncellemelerinin hâlâ geçtiği ve "bilerek silme" yolu da burada denenir. 003 için kapanmış turun ilk sonuç yazımı, durum/bitiş zamanı koruması, not güncellemesi, eşzamanlı kapanış/yazım ve mevcut kayıtlarla migration geçişi sınanır (150 test; 138'i gerçek PostgreSQL'de). |
-| `tests/test_comparability.py` | `product_run_prices` görünümü: aynı sayfa kümesi, hata (girerken ve çıkarken), yeni sayfa, Tükendi, cevapsız ürün, ürünlerin ayrı karşılaştırılması, `--prefix` turu, süren ve yarıda kalan turların dışarıda kalması, uzun boşluk (14 test, hepsi gerçek PostgreSQL'de). |
-| `tests/test_url_identity.py` | Ortak ürün adresi kimliği (28 ağsız test): ürün yolu, sorgu, son eğik çizgi, küçük harfli SKU, eksik/bozuk kimlik ve bütün tüketicilerin aynı kimliği okuması. |
-| `tests/test_market_history_probe.py` | Piyasa geçmişi araştırmasında aday tablo satırları, ürün kimliği, sentetik 365 günlük grafik yanıtı, eksik/bozuk fiyat ve tablo uyuşmazlığı (12 ağsız test). Gerçek fiyat dizileri Git dışındaki yerel raporlardadır. |
-| `tests/test_market_history.py` | Yerel Cimri alımı (197 ağsız test): seçilmiş gerçek başlık/fiyat örnekleri, marka/model/kapasite/kategori/kimlik, tarih/fiyat/eksik veri, sıfır fiyatın eksik değer olarak okunması ve eski araştırma davranışının korunması, ham kanıt ve parmak izi, dört istek bütçesi, engelde durma, Ctrl+C, disk/klasör hatası, komut çıktıları ve kilit. |
-| `tests/test_market_history_import.py` | 161 test, 48 PostgreSQL: dosya/rapor kimliği ve bütünlüğü; ilk/tekrar aktarım, NULL/kimlik/fiyat çelişkisi, READ ONLY önizleme, eşzamanlılık, kesinti/COMMIT belirsizliği, kilitler, sonraki toplama ve 001–003 → 004 geçişi. |
-| `tests/fixtures/cimri_recorded_samples.json` | 29 Eylül raporlarından üç başlık ve üçer fiyat noktası; kayıtlı Xiaomi HTML'sinden küçük ürün kimliği bölümü. 8 Ekim gerçek Xiaomi yanıtından son sekiz grafik değeri ve bunlarla kesişen dört tablo satırı. Tam fiyat serisi veya tam ham yanıt değildir; testlerin API zarfları yeniden kurulur. |
-| `tests/test_live_discovery_check.py` | Ham keşif kanıtı kaydı (13 ağsız test): HTML/JSON baytları, istek bütçesi ve tekrarlar, bozuk JSON'un korunması, tek hedef/yeni klasör zorunluluğu, kilit ve disk hatası, platformların ayrı kaydı ve eski komut çıktısının korunması. Dosyalar normal veya ters sırada listelense de kayıt denetimi aynıdır. |
-| `tests/fixtures/discovery/` | Testlerin kullandığı örnek site yanıtları ve kataloğun sabit bir kopyası (`catalog.json`); testler gerçek kataloğa bağlı değildir. `phone_identity_examples.json`, kullanıcının 6 Ekim iPhone 15 kontrolündeki 21 sayfanın özgün adlarını, doğrulanan kapasitesini ve kaynak dosya bilgisini taşır; testler Git dışındaki ham dosyalara ihtiyaç duymaz. |
+| `tests/test_http.py` | HTTP katmanı: hata kodları (`invalid_host` mesajı hedef alan adını yazar, sorgu metnini yazmaz), indirme sırasında 8 MB sınırı, büyük hata/yönlendirme yanıtları, yönlendirme kuralları, 5xx tekrarı ve bekleme süreleri, istekler arası bekleme, scraper factory. Mimari sınır da burada: pazaryeri HTTP'si yalnız `app/scraper/http.py` ve curl_cffi ile; HTTPX yalnız `app/ui/api_client.py` için; UI veritabanı/havuz/sunucu katmanını yüklemez. |
+| `tests/test_contracts.py` | Pydantic sözleşmeleri: satılabilir teklif fiyat ve satıcı taşır, puan ölçeği aşamaz, üstü çizili fiyat güncel fiyattan büyüktür, katalog kimlik/referans/alan adı kuralları, `money()` kuruş çevirimi. |
+| `tests/test_url_identity.py` | Ortak ürün adresi kimliği: ürün yolu, sorgu, son eğik çizgi, küçük harfli SKU, eksik/bozuk kimlik ve bütün tüketicilerin aynı kimliği okuması. |
+| `tests/test_trendyol_scraper.py`, `tests/test_hepsiburada_scraper.py` | Fiyat okuma: seçilen teklif, eşit fiyatta satıcı adı, çizili fiyat, Kritik Stok, Tükendi'nin yalnız açık sinyalle verilmesi, bozuk satıcı kayıtlarının reddi, ret nedenleri, `parse` dönüşümü. Sahte sayfa ve istemci; internete çıkmaz. |
+| `tests/test_discovery.py` | Keşif: kimlik kuralları, sayfalama ve uyarı türleri, katalog birleştirme, dry-run'ın kataloğa yazmaması, LF satır sonu, BOM'lu ayar dosyaları, UTF-8 çıktı, çıkış kodları, zamanlanmış keşif, `--apply-report` ve gerçek `config/*.json` dosyalarının sözleşmeye uyması. |
+| `tests/test_discovery_acceptance.py` | Otomatik güvenli kabul: gerçek kaynak örnekleriyle doğrulandı/uyuşmazlık/kanıt yetersiz kararı, rapor ve katalog yazma koruması, kesinti sonrası uzlaştırma. |
+| `tests/test_collection.py` | Toplama turu: sahte scraper'larla her sonuç türü, Ctrl+C, tur ortasında veritabanı hatası, yarım kalan tur, kilitlerin bırakılması, pasif sayfa/ürün/platform, ön ek, çıkış kodları, zamanlanmış turun logu, kapanış sonrası hatalar ve tur sonu ikinci okuma. |
+| `tests/test_catalog_sync.py` | Katalog eşitleme: kararlar veritabanısız; yazma, deneme, çakışma ve komut satırı veritabanında. |
+| `tests/test_database.py` | Migration koşucusu, şemanın bütün `CHECK`/`UNIQUE`/yabancı anahtar kuralları, 002 ve 003 tetikleyicileri, kodun gerçek güncellemelerinin geçmesi, "bilerek silme" yolu ve testlerin emniyet kemerleri. |
+| `tests/test_comparability.py` | `product_run_prices` görünümü: aynı sayfa kümesi, hataya giriş/çıkış, yeni sayfa, Tükendi, `--prefix` turu, süren/yarıda kalan turlar, uzun boşluk. |
+| `tests/test_database_read.py` | Salt okunur sorgular ve istatistiklerle bütünleşme: ürüne özel tamamlanmış tur, kısmi kapsam, ayrı Cimri/NULL, iki bağlantıyla tutarlı görüntü, sorgu hatası/zaman aşımı sonrası yeniden okuma. |
+| `tests/test_price_statistics.py` | İstatistik hesabı: tam kapsam dönemi, 30 gün/14 geçiş/7 gün/18 saat eşikleri, İstanbul günü, NULL üzerinden geçmeme, değişkenlik, grafik aralığından bağımsızlık. Veritabanısız. |
+| `tests/test_api_foundation.py` | API okuma rolünün izinleri (yazamaması, kalıcı nesne kuramaması) ve test ortamının ağ/adres korumaları. |
+| `tests/test_api.py` | FastAPI: dört adres ve OpenAPI, kuruş/UTC/NULL, fiyat yaşı, rol/şema hataları, dört bağlantı sınırı, kesinti ve yeniden bağlantı, 5 sn sorgu zaman aşımı, tutarlı cevap. |
+| `tests/test_api_client.py` | Yerel API istemcisi: katı girdi/JSON ve alan tamlığı, sabit hedef/proxy/yönlendirme sınırı, güvenli hatalar, tekrar/önbellek olmaması, kaynak bırakma. |
+| `tests/test_ui.py`, `tests/ui_samples.py` | Streamlit ekranı (AppTest) ve grafik verisi. `ui_samples.py` AppTest ve önizlemenin ortak yapay örnekleridir; gerçek fiyat değildir. |
+| `tests/test_api_ui_integration.py` | Gerçek test okuma hesabı → FastAPI → istemci → Streamlit zinciri; SQL ve hesaplama sahte değildir. |
+| `tests/test_api_ui_check.py`, `tests/test_ml_data_check.py`, `tests/test_live_discovery_check.py`, `tests/test_market_history_probe.py` | Aşağıdaki denetim/kontrol araçlarının kendileri. |
+| `tests/test_market_history.py`, `tests/test_market_history_import.py` | Cimri alımı ve aktarımı: kimlik, tarih/fiyat/eksik veri, ham kanıt ve parmak izi, istek bütçesi, kilit, ilk/tekrar aktarım, çelişki, READ ONLY önizleme, kesinti. |
+| `tests/fixtures/` | Gerçek kaynaklardan küçültülmüş örnekler (kaynak yolu ve SHA-256 ile) ve kataloğun sabit kopyası (`discovery/catalog.json`). Testler `data/` veya ağa bağlı değildir. |
+| `.github/workflows/ci.yml` | Her push/pull request'te geçici PostgreSQL 17 (`C.UTF-8`) açar, `dev,web` bağımlılıklarını kurar; yalnız `_test` DB'de API rolünü hazırlar ve Black/Flake8/tam testleri çalıştırır. `ci_only` şifresi yalnız o işte açılıp silinen sunucunundur. |
+| `.github/workflows/bulut-deneme.yml` | Elle tetiklenen bulut erişim denemesi (zamanlama, veritabanı ve gizli anahtar yok): `tests/manual/live_scraper_check.py samsung_galaxy_a55_128gb` ile 4 sayfayı GitHub'ın makinesinden okur. Sonuç "Bilinen sınırlar"dadır. Tur saatlerinde (10:00–10:40, 22:00–22:40) tetiklenmez: `data/scrape.lock` bu makineye özgüdür. |
+
+### Canlı kontrol ve denetim araçları: `tests/manual/`
+
+Otomatik test değildir; siteye veya gerçek veritabanına giden araçları
+kullanıcı kendi terminalinden, tur ve keşif saatleri dışında çalıştırır.
+
+| Araç | Ne işe yarar |
+|---|---|
 | `tests/manual/live_scraper_check.py` | Katalogdaki sayfaları canlı okur; bütün satıcıları gösterir. İsteğe bağlı `product_key` ön eki (ör. `samsung_`) ile yalnız o ürünler; sayfa seçimi toplama turuyla aynı fonksiyondur. Başka bir tarama sürüyorsa (ortak kilit) çıkış kodu 3'tür. |
 | `tests/manual/live_discovery_check.py` | Keşfi kataloğa yazmadan canlı çalıştırır; `--trace` ile her kararın nedenini gösterir. Normalde raporu `data/discovery_report.json` dosyasının üzerine yazar. `--save-responses KLASOR`, tek hedefin ham HTML/JSON yanıtlarını ve raporunu yeni klasöre kaydeder; karar izini de basar. |
 | `tests/manual/market_history_probe.py` | Akakçe için tek örnek sayfayı, Cimri için ürün sayfası ve grafik API'sini ortak HTTP katmanı ve tarama kilidiyle okur. Cimri'nin tarihli fiyat noktalarını Git dışındaki yerel JSON raporuna yazar; ham HTML'yi ve veritabanını yazmaz. |
 | `tests/manual/ui_preview.py` | Aynı Streamlit ekranını ağsız test istemcisiyle gösterir; kalıcı test verisi uyarısı vardır. API/DB veya canlı site gerekmez; kullanıcı görünüm/yenileme kontrolünü burada yapar. |
 | `tests/manual/ml_data_check.py` | Yalnız okuma hesabıyla günlük 30+7 ML pencereleri, %5 hedefi, eksik/kapsam nedenleri ve zaman bölümlerini hesaplar. Kendi/Cimri ayrı; `--snapshot` ile ağsız tekrar. Model eğitmez, API/site çağırmaz. |
-| `tests/test_ml_data_check.py` | Gün/tur/fiyat/kapsam sınırları, tam %5, NULL etiket, geleceğe taşmayan bölümleme; okuma hesabı, kaynak değişimi, güvenli çıktı ve tekrar sınamaları. Gerçek DB kullanılmaz. |
-| `.github/workflows/ci.yml` | Her push/pull request'te geçici PostgreSQL 17 (`C.UTF-8`) açar, `dev,web` bağımlılıklarını kurar; yalnız `_test` DB'de API rolünü hazırlar ve Black/Flake8/tam testleri çalıştırır. `ci_only` şifresi yalnız o işte açılıp silinen sunucunundur. |
-| `.github/workflows/bulut-deneme.yml` | Elle tetiklenen bulut denemesi (zamanlama, veritabanı ve gizli anahtar yok): `tests/manual/live_scraper_check.py samsung_galaxy_a55_128gb` ile 4 sayfayı (Trendyol ve Hepsiburada) GitHub'ın makinesinden okur; her iki site de hatasız okunduysa başarılı, aksi hâlde başarısız biter ve sonucu çalışmanın özet sayfasına yazar. Soru: siteler bulut adreslerini engelliyor mu ([proje_plani.md](../proje_plani.md) Bölüm 8). **İlk sonuç (6 Ekim):** Hepsiburada'nın 3 sayfası okundu, Trendyol'un sayfası HTTP 403 (`blocked`) verdi; tek örnek (bkz. "Bilinen sınırlar"). Tetiklemek: GitHub → Actions → "Bulut deneme (canlı okuma)" → Run workflow. Bilgisayardaki tur saatlerinde (10:00–10:40, 22:00–22:40) tetiklenmemelidir: `data/scrape.lock` bu makineye özgüdür, GitHub'daki çalışma onu almaz ve aynı siteye iki yerden gidilir (iş tanımı bunu denetlemez, yalnız yorumda uyarır). |
+| `tests/manual/api_ui_check.py` | Yerel API'nin gerçek veritabanını doğru sunduğunu, üretim kodunu kullanmadan bağımsız SQL hesabıyla karşılaştırır ([bağımsız denetim](#sqlapistreamlit-bağımsız-denetimi)). |
 
-## Komutların ayrıntısı
+## Komutlar
 
 Windows ve PowerShell, Python sanal ortamı `.venv`:
 
@@ -223,8 +240,13 @@ powershell -ExecutionPolicy Bypass -File scripts\zamanlayici_kur.ps1 -Kaldir
 # İncelenen önizleme raporunu siteye gitmeden kataloğa ekle
 .venv\Scripts\python.exe -m app.discovery --apply-report data\discovery\kesif_<tarih-saat>.json
 
-# Haftalık keşfi Görev Zamanlayıcı'ya kur (her Pazar 14:00); -Kaldir ile siler
+# Zamanlanmış keşfin otomatik kabul modu (kurulu haftalık görev bunu çalıştırır)
+.venv\Scripts\python.exe -m app.discovery --scheduled --auto-accept
+
+# Haftalık keşfi Görev Zamanlayıcı'ya kur (her Pazar 14:00): seçeneksiz önizleme
+# modu, -OtomatikKabul ile otomatik kabul modu (bugün kurulu olan); -Kaldir siler
 powershell -ExecutionPolicy Bypass -File scripts\kesif_zamanlayici_kur.ps1
+powershell -ExecutionPolicy Bypass -File scripts\kesif_zamanlayici_kur.ps1 -OtomatikKabul
 
 # Keşif tanılaması: rapor + her kararın izi (katalog değişmez)
 .venv\Scripts\python.exe tests\manual\live_discovery_check.py apple_iphone_15 --trace
@@ -248,1867 +270,6 @@ ek HTTP isteği göndermez, bütçeyi veya kilidi değiştirmez. Hedef verilmezs
 da klasör zaten varsa tarama başlamaz (kod 2); kilit meşgulse kod 3. Disk hatası
 çalışmayı keser. Canlı kontrolü kullanıcı tur saatleri dışında çalıştırır;
 kanıt dosyaları `data/` altında tutulur ve Git'e gönderilmez.
-
-### ML öncesi yeni sayfa kontrolü (13–14 Ekim; 25 sayfanın incelemesi tamam)
-
-11 Ekim keşif raporundaki 25 yeni sayfa için kullanıcı bütün sayfalarda güncel
-kaynak doğrulamasını ve her model/kapasite grubundan sonra durmayı onayladı.
-Kaynak rapor değiştirilmez. Ağsız hazırlıkta aynı üretim merge_catalog yalnız
-bellekte çalıştırılır; kaynak parmak izleri, 11 grup ve aday/katalog karşılığı
-`artifacts/ml_oncesi_inceleme_20261013/hazirlik.json` içinde tutulur (Git dışında).
-
-İlk grup iPhone 15 256 GB Pembe, Trendyol 762254854: geçici katalog yalnız
-mevcut product_id=2 ve bu yeni sayfayı içerir. Asıl catalog.json değiştirilmez.
-Proje klasöründeki kullanıcı PowerShell terminalinde, tur/keşif çalışmıyorken:
-
-```powershell
-.\artifacts\ml_oncesi_inceleme_20261013\01_apple_iphone_15_256gb\canli_kontrol.ps1
-```
-
-Bu BOM'lu yerel komut önce rapor/asıl katalog/geçici katalog parmak izlerini
-denetler; yalnız mevcut live_scraper_check.py aracını geçici CATALOG_PATH ile
-çalıştırır. Ortam değeri başarı/hata halinde finally ile geri alınır. Çıktı,
-stderr ve UTC zaman/çıkış kodu bilgileri yeni tarihli canli_ klasörüne yazılır;
-önceki çıktı ezilmez. Komut üretim veritabanına yazmaz veya raporu uygulamaz.
-
-Beklenen JSON: checked_listings=1, errors=[], yalnız trendyol_762254854.
-Çıkış 0 tek başına başarı değildir: bu araç sayfa hatalarını errors içinde
-bildirir. Kaynakta açık stok yokluğu geçerli Tükendi olabilir; güncel model,
-kapasite, renk, kapsam ve seçilen satıcı/fiyat/stok ayrıca tarayıcıyla
-karşılaştırılmadan sayfa doğrulandı sayılmaz. Kaynak iki okuma arasında
-değişmişse aynı zamana yakın yeniden teyit edilir. Rapor ancak bütün adaylar
-doğrulanıp kullanıcı kabul edince mevcut --apply-report ile uygulanır.
-**İlk grubun sonucu:** kullanıcı 13 Ekim 12:49 İstanbul'da komutu çalıştırdı;
-tek sayfa, errors=[], çıkış 0, stderr boş. iPhone 15 256 GB Pembe için
-87.960,00 TL/çizili 88.000,00 TL, KAPLANLAR TEKNOLOJİ, 9,5/10 ve Kritik Stok
-geldi; tek uygun/seçilen teklifti. Kaydedilmiş çıktı strict sözleşme,
-alan/teklif eşitliği ve kaynak parmak izleriyle ağsız kontrol edildi.
-Kullanıcı aynı sayfanın model/kapasite/renk/yeni telefon ve teklif bilgilerini
-tarayıcıda eşleşti diye teyit etti; doğrudan ajan tarayıcı kontrolü veya ekran
-görüntüsü yok. İlk grup doğrulandı (1/25); burada duruldu. Asıl katalog aynı,
-diğer 24 sayfa/10 grubun canlı kontrolü başlamadı.
-Ham kanıtlar `canli_20261013_124911_507/`, nihai kullanıcı teyidi ve sonuç
-grup kökündeki `grup_sonucu.json` içinde; artifacts Git dışındadır.
-
-**İkinci grup (iPhone 15 Pro 128 GB):** yalnız üç yeni Trendyol sayfalı
-geçici katalog, 02_apple_iphone_15_pro_128gb altında hazır. Adreslerde
-Yenilio/A kalite veya outlet/C kalite geçtiği için önce yenilenmiş ürün
-şüphesi kaydedildi. Kullanıcı üç başlığı ve Yenilenmiş Cihaz Rehberi kanıtını
-verdi; aşağıdaki ham kaynak incelemesi kapsam uyuşmazlığını doğruladı. Bu grubun
-canli_kontrol.ps1 dosyası, kapsam netleşene kadar canlı çağrıdan önce
-açıklamalı hata ile duracak şekilde kaydedildi; şu anda çalıştırma talimatı
-yok. Kapsam dışı ürün teyit edilirse fiyat kontrolü yerine bulgu/ret ve
-ayrı dar düzeltme planı ele alınır. Asıl katalog ve özgün rapor aynı.
-
-Kullanıcı üç gerçek başlığı ve bir ekran görüntüsünü verdi; görüntüde
-Yenilenmiş Cihaz Rehberi/Siyah/128 GB/iPhone 15 Pro var, aynı rehberin
-üçünde de olduğunu bildirdi. Yeni telefon kabulü üç aday için durduruldu.
-Gerçek üç başlık mevcut ortak
-identify kuralında kabul edildi; başlık koruması bu örnekleri elemedi.
-Kanıt ve yorum ayrımı grup içi kapsam_incelemesi.json içinde tutulur.
-
-Dar teşhis için kullanıcı terminalinde, tur/keşif çalışmıyorken:
-
-```powershell
-.\artifacts\ml_oncesi_inceleme_20261013\02_apple_iphone_15_pro_128gb\ham_kayit.ps1
-```
-
-Bu komut yalnız Trendyol platformunu içeren geçici katalogla mevcut
-live_discovery_check.py apple_iphone_15_pro --save-responses aracını
-çalıştırır. Tek model hedefinin farklı kapasiteleri/varyantları da kayda
-girebilir; yalnız üç URL ile sınırlı fiyat kontrolü değildir. Ham yanıtlar
-ve karar izi yeni tani_<zaman>/ klasöründedir. Özgün rapor/asıl katalog ve
-standart keşif raporu korunur; ortam ayarı sonunda geri alınır. Bu tanılama
-raporu üretim kataloguna uygulanmaz. Çıkış 2 kısmi tarama olabilir; gerçek
-değerlendirme kaydedilen yanıt, ret ve karar izinden yapılır.
-
-**Tanılama tamamlandı (13 Ekim, 13:15–13:16 İstanbul):**
-tani_20261013_131516_236/ içindeki rapor/iz eşleşiyor, stderr boş.
-Çıkış 2'nin tek nedeni count_mismatch (128 farklı kart / kaynak toplamı
-129); bir kayıt farkının nedeni bilinmiyor. İlk arama yanıtı 0002.json'da
-1209732705, 1212867268 ve 1212867392 kimliklerinin başlık/URL'leri eşleşiyor,
-category.name="Yenilenmiş Cep Telefonu", category.id=3720. Üç sayfa
-**uyuşmazlık** olarak kapatıldı; yeni telefon kabulü ve fiyat kontrolü yok.
-Güncel kategori filtresi bu üçünü nihai adaylara almadı, ürün HTML'leri
-kaydedilmedi. İlk arama kartı kaynak kanıtı ile ürün HTML kanıtı ayrıdır.
-
-Aynı tanılamada başka dört 256 GB Yenilio/A-B veya Outlet C kalite sayfası
-normal IOS kategorisinden geçerek kabul edildi. 0015–0018.html ile ağsız
-_candidate/Scraper.parse denemesi de kabul/fiyat üretti; DB'ye yazılmadı,
-yeni canlı gözlem değildir. Açık yenilenmiş bayrağı ürün JSON'larında yok;
-alan yokluğu yeni telefon kanıtı sayılmaz. 11 Ekim anının ham yanıtları bu
-kayıtta yok; özgün rapordaki kabulün tam nedeni kesinleşmedi. Katalog ve
-rapor/discovery/runtime/ham dosyaların parmak izleri korundu. Kanıtlar grup
-kökündeki tani_incelemesi.json ve grup_sonucu.json; toplam 1 doğrulandı,
-3 uyuşmazlık, 21 incelenmedi. Üçüncü gruba geçilmedi, raporlar uygulanmaz.
-
-**Dar düzeltme kullanıcı onayıyla uygulandı (13 Ekim):** ortak
-app/scraper/parsing.py EXCLUDED kuralında Yenilio + isteğe bağlı Outlet +
-A/B/C Kalite birleşimi elenir. Keşif kartı excluded_word, ürün adayı ve
-scraper fiyat öncesi identity üretir. Tek outlet/kalite veya Yenilio satıcı
-adına genel ret yok. Gerçek kaynak özeti
-tests/fixtures/discovery/trendyol_scope_examples.json içinde; iki test
-dosyasındaki 41 yeni sınama eski kodda 28 başarısız/13 başarılı, yeni kodda
-41 başarılı. Tam paket **1717 geçti/0 atlandı/xfail**, 157,71 sn;
-Black 74 dosya/Flake8 temiz, iki mevcut bağımlılık uyarısı sürüyor.
-Kayıtlı tam HTML'lerle dört kalite ürünü identity ile elendi, iki normal
-telefonun teklif alanları öncekiyle aynı. Gerçek DB ve katalog değişmedi.
-Kod/yerel test sonucu bugünkü canlı ret teyidinin yerine geçmez.
-
-**Canlı ret teyidinde kullanılan komut (tamamlandı)**, proje PowerShell'inde:
-
-```powershell
-.\artifacts\ml_oncesi_inceleme_20261013\02_apple_iphone_15_pro_128gb\canli_ret_kontrolu.ps1
-```
-
-BOM'lu dosya yalnız üç özgün sayfalı geçici katalogla mevcut aracı çağırır;
-CATALOG_PATH/kodlama/çalışma klasörü finally ile geri alınır. Asıl
-katalog/rapor/geçici katalog ve parsing.py hash denetimi vardır. Çıktı yeni
-ret_<zaman>/ içinde scraper.json/stderr.log/calisma.json; sözdizimi ağsız
-kontrol edildi, ajan komutu çalıştırmadı. Beklenen: checked_listings=0,
-platform_results=[], best_offers_by_product={} ve errors içinde tam üç
-listing_id için kapsam dışı ürün mesajı. checked_listings yalnız başarılı
-gözlemleri sayar; toplam 0 başarılı + 3 hata = 3 sayfa. Araç error alanında
-mesajı verir, FetchError.code ayrıca yayımlanmaz; identity kodu otomatik
-ve ağsız kontrollerde doğrulanır. Araç errors varken de çıkış 0 dönebilir.
-Bu çıktı yeni telefon kabulü değildir, beklenen retin canlı teyididir.
-Kaynak değişir/farklı hata gelirse çıktı yeniden incelenir; raporlar uygulanmaz.
-
-Yerel düzeltme kanıtı grup içindeki kod_duzeltmesi.json ve iki JUnit XML'de.
-**Canlı ret teyidi tamamlandı:** kullanıcı komutu 13 Ekim 14:33:11–14:33:18
-İstanbul'da çalıştırdı; ret_20261013_143311_367/ içinde çıkış 0, boş stderr,
-0 başarılı gözlem ve üç doğru kimlik için kapsam dışı ürün mesajları var.
-Üç başlık önceki kaynak kartlarıyla birebir eşleşti; ağsız identify aynı
-identity kodu/mesajı üretiyor. Asıl/geçici katalog, rapor ve parsing.py
-hashleri çalışma bilgileriyle aynı; ham çıktılar ve önceki tanılama dosyaları
-korundu. Grup içi canli_ret_dogrulama.json kanıtı ve kod_duzeltmesi.json /
-grup_sonucu.json durumları güncellendi. Tam paket sonrası kod/test değişmedi;
-testler yeniden çalıştırılmadı. Düzeltme ve doğrulama tamam. Kullanıcı 13
-Ekim'de commit/push'ı 11 grubun incelemesinin sonuna erteledi; sonraki gruplar
-gönderim/CI beklemeden incelenir. Sonunda güncel dosya listesi/mesaj, ayrı
-onay ve aynı SHA başarılı CI gerekir. Plan ve güncel durum proje_plani.md
-Bölüm 9'da.
-Canlı komutu yeniden çalıştırmak gerekmiyor; eski canli_kontrol.ps1 halen
-çağrı öncesinde durur. Katalog/keşif raporu uygulanmadı.
-
-**Üçüncü grup hazırlığı:** 03_apple_iphone_15_pro_max_256gb/ içinde yalnız
-product_id=8 ve yeni 1212866645/1212866811/1212866873 sayfalarının kontrol
-kataloğu var; sayfa seçimi tam üç kayıt. URL'lerde Yenilio A/B kalite var;
-kullanıcı birinci/üçüncü başlıkları ve üçünde Yenilenmiş Cihaz Rehberi
-bulunduğunu bildirdi. İkinci sayfa için başlık yerine URL geldi; gerçek
-başlık canlı hata mesajından okunacak. Önceki ham
-arama 1212866873'ü açık Yenilenmiş Cep Telefonu kategorisinde içeriyor;
-diğer iki kimlik bu kayıtta yok. Güncel ürün HTML'i/canlı çıktı bu grup için
-henüz alınmadı. Hazırlık ve kaynak hashleri hazirlik.json içinde, yazılı
-tarayıcı kanıtı kapsam_incelemesi.json içinde. Üretim/test kodu değişmedi,
-yeni tam paket gerekmedi. Mevcut ortak kural verilen iki başlığı ağsız
-identity ile reddediyor.
-
-Üçüncü grubun tamamlanan kullanıcı komutu (yeniden çalıştırılması gerekmez):
-
-```powershell
-.\artifacts\ml_oncesi_inceleme_20261013\03_apple_iphone_15_pro_max_256gb\canli_ret_kontrolu.ps1
-```
-
-Komut BOM'lu, sözdizimi ağsız doğrulandı; ajan çalıştırmadı. Geçici katalog
-yalnız bu üç adayı içerir; kaynak/geçici katalog ve parsing.py hash denetimi,
-CATALOG_PATH/kodlama/klasör için finally var. Yeni ret_<zaman>/ içinde
-scraper.json/stderr.log/calisma.json üretir. Beklenen: checked_listings=0,
-platform_results=[], best_offers_by_product={} ve errors içinde üç doğru
-kimlikte kapsam dışı mesaj: 1212866645, 1212866811, 1212866873. Başarılı
-gözlem sayımı/JSON'da hata kodunun bulunmaması önceki grupla aynı; çıkış 0
-tek başına yeterli değildir. Bu farklı sayfaların teyididir; önceki grubun
-adresleri yeniden okunmaz. Sonuç gelince grup kapanır, ardından durulur.
-
-**Üçüncü grup canlı sonucu:** kullanıcı 13 Ekim 15:18:55–15:19:03 İstanbul'da
-çalıştırdı. ret_20261013_151855_568/ içinde çıkış 0/boş stderr, 0 başarılı
-gözlem/3 doğru kimlikte kapsam dışı ret var. Üç başlık Pro Max/256 GB ve
-rapordaki Mavi/Siyah/Mavi renkleriyle eşleşti. Eksik ikinci başlık canlı
-hata mesajından doğrulandı; tarayıcı beyanı olarak uydurulmadı. Kaynak/geçici
-katalog, rapor, kod ve önceki ham kayıtlar hash ile aynı; yeni kod/test yok.
-Grup kökündeki canli_ret_dogrulama.json ve grup_sonucu.json kanıtı saklar.
-Üçüncü grup 3/3 uyuşmazlık olarak kapandı; genel 1 doğrulandı/6 uyuşmazlık/
-18 aday bekliyor (3/11 grup, 7/25 sayfa). Dördüncü gruba geçilmedi;
-commit/push tüm grupların sonuna erteli, katalog raporu uygulanmadı.
-
-**Dördüncü grup:** iPhone 17 512 GB / product_id=22 / Lavanta,
-hepsiburada_hbcv0000i7gqiw. Geçici katalog yalnız bu Hepsiburada sayfasını
-içerir. Kullanıcı başlığı eşleştirdi, yenilenmiş ibaresi görmediğini bildirdi;
-nihai kaynak/teklif karşılaştırması canlı çıktı sonrası yapılacak.
-
-Tur/keşif çalışmıyorken kullanıcı komutu:
-
-```powershell
-.\artifacts\ml_oncesi_inceleme_20261013\04_apple_iphone_17_512gb\canli_kontrol.ps1
-```
-
-Beklenen checked_listings=1, errors=[] ve yukarıdaki tek listing_id.
-Stoksuzluk geçerli sonuçtur. Çıktı yeni canli_<zaman>/ içinde scraper.json,
-stderr.log, calisma.json; geçici CATALOG_PATH/kodlama/klasör geri alınır.
-Kaynak/geçici katalog ve parsing/Hepsiburada scraper hash denetimi var.
-BOM/sözdizimi ve tek sayfa seçimi ağsız doğrulandı; ajan çalıştırmadı.
-Hazırlık/kapsam kanıtı aynı grubun hazirlik.json/kapsam_incelemesi.json
-dosyalarında. Katalog/kod/test değişmedi; son temiz test paketi korunuyor.
-
-**Dördüncü grup ara sonucu:** canli_20261013_153949_100/ içinde bir gözlem,
-errors=[]/çıkış 0/boş stderr. 116.999,00 TL, çizili fiyat yok, Gürgençler
-Apple Yetkili Satıcı, 9,5/10 ve Stokta Var; katı gözlem/tek teklif seçimi ve
-hash kontrolü geçti. Kullanıcı teklif alanlarını ve aktif Sepete Ekle'yi
-teyit etti, yeni/yenilenmiş bilgisi görmedi. Ürün durumu açık kanıt bekliyor;
-grup henüz doğrulandı sayılmadı. scraper_dogrulama.json bu ayrımı kaydeder.
-
-Yalnız aynı sayfanın ham kaynak kontrolü, tur/keşif yokken kullanıcı komutu:
-
-```powershell
-.\artifacts\ml_oncesi_inceleme_20261013\04_apple_iphone_17_512gb\ham_kayit.ps1
-```
-
-Git dışı ham_scraper.py mevcut live_scraper_check.py aracını, mevcut
-live_discovery_check.py::_capture_responses yardımcısıyla sarar. Geçici
-katalogda tek kimlik doğrulanır; mevcut kilit/HTTP/sonuç ve kapanış davranışı
-korunur. Yeni tani_<zaman>/ içinde scraper.json/stderr.log/calisma.json ve
-yanitlar/ ham HTML/API JSON'ları/index.json; kaynak/geçici katalog/kod/yardımcı
-hash koruması ve ortamı finally ile geri alma var. BOM/Python/PowerShell
-sözdizimi doğrulandı; canlı çağrı ajan tarafından yapılmadı. Üretim/test
-dosyaları değişmedi. Ürün durumunun gerçek SKU/teklife bağlı açık alanı
-araştırılır; bulunmazsa yokluğu yeni ürün kanıtı yapılmaz. Grup bu adımın
-sonucunu bekler; rapor/katalog uygulanmaz.
-
-**Dördüncü grup doğrulandı:** kullanıcı ham kaydı 15:54:41–15:54:48
-İstanbul'da aldı; tani_20261013_155441_618/ içinde üç yanıt, çıkış 0,
-errors=[]/boş stderr. 0001.html JSON-LD teklifinde itemCondition=
-https://schema.org/NewCondition; SKU HBCV0000I7GQIW, ürün URL'si, 116999.00
-TRY ve InStock aynı sayfayla eşleşti. Varyant kaydı 512 GB/Lavanta. API ve
-ürün bağlamı aynı listingId'de Gürgençler/9,5/Stokta Var/116.999 TL gösterdi;
-satıcı için JSON-LD'deki genel Apple seller alanı kullanılmadı. Teklif
-ilk kontrolle aynı, kullanıcı ekran teyidi zaten tamam. Kaynak/kod/ham
-dosya hashleri aynı. ham_kaynak_dogrulama.json ve grup_sonucu.json sonucu
-kaydeder: verified. Genel 4/11 grup, 8/25 sayfa; 2 doğrulandı/6 uyuşmazlık/
-17 bekliyor. Burada duruldu; komutları tekrarlamak gerekmez. Kod/test
-değişmedi, paket tekrarlanmadı; katalog uygulanmadı, gönderim sona erteli.
-
-**Beşinci grup hazırlığı:** iPhone 17 Pro Max 1 TB (1024 GB), product_id=28,
-Kozmik Turuncu; tek yeni sayfa hepsiburada_hbcv0000i7gpul. Kullanıcı
-başlığı/model/kapasite/renk eşleşti; Apple Türkiye garantili bilgisi verdi,
-açık yeni/yenilenmiş durum alanı görmedi. Bu garanti bilgisi tek başına
-yeni ürün kanıtı sayılmaz; aynı sayfanın ham ürün durumu incelenecek.
-
-Geçici katalog yalnız bu yeni sayfayı içerir. Grup 4'teki mevcut araç
-sarmalayıcısı bu hedefe uyarlandı; tek çalıştırmada scraper sonucu ve
-yanitlar/ ham HTML/API kayıtları alınır. Üretim HTTP/kilit/teklif sözleşmesi
-değişmez. Kaynak rapor/asıl-geçici katalog/kod/yardımcı hashleri denetlenir;
-CATALOG_PATH, konsol kodlaması ve klasör finally ile geri alınır.
-AST, PowerShell sözdizimi/BOM ve araç yükleme ağsız doğrulandı; canlı çağrı
-yapılmadı, app/tests değişmedi. Tur veya keşif çalışmıyorken kullanıcı:
-
-```powershell
-& .\artifacts\ml_oncesi_inceleme_20261013\05_apple_iphone_17_pro_max_1024gb\ham_kayit.ps1
-```
-
-Normal beklenen JSON: checked_listings=1, errors=[], tek listing_id=
-hepsiburada_hbcv0000i7gpul. Stoksuzluk geçerli sonuçtur; fiyat/satıcı/stok
-uydurulmaz. Araç çıkış kodu yanında errors ve ham kaynak kimlik/durum
-alanları incelenir; fiyatlı sonuçta tüm teklifler, seçilen teklif ve
-tarayıcı karşılaştırması ayrıca tamamlanır. Ham kayıt kataloğa uygulanmaz.
-Hazırlık sırasında sonuç bekliyordu; aşağıdaki kaynak/teklif kontrolüyle
-tamamlandı. Komutu tekrarlamak gerekmez; gönderim sona erteli.
-
-**Beşinci grup doğrulandı:** kullanıcı 16:24:41–16:24:48 İstanbul'da
-ham komutu çalıştırdı; tani_20261013_162441_679/ içinde bir gözlem,
-errors=[]/çıkış 0/boş stderr ve üç ham yanıt var. JSON-LD teklifinde
-SKU HBCV0000I7GPUL, aynı ürün URL'si, 156999.00 TRY/InStock ve
-itemCondition=https://schema.org/NewCondition eşleşti; varyant kaydı
-1024 GB/Kozmik Turuncu. Ürün bağlamı ve iki API aynı listingId'de
-ENHIZLIBİZDE/9,9/10/satılabilir stok/156.999 TL gösterdi. API çizili fiyatı
-güncel fiyatla aynı olduğundan mevcut kural null verdi. JSON-LD genel
-Apple seller alanı satıcı teyidinde kullanılmadı; garanti veya durum alanı
-yokluğu da yeni ürün kanıtı sayılmadı.
-Kullanıcı fiyat/çizili fiyat yokluğu/satıcı/puan ve aktif Sepete Ekle'yi
-"hepsi doğru sepette aktif" ile teyit etti. Katı gözlem, zaman aralığı,
-kuruş/gösterim, seçilen minimum teklif ve ürün özeti doğrulandı. Ham yedi
-dosya/kod/katalog/rapor/önceki kanıt hashleri aynı. ham_kaynak_dogrulama.json
-ve grup_sonucu.json sonucu kaydeder: verified. Genel 5/11 grup, 9/25
-sayfa; 3 doğrulandı/6 uyuşmazlık/16 bekliyor. Beşinci grupta duruldu;
-altıncı grup başlamadı. app/tests değişmedi, temiz testler tekrarlanmadı;
-katalog uygulanmadı, commit/push bütün grupların sonuna erteli.
-
-**Altıncı grup hazırlığı:** Galaxy S24 Ultra 1 TB (1024 GB), product_id=39,
-tek yeni Trendyol sayfası trendyol_792557588. Raporda renk Siyah, URL'de
-Titanyum Siyah; güncel başlık ve renk seçicisiyle aynı varyant olduğu
-kontrol edilir. Kullanıcı tam başlığı Samsung Galaxy S24 Ultra 1 TB
-Titanyum Siyah (Samsung Türkiye Garantili) olarak verdi; mevcut identify
-ağsız 1024 GB ve tam model eşleşmesini doğruladı. Yeni/yenilenmiş alanını
-görmediğini bildirdi; garanti bilgisi veya durum alanının yokluğu yeni
-ürün kabulü sayılmadı. Renk seçicisi ve açık ürün durumu ham kaynakta
-bekliyor; canlı teklif ve tarayıcı karşılaştırması henüz yapılmadı.
-Geçici katalog yalnız bu sayfayı içerir; mevcut iki sayfa değişmez.
-
-BOM'lu ham_kayit.ps1 ve tek sayfa yardımcısı önceki gruptan bu hedefe
-uyarlandı. Mevcut live_scraper_check.py ve _capture_responses kullanılır;
-HTTP/kilit/teklif sözleşmesi değişmez. Trendyol scraper, ortak parsing,
-kaynak rapor/asıl-geçici katalog/yardımcı hashleri denetlenir; CATALOG_PATH,
-kodlama ve klasör finally ile geri alınır. AST/sözdizimi/BOM/araç yükleme
-ağsız doğrulandı; app/tests değişmedi, canlı çağrı yapılmadı.
-Tur veya keşif çalışmıyorken kullanıcı için hazırlanan komut:
-
-```powershell
-& .\artifacts\ml_oncesi_inceleme_20261013\06_samsung_galaxy_s24_ultra_1024gb\ham_kayit.ps1
-```
-
-Normal beklenen JSON: checked_listings=1/errors=[]/listing_id=
-trendyol_792557588. Stoksuzluk geçerli sonuçtur. Araç çıkış kodu yanında
-errors, ham kimlik/kapsam, tüm teklifler ve seçilen teklif incelenir;
-fiyat/satıcı/puan/stok tarayıcıyla karşılaştırılır. Ham kayıt kataloğa
-uygulanmaz. Hazırlıkta sonuç bekliyordu; aşağıdaki kaynak/teklif teyidiyle
-tamamlandı. Komutu tekrarlamak gerekmez; gönderim sona erteli.
-
-**Altıncı grup doğrulandı:** kullanıcı 17:29:04–17:29:06 İstanbul'da ham
-komutu çalıştırdı; tani_20261013_172904_488/ içinde checked_listings=1,
-errors=[]/çıkış 0/boş stderr ve tek HTML yanıtı var. JSON-LD ProductGroup
-sku=792557588, @id/teklif URL'si aynı adres; ana teklif NewCondition,
-95000.00 TRY/InStock. Kardeş renk/kapasite JSON-LD teklifleri kullanılmadı.
-Başlık/özellik 1 TB, kimlik doğrulaması 1024 GB; aynı kimliğin DsmColor,
-Renk özelliği ve JSON-LD rengi Siyah, başlığı Titanyum Siyah. Render edilmiş
-renk seçicisi ham HTML'de yer tutucu olduğundan görüldüğü iddia edilmedi;
-sayfa/renk eşleşmesi aynı ürünün kaynak verileriyle doğrulandı.
-Seçilen merchantListing teklifi ALTINKOZA  TEKNOLOJİM/8,2/10/95.000 TL;
-inStock/sellable true, isRunningOut true/runningOutQuantity=1 ve ham HTML
-Son 1 Ürün! içerir. Fiyatlar aynı; çizili fiyat null. Kullanıcı tüm teklif
-alanları ve Sepete Ekle aktifliğini "evet her şey doğru ve sepete ekle
-oluyor" ile teyit etti. Katı gözlem/zaman/gösterim/minimum/özet ve kaynak
-eşleşti; ham beş dosya ve önceki kanıt/kod/katalog/rapor hashleri aynı.
-ham_kaynak_dogrulama.json ve grup_sonucu.json verified. Genel 6/11 grup,
-10/25 sayfa; 4 doğrulandı/6 uyuşmazlık/15 bekliyor. Altıncı grupta duruldu,
-yedinci grup başlamadı. Kod/test değişmedi, paket tekrarlanmadı; katalog
-uygulanmadı, commit/push bütün grupların sonuna erteli.
-
-**Yedinci grup hazırlığı (14 Ekim):** Xiaomi 14T Pro 256 GB, product_id=47,
-Mavi; tek yeni Trendyol sayfası trendyol_859623143. Kullanıcı başlığı/model/
-kapasite/renk eşleşti. Sıfır/ikinci el ifadesi görmedi, garanti bilgisi
-verdi; garanti veya alan yokluğu yeni ürün kanıtı sayılmadı. Kapsam ve
-teklif teyidi ham kaynakta bekliyor. Geçici katalog yalnız yeni sayfayı
-içerir; mevcut dört sayfa, asıl katalog ve özgün rapor korunur.
-Önceki tek sayfa yardımcısı yeni hedefe uyarlandı; mevcut canlı scraper
-aracı ve _capture_responses aynı kilit/HTTP/sözleşmeyle kullanılır.
-Kaynak/katalog/kod/yardımcı hash denetimi ve finally ortam geri alma
-korunur; AST, PowerShell sözdizimi/BOM ve araç yükleme ağsız doğrulandı.
-Üretim/test kodu değişmedi; 13 Ekim'deki 1717 test/0 atlama ve biçim
-kontrolleri tekrarlanmadı. Tur/keşif yokken kullanıcı:
-
-```powershell
-& .\artifacts\ml_oncesi_inceleme_20261013\07_xiaomi_14t_pro_256gb\ham_kayit.ps1
-```
-
-Normal beklenen checked_listings=1/errors=[]/listing_id=trendyol_859623143.
-Stoksuzluk geçerli sonuçtur; çıkış kodu yanında errors ve ham kaynak
-kimlik/kapsam/renk alanları incelenir. Tüm teklifler/seçilen teklif ve
-tarayıcı fiyat/satıcı/puan/stok karşılaştırması tamamlanınca grup sonucu
-kaydedilir. Ham rapor kataloğa uygulanmaz. Genel 6/11 grup, 10/25 sayfa;
-4 doğrulandı/6 uyuşmazlık/15 bekliyor. Bu gruptan sonra durulur; gönderim
-bütün grupların sonuna erteli, sekizinci grup başlamadı.
-
-**Yedinci grup ara sonucu:** 14 Ekim 09:13:18–09:13:19 kullanıcı kaydı
-tani_20261014_091318_271/ içinde Tükendi/errors=[]/çıkış 0. Ürün ve teklif
-inStock=false, pasif Tükendi! düğmesi, doğru 256 GB/Mavi/859623143 eşleşti.
-50.000 TL/Ceppodium/7,9 stok dışı teklif tanılamasında kalır; gözlemde
-fiyat/satıcı/puan null, kazanan yok. Bu yanıtta açık yeni ürün durumu
-bulunmadı; yalnız WebPage JSON-LD var. Kapsam kabulü verilmedi.
-Kullanıcının ilk görüntüsü bu stoksuz durumu teyit eder; F5 sonrası ikinci
-görüntü AYPA TEKNOLOJİ/9,4/54.999 TL/Son 1 Ürün/aktif Sepete Ekle gösterir.
-URL ürün sayfasına bağlıdır; görüntülenen ana satıcı teklifi değişebilir.
-Scraper merchantListing ana teklifi ve o yanıtta bulunan otherMerchants
-tekliflerini değerlendirir. İlk yanıtta otherMerchants boş ve AYPA yok;
-aynı anda bütün satıcıların görüldüğü iddia edilmez. Fiyat farkı aynı
-satıcıda artış olarak yorumlanmaz, platformun seçim nedeni kesinleşmedi.
-ham_kaynak_dogrulama.json ve tarayici_degisim_incelemesi.json ilk ham
-kaydı/iki görüntüyü ayrı tutar. Kullanıcı önce açıklama istedi; yeni
-kontrol yapılmadı, grup kapanmadı. Devamda aynı komut yeni tarihli kayıt
-üretir; ilk kayıt korunur. app/tests/katalog/DB değişmedi, test tekrarı yok.
-
-**Yedinci grup ikinci kayıt:** kullanıcı açıklamadan sonra devam istedi.
-Mevcut komut/tek hedef ve kaynak/katalog/kod/ilk ham dosya hashleri tekrar
-doğrulandı; aynı 07_xiaomi_14t_pro_256gb/ham_kayit.ps1 kullanıcı tarafından
-yeniden çalıştırılacak. Yeni tani_<zaman>/ klasörü eski kaydı korur.
-Son tarayıcı görüntüsü AYPA/9,4/54.999 TL/1 stok referansıdır; yeni yanıtta
-aynı fiyat/satıcı bulunması şart koşulmaz. Doğru kimlik/model/256 GB/Mavi,
-geçerli teklif/stok/puan ve açık yeni ürün durumu güncel kaynakla incelenir.
-Çıkış kodu yanında errors ve checked_listings=1/859623143 kontrol edilir;
-sonuç klasörü paylaşılır, kullanıcı tarayıcı karşılaştırmasıyla grup
-kapatılır. İkinci kontrol henüz çalışmadı; kod/katalog/DB değişmedi.
-
-**Yedinci grup doğrulandı:** ikinci kayıt 14 Ekim 09:39:17–09:39:18
-İstanbul'da alındı; tani_20261014_093917_359/ içinde tek gözlem,
-errors=[]/çıkış 0/boş stderr ve bir HTML. Product JSON-LD sku=859623143,
-@id/teklif URL'si aynı sayfa; 256 GB/Mavi/54999.00 TRY/InStock ve
-itemCondition=https://schema.org/NewCondition. İlk kayıtta eksik yeni
-ürün kanıtı ikinci doğru teklifle tamamlandı. MerchantListing AYPA
-TEKNOLOJİ/9,4/10/54.999 TL; inStock/sellable true, isRunningOut true/
-runningOutQuantity=1, Son 1 Ürün! Fiyatlar aynı, çizili null. Kaynak
-teklif/katı gözlem/zaman/gösterim/minimum/ürün özeti ve kullanıcının
-ikinci görüntüsündeki fiyat/satıcı/puan/aktif Sepete Ekle/az stok eşleşti.
-İlk Ceppodium/Tükendi kaydı ve ilk doğrulama/görüntü incelemesi değişmedi;
-ikinci beş ham dosya korundu. İkinci kanıt ayrı
-ikinci_ham_kaynak_dogrulama.json içinde, grup_sonucu.json verified.
-İki satıcı/teklif kimliği farklı; aynı satıcıda fiyat artışı diye
-yorumlanmadı. Her iki yanıtta diğer satıcı listesi boş; platformun seçim
-nedeni veya tüm satıcıların eşzamanlı kapsamı kesinleşmedi.
-Genel 7/11 grup, 11/25 sayfa; 5 doğrulandı/6 uyuşmazlık/14 bekliyor.
-Burada duruldu; sekizinci grup başlamadı. app/tests/katalog/DB değişmedi,
-testler tekrarlanmadı; commit/push bütün grupların sonuna erteli.
-
-**Sekizinci grup hazırlığı (14 Ekim):** Xiaomi 14T Pro 512 GB, product_id=48,
-Titan Gri; tek yeni Hepsiburada sayfası hepsiburada_hbcv00006ya8az.
-Geçici katalog yalnız bu adayı içerir, mevcut dört sayfa değişmez. Kullanıcının
-Xiaomi 14T Pro 512 GB 12 GB Ram (Xiaomi Türkiye Garantili) Titan Gri başlığı
-model/kapasite/renkle eşleşti. Açıklamada "bu ürün şu an satılamamaktadır"
-mesajı gördü; ürün durumu ve satılamama nedeni henüz kaynakla teyit edilmedi.
-Garanti veya satılamama mesajı yeni ürün kanıtı sayılmaz.
-Önceki Hepsiburada tek sayfa yardımcısı bu hedefe uyarlandı; mevcut
-live_scraper_check.py ve _capture_responses, aynı kilit/HTTP/sözleşmeyle
-sonuç ve ham yanıtları birlikte kaydeder. Kaynak/katalog/kod/yardımcı hash
-koruması, yeni tani_<zaman>/ ve finally ile CATALOG_PATH/kodlama/klasör
-geri alma sürer. AST/PowerShell sözdizimi/BOM/yol/araç yükleme ağsız
-doğrulandı; app/tests değişmedi, main/fetch çağrılmadı.
-Kullanıcı 10:00 zamanlanmış turu sürdüğü için komutu çalıştırmadı. Tur
-gerçekten tamamlanıp başka tur/keşif yokken aynı kullanıcı komutu:
-
-```powershell
-& .\artifacts\ml_oncesi_inceleme_20261013\08_xiaomi_14t_pro_512gb\ham_kayit.ps1
-```
-
-Normal beklenen checked_listings=1/errors=[]/listing_id=
-hepsiburada_hbcv00006ya8az. Stoksuzluk geçerli sonuçtur; çıkış kodu yanında
-errors, ham kimlik/kapsam/renk ve tüm teklifler/seçilen teklif incelenir.
-Tarayıcı fiyat/satıcı/puan/stok karşılaştırmasıyla grup kapatılır, ardından
-durulur. Ham rapor kataloğa uygulanmaz. Genel 7/11 grup, 11/25 sayfa;
-5 doğrulandı/6 uyuşmazlık/14 bekliyor. Gönderim sona erteli, grup 9 başlamadı.
-
-**Sekizinci grup doğrulandı — stoksuz:** kullanıcı tur bittikten sonra
-14 Ekim 10:32:18–10:32:23'te ham kontrolü çalıştırdı. İki GET yanıtı:
-0001.html ürün, 0002.json aynı SKU satıcı listesi; checked_listings=1,
-errors=[], çıkış 0, stderr boş. HBCV00006YA8AZ/URL/14T Pro/512 GB/Titan Gri
-eşleşti. allVariantCombinations bulunmadığından variant_identity None;
-kapasite/renk aynı sayfa başlığı ve SKU ürün bağlamından doğrulandı.
-JSON-LD aynı SKU/URL'de NewCondition etiketi taşıyor. Ancak JSON-LD
-0.00/InStock güncel satışla çelişiyor; bu alanlar fiyat/stok kanıtı değildir.
-Satıcı API statusCode=200/listings=[], aynı ürün isInStock=false ve
-"Bu ürün şu an satılamamaktadır" mesajı kullanıcı beyanıyla eşleşti.
-Bu nedenle Tükendi/null fiyat-satıcı-puan ve boş teklif/kazanan sonucu doğru;
-üçüncü fiyat isteği gönderilmedi. Satılabilir teklif seçimi/minimum fiyat
-denetimi uygulanamaz; stok dışı sayfa geçerli kontrol sonucudur. NewCondition
-yalnız aynı ürünün kaynak kapsam etiketi; fiziksel cihaz veya gelecekteki
-satıcı durumu ayrıca doğrulanmış sayılmaz. Satılamama nedeni kesinleşmedi.
-ham_kaynak_dogrulama.json/grup_sonucu.json verified; altı ham dosya,
-126 önceki kanıt/87 kaynak-test aynı. Genel 8/11 grup, 12/25 sayfa;
-6 doğrulandı/6 uyuşmazlık/13 bekliyor. Burada duruldu, grup 9 başlamadı.
-Kod/katalog/DB değişmedi; temiz test/biçim paketi tekrarlanmadı, gönderim erteli.
-Kullanıcının tamamlandı dediği tur 31'in mevcut logunda 239 fiyat/92 Tükendi/
-1 identity (S25 512 GB sayfasında S25+ başlığı)/çıkış 2 var; ayrı bakım
-notuna alındı, kaynak/DB araştırması yapılmadı. Ham rapor uygulanmaz.
-
-**Dokuzuncu grup hazırlığı (14 Ekim):** Redmi Note 13 Pro 512 GB/4G,
-product_id=57; iki yeni Hepsiburada sayfası HBCV00005PZUWE/Mor ve
-HBCV00005PZUWG/Yeşil. Kullanıcının iki başlığı/model/512 GB/renk eşleşti.
-Mor sayfada bağlantı hızı görünmedi; Resmi Distribütör Garantili bildirildi.
-Yeşil sayfada satılamama mesajı var; ağ hızı ayrıca bildirilmedi. Başlıkta
-5G olmaması veya garanti bilgisi 4G/yeni ürün kanıtı sayılmaz; aynı ürünün
-ham kimlik/özellik/kapsam alanları ayrıca incelenecek.
-Geçici katalog mevcut üç sayfayı içermez; yalnız iki yeni sayfayı seçer.
-Mevcut live_scraper_check.py aynı kilit/HTTP/sözleşmeyle tek çalıştırmada
-ikisini okur. Ham yanıtlar _capture_responses ile
-yanitlar/hepsiburada_hbcv00005pzuwe/ ve yanitlar/hepsiburada_hbcv00005pzuwg/
-altında ayrı index ve özgün dosyalara yazılır. BOM'lu komut hash denetimi,
-yeni tani_<zaman>/ ve finally ortam geri alma kullanır. AST/PowerShell
-sözdizimi/BOM/araç yükleme/iki hedef ağsız doğrulandı; main/fetch çağrılmadı.
-Önceki 139 kanıt/87 kaynak-test aynı; üretim/test kodu değişmedi, paket tekrarı yok.
-Tur/keşif yokken kullanıcı komutu:
-
-```powershell
-& .\artifacts\ml_oncesi_inceleme_20261013\09_xiaomi_redmi_note_13_pro_4g_512gb\ham_kayit.ps1
-```
-
-Normal beklenen checked_listings=2/errors=[] ve tam iki kimlik:
-hepsiburada_hbcv00005pzuwe, hepsiburada_hbcv00005pzuwg. 4.5G, mevcut
-network_type kuralında 4G sayılır; aynı ürünün ağ verisi ayrıca teyit edilir.
-Stoksuzluk geçerli sonuçtur; çıkış 0 tek başına yeterli değildir. Kimlik/
-kapasite/renk/4G/kapsam, tüm teklifler/seçilen teklif ve kullanıcı tarayıcı
-karşılaştırması tamamlanınca her sayfanın sonucu kaydedilir, grupta durulur.
-Henüz canlı çıktı yok: genel 8/11 grup, 12/25 sayfa;
-6 doğrulandı/6 uyuşmazlık/13 bekliyor. Rapor/katalog uygulanmaz; gönderim
-bütün grupların sonuna erteli, grup 10 başlamadı.
-
-**Dokuzuncu grup incelemesi tamam — iki kanıt yetersiz:** kullanıcı kaydı
-14 Ekim 10:50:59–10:51:13; tani_20261014_105059_599/ içinde Mor üç,
-Yeşil iki ham yanıt. İki gözlem/errors=[]/çıkış 0/stderr boş; katı sözleşme,
-kimlik/512 GB/renk/zaman/gösterim ve teklif/özet eşleşmeleri doğrulandı.
-Mor aynı SKU/URL/21999.00/InStock JSON-LD teklifinde NewCondition ve
-variant_identity=(512, Mor). Satıcı/fiyat API'leri aynı iki listingId ile
-dogabilisim/9,3/21.999 TL ve teknolojikapinda/9,7/34.999 TL gösteriyor.
-İkisi uygun, mevcut en düşük fiyat kuralı dogabilisim'i seçiyor; çizili
-fiyatlar güncel fiyatla eşit olduğu için null. Kullanıcı ana teklif/aktif
-Sepete Ekle ve Diğer Satıcılar'daki ikinci teklifin alanlarını teyit etti.
-Yeşil API listesi boş/isInStock=false ve HTML/kullanıcı satılamama mesajı
-eşleşti; Tükendi/null alanlar/boş teklifler, fiyat POST'u yok. Aynı ürün
-JSON-LD NewCondition etiketli; 0.00/InStock gerçek satış kanıtı sayılmadı.
-Bu sayfada variant_identity=None, renk başlık/aynı SKU bağlamından alındı.
-İki sayfada da Mobil Bağlantı Hızı/_network verisi yok. Mor açıklamasında
-Snapdragon 7 var; bundan kesin 4G/5G sınıfı çıkarılmadı. Mor/Yeşil kaynak
-GTIN'leri 6941812762899/6941812762776, güvenilir model/ağ eşleştirmesi yok.
-Yeni ürün etiketi ve teknik teklif/stok karşılaştırması tamam; 4G hedefe
-kabul için sonuç iki insufficient_evidence. Garanti veya başlıkta 5G
-yokluğu bunun yerine geçmez. Tam inceleme sonrası dar aday çözümünde
-kanıt tamamlanamazsa bu ikisi uygulanacak rapora alınmaz; henüz uygulama yok.
-ham_kaynak_dogrulama.json/grup_sonucu.json bu ayrımı kaydeder; 10 ham
-dosya/139 önceki kanıt/87 kaynak-test korundu. Genel 9/11 grup, 14/25 sayfa;
-6 doğrulandı/6 uyuşmazlık/2 kanıt yetersiz/11 bekliyor. Burada duruldu,
-grup 10 başlamadı. Üretim/test kodu değişmedi, temiz paket tekrarlanmadı;
-katalog/DB/rapor uygulaması ve commit/push yapılmadı.
-
-**Onuncu grup hazırlığı (14 Ekim):** Redmi Note 13 Pro 5G 256 GB,
-product_id=51; dört yeni Hepsiburada sayfası HBCV00007A36P9/Mor,
-HBCV00009N3RQE/Siyah, HBCV0000A1GTQO/Mor, HBCV0000E8DHJL/Siyah.
-Geçici katalog yalnız bu dört yeni adayı içerir; mevcut yedi sayfa korunur.
-Kullanıcının dört başlığı tam 5G model/256 GB ile eşleşti; ilk ikide 12 GB,
-son ikide 8 GB RAM başlıklardan kaydedildi. 1/2/4 sayfalarda Mor/Siyah/Siyah,
-5G alanı ve Resmi Distribütör Garantili bildirildi. Üçüncü sayfa
-satılamamaktadır; rengi ve ayrı ağ hızı alanı ayrıca bildirilmedi.
-Sıfır/yenilenmiş ifadesi görülmedi. Garanti türü tek başına ürün durumu
-kanıtı sayılmaz; satılamama mesajı da yeni/yenilenmiş ayrımını vermez.
-kapsam_incelemesi.json kullanıcı beyanını tutar; aynı ürünün açık durumu,
-üçüncü renk ve teklif/kaynak karşılaştırması bekliyor. Mevcut model/depolama
-grubu değişmez; RAM verisi URL'den varsayılmadı.
-Önceki grup yardımcısı yalnız dört hedef/sayıya uyarlandı. Mevcut canlı
-scraper aracı, aynı kilit/HTTP/sözleşmeyle dört sayfayı okur; ham yanıtlar
-yanitlar/<listing_id>/ içinde ayrı index ve özgün dosyalara kaydedilir.
-BOM'lu komut kaynak/katalog/kod/yardımcı hash koruması, yeni tani_<zaman>/
-ve finally ortam geri alma kullanır. AST/PowerShell sözdizimi/BOM/araç
-yükleme/dört hedef ağsız doğrulandı; main/fetch çağrılmadı. Önceki
-157 kanıt/87 kaynak-test aynı; üretim/test kodu değişmedi, paket tekrarı yok.
-Tur/keşif yokken kullanıcı komutu:
-
-```powershell
-& .\artifacts\ml_oncesi_inceleme_20261013\10_xiaomi_redmi_note_13_pro_5g_256gb\ham_kayit.ps1
-```
-
-Normal beklenen checked_listings=4/errors=[]; kimlikler tam olarak
-hepsiburada_hbcv00007a36p9, hepsiburada_hbcv00009n3rqe,
-hepsiburada_hbcv0000a1gtqo, hepsiburada_hbcv0000e8dhjl. Çıkış kodu yanında
-errors ve sayfa sayısı incelenir; Tükendi geçerli sonuçtur. Aynı sayfanın
-5G/model/256 GB/renk/kimlik/kapsam, tüm teklifler/seçilen teklif ve kullanıcı
-tarayıcı teyidi tamamlandığında sonuç yazılır, grupta durulur. Henüz canlı
-çıktı yok; genel 9/11 grup, 14/25 sayfa; 6 doğrulandı/6 uyuşmazlık/
-2 kanıt yetersiz/11 bekliyor. Rapor uygulanmaz, commit/push sona erteli;
-grup 11 başlamadı.
-
-**Onuncu grup tamam — 3 doğrulandı/1 kanıt yetersiz:** kullanıcı tam kaydı
-14 Ekim 13:28:53–13:29:24'te aldı; tani_20261014_132853_803/ içinde dört
-gözlem/errors=[]/çıkış 0/boş stderr ve 11 ham yanıt var. 1/2/4'te doğru
-SKU/URL/model/256 GB, yapısal 5G/varyant rengi ve fiyatlı NewCondition
-eşleşti. İlk iki sayfa 21.999 TL/dogabilisim/9,3, dördüncü 23.999 TL/
-CeSE Market/9,5; sayfa başına tek uygun teklif doğru seçildi. Satıcı puanları
-satıcı API'sinden, fiyatlar aynı listingId fiyat yanıtından doğrulandı;
-regular=current olduğu için original null. Kullanıcı üç sayfanın tüm
-alanlarını ve aktif Sepete Ekle'yi teyit etti. 1/2 aynı en düşük fiyatı
-taşıyor; mevcut manuel özet ilk gözlemi korur, üçüncü stoksuz sayfa yarışmaz.
-Üçüncü A1GTQO aynı SKU adlarında açık 5G/8 GB RAM/256 GB; satıcı listesi
-boş/isInStock=false/HTML-kullanıcı satılamama mesajı ve Tükendi/null alanlar
-eşleşti, fiyat POST'u yok. JSON-LD NewCondition kapsam etiketi, 0.00/InStock
-gerçek satış kanıtı değil. Güncel renk yok; Beyaz başka SKU A1HQ64'e ait,
-hedefe atanmadı. Kullanıcı alt ürün bilgisi/renk ve Sepete Ekle yok dedi.
-Renk kanıtı eksikliği nedeniyle bu sayfa insufficient_evidence olarak kaldı;
-aynı SKU rengi teyit edilmeden uygulanacak rapora alınmaz.
-ham_kaynak_dogrulama.json/grup_sonucu.json 3 verified/1 insufficient_evidence;
-18 ham dosya/157 önceki kanıt/87 kaynak-test korundu. Daha önceki
-tani_20261014_132840_684/ eksik metadata ile beş dosya içerir; neden
-kesinleşmedi, nihai run sayılmadı ve korundu. Genel 10/11 grup, 18/25 sayfa;
-9 doğrulandı/6 uyuşmazlık/3 kanıt yetersiz/7 bekliyor. Burada duruldu,
-grup 11 başlamadı. app/tests değişmedi, temiz paket tekrarlanmadı;
-katalog/DB/rapor uygulaması ve commit/push yapılmadı.
-
-**Son grup hazırlığı (14 Ekim):** Redmi Note 13 Pro 5G 512 GB, product_id=52;
-4 Hepsiburada/3 Trendyol yeni sayfa. Geçici katalog yalnız yedi adayı seçer;
-mevcut üç sayfa korunur. Numaralar 1–4 Hepsiburada, 5–7 Trendyol sırasındadır.
-Kullanıcının yedi güncel başlığı tam 5G model/512 GB ile, renkleri raporla
-eşleşti. 1/4 Hepsiburada satılamama mesajı var; renk başlıkta. 2/3 renk/5G
-ve Resmi Distribütör Garantili; 5/6 renk/KVK; 7 Mavi/Xiaomi Türkiye
-Garantili bildirildi. Garanti türleri tek başına yeni/yenilenmiş kanıtı değil.
-Mavi Trendyol 797850359 güncel başlığı 12 GB RAM, özellik alanı 8 GB;
-kullanıcı farkı teyit etti, eski özellik kaydıyla aynı. Fiziksel RAM değeri
-ve farkın nedeni kesinleşmedi; mevcut model/depolama grubu değiştirilmedi.
-kapsam_incelemesi.json beyanları tutar; ham kapsam/teklif/RAM kaynağı bekliyor.
-Mevcut yardımcı yalnız hedef/sayıya uyarlandı; aynı canlı araç ve ortak
-kilit altında iki platform okunur, ham yanıtlar yanitlar/<listing_id>/
-altında ayrı tutulur. BOM'lu komut kaynak/katalog/kod/yardımcı hashleri,
-yeni tani_<zaman>/ ve finally ortam geri alma kullanır. İki scraper'ın
-hashi korunur; metadata eski scraper_sha256 (Hepsiburada) ve yeni
-trendyol_scraper_sha256 alanlarını ayrı kaydeder. AST/PowerShell sözdizimi/
-BOM/araç yükleme/yedi hedef/iki platform ağsız doğrulandı; main/fetch
-çağrılmadı. Önceki 188 kanıt/87 kaynak-test aynı; app/tests değişmedi.
-Tur/keşif yokken kullanıcı komutu:
-
-```powershell
-& .\artifacts\ml_oncesi_inceleme_20261013\11_xiaomi_redmi_note_13_pro_5g_512gb\ham_kayit.ps1
-```
-
-Normal beklenen checked_listings=7/errors=[]; kimlikler:
-hepsiburada_hbcv00005r1556, hepsiburada_hbcv00005r15v5,
-hepsiburada_hbcv00005r184r, hepsiburada_hbcv0000cqyidt,
-trendyol_1066280208, trendyol_1097892676, trendyol_797850359.
-Stoksuzluk geçerli sonuç; çıkış kodu yanında errors ve kontrol edilen
-kimlikler incelenir. Sayfa başına model/5G/512 GB/renk/kapsam/RAM tutarlılığı,
-tüm teklifler/seçilen teklif/ürün özeti ve tarayıcı eşleşmesi tamamlanınca
-sonuçlar yazılır, grupta durulur. Hazırlık anında genel 10/11 grup,
-18/25 sayfa; 9 doğrulandı/6 uyuşmazlık/3 kanıt yetersiz/7 bekliyordu.
-Özgün rapor uygulanmaz; katalog bakımı ve gönderim ayrı karar/onay gerektirir.
-
-**Son grup sonucu (14 Ekim):** kullanıcı tani_20261014_141008_752/ kaydını
-14:10:08–14:10:43 arasında aldı. checked_listings=7/errors=[]/çıkış 0,
-stderr boş; 13 yanıt/23 ham dosya. Yedi kimlik/URL/gözlem/tüm teklifler/
-seçilen teklifler/ürün özeti kaynakla karşılaştırıldı. Yapıştırılan JSON
-tam scraper.json ile aynı; önceki 188 kanıt/87 kaynak-test dosyası korundu.
-
-| Sayfa | Kaynak ve kullanıcı teyidi | Katalog kabul sonucu |
-|---|---|---|
-| 1 HB HBCV00005R1556 / Siyah | Aynı SKU başlığı/bağlamı 5G/512 GB/Siyah; NewCondition etiketi. Boş satıcı API'si/isInStock=false/HTML ve tarayıcı satılamama mesajı; Tükendi/null alanlar/boş teklifler. | Doğrulandı |
-| 2 HB HBCV00005R15V5 / Mavi | Aynı SKU/varyant/5G/512 GB/Mavi/NewCondition; dogabilisim/9,3/23.999 TL, aktif Sepete Ekle, çizili fiyat yok. | Doğrulandı |
-| 3 HB HBCV00005R184R / Mor | Aynı SKU/varyant/5G/512 GB/Mor/NewCondition; dogabilisim/9,3/23.999 TL, aktif Sepete Ekle, çizili fiyat yok. | Doğrulandı |
-| 4 HB HBCV0000CQYIDT / Beyaz | Aynı SKU başlığı/bağlamı 5G/512 GB/Beyaz; NewCondition etiketi. Boş satıcı API'si/isInStock=false/HTML ve tarayıcı satılamama mesajı; Tükendi/null alanlar/boş teklifler. | Doğrulandı |
-| 5 TY 1066280208 / Beyaz | Aynı kimlik/512 GB/Beyaz/5G özellik/NewCondition; Doğa Bilişim/9,0/23.999 TL/Kritik Stok/Son 3 Ürün, aktif Sepete Ekle, çizili fiyat yok. | Doğrulandı |
-| 6 TY 1097892676 / Siyah | Aynı kimlik/512 GB/Siyah/5G özellik/NewCondition; Doğa Bilişim/9,0/27.999 TL/Kritik Stok/Son 1 Ürün, aktif Sepete Ekle, çizili fiyat yok. | Doğrulandı |
-| 7 TY 797850359 / Mavi | Aynı kimlik/Mavi/512 GB/NewCondition ve Doğa Bilişim/9,0/23.999 TL/Kritik Stok/Son 3 Ürün doğru. Başlık 5G/12 GB RAM; aynı ürün özellikleri 4G/8 GB RAM. | Uyuşmazlık; 5G hedefe alınmaz |
-
-1/4 sayfaların JSON-LD 0.00/InStock değerleri satış fiyatı/stok kanıtı
-sayılmadı; NewCondition yalnız aynı ürünün kaynak durum etiketi olarak
-kullanıldı. 2/3 API satıcı puanı, aynı listingId fiyat yanıtı ve SKU ürün
-bağlamı eşleşti; regular=current → original_price=null. Trendyol ürün
-verisi `__envoy__SHARED_PROPS.product` içindedir; 5/6 özellikleri 5G,
-7 özellikleri açık 4G bildirir. Yedi teknik scraper sonucu doğru olsa da
-7 başlık/özellik ağ çelişkisi nedeniyle kabul edilmez. İlk incelemede identify
-başlık/model/kapasiteyi sınıyordu; bu yapısal ağ çelişkisi için koruma yoktu.
-Sonradan ayrı kullanıcı onaylı dar ortak koruma uygulandı; aşağıdaki
-uygulama kaydı esas alınır. Bu grubun kaynak incelemesinde kod değiştirilmedi.
-Fiziksel ağ/RAM ve yanlış alanın hangisi kesinleşmedi;
-RAM için yeni ürün grubu/şema kararı verilmedi.
-
-Grup ham_kaynak_dogrulama.json ve grup_sonucu.json sonucu 6 doğrulandı/
-1 uyuşmazlık olarak kaydeder. Kök inceleme_ozeti.json 11 grup dosyasından
-25 özgün kimliği tek tek karşılaştırır: **11/11 grup, 25/25 sayfa;
-15 doğrulandı/7 uyuşmazlık/3 kanıt yetersiz/0 bekliyor.** Özgün rapor ve
-katalog parmak izleri değişmedi; katalog 59 ürün/334 bağlantı/332 etkin.
-Altı Yenilio adayı ve TY797850359 uyuşmazlık; HBCV00005PZUWE/5PZUWG ağ
-kanıtı, HBCV0000A1GTQO renk kanıtı yetersiz. Özgün 25 adaylı rapor
-uygulanmaz. Kabul edilen 15 adayı güvenle seçme çözümü, yeni ağ koruması
-ve katalog uygulaması bu inceleme anında ayrı plan/onay bekliyordu; ağ
-koruması sonradan aşağıdaki kayıtla uygulandı. Yalnız 15 aday ileride kabul
-edilip uygulanırsa koşullu sayı 59/349/347; bu sayı uygulanmış durum değildir.
-Son grupta duruldu; Adım 1 inceleme tamam, katalog bakımı/ML öncesi diğer
-ana adımlar tamamlanmadı. Ham dosyalar/özet Git dışında kalır.
-
-**14 Ekim gönderim öncesi denetim:** tam pytest 1717 geçti/0 atlandı/xfail,
-168,18 sn; Black 74 dosya temiz, Flake8 temiz. İki TEST_* adresinin
-veritabanı fiyat_takip_test olarak doğrulandı; gerçek DATABASE_URL ve
-API_DATABASE_URL test sürecinden çıkarıldı ve sonunda geri alındı. İlk
-çalıştırmanın 389 kurulum hatası, Windows pytest-of-Emir geçici klasörüne
-erişimden kaynaklandı; 0 test başarısızdı. Başarısız JUnit kaydı korundu,
-izinli tekrar yeni ve önceden bulunmayan proje içi --basetemp klasörünü
-kullandı. Tekrarın 1717 testi geçti; iki bağımlılık deprecation uyarısı
-kaldı. Kayıtlar artifacts/ml_oncesi_inceleme_20261013/ altında
-kapanis_testleri_20261014.xml ve kapanis_testleri_20261014_proje_temp.xml.
-Bu klasör geçicidir; aynı --basetemp yolu yeniden kullanılmadan önce
-pytest'in klasörü temizlediği dikkate alınmalıdır. Kaynak/katalog/test
-kodunda bu erişim sorunu için değişiklik yapılmadı. Bu kontroller Yenilio
-koruması ve mevcut kuralları sınar; bu gönderim öncesi kayıtta yeni ağ
-çelişkisi henüz kodla korunmuyordu. Sonraki uygulama kaydı aşağıdadır.
-Kullanıcı 14 Ekim'de gösterilen yedi dosya ve Türkçe mesajla commit/push
-işlemini onayladı; aynı yeni SHA CI gönderim akışında doğrulanır. Katalog
-uygulaması ve yeni ağ koruması için ayrı plan/onay gereksinimi sürer.
-
-**Dar ağ koruması (14 Ekim; kullanıcı onayıyla uygulandı):** Trendyol'da
-hedef/katalog modelinde bütün sözcük olarak açık 5G bulunurken aynı ürünün
-Mobil Bağlantı Hızı özelliği mevcut network_type ile 4G okunuyorsa,
-parsing.verify_model_network(model, value) identity hatası verir.
-4.5G/4,5G/LTE/4G LTE mevcut 4G yazımlarıdır; 5G+/5G NR/4G/5G desteği
-mevcut 5G tanımındadır. Özellik yok veya tanınmıyorsa yeni çıkarım yok;
-modelde 5G olmaması 4G kanıtı sayılmaz. Bu ek kontrol için keşif hedefinde
-network tanımı gerekmez; mevcut tanımlı network denetimi ayrıca sürer.
-
-Trendyol keşfinde model/kapasite sonrası ve adaydan önce; scraper'da
-model/kapasite/ürün kimliği sonrası ve satıcı fiyatından önce aynı ortak
-kontrol çağrılır. Ret fiyat gözlemi/Tükendi veya aday üretmez. Hata mesajı:
-"Ağ türü modelle eşleşmiyor (4G, beklenen 5G): Redmi Note 13 Pro 5G".
-fetch(listing) → PriceObservation, HTTP yolu, rapor/katalog/sözleşme ve
-şema korunur. Hepsiburada için yeni kimlik kuralı/RAM gruplaması eklenmedi.
-
-tests/fixtures/discovery/trendyol_network_examples.json, üç gerçek 14:10
-HTML'inin gereken ürün/teklif alanlarını kaynak SHA'larıyla tutar:
-797850359 çelişkili, 1066280208 ve 1097892676 doğru 5G kontrolleri.
-Eski kodda altı gerçek örnek testinden iki ret testi başarısız, dört doğru
-kontrol başarılıydı. Yeni kodda **34 regresyon geçti**: altı gerçek örnek,
-24 iki tüketicide türetilmiş ağ değeri, dört model sözcük sınırı/çıkarım
-koruması. Türetilmiş değerler test girdileridir, yeni canlı ürün kanıtı değil.
-Asıl üç tam HTML de HTTP'yi reddeden istemciyle yeniden okundu: sorunlu
-sayfa iki yolda identity, doğru iki gözlem ve aday bütün alanlarıyla aynı.
-Son grubun 23 ham dosyası/özgün rapor/config/katalog hashleri korundu.
-Bu kaynak/test doğrulamasıdır; siteye yeni canlı istek yapılmadı.
-
-Tam pytest **1751 passed/0 skipped/xfail**, 158,38 sn; Black 74 dosya temiz,
-Flake8 temiz. İki TEST_* adresi fiyat_takip_test; gerçek DATABASE_URL ve
-API_DATABASE_URL test sürecinden kaldırılıp sonunda geri alındı.
-Önceki Windows temp erişim nedeniyle yeni proje içi --basetemp izinli
-çalıştırıldı; cacheprovider kapatıldı. İki mevcut bağımlılık deprecation
-uyarısı var. Kanıtlar Git dışı ag_kimligi_koruma.json,
-ag_koruma_regresyon_once.xml/ag_koruma_regresyon_sonra.xml/
-ag_koruma_tam_testler.xml. İşlem verilen adım sonu gönderim yetkisiyle
-dosya listesi/Türkçe mesaj, commit/push ve aynı SHA CI ile kapatılır.
-Kaynak çelişkisi düzeltilmiş sayılmaz; TY797850359 aday kararı hâlâ
-uyuşmazlık, toplam 15 doğrulandı/7 uyuşmazlık/3 kanıt yetersiz değişmedi.
-
-**Eksik ağ/renk araştırması (14 Ekim; ilk ağ grubu tamamlandı):**
-önce HBCV00005PZUWE/Mor ve HBCV00005PZUWG/Yeşil, product_id=57 /
-Redmi Note 13 Pro 512 GB / 4G. Kayıtlı aynı-SKU JSON'larda ağ özelliği ve
-üretici model kodu yok; GTIN 6941812762899/6941812762776. Referanslar
-[Xiaomi Pro teknik sayfası](https://www.mi.com/tr/product/redmi-note-13-pro/specs/)
-ve [Xiaomi Pro 5G teknik sayfası](https://www.mi.com/tr/product/redmi-note-13-pro-5g/specs/).
-Resmî model özellikleri, belirli Hepsiburada SKU'suna eşleşme olmadan
-ağ kabul kanıtı sayılmaz. Yapılan GTIN/resmî domain araması kesin eşleşme
-vermedi; bütün olası kaynaklarda eşleşme bulunmadığı iddia edilmez.
-Mor'daki işlemci metni/tanıtım görseli, garanti veya eksik 5G ifadesi tek
-başına yeterli değildir. Kullanıcı Mor/512 GB/renk aynı, ağ alanı görünmüyor
-ve Yeşil satılamama mesajı sürüyor dedi; üretici model kodu açıklaması yapıldı.
-
-Eski 09 kontrolü parsing.py F78F... hashini bekler; 4eaf35e sonrası güncel
-AA348... için eski dosyalar korunarak ek_redmi_note_13_pro_4g_512gb/
-altında yeni BOM'lu ham_kayit.ps1 hazırlandı. Eski ham_scraper.py ve geçici
-katalog baytları aynı; yalnız iki beklenen bağlantı seçilir. Yeni PS kaynak
-rapor/asıl-geçici katalog/güncel parsing/HB/manuel araç/capture/runtime/
-discovery/yardımcı hashlerini denetler; yeni tarihli çıktı ve NoClobber,
-finally içinde CATALOG_PATH/konum/konsol geri alma sürer.
-AST/PowerShell sözdizimi/BOM/import/tam iki hedef/hashler ağsız doğrulandı;
-main/fetch çağrılmadı. Önceki 219 kanıt ve app/tests/config 92 dosya aynı;
-üretim/test/katalog/DB değişmedi, son 1751 test/0 atlama tekrarlanmadı.
-
-Kullanıcı 14 Ekim 17:05'te, tur/keşif yokken proje kökünde bir kez çalıştırdı:
-
-```powershell
-& .\artifacts\ml_oncesi_inceleme_20261013\ek_redmi_note_13_pro_4g_512gb\ham_kayit.ps1
-```
-
-Normal beklenen checked_listings=2/errors=[]; kimlikler
-hepsiburada_hbcv00005pzuwe ve hepsiburada_hbcv00005pzuwg. Her durumda
-başarılı gözlem+errors iki farklı kimliği kapsamalı; çıkış kodu/fiyat veya
-errors=[] ağ doğrulaması değildir. Gerçek çıktı checked=2/errors=[]/çıkış 0,
-iki doğru kimlik/product_id=57; ek_kontrol_20261014_170540_981/ altında
-yanitlar/<listing_id>/, çalışma kaydı ve kaynak_incelemesi.json var.
-Çalışma hashleri hazırlıkla uyumlu; önceki 219 kanıt/92 kaynak dosyası aynı.
-
-Mor'un kendi SKU/başlık/JSON-LD/varyantı 512 GB/Mor ve GTIN 6941812762899;
-üretici kodu/ağ özelliği yok. Güncel API'lerde yalnız teknolojikapinda/9,7/
-34.999 TL teklifi var, üretim seçimiyle eşleşiyor. Önceki dogabilisim/21.999
-TL teklifi güncel listede yok; kaynak teklif kümesi değişti, aynı satıcının
-fiyat artırdığı veya scraper hatası olduğu çıkarılmadı. Yeşil'in kendi
-başlığı 512 GB/Yeşil, GTIN 6941812762776; üretici kodu/ağ özelliği yok.
-API 200/boş satıcı listesi, isInStock=false ve kullanıcı satılamama teyidi
-Tükendi ile uyumlu. JSON-LD 0.00/InStock stok/fiyat kanıtı sayılmadı.
-İki kaynakta NewCondition etiketi var; garanti/ürün durumu veya tanıtım
-işlemci metni, kesin üretici sürüm eşleşmesinin yerine kullanılmadı.
-
-**İlk grubun kararı: iki kanıt yetersiz.** Adaylar katalog dışında kalır;
-araştırma tamamlandı, fiziksel ağ türü kesinleştirilmedi. Stoksuzluk geçerli;
-kanıt eksikliğinde yeni tekrar döngüsü yok. Önceki karar/ham dosyaları aynı,
-ek inceleme tarih/SKU/kaynak/gerekçeyle grup_sonucu.json içinde ayrı tutulur.
-Toplam 15 doğrulandı/7 uyuşmazlık/3 kanıt yetersiz, katalog 59/334/332 aynı.
-İlk ağ grubu c814f64 ile gönderildi, aynı SHA CI 38578897388 başarılı oldu.
-A1GTQO renk grubu kullanıcı devamından sonra ayrı yürütülür. Üretim/test/katalog değişmediği
-için tam pytest/Black/Flake8 tekrarlanmadı; ağsız yardımcı/kanıt kontrolleri
-bu araştırmanın doğrulamasıdır. Kod hatası bulunursa ayrı düzeltme planı.
-
-**Ek renk incelemesi (1b-2, 14 Ekim; araştırma tamam, gönderim onayı bekleniyor):**
-kullanıcı devam istedi. HBCV0000A1GTQO / product_id=51 / Redmi Note 13 Pro
-5G 256 GB için beklenen renk Mor. 13:29 kaydının kendi başlık/JSON-LD/ürün
-bağlamı renk içermiyor; variant_identity=None. Beyaz bilgisi başka SKU
-HBCV0000A1HQ64'e ait. MS.TEKNOd7131a24-2b4 gtin/barcode üretici barkodu
-sayılmaz. Genel üretici renk seçenekleri veya görsel tahmini kullanılmaz.
-Güncel kullanıcı yanıtında başlık ve satılamama mesajı var; renk bildirilmedi,
-bu yanıt renk teyidi olarak kaydedilmedi.
-
-ek_redmi_note_13_pro_5g_256gb_renk/ altında yalnız bu bağlantının geçici
-kataloğu ve mevcut manuel araç/capture yöntemini kullanan ham yardımcı hazır.
-Yeni PS UTF-8 BOM'lu; güncel parsing/HB/manuel araç/config/rapor/katalog/
-yardımcı için 10 hash koruması, NoClobber ve finally ortam geri alma var.
-AST/PowerShell sözdizimi/BOM/araçları yalnız yükleme/doğru kök/tam bir hedef
-ağsız doğrulandı; main/fetch çalıştırılmadı. Önceki 239 kanıt (ilk ek ağ
-grubu dahil) ve 92 kaynak dosyası aynı. Üretim/test/katalog/DB değişmedi.
-
-Kullanıcı 14 Ekim 17:48'te, tur/keşif yokken proje kökünde bir kez çalıştırdı:
-
-```powershell
-& .\artifacts\ml_oncesi_inceleme_20261013\ek_redmi_note_13_pro_5g_256gb_renk\ham_kayit.ps1
-```
-
-Normal beklenen checked_listings=1/errors=[] ve tek kimlik
-hepsiburada_hbcv0000a1gtqo. Başarılı sonuç ve errors birlikte bu kimliği
-kapsamalı; fiyat/çıkış kodu renk kabulü değildir. Kaynaklar yeni tarihli
-ek_kontrol_<zaman>/yanitlar/<listing_id>/ altında. Stoksuzluk geçerli;
-engelde/eksik renkte tekrar döngüsü yok. Aynı SKU'da beklenen renk için
-yeterli ve çelişkisiz kanıt varsa doğrulandı; açık farklı renk varsa
-uyuşmazlık; aksi hâlde kanıt yetersiz ve katalog dışında. Aday başka
-ürüne kendiliğinden taşınmaz.
-
-Gerçek çıktı ek_kontrol_20261014_174849_795/ altında checked=1/errors=[]/
-çıkış 0, beklenen tek kimlik ve product_id=51. Güncel kendi başlık/JSON-LD/
-ürün bağlamı 5G/256 GB içeriyor; renk alanı yok, variant_identity=None.
-Beyaz yine A1HQ64'e ait ve hedefe uygulanmadı. API 200/boş satıcı listesi,
-isInStock=false ve kullanıcı satılamama mesajı Tükendi ile uyumlu.
-Sıfır fiyatlı/InStock JSON-LD stok veya fiyat kanıtı sayılmadı.
-
-**Karar: kanıt yetersiz; HBCV0000A1GTQO katalog dışında kalır.** Araştırma
-tamamlandı; fiziksel renk tahmin edilmedi, yeni canlı tekrar yok. Kaynak/
-tarih/SKU/gerekçe grup_sonucu.json ve güncel kaynak_incelemesi.json içinde.
-Çalışma hashleri uyumlu, önceki 239 kanıt/92 kaynak ve yeni altı ham dosya
-aynı. Üretim/test/katalog değişmedi; tam yerel test paketi tekrarlanmadı.
-Üç eksik adayın ek araştırması bitti, toplam 15/7/3 ve katalog 59/334/332
-korundu. Dosya listesi/mesaj/doğrulama gösterilip ayrı açık kullanıcı onayı
-alınmadan commit/push yapılmaz; ardından aynı SHA CI kontrol edilir.
-Katalog seçimi/uygulaması sonraki ayrı adımdır; burada başlamadı.
-
-**Planlanan son bakım adımı (14 Ekim; uygulanmadı):** kullanıcı rutin yeni
-bağlantıların model/ağ/renk bilgilerini tek tek tarayıcıda kontrol etmek
-istemiyor. Bakımın 2–5 adımları sonrasında yeterli, kendi SKU'suna bağlı ve
-çelişkisiz kimlik kanıtlı adayların otomatik katalog kabulü yapılacak;
-eksik/çelişkili adaylar gerekçeyle dışarıda kalacak. Bir sürenin dolması
-kabul kanıtı değildir. Kullanıcı “1 gün” ile manuel incelemede harcanan
-zamanı kastettiğini netleştirdi; 24 saat bekleme/günlük tekrar görevi yok,
-mevcut haftalık keşif periyodu korunacak. Mevcut görev hâlâ dry-run
-rapor üretir, otomatik katalog yazma devreye alınmadı. Ayrıntılı kurallar/
-rapor/yazma/Git politikası ve gerçek örnek testleri için ayrı uygulama planı
-hazırlanacak; yalnız dry-run bayrağı kaldırılmayacak. Kaynak/kod hatası için
-hedefli canlı araştırma sürebilir; yeni adayların rutin manuel kabulü hedef
-akış değildir. Bu değişiklik API kapanışını yeniden açmaz; diğer bakım,
-ML veri yeterliliği ve sonraki işletim aşamalarını tamamlanmış saymaz.
-Commit/push her seferinde ayrı açık onay ister.
-
-### Doğrulanan 15 adayın seçili raporu (15–16 Ekim; tamamlandı)
-
-Bu tek seferlik bakım mevcut --apply-report yolunu kullanır; üretim kodunda
-yeni seçenek yoktur. Özgün 25 adaylı rapor ve inceleme kanıtları korunur.
-Git dışı ml_oncesi_inceleme_20261013/katalog_kabul_15/ altında seçili rapor,
-seçim/parmak izi kaydı, son liste, başlangıç/beklenen katalog kopyası ve
-korumalı uygulama yardımcısı vardır. results[].candidates dahil bütün aday
-listeleri yalnız doğrulanmış 15 kimliği içerir. 7 uyuşmazlık ve 3 kanıt
-yetersiz aday dışarıdadır. Özgün keşif zamanı/tarama uyarıları tarihsel
-bilgidir; ekleme/platform/renk özetleri seçilen 15 aday için yeniden üretilir.
-
-Kopyada 7 ağsız kontrol geçti: mevcut CLI ilkinde 15 bağlantı/sıfır ürün
-ekledi, ikinci kez hiçbir şey yazmadı; mevcut kayıtlar aynı, dışlananlar yok.
-Değiştirilmiş rapor, dışlanmış aday ekleme ve katalog hash uyuşmazlığı durdu.
-AST, sözleşme, tarih, LF/BOM, PowerShell sözdizimi ve -CheckOnly sonunda ortam/
-konum/konsol geri alma sınandı. CLI gerçek HTTP/DB/yeni keşif çağırmadı.
-Kanıt agisiz_dogrulama_20261015_094751_600948/ içinde. Doğrulama alt sürecinde
-betik ilkesi için geçici Process/Bypass kullanıldı; kalıcı ayar değiştirilmedi.
-
-Yardımcının tam akışı kopyada ayrıca iki kez sınandı; kilit meşgulken ve
-bozuk katalogda alt süreç başlamadı, ana süreç ortamı korundu. Bu ek 4
-kontrol ek_dogrulama_20261015_095131/ içinde; toplam 11 yerel kontrol geçti.
-Hazırlık sonrası tam pytest **1751 passed/0 skipped/xfail**, 158,32 sn;
-Black app/tests ve iki yerel yardımcıda 76 dosya, Flake8 temiz. İki mevcut
-bağımlılık uyarısı var. Yalnız TEST_* _test adresleri kullanıldı; gerçek DB
-ortam değişkenleri test alt sürecinden kaldırıldı. Tam kayıtlar
-tam_kontroller_20261015_095034/ altında. Katalog uygulamasından sonra aynı
-kontroller tekrarlandı; sonuç aşağıdaki uygulama kaydındadır.
-
-**Uygulama öncesi katalog 59 ürün/334 bağlantı/332 etkindi.** Hazırlanan fark
-yalnız 15 yeni etkin bağlantı ekler; beklenen 59/349/347. Son liste kullanıcıya
-gösterilip ayrıca kabul edilmeden uygulanmaz. Uygula yardımcısı yalnız
-kabulden sonra kullanıcı terminalinde çalıştırılır; önce ortak scrape.lock,
-kaynak/rapor/katalog/kod hashleri ve aday/ürün eşleşmeleri denetlenir.
-Katalog yalnız başlangıç veya tam beklenen sonuç durumundaysa devam edilir.
-Başka değişiklikte durur; beklenmeyen sonuçta otomatik geri alma yapılmaz.
-Önceki katalog ve stdout/stderr/sonuç yeni tarihli klasörde korunur.
-CATALOG_PATH yalnız işlem süresince ayarlanır, finally ile geri alınır.
-Uygulama siteye gitmez/DB yazmaz; sonraki normal fiyat turu yeni bağlantıları
-eşitler. Normal turdan sonra salt okunur kimlik/sonuç ve bağımsız SQL–API
-teyidi yapılır. Kimlik hatası adım kapanışını engeller; stoksuzluk geçerlidir.
-Tam pytest/Black/Flake8, README sayıları ve gönderim/aynı SHA CI kapanışı
-katalog uygulamasından sonra tamamlanır. Commit ve push ayrı açık onay ister.
-
-**15 Ekim 10:38:** kullanıcı son listedeki 15 bağlantıyı ayrıca kabul etti.
-Kaynak/rapor/katalog hashleri aynı; ortak kilit kontrol anında boştu.
-Kabul ayrı katalog_kabulu_20261015_1038.json kaydındadır; tarihsel hazırlık
-kayıtları yeniden yazılmadı. Gerçek uygulama kullanıcı terminalinde, toplama/
-keşif çalışmıyorken proje kökünde yapılır:
-
-```powershell
-& .\artifacts\ml_oncesi_inceleme_20261013\katalog_kabul_15\uygula.ps1
-```
-
-Beklenen çıkış 0, “Eklendi: 0 ürün, 15 sayfa” ve 59 ürün/349 bağlantı/347
-etkin doğrulamasıdır. Yardımcı uygulama_<zaman>/ altında log ve önceki katalog
-kopyası tutar. Kullanıcı çıktısından sonra gerçek fark doğrulanır. Sabah turu
-33 zaten tamamlandığından normal takvimde sonraki tur 22:00'dir; uygulama
-kendi başına fiyat toplamaz. Kullanıcı komutu 10:41'de çalıştırdı; sonuç aşağıda.
-
-**15 Ekim 10:41 uygulama sonucu:** uygulama_20261015_104152_141915/ altında
-çıkış 0/0 yeni ürün/15 bağlantı, boş stderr ve önceki katalog yedeği var.
-Gerçek katalog beklenen dosyayla birebir aynı: **59 ürün/349 bağlantı/347 etkin**.
-Eski 59 ürün ve 334 bağlantı değişmedi; dışlanan 10 aday eklenmedi. Yeni
-bağlantılar 8 mevcut ürüne bağlıdır. Marka toplamları Apple 174, Samsung 105,
-Xiaomi 66, POCO 4. katalog_dogrulama.json gerçek fark/hash/kimlik kontrolünü
-kaydeder; Git farkı yalnız 120 ek satırdır.
-
-Tur öncesi DB, fiyat_takip_api hesabıyla READ ONLY oturum/transaction içinde
-okundu: hâlâ 59/334/332, son completed tur 33; yeni 15 bağlantı henüz yok.
-Bu beklenen durumdur; DB'yi yalnız normal toplama eşitleyecek. Eski kimlikler
-başlangıç kataloğuyla aynı; db_tur_oncesi_salt_okunur.json başlangıç kanıtıdır.
-Normal takvimde sonraki 22:00 turu bitince yeni 15 kayıt/doğru 8 ürün/kontrol
-sonuçları ve eski kimliklerin korunması salt okunur doğrulanacak. Ardından
-mevcut SQL–API kontrolünü kullanıcı terminalinde çalıştıracak; eski API/ekran
-doğrulaması yeni bağlantıların bu teyidinin yerine geçmez. Bu kapanış bekliyor.
-
-Uygulama sonrası tam pytest **1751 passed/0 skipped/xfail**, 152,83 sn;
-Black app/tests 74 dosya temiz, Flake8 temiz. İki mevcut bağımlılık uyarısı
-var. Test sürecine yalnız TEST_* _test adresleri aktarıldı; gerçek DB adresleri
-kaldırıldı. Kayıt uygulama_sonrasi_kontroller_20261015_104255/ altında.
-README güncel katalog sayılarıyla yenilendi. Normal tur/SQL–API ve adım sonu
-gönderim/CI bu tarihli kayıtta bekleniyordu; doğal tur teyidi aşağıdadır.
-
-**16 Ekim normal tur teyidi:** tur 34 (15 Ekim 22:00) ve tur 35 (16 Ekim
-10:00) 347'şer sayfayla completed. Tur 34: 253 fiyat/93 Tükendi/1 identity;
-tur 35: 251 fiyat/95 Tükendi/1 identity. Yeni 15 sayfada her iki turda
-10 fiyat/5 Tükendi/0 hata. Tek hata eski HB08BCY51 S25/S25+ sayfasıdır;
-bu kabul grubuna ait değildir ve bakım Adım 3'te açık kalır.
-
-READ ONLY API hesabıyla DB ve katalog eşitliği 59/349/347 doğrulandı; eski
-59 ürün/334 bağlantının bütün alanları aynı, yeni 15 kimlik doğru 8 üründe,
-dışlanan 10 aday yok. İki turun bütün log sonuçları DB ile, 59'ar ürünün
-minimumları ve kapsam karşılaştırması ham kayıt hesabıyla eşleşti. Hata
-metni logda mevcut kural gereği 100 karakterdir; DB tam metni korur.
-8 üründe ilk yeni kapsam turu 34 karşılaştırılamıyor, tur 35 karşılaştırılabilir.
-Kanıt normal_tur_kontrolu_20261016_104451/dogrulama.json. Bu işlem DB'ye
-yazmadı; ek fiyat turu veya kaynak isteği yapılmadı.
-
-Bağımsız SQL–API kontrolü bu tur teyidi anında bekliyordu. Kullanıcı mevcut API'yi ayrı
-terminalde yalnız 127.0.0.1:8000 üzerinde, gerçek API okuma hesabıyla başlatır;
-ikinci terminalde tests/manual/api_ui_check.py --output-dir <yeni_klasor>
-çalıştırır. Araç dosyasının SHA'sı F65D36E18D977D2C1AC335F367135DDD42FF2654B2640C865C6B7AA8EE26268D;
-başlangıç hazırlığındakiyle aynı. Normal tur/keşif çalışmıyorken 59 ürün,
-status=verified, exit_code=0 ve sekiz nesnede değişmeyen önce/sonra parmak
-izleri beklenir. Kaynak değişirse inconclusive kesin başarı sayılmaz.
-
-**16 Ekim 11:14 bağımsız SQL–API sonucu:** kullanıcı aracı çalıştırdı;
-sql_api_20261016_111434_728/report.json içinde status=verified, exit_code=0.
-59 ürünün tamamı matched=true/differences=[], current run_id=35;
-endpoint_differences=[] ve changed_relations=[]. schema_migrations, platforms,
-products, listings, collection_runs, listing_checks, market_history ve
-product_run_prices nesnelerinin önce/sonra parmak izleri aynı. Hesap
-fiyat_takip_api, read_only=true. Rapor SHA
-250f23e117f2492b97e9ae77eba6e4a58dde428697e5033030dfd1769dbc74b5.
-Araç ve katalog hashleri hazırlık/uygulamayla eşleşti. Böylece bu 15 bağlantının
-katalog → toplama → DB → API akışı teknik olarak doğrulandı. Yeni ekran
-incelemesi veya pazaryeri isteği yapılmadı. Eski S25/S25+ vakası ayrı açık.
-Bu teknik kontrol anında gönderim bekleniyordu. Kullanıcının açık onayıyla
-yalnız katalog/README/plan/teknik rehber 96d42a6 ile gönderildi; aynı SHA
-CI 38873185491 completed/success (pytest/Black/Flake8 başarılı). Yerel
-kanıtlar Git dışında, 2. bakım adımı kapandı.
-
-### S25/S25+ tek sayfalık kaynak kontrolü (bakım 3; 16 Ekim hazırlığı)
-
-Hedef hepsiburada_hbcv00008bcy51, product_id=58 / samsung_galaxy_s25_512gb.
-Mevcut tur 30–35 kayıtlarında S25+ başlığı identity hatasıdır; fiyat NULL.
-Bu, güncel ham sayfa kanıtının yerine geçmez. Git dışındaki
-artifacts/ml_oncesi_inceleme_20261013/bakim_03_20261016/ geçici kataloğu
-mevcut ürün/platform kaydını ve yalnız hedef bağlantıyı içerir. Kullanıcı,
-toplama/keşif çalışmıyorken proje kökünde şu komutu çalıştırır:
-
-```powershell
-& .\artifacts\ml_oncesi_inceleme_20261013\bakim_03_20261016\ham_kayit.ps1
-```
-
-Yardımcı 52 girdi parmak izini doğrular; farklı katalog/kod/yardımcıda
-başlamaz. Mevcut live_scraper_check.py ve live_discovery_check.py yanıt
-kaydetme yöntemi kullanılır; aynı HTTP ve ortak tarama kilidi korunur.
-CATALOG_PATH yalnız süreçte geçici kataloğa alınır ve finally içinde önceki
-değerine döner. BOM'lu PowerShell yeni s25_kontrol_<zaman>/ klasörüne
-scraper.json, stderr.log, calisma.json ve yanitlar/<listing_id>/ ham
-baytlarını yazar; önceki kaynaklar değişmez, katalog/DB'ye yazılmaz.
-
-Başarılı sonuçlarla errors birlikte hedef kimliği tam bir kez kapsamalı.
-S25+ sürüyorsa checked_listings=0, platform_results=[] ve aynı kimlikli
-tek model uyuşmazlığı beklenir; aracın 0 çıkışı ürün kabulü değildir.
-Kilit doluysa çıkış 3, boş/eksik sonuç kesin kaynak kararı sayılmaz.
-Kendi SKU'sunun başlığı/JSON-LD'si incelenmeden sayfa pasifleştirilmez.
-Kaynak S25+ doğrulanırsa tek active=false farkı ayrıca kullanıcı kabulüne
-sunulur. Ürün/geçmiş korunur; S25+ fiyatı S25'e taşınmaz, ürün Tükendi
-sayılmaz. Normal tur eşitlemesi ve SQL–API doğrulaması sonra gelir.
-
-**16 Ekim 13:38 kaynak sonucu:** kullanıcı komutu çalıştırdı; tek GET
-yanıtında aynı HBCV00008BCY51 için H1, JSON-LD Product ve ana ürün verisi
-S25+ 512 GB. Ana productId HBC00007MIDNM. Tek identity hatasıyla
-checked=0/errors=1/çıkış 0 beklenen tanılama; bu kayıt için mevcut koruma
-doğru çalıştı. HTML SHA
-a41a019250fd394442fd4bdb3751e23e9e88a86f9122fa0b765583d8818d5478.
-Girdi parmak izleri aynı; ağsız tam scraper replay aynı hatayı üretip
-satıcı/fiyat isteğine geçmedi. Ajan yeni site isteği yapmadı.
-
-Git dışı s25_degerlendirme_20261016_134043 kayıtları yalnız HB08BCY51'in
-active=false önizlemesini içerir; ürün58 etkin, geçmiş/kimlik ve diğer
-alanlar aynı. Kabul edilirse 59/349/346; şu an gerçek katalog 59/349/347.
-Bu önizleme o anda uygulanmamıştı. **16 Ekim kullanıcının son kararı:**
-active=false kaydı yerine bağlantının katalogdan doğrudan kaldırılması
-istendi; yalnız HB08BCY51 çıkarıldı. Şimdiki dosya59 ürün/348 bağlantı/
-346 etkin; ürün58 etkin ve geçmiş aynı, bu ürünün etkin takip sayfası yok.
-
-Mevcut catalog_sync davranışı dosyada bulunmayan bağlantıyı DB'den silmez;
-sonraki normal turda active=false yapar. Dolayısıyla turdan sonra DB'de
-349 toplam/346 etkin, katalogda348 toplam/346 etkin beklenir. Ajan gerçek
-DB'ye yazmadı. Salt okunur DB görüntüsüne karşı ağsız plan_sync hesabı yalnız
-hedef kaydın pasifleştirilmesini gösterdi; yeni ürün/bağlantı/başka alan farkı
-yok. Kimlik/geçmiş taşınmaz, yeni manuel fiyat turu başlatılmaz. Güncel
-katalog SHA3b1615cf6ef186ad1ab87e5df3874ed5189b08ef323aafc804b7bc5da879a94a;
-önceki/beklenen dosyalar ve karar Git dışı katalogdan_cikarma_20261016 içinde.
-Yerel kontroller tamam: son tam paket1751 geçti/0 atlama/xfail, Black74 ve
-Flake8 temiz. İlk koşudaki tek AppTest3sn süre aşımı aynı test ve tam paket
-kod/süre sınırı değişmeden yeniden çalıştırılarak kontrol edildi; hedefli1
-ve tam1751 geçti. İlk kayıt ve başarılı tekrarlar ayrı korundu. Testler
-yalnız fiyat_takip_test üzerinde, gerçek DB ortam değişkenleri çıkarılarak
-çalıştı; iki mevcut Starlette/AnyIO uyarısı kaldı.
-
-Değişiklik sonrası gerçek DB'de katalog alanları ve hedefin34 geçmiş
-kontrolü salt okunur tekrar karşılaştırıldı, aynı. Ağsız ikinci eşitleme
-planı değişiklik üretmiyor. Gerçek normal tur/SQL–API teyidi hâlâ bekliyor.
-Bu3.1 yerel kapanışında erişim/ağ ve grafik başlamamıştı;3.2 sonucu aşağıda.
-Eski ham kontrol yardımcıları
-eski katalog hash'ini bekler; korumaları kaldırılarak tekrar çalıştırılmamalı.
-
-### Erişim ve ağ gözlemi (bakım 3.2; 16 Ekim tamamlandı)
-
-Git dışı bakim_03_20261016/erisim_ag_20261016/sonuc.json, salt okunur DB
-sonuçlarını kayıtlı logların SHA'larıyla birleştirir. HB0DHXKTI tur28'de
-www3.hepsiburada.com/ için invalid_host verdi; sonraki altı normal
-tamamlanmış tur29–34 ve ek35'te aynı sayfa22.999 TL teklif/0 hata.
-Sonuç: neden/yönlendirme zinciri kesinleşmedi, yedi turda tekrarlamadı.
-İzinli host yalnız www.hepsiburada.com; ayar veya HTTP kodu değiştirilmedi.
-
-Tur16–35'in20 tamamlanmış zamanlanmış turunda network/tekrar logu yok,
-tur notları NULL, kayıtlı kalan network hatası yok. Canlı ikinci okuma
-gözlemi oluşmadı. Son tam paketin XML'indeki18 ilgili PostgreSQL sınaması
-başarılı; yeni test koşusu gerekmedi, üretim kodu aynı. Otomatik sınama
-kanıtı canlı gözlem yerine geçmez. Kasıtlı kesinti yapılmadı; yeni bir
-arıza oluşmasını beklemek bu incelemenin kapanış şartı değil.
-
-Bu kayıt kontrolü yeni site isteği veya DB yazması yapmaz. 3.3 grafik
-sonucu aşağıdadır; katalogdan çıkarma sonrası normal tur/SQL–API teyidi ayrı
-bekliyor; bütün3.adım veya gönderim kapanmış sayılmaz.
-
-### Grafik başlangıç uyarısı (bakım 3.3; 16 Ekim tamamlandı)
-
-8502 ağsız önizlemesinde kullanıcı dört Infinite extent uyarısını yeniden
-gördü. Streamlit1.65.0 `_marshall_chart_data`, satırları Altair tanımından
-çıkarıp ayrı Arrow yüküne taşır; ön yüz grafik motorunu satırlar yüklenmeden
-başlatır. Kurulu motorla aynı Vega6.4.0 üzerinde boş başlangıç dört sonsuz
-eksen uyarısı üretti; satırlar eklendiğinde uyarı oluşmadı.
-
-`app/ui/presentation.py::price_chart` mevcut satırlardan sonlu eksen
-sınırları hazırlar. Tarih sınırı UTC milisaniye sabit ifadesidir; tek
-tarihte derleyicinin iki sınırı tek elemana indirmesi böyle önlenir.
-Fiyat sınırları NULL olmayan fiyatlardan gelir; nice=True eski yuvarlamayı
-korur. Satırlar, eksik fiyatlar, segmentler, zaman/kapsam boşlukları,
-etkileşim ve iki ayrı kaynak değiştirilmez. Ekran tamamen fiyatsız/boş
-seriyi zaten çizmez; sıfır fiyat veya sahte gözlem eklenmez. Konsol uyarısı
-susturulmadı, üretim bağımlılığı eklenmedi.
-
-`tests/test_ui.py` içindeki altı yeni regresyon gerçek Arrow ayırımında
-tek nokta/NULL uçlar/boşluk durumlarında eksenlerin satırlardan önce hazır
-olmasını ve satırların aynen taşınmasını sınar. `tests/ui_samples.py`
-önizlemesine “Tek fiyat gözlemi” eklendi. Ağsız Vega matrisinde 30 çizimde
-boş başlangıç ve iki veri yenilemesi temiz; 20 eski/yeni grafiğin eksenleri
-ve çizim yolları aynı. Dört boş/fiyatsız durum ekran koşuluyla atlanır.
-Tanılama aracı vl-convert1.9.0/Vega-Lite6.4 ailesindedir; kurulu ön yüzün
-Vega-Lite6.4.3 derleyicisiyle aynı olduğu iddia edilmez. Tarayıcısız
-ortamın window olay kaynağı uyarıları ayrı kaydedilir.
-
-Yerel kanıt `bakim_03_20261016/grafik_20261016/` altında. Son tam pytest
-**1758 geçti/0 atlama/xfail** (156,10sn; 434 PostgreSQL); yalnız test DB'si,
-gerçek DB adresleri test sürecinden çıkarıldı. Black'ın bulduğu iki uzun
-satır biçimlendirildikten sonra Black74/Flake8 temiz. İki önceki bağımlılık
-uyarısı aynı; ilk biçim hatası ve son kontroller ayrı saklanır. Düzeltme
-sonrası ilk kullanıcı F5 görüntüsünde dört gruplanmış Infinite extent
-satırı sürüyor; her sayaç2. Tarayıcı kontrolü geçmedi. Açık önizleme süreci
-değişiklikten önce15:16'da başladı; yeni Python sürecinde güncel sonlu
-eksenler/12 senaryo doğrulandı. Açık sunucunun yüklü modülünü ayırmak için
-yalnız8502 önizlemesinin kullanıcı tarafından yeniden başlatılması ve
-temiz konsol teyidi bekleniyor; önbellek nedeni henüz kanıtlanmadı. Yeni
-kod değişmedi.
-
-16 Ekim15:52'de kullanıcı önizlemeyi yeniden başlattıktan sonra yeni
-“Tek fiyat gözlemi” seçeneğinin bulunduğunu ve konsolda uyarı oluşmadığını
-bildirdi. İlk güncel önizleme konsol teyidi geçti; önceki F5 başarısızlığı
-ayrı kanıt olarak tutulur. Dosya izleyicisinin neden yenilemediği henüz
-kesinleşmedi; ilave kod değişmedi. Dört veri durumu, dört aralık/ürün
-değişimi/yenilemeler ve gerçek ekran teyidi bekliyor. Yerel kanıt
-browser_restart_no_warning.json. Ardından16:06'da kullanıcı tek fiyat
-senaryosunda9 Ekim kendi/8 Ekim Cimri noktalarını, fiyatsız durumda kendi
-geçmişinin fiyat bulunmadığı açıklamasını, kısmi kapsamın elmas/boşluklarını
-ve Cimri yokluğunda kendi grafiği/Cimri yokluğu açıklamasını teyit etti.
-Fiyatsız Cimri açıklaması ve bu geçişlerin konsol sonucu ayrıca yazılmadı;
-raporda varsayılmadı. Aralık/ürün/elle yenileme ve iki otomatik yenileme
-teyidi isteniyor. Kanıt browser_scenarios_user.json; gerçek ekran ayrı
-bekliyor. Tarihsel10 Ekim ekran kaydı bu düzeltmenin doğrulaması sayılmaz.
-
-Kullanıcı kalan kontrolleri ajana devretti. 16 Ekim'de erişilebilir hale
-gelen dahili tarayıcıdan çalışan8502 önizlemesinde iki grafik × dört aralık
-(7/30/90/366 gün) doğrulandı. Kendi serisi altı fiyat noktası; Cimri7 gün
-beş, diğer aralıklar sekiz nokta. SVG etiketleri ve çizgi yolları kaydedildi;
-NULL çizilmedi, kısmi kapsamın iki elması ve çizgi boşlukları korundu.
-Normal boşluklu, tek fiyatlı, tamamen fiyatsız, kısmi, Cimri'siz ve yalnız
-Cimri'li altı durum geçti; fiyatsız Cimri açıklaması da ayrıca görüldü.
-Ekrana uygulanmayan otomasyon seçimleri başarı sayılmadı.
-
-Telefon/gün tercihleri korundu. Girdisiz otomatik cevaplar16:17:40 →
-16:18:10 → 16:18:40; iki ardışık30sn aralıkta grafikler aynı, warn/error
-günlüğü boş. Daha sonra elle yenileme16:19:10 → 16:19:29 ilerledi.
-Varsayılan ilk telefon/30–366 gün/normal senaryo geri alındı. Üretim/test
-kodu değişmedi; tam paket tekrarlanmadı. Yerel kanıtlar browser_preview_agent.json,
-browser_preview_result.json ve browser_preview_agent.jpg. Yardımcı PNG
-indirme olayı araçta zaman aşımına uğradı; PNG başarısı iddia edilmez,
-ekran görüntüsü JPEG ile kaydedildi. Gerçek API8000/UI8501 kapalı bulundu;
-üç temsilciyle gerçek ekran ve normal tur/SQL–API teyidi hâlâ bekliyor.
-Bu önizleme kapanışında gerçek ekran henüz bekliyordu; gerçek sonuç aşağıdadır.
-
-Kullanıcı API/UI'yi başlattıktan sonra gerçek8501 ekranında iPhone16 128GB,
-iPhone16 256GB ve GalaxyS25 512GB için7/30/90/366 gün seçimleri sınandı.
-12 aralık ve üç30/366 varsayılan görünümde SVG fiyatları, İstanbul
-zamanları, kapsam şekilleri ve çizgi parçaları API referansıyla eşleşti.
-Karşılaştırma betiği sunum yardımcılarını kullanmaz; bu çalışma tam bağımsız
-SQL–API denetiminin yerine geçmez. 128GB72.399 TL teklif;256GB6/6 stok yok;
-S25 fiyat doğrulanamadı durumunda. S25'in79.699 TL/13 Ekim eski teklifi
-ayrı bölümde, güncel teklif veya Tükendi yerine kullanılmıyor.
-
-Kendi30gün/Cimri366gün fiyat–NULL sayıları sırasıyla128GB32–2/365–0,
-256GB16–18/262–103,S2528–6/Cimri yok. 256GB7gün kendi serisindeki14 NULL
-grafik yerine açıklama üretir. Eksik fiyat, kapsam ve zaman boşlukları
-üzerinden çizgi geçmedi; sahte sıfır/ek nokta yok. Gerçek otomatik cevaplar
-17:06:47 →17:07:17 →17:07:47 (30/30sn);elle17:08:17 →17:08:29.
-Tercihler korundu, konsolda sıfır warn/error, test verisi uyarısı yok.
-
-Gerçek DB, fiyat_takip_api hesabıyla REPEATABLE READ READ ONLY okunarak
-sekiz nesnenin önce/sonra satır sayısı ve SHA'ları karşılaştırıldı: aynı.
-35 tur/11.252 kontrol/2.007 ürün-tur/20.805 Cimri kaydı korunur. Test/üretim
-kodu son1758/0 atlama koşusuyla aynı; tam test tekrarlanmadı. Ajan oturumu
-iPhone16 128GB/30–366 günle bırakıldı; kullanıcı süreçleri kapatılmadı.
-Kanıtlar grafik_20261016/real_reference_before.json, real_reference_after.json,
-real_browser_agent.json, real_browser_result.json, real_iphone16_128_graphs.jpg
-ve real_s25_historical_offer.jpg. **3.3 tamamlandı; normal tur eşitlemesi,
-bağımsız SQL–API ve bütün bakım3 gönderim kapanışı henüz bekliyor.**
-
-19 Ekim'de gönderilecek altı dosyayla ayrı oluşturulan ağaçta tam paket
-yeniden doğrulandı:1758 geçti/0 atlama/xfail,174,08sn; Black/Flake8
-temiz. Yalnız test veritabanları kullanıldı; gerçek DB adresleri test
-sürecinden çıkarıldı. Sonrasında yalnız bu doğrulama kaydı belgelere eklendi.
-
-**19 Ekim gönderim kararı:** kullanıcı tamamlanan3.3 grafik alt adımının
-ayrı commit/push ile gönderilmesini istedi. Bu gönderim grafik kodu,
-testleri ve ilgili belgelerle sınırlıdır. S25 katalog değişikliği ve
-3.1/3.2 kayıtları sonraki kapanışta gönderilecek. Beklenen normal turlar
-artık gerçekleşti; loglarda tur36 ve40 çıkış0 ile tamam. Bağlantının
-DB etkinliği/geçmişi ve bağımsız SQL–API denetimi henüz doğrulanmadı;
-bunlar3.1/3.4 kapanışında kalır. Bütün bakım3 tamamlanmış sayılmaz.
-
-**19 Ekim3.3 gönderimi tamamlandı:** altı dosyanın yalnız grafik kapsamı
-7a2d4ec ile origin/main'e gönderildi. Aynı SHA için CI39209741592
-completed/success; yerel1758 test/0 atlama ve Black/Flake8 temiz.
-S25 katalog değişikliği, erişim kayıtları ve bütün bakım3 kapanışı ayrı
-çalışma değişiklikleri olarak korundu; DB/bağımsız SQL–API teyidi açık.
-
-### Adım 3.4 kapanış doğrulaması (19 Ekim; teknik çalışma tamam)
-
-Kullanıcı 3.4 planını onayladı. Ajan fiyat_takip_api hesabıyla açık
-REPEATABLE READ READ ONLY işlemlerinde inceleme yaptı; üretim DB'sine
-yazılmadı. Kabul edilmiş katalog SHA 3b1615cf… ile aynı. Katalog 59 ürün/
-348 bağlantı/346 etkin; DB 59 ürün/349 bağlantı/346 etkin. Yalnız
-hepsiburada_hbcv00008bcy51 active=false; ürün 58 etkin/0 etkin sayfa.
-Önceki platform/ürün/bağlantı alanları bu tek etkinlik farkı dışında aynı.
-Hedefin 34 tarihsel kontrolü tüm alanlarıyla korundu,36'dan sonra 0 kayıt.
-Saf plan_sync değişiklik üretmiyor; sync-catalog veya yeni tur çalıştırılmadı.
-
-| Normal tur | Fiyat | Tükendi | Hata | Doğal ikinci okuma |
-|---|---:|---:|---:|---|
-| 36 | 249 | 97 | 0 | yok |
-| 37 | 247 | 98 | 1 invalid_host | 55/55 düzeldi |
-| 38 | 243 | 102 | 1 invalid_host | yok |
-| 39 | 243 | 103 | 0 | yok |
-| 40 | 240 | 106 | 0 | yok |
-
-Beş normal turun 346'şar tekil kimliği, katalog parmak izi, fiyat/satıcı/stok
-veya hata sonuçları, özet ve çıkış kodları log–DB karşılaştırmasında aynı.
-S25 bağlantısı bu planların dışında. 37'nin ilk 55 network hatası, aynı
-55 kimlikli tur sonu okumada uygun fiyat/stok sonucuna döndü; 0 network
-hatası kaldı. Kasıtlı kesinti oluşturulmadı. Eski DHXKTI www3 hedefi bu
-beş turda 22.999 TL teklif/0 hata. 37'nin tek hatası PZUWB, 38'inki 9Z3XZZ
-sayfalarında www3 invalid_host; farklı SKU'lar ve sonraki 39/40 hatasız.
-Yönlendirme nedeni bilinmiyor; host koruması korunuyor, düzeltildi denmiyor.
-
-16 Ekim gerçek ekran başlangıç kanıtındaki önceki 11.252 listing_checks,
-2.007 ürün-tur özeti,35 tur ve 20.805 Cimri satırının parmak izleri aynı.
-Şema/platform/ürün kayıtları aynı; bağlantılarda yalnız beklenen pasiflik
-farkı var. 19 Ekim salt okunur incelemenin önce/sonra 8 nesnesi de aynı.
-
-Kullanıcı yerel API'yi kendi terminalinde başlattı; mevcut bağımsız
-tests/manual/api_ui_check.py aracını 09:38'de yeni çıktı klasörüyle çalıştırdı.
-Rapor verified/exit 0; 59 ürünün hepsi matched, uç nokta/ürün farkı yok,
-changed_relations=[] ve 8 nesnenin önce/sonra parmak izi aynı. Okuma hesabı
-fiyat_takip_api/read_only=true; araç/katalog kanıtları kaydedildi.
-
-S25 API yanıtı ayrıca mevcut istemciyle okundu: product.active=true,
-state=unverified, best_offer=null. Son ürün turu35'teki kimlik hatası,
-yeni genel tur 40 ile karıştırılmadı. 29. turun 79.699 TL eski teklifi
-last_successful_offer içinde, listing_active=false olarak korunuyor;
-güncel teklif veya Tükendi sayılmıyor. Grafik matrisi tekrar çalıştırılmadı.
-
-Son tam paket 1758 geçti/0 atlama/xfail (165,084sn); Black/Flake8 temiz.
-Yalnız iki izinli _test hesabı kullanıldı; gerçek DB adresleri test
-sürecinden çıkarıldı. 434 PostgreSQL sınaması ve önceki iki bağımlılık
-uyarısı var. Üretim/test/katalog parmak izleri kontroller boyunca aynı;
-sonrasında yalnız belgeler güncellendi. Grafik 3.3 ayrı 7a2d4ec ile gönderildi,
-aynı SHA CI 39209741592 başarılı. Kalan beş dosya katalog/README/plan/
-teknik rehber/AGENTS; commit ve push için ayrı onay ve yeni SHA CI bekleniyor.
-
-Git dışı kanıt kökü artifacts/bakim_3_4_20261019/: db_20261019_093605_783046/
-sonuc.json, sql_api_20261019_093838_877/report.json, s25_api_sonucu.json,
-kontroller/sonuc.json ve kapanis_ozeti.json. Önceki kanıtlar değiştirilmedi.
-Bu teknik kapanış Cimri, ML yeterlilik veya otomatik aday kabulünü başlatmaz.
-
-**19 Ekim gönderim kapanışı:** kullanıcı beş dosya ve Türkçe mesaj
-gösterildikten sonra “tamamdır commit push at” diyerek iki işlemi de
-açıkça istedi. Yalnız AGENTS.md, README.md, config/catalog.json,
-docs/teknik.md ve proje_plani.md b4d223f ile origin/main'e gönderildi.
-Yazar yalnız Emir-Ars; yapay zekâ imzası yok. Aynı SHA için
-[CI 39211825501](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/39211825501)
-completed/success; testler, Black ve Flake8 başarılı. Bakım 3.1–3.4
-tamamlandı ve bu adımda duruldu. Git dışı ci_sonucu.json ve
-gonderim_kaydi.json gönderim kanıtlarıdır. Cimri/ML yeterliliği/otomatik
-güvenli kabul sonraki adımlarda kalır; bunlar için genel gönderim yetkisi yok.
-
-### Cimri kullanım değerlendirmesi (bakım 4.1; 19 Ekim)
-
-19 Ekim 2026'da [kullanım koşulları](https://www.cimri.com/kullanim-kosullari)
-(2.2, 3.1, 4.12) ve [kullanıcı sözleşmesi](https://www.cimri.com/kullanici-sozlesmesi)
-(5.6, 7.1) web aracıyla incelendi. İlk belgede kullanım amacı, kopyalama/işleme
-ve başka mecrada kullanım sınırları var. İkinci belge üyelik sözleşmesidir;
-kullanıcının üyelik durumu araştırılmadı, üyeliğe bağlı hükümler otomatik
-genellenmedi. Eğitim/staj amacı tek başına izin kanıtı sayılmadı.
-
-| Projedeki amaç | Teknik inceleme sonucu | Uygun kullanım doğrulandı mı? |
-|---|---|---|
-| Yeni geçmişi indirme ve saklama | Kısıtlı | Hayır |
-| Mevcut geçmişi yerel uygulamada gösterme | Belirsiz | Hayır |
-| ML eğitiminde kullanma | Belirsiz | Hayır |
-
-Bu, kesin hukuki izin kararı değildir. İncelenen belgelerden projeye uygun
-kullanım dayanağı doğrulanamadı. Kullanıcının onayladığı bakım 4 planındaki
-koşul gereği yeni alım/aktarım aşamasına geçilmez. Mevcut veri ve gösterim
-davranışı korundu; ML eğitimi başlatılmadı. İki ürünün kimliği kullanım
-değerlendirmesinden ayrı araştırıldı; 4.2 sonucu sonraki bölümdedir.
-
-29 Eylül araştırmasında kaydedilmiş kısıt başlıkları güncel metinde de var;
-eski tam metin kopyası bulunmadığından birebir metin karşılaştırması yapılmadı.
-Belgelerin sürüm/yayın tarihi saptanmadı; verilen tarih erişim tarihidir.
-Kayıt, kaynak adreslerini ve değerlendirmeyi içerir; tam HTML arşivi değildir.
-Git dışı kanıt: artifacts/bakim_4_20261019/41_kullanim/sonuc.json.
-
-57 ürün/20.805 kayıt/553 eksik fiyat, 3.4'ün önceki salt okunur doğrulamasının
-başlangıç sayılarıdır. 4.1'de DB sorgusu veya fiyat geçmişi isteği yapılmadı;
-eşleştirme, katalog, kod, şema ve zamanlayıcı değişmedi. Yalnız belgeler
-güncellendiğinden tam test paketi tekrarlanmadı. 4.1'de duruldu; bakım 4'ün
-tamamı henüz bitmedi. Kullanıcı 4.1 için commit ve pushu ayrıca açıkça istedi;
-üç belge 14d70b2 ile gönderildi, aynı SHA
-[CI39216850461](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/39216850461)
-başarılı. Onaylı kalan akış proje planı Bölüm 9'dadır.
-
-### İki eksik Cimri kimliği (bakım 4.2; 19 Ekim)
-
-Onaylı dar planla önce 8 Ekim araştırmaları ve 57 eşleştirme karşılaştırıldı;
-ardından S25 ve Redmi için üçer Cimri alan adı sınırlı arama yapıldı. Her
-üründe iki farklı doğrudan aday incelendi. Sonuçlar:
-
-| Hedef | Aday kararı | Hedefin sonucu |
-|---|---|---|
-| Galaxy S25 512 GB, ürün 58 | [512 GB aday](https://www.cimri.com/cep-telefonlari/en-ucuz-samsung-galaxy-s25-plus-512gb-12gb-ram-fiyatlari,a2445851637) Plus; [normal S25](https://www.cimri.com/cep-telefonlari/en-ucuz-samsung-galaxy-s25-256gb-12gb-ram-fiyatlari,a2430825219) 256 GB, görünen seçenekleri 128/256. İkisi uyuşmazlık. | **Kanıt yetersiz** |
-| Redmi Note 14 Pro 5G 256 GB, ürün 59 | [5G aday](https://www.cimri.com/cep-telefonlari/en-ucuz-xiaomi-redmi-note-14-pro-5g-fiyatlari,a2428710429) başlık ve depolama tablosunda 512 GB; [256 GB aday](https://www.cimri.com/cep-telefonlari/en-ucuz-xiaomi-redmi-note-14-pro-fiyatlari,a2372365369) kendi ağ tablosunda 4G. İkisi uyuşmazlık. | **Kanıt yetersiz** |
-
-512 GB Redmi'nin karşılaştırma yazısındaki 256 ifadesi hedef kimlik kanıtı
-sayılmadı. Araştırmada sonuç bulunmaması, hedefin Cimri'de bulunmadığını
-kanıtlamaz. Dört aday için marka/başlık ve ilgili kendi alanları okundu;
-URL kimliği bağımsız gömülü ürün kimliği doğrulaması sayılmadı. Doğru hedef
-olmadığından eşleştirme önerisi hazırlanmadı; mevcut 57 eşleştirme korundu.
-
-Kaynak erişim tarihi 19 Ekim 2026. Web aracı 512 GB Redmi metnini üç gün önce,
-diğer üç sayfayı aynı gün taranmış gösterdi. Tam HTML/gömülü JSON arşivi
-yok; doğrulanan ham HTML veya parser replay iddiası yok. Git dışı kayıtlar:
-artifacts/bakim_4_20261019/42_kimlik/ altında baslangic.json, arastirma.json,
-inceleme.md ve dogrulama.json. Önceki kanıtlar değişmedi.
-
-4.1 kullanım koşulu ve doğru kimlik koşulu sağlanmadı. Yeni geçmiş alımı,
-aktarım, geçmiş API isteği ve DB sorgusu/yazımı yapılmadı. Katalog ve kod
-aynı; üretim kodunda yeni hata kanıtlanmadı. Yalnız belgeler için tam test
-paketi tekrarlanmadı; ağsız kayıt sayımı, mevcut eşleştirme doğrulayıcısı ve
-git diff --check kullanıldı. 4.2 tamamlandı; kullanıcı 4.3 öncesinde bu
-alt adım için commit ve pushu ayrıca açıkça istedi. Üç belge 0bc26a6 ile
-origin/main'e gönderildi; aynı SHA
-[CI39223564598](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/39223564598)
-başarılı. Git dışı 42_kimlik/gonderim_kaydi.json sonucu saklar. 4.3'ün
-sonraki karar kaydı aşağıdadır.
-
-### Cimri koşullu alım kararı (bakım 4.3; 19 Ekim)
-
-Onaylı kapanış planıyla 4.1/4.2 kanıtları ve başarılı gönderim kayıtları
-karşılaştırıldı. Kullanım uygunluğu ve doğru hedef kimlikleri doğrulanmadı;
-4.3 alım/aktarım kararı **koşullar sağlanmadığı için uygulanmadı**.
-
-| Ürün | Eşleştirme | Geçmiş alımı | Aktarım |
-|---|---|---|---|
-| Galaxy S25 512 GB, ürün 58 | Kanıt yetersiz | Yapılmadı | Yapılmadı |
-| Redmi Note 14 Pro 5G 256 GB, ürün 59 | Kanıt yetersiz | Yapılmadı | Yapılmadı |
-
-Önerilen/uygulanan yeni eşleştirme 0; bu adımda aktarılan yeni geçmiş satırı 0.
-Mevcut 57 eşleştirme ve katalog 59/348/346 aynı. Yeni araştırma, capture,
-import/dry-run, DB okuması/yazımı veya API işlemi yapılmadı. 20.805 kayıt/
-553 NULL, bakım 3.4'ün 19 Ekim 09:36 tarihli önceki salt okunur doğrulamasının
-referansıdır; yeni DB doğrulaması olarak sunulmaz. Mevcut veriye işlem
-uygulanmadı; gösterim, sözleşmeler, şema ve zamanlayıcılar korundu.
-
-Git dışı artifacts/bakim_4_20261019/43_kapanis/ altında başlangıç parmak
-izleri, iki ürünün ayrı sonuçları ve ağsız doğrulama kaydı tutulur. Eski
-kanıtlar değişmedi. Yalnız belge değiştiği için tam pytest, Black, Flake8
-ve SQL–API yerelde tekrarlanmadı; JSON/UTF-8, belge bağlantıları, kayıt
-tutarlılığı, dosya parmak izleri ve git diff --check denetlendi.
-
-**Bakım 4 teknik incelemesi tamam.** Kullanıcı bu kapanış için commit ve
-pushu açıkça istedi; aynı gönderilen SHA'nın CI sonucu Git dışı
-43_kapanis/gonderim_kaydi.json ve yerel devir notunda izlenir.
-Kullanım belirsizliği ve iki eşleştirme eksikliği sürer; giderilmiş veya
-veri alımı başarılı sayılmadı. Aynı commit'in CI sonucu başarılı olunca
-bütün bakım 4 kapanır; sonraki Git işlemleri ayrı açık onay ister.
-ML veri yeterliliği ayrı planlanır; Cimri'nin ML kullanımı belirsizliği
-o aşamaya taşınır, model eğitimi başlatılmadı. Cimri geçmişi eksik olması
-tek başına ürünü katalogdan çıkarma nedeni değildir; veri yeterliliği
-ve ML'e dahil edilmesi sonraki adımlarda ayrı değerlendirilir.
-
-### ML veri denetimi (Bakım 5)
-
-**19 Ekim, teknik çalışma tamam:** yeniden kullanılabilir araç kullanıcı
-tarafından çalıştırıldı; gerçek sonuçlar aşağıdadır. Tam 1829 test/0 atlama,
-Black/Flake8 temiz. Kullanıcı bu gönderimin commit ve pushunu açıkça onayladı;
-aynı SHA CI sonucu ve güncel kapanış yerel gönderim kaydında izlenir.
-Bakım 4 kapanışı 978faa6 ve aynı SHA CI39225290241 başarılı olarak gönderildi;
-kullanım belirsizliği sürer.
-
-Araç, mevcut tests/manual/api_ui_check.py içindeki configured_url/read_dataset
-hesap/şema denetimlerini kullanır. Yalnız API_DATABASE_URL ve SELECT hesabı;
-her görüntü REPEATABLE READ / READ ONLY, 5 saniye sorgu sınırı ve UTC ile alınır.
-Analiz önceki tek görüntüde yapılır; sonunda sekiz nesne yeniden okunup parmak
-izleri karşılaştırılır. Devam eden tur varsa başlanmaz; kaynak değişirse
-hesaplanan sayılar kesin kabul edilmez. API, internete HTTP, migration,
-katalog eşitlemesi veya gerçek DB yazması yoktur.
-
-Toplama ve keşif çalışmıyorken proje kökünde kullanıcı terminalinden:
-
-```powershell
-$env:API_DATABASE_URL = "postgresql://fiyat_takip_api@localhost:5432/fiyat_takip"
-$mlAuditOut = "artifacts\bakim_5_$(Get-Date -Format yyyyMMdd)\denetim_$(Get-Date -Format HHmmss_fff)"
-.venv\Scripts\python.exe tests/manual/ml_data_check.py --output-dir $mlAuditOut
-$LASTEXITCODE
-```
-
-Şifre pgpass'ten okunur, komuta yazılmaz. API sunucusunu açmak veya yeni tur
-başlatmak gerekmez. Araç otomatik zamanlanmaz; eski çıktı klasörü kabul edilmez.
-Yerel hazırlıkta verilen BOM'lu denetimi_calistir.ps1, kod/config parmak
-izlerini ve çalışan zamanlanmış işleri denetler, API_DATABASE_URL değerini
-yalnız işlem boyunca seçip sonunda geri alır.
-
-| Çıkış | Anlamı |
-|---|---|
-| 0 | Denetim doğrulandı; kullanılabilir örnek sayısı sıfır olabilir. ML hazır veya kullanım izni var anlamına gelmez. |
-| 1 | Hesap/şema/girdi/DB/çıktı hatası; denetim tamamlanmadı. Ham hata ve bağlantı adresi yazdırılmaz. |
-| 2 | Kaynak değişti; sonuç kesin kabul edilmedi. Bu görüntünün ağsız tekrarı da 2 kalır. |
-| 130 | Kullanıcı durdurdu; tamamlanmış sonuç değildir. |
-
-Başarılı veya kaynak değişen denetim; snapshot.json, rules.json, report.json,
-source_check.json, windows.jsonl, daily.jsonl, report.md ve dosya parmak
-izlerini içeren manifest.json üretir. snapshot.json yalnız gereken alanları
-taşır; DSN/parola/tur notu/satıcı/ham hata metni içermez. Çıktı yazımı kesilirse
-failure.json varsa önceki kısmi dosyalar kesin sonuç sayılmaz. Yerel hash
-bütünlük kontrolüdür, kaynağın dijital imzası değildir. Görüntüdeki ilk
-hesaplayıcı SHA'sı ve source_check.json içindeki analysis_verifier_sha256
-ayrıdır; başka kod sürümüyle tekrar alınırsa hangi hesaplayıcının kullanıldığı bellidir.
-
-Kaydedilmiş görüntünün ağsız tekrarı da kullanıcı terminalinden:
-
-```powershell
-.venv\Scripts\python.exe tests/manual/ml_data_check.py --snapshot "$mlAuditOut\snapshot.json" --output-dir "${mlAuditOut}_tekrar"
-$LASTEXITCODE
-```
-
-Tekrar DB adresini okumaz/bağlanmaz ve görüntünün sabit tarihiyle hesaplar;
-aynı hesaplayıcı sürümü ve kurallarıyla
-report.json/windows.jsonl/daily.jsonl aynı olmalıdır. source_check.json içindeki
-çalışma biçimi farklıdır. Dışarıdan eklenen alanlar, tekrarlı/bozuk kimlikler,
-plan–kontrol veya sonuç–fiyat çelişkisi ve bozuk hash reddedilir.
-
-**Günlük kurallar:** kendi verimizde başlangıç fiyatı akşam turunun ürün
-minimumu, gelecek sonucu günün iki turunda gözlenen minimumdur. Akşam fiyatı
-yoksa sabah fiyatı başlangıca taşınmaz. Her scheduled tur, başlangıcından
-önceki en yakın İstanbul 10.00/22.00 dilimine aittir; örneğin ertesi gün
-09.00 başlangıcı önceki 22.00 dilimidir. Eksik/tekrarlı dilim, kesilen tur,
-günü aşan tamamlanma, ürünün planlanmaması ve eksik/hatalı sayfa cevabı kalite
-kusurudur. İki turun ürün sayfa kimlikleri aynı olmalı; başka ürünün değişen
-kataloğu etkilemez. Manuel turlar envanterde kalır, örneklere katılmaz.
-Cimri günlük fiyatları ayrı kalır; ürün kimliği değişimi pencereyi eler,
-tarihsel satıcı kapsamının aynı olduğu varsayılmaz.
-
-**19 Ekim toplama sıklığı kararı:** günde bir tahmin örneği üretmek için
-10.00 ve 22.00 ölçümleri korunacak. Akşam turu günlük başlangıç fiyatını,
-iki tur ise gün içinde gözlenen minimumu sağlar; sabah görülen düşük fiyat
-akşama kadar değişebilir. Sürekli işletim kurulduktan ve veri biriktikten
-sonra sabah turunun kaç ek fiyat değişimi/düşüş yakaladığı ayrıca ölçülecek.
-Tek tura geçiş gerekirse zamanlayıcıyla birlikte günlük veri, hedef ve
-kalite kuralları da ayrı planla değerlendirilecek; mevcut denetimde yalnız
-sabah görevini kaldırmak günlerin eksik sayılmasına yol açar. Bu kayıt
-ayar değişikliği veya yapılmış bir katkı analizi değildir.
-
-Geçmiş d−29…d, gelecek d+1…d+7'dir; d başlangıç günüdür. İlk 30 günde her gün
-başlangıç fiyatı ve sonraki yedi günde her gün minimum fiyat gerekir. Kendi
-37 günlük kapsamı sabit ve cevapları tam olmalı. Tükendi geçerli kaynak
-sonucudur; bütün gün fiyatsızsa doldurulmaz. Sabah fiyatı olan, akşam stoksuz
-bir gün gelecek minimumu sağlayabilir; geçmiş başlangıç fiyatını sağlayamaz.
-Eksik gelecekte gözlenen düşüş olsa dahi sıkı temel sayımda pencere dışarıda
-kalır; olumsuz etiket üretilmez. Tam sayı kuruşla
-100×gelecek_minimum ≤ 95×başlangıç ise 1, değilse 0; kullanılamayan etiket NULL.
-İçinde bulunduğumuz İstanbul günü elenir. API'nin 18 saat/14 geçiş/7 gün gibi
-gösterge eşikleri ML denetimine aktarılmaz.
-
-Rapor ürün/kaynak bazında tur/sonuç sayıları, süre, eksik gün/fiyat aralıkları,
-kapsam dönemleri, azami tur boşluğu, aday/elenen/kullanılabilir pencere ve
-sınıfları verir. calendar_days takvim uzunluğu, observed_days en az bir
-kontrol sonucu/kaydı bulunan nominal gün sayısıdır; boş hazırlanan satır
-gözlem sayılmaz. Cimri'de NULL fiyatlı tarih kaydı gözlemdir, fiyat değildir.
-Elenme nedenleri birden fazla olabilir; neden sayıları
-toplamı elenen pencere sayısına eşit olmak zorunda değildir. Güncel etkin
-sayfalar değişmişse bekleme hesabı eski kapsamı sürüyormuş gibi saymaz.
-Koşullu ilk pencere sonu ve ertesi gün yapılabilecek denetim tarihi verilir;
-bu vaat değildir. Takip sayfası yoksa veya ürün pasifse tarih hesaplanmaz.
-
-Kaynak başına kullanılabilir ortak referans tarihlerinde ilk floor(%70),
-sonraki floor(%85)'e kadar doğrulama, kalanı testtir. Bütün ürünler aynı
-tarih bölümünü paylaşır. Önceki bölümün hedef sonu sonraki dolu bölümün ilk
-referansına eşit/sonraysa purged olarak ayrılır. first_anchor/last_anchor,
-ayırmadan önceki bölüm sınırlarıdır; distinct_anchor_days kalan günleri sayar.
-Ürün/sınıf/gün sayıları ve
-boş/tek sınıflı bölümler belirtilir; model eğitilmez, puan üretilmez.
-Çakışmayan 37 günlük pencereler en erken olandan açgözlü seçilir; bunlar da
-ürünler arası istatistiksel bağımsızlık kanıtı değildir. numerical_candidate
-yalnız bu sayımlarda engel bulunmadığıdır; yayın yeterliliği değildir.
-Mevcut Cimri serisinin eski kalması ve ML kullanım belirsizliği ayrıca gösterilir.
-
-**5.3 gerçek veri sonucu:** kullanıcı 19 Ekim 13:14'te
-artifacts/bakim_5_20261019/gercek_20261019_131458_922/ çıktısını aldı;
-59 ürün/8 değişmeyen nesne/çıkış 0. Sonraki bütün hesaplar aynı görüntüde
-ağsız yapıldı. DB 59 ürün/349 bağlantı/346 etkin; katalog 59/348/346 ve 57
-eşleştirme değişmedi. 41 tur (39 scheduled/2 manual) envanterde;
-günlük örnek hesabı yalnız 18 Ekim sonuna kadar.
-
-| Kaynak | Pencere | Olumlu | Olumsuz | Kullanım sonucu |
-|---|---:|---:|---:|---|
-| Kendi geçmişimiz | 0 | 0 | 0 | 28 Eylül–18 Ekim 21 takvim günü; 37 günlük pencere yok, veri beklenir |
-| Cimri 57 ürün | 17.668 | 1.792 | 15.876 | Sayısal aday; ML kullanım uygunluğu doğrulanmadı, eğitim başlamaz |
-
-Cimri 20.805 satır/553 NULL, 2025-10-09–2026-10-08; arada kayıtsız tarih yok.
-43 üründe 329'ar pencere, 14 üründe 156–322 pencere. 56 ürünün iki sınıfı da var;
-iPhone 16 Pro 512 GB'ın 189 penceresi yalnız olumsuz. Ortak model taslağında
-ürünü otomatik silme nedeni değildir. İki eşleştirmesiz ürün hâlâ S25 512 GB
-ve Redmi Note 14 Pro 5G 256 GB. Kendi serileri de henüz örnek sağlamaz.
-494 çakışmayan 37 günlük pencere ve 329 farklı referans günü var; 17.668
-bağımsız gözlem varsayılmaz. Olumlu oranı yaklaşık %10,14; sınıflar dengesiz.
-
-| Cimri bölümü | Pencere | Olumlu | Olumsuz |
-|---|---:|---:|---:|
-| Eğitim | 12.333 | 1.180 | 11.153 |
-| Doğrulama | 2.172 | 207 | 1.965 |
-| Test | 2.431 | 298 | 2.133 |
-| Hedef taşmasıyla ayrılan | 732 | 107 | 625 |
-
-Ayırma sonrası 16.936 pencere kalır; bu model başarısı veya kullanım izni
-değildir. Kendi serimizde hatalı/eksik cevap, geç tamamlanma ve sayfa kapsamı
-değişimleri ayrıca raporlanır. Tam/fiyatlı iki tur ve güncel kapsam sürerse
-48 ürün 24 Kasım, 10 ürün 25 Kasım'da ilk kullanılabilir pencereyi denetleyebilir;
-yeni kusur tarihi değiştirir. Beş üründe 21 günün tamamında akşam fiyatı yok;
-tarihler onların da fiyat üretmeye başlaması koşuluna bağlıdır. Etkin sayfası
-olmayan S25'e tarih verilmez. Bunlar bugünkü teklif durumunu veya API'yi değiştirmez.
-
-71 yeni testin iki tanesi, boş nominal günün gözlem sayılmasını önleyen rapor
-düzeltmesidir. İlk gerçek rapor ve ham görüntü değişmedi; kabul edilen
-agsiz_tekrar_20261019_2/report.json, aynı veriyi düzeltilmiş hesaplayıcıyla
-yeniden sayar. S25'in 21 takvim gününde 19 gözlemli/2 kayıtsız günü vardır.
-Örnek/sınıf/bölüm sayıları ve bekleme tarihleri aynı kaldı; bağımsız Cimri
-hesabı ve gün dökümü doğrulandı. Ajan yeni gerçek DB okuması yapmadı.
-**5.4 doğrulaması:** 71 yeni testin 4'ü test PostgreSQL üzerinde; tam paket
-1829 geçti/0 atlandı/xfail (438 PostgreSQL), 156,55 sn. Black 76 dosyada ve
-Flake8 temiz. Gün sayımı düzeltmesi sonrası son tam paket yeniden çalıştırıldı;
-yalnız izinli test hesapları kullanıldı, üretim DB değişkenleri aktarılmadı.
-Mevcut iki Starlette/AnyIO uyarısı sürüyor. Üretim/config parmak izleri aynı;
-API/scraper/şema/zamanlayıcı değişmedi. Beş dosya ve Türkçe mesaj sunulduktan
-sonra kullanıcı “commit push atabilirsin” diyerek iki işlemi de onayladı.
-Aynı SHA CI başarılı olmadan gönderim kapanışı tamamlanmaz; sonuç Git dışı
-artifacts/bakim_5_20261019/gonderim_kaydi.json ve devir notunda izlenir.
-
-### Piyasa geçmişi araştırması (Adım 8)
-
-Kaynak seçimi için örnekler: `apple_iphone_16_128gb`,
-`samsung_galaxy_s24_256gb`, `xiaomi_14t_pro_256gb`. Akakçe ve Cimri için
-ürün geçmişi URL'si tarayıcıda ayrı ayrı bulunur; araç otomatik arama yapmaz.
-Her çalışmada yönlendirme/tekrar dahil en çok dört HTTP denemesi yapılır ve
-`data/scrape.lock` kilidi alınır. Cimri'de önce sayfanın model/kapasitesi ve
-gömülü ürün kimliği doğrulanır; sonra aynı HTTP oturumuyla
-`POST https://www.cimri.com/api/cimri` üzerinden `priceHistoryV2Query`
-çağrılır. Örnek komut biçimi:
-
-```powershell
-.venv\Scripts\python.exe tests\manual\market_history_probe.py akakce apple_iphone_16_128gb "<ürünün HTTPS adresi>"
-.venv\Scripts\python.exe tests\manual\market_history_probe.py cimri xiaomi_14t_pro_256gb "https://www.cimri.com/cep-telefonlari/en-ucuz-xiaomi-14t-pro-fiyatlari%2Ca2372365900"
-```
-
-Rapor varsayılan olarak `artifacts/market_history_probe/<kaynak>_<product_key>.json`
-dosyasına yazılır (`--output-dir` başka bir yerel klasör gösterir); aynı örnek
-tekrar çalıştırılırsa dosya güncellenir. Terminal yalnız
-kısa özet gösterir. Cimri raporunda eski tarihten yeniye `history.points`
-(`day`, `price_tl`), nokta/eksik fiyat sayısı ve gömülü tablonun grafikle
-karşılaştırılması bulunur. `null` fiyat uydurulmadan korunur; kimlik veya ortak
-tarihte fiyat uyuşmazlığı hata olur. Çıkış 0 okuma/ayrıştırma tamamlandı ve
-**manuel inceleme gerekiyor**, 1 örnek ürün etkin katalogda yok (istek atılmaz),
-2 HTTP/kimlik/veri hatası, 3 ortak kilit meşgul demektir. Testlerin geçmesi canlı API erişimini veya her günün ayrı fiyat
-gözlemi olduğunu kanıtlamaz. Ham sayfa, veritabanı ve katalog değiştirilmez.
-
-29 Eylül 2026'da [Akakçe kullanım sözleşmesinde](https://www.akakce.com/kullanim-sozlesmesi/)
-ve [Cimri kullanım koşullarında](https://www.cimri.com/kullanim-kosullari)
-içerik kopyalama/işleme kısıtları görüldü. Az sayıda sayfa teknik araştırma
-için incelenir; düzenli geçmiş indirme ve projede saklama ayrıca
-değerlendirilir. Kaynak seçilirse yalnız onun geçmişi ele alınır; iki sitenin
-serileri birleştirilmez.
-
-Kullanıcının çalıştırdığı üç Cimri canlı denemesinde ürün kimliği eşleşti;
-her biri 365 nokta (30 Eylül 2025–29 Eylül 2026), 0 eksik fiyat ve gömülü
-tablodaki 90/90 fiyat eşleşmesini verdi. Bu teknik doğrulama, fiyatların her
-gün bağımsız ölçüldüğünü veya tarihsel satıcı kapsamını kanıtlamaz. Resmî
-koşullardaki kopyalama/işleme kısıtları nedeniyle Cimri verisinin düzenli
-indirilmesi ve veritabanına alınması bu araştırma sonunda başlatılmadı.
-
-### Cimri geçmişinin yerel alımı (Adım 9.1)
-
-Yerel doğrulama (8 Ekim): 197 yeni ağsız test; son tam paket **1029 geçti, 0 atlandı/xfail**, 54,20 sn. 228 PostgreSQL testi yalnız fiyat_takip_test üzerinde; Black ve Flake8 temiz. Sıfır fiyat düzeltmesi için eklenen 12 testin altısı eski kodda başarısızdı; altı koruma testi eski kodda da geçti. İlk teklif dönüşümü için eklenen 100 testin beş ana regresyonu eski kodda başarısız gösterildi.
-
-Canlı kontrol (8 Ekim 09:24–09:25, kullanıcı çalıştırdı):
-`data/market_history/pilot_20261008_092438_295/report.json` çıkış 2 / kısmi
-sonuç. Üç ürünün sayfa ve grafik kimliği doğrulandı; altı kaynak dosyasının
-SHA-256 parmak izi raporla aynı. iPhone 16 128 GB ve Galaxy S24 256 GB için
-365'er nokta (2025-10-09–2026-10-08), eksik fiyat 0 ve 90'ar tablo eşleşmesi
-var. Kaydedilmiş tarihler ve kuruş fiyatları bağımsız hesapla da karşılaştırıldı.
-Xiaomi 14T Pro 256 GB grafiği 2–5 Ekim için dört sayısal `0` içeriyor;
-bu tarihler HTML fiyat tablosunda yok. Diğer 361 fiyat pozitif ve mevcut
-86 tablo satırı grafikle aynı. Mevcut pozitif fiyat kuralı ürünü `parse`
-hatasıyla reddetti; ham HTML/JSON korundu, kabul edilmiş `history` yazılmadı.
-Kullanıcı, bu grafik sıfırlarının eksik değer olarak ele alınmasını seçti.
-Dar düzeltme uygulandı: aynı tarihte tabloda fiyat yoksa sayısal grafik `0`
-ve `0.0`, `null` olur; tabloda fiyat varsa uyuşmazlık reddedilir. Bu, kaynak
-yanıtına ilişkin kabul edilen yorumdur; fiyatın gerçekten sıfır olduğu veya
-eksikliğin nedeninin bilindiği söylenmez. Negatif, boolean, metin ve bozuk
-fiyatlar hata olmaya devam eder. Eski araştırma aracının TL ayrıştırıcısı
-varsayılan olarak sıfırı reddeder; bu değişiklik yeni kuruş alımına özeldir.
-Kaydedilmiş üç kaynak yeniden ağsız doğrulandı: toplam 1.095 nokta,
-dört eksik gün, 266 tablo eşleşmesi; iPhone/Samsung geçmişi aynen korundu.
-İlk `report.json` hâlâ ilk alımın kısmi sonucu ve Xiaomi `parse` hatasını
-taşır; rapor veya ham yanıtlar üzerine yazılmadı. Gerçek veritabanına yazılmadı.
-
-**Katalog alımı (8 Ekim 10:49:37–10:58:07, kullanıcı):**
-`data/market_history/katalog_20261008_104936_277/report.json`, çıkış 2.
-59 ürün: 53 `captured`, dört `error`, iki `unmapped`; denenmeden kalan yok.
-57 ürünün her birinde üç HTTP denemesi, toplam 171; HTTP engeli veya kimlik
-hatası yok. 114 ham dosyanın SHA-256 değeri raporla aynı; bütün sayfa ve API
-kimlikleri yeniden doğrulandı. 53 kabul edilmiş geçmiş ortak ayrıştırıcıyla
-yeniden okundu; tarihler ve kuruşlar ayrıca bağımsız hesapla raporla aynı çıktı.
-Her birinde 365 nokta (2025-10-09–2026-10-08): toplam 19.345 nokta,
-18.792 pozitif fiyat, 553 eksik değer. Eksikler 14 üründeki sayısal grafik
-sıfırlarıdır; kaynak null değeri yok. Mevcut 4.413 tablo satırı grafikle aynı.
-Eksiklerin nedenine veya ayrı günlük gözlem sıklığına ilişkin çıkarım yapılmadı.
-
-Dört reddin tüm ortak tarihleri ayrıca karşılaştırıldı; her üründe yalnız
-2026-10-08 farklı, diğer 89 tablo satırı aynı. Her iki fiyat da pozitiftir:
-
-| Ürün | HTML günlük dizisi (TL) | Ham API (TL) |
-|---|---:|---:|
-| iPhone 16 Pro Max 512 GB | 159.000,00 | 114.999,00 |
-| Galaxy S24 256 GB | 44.719,29 | 44.160,00 |
-| Galaxy S24 Ultra 512 GB | 73.304,00 | 73.920,00 |
-| Redmi Note 13 Pro 4G 512 GB | 24.910,01 | 21.999,00 |
-
-Bu, kaydedilmiş iki kaynak yanıtının uyuşmazlığıdır; eşzamanlı güncellenmeme
-gibi bir neden kanıtlanmadı. Mevcut ret kuralı doğru çalıştı; kaynak seçimi,
-fiyat düzeltmesi veya bugünü atlama kuralı eklenmedi. Dört ürünün ham kanıtı
-korundu, kabul edilmiş geçmiş yazılmadı. Kullanıcı yalnız bu dört ürünü
-11:12–11:13'te yeniden aldı; sonuç aşağıdadır. Kod değişmedi; son tam test sonucu 929 geçti /
-0 atlandı olarak geçerli, bu oturumda tam testler yeniden çalıştırılmadı.
-
-**Tekrar kontrolü (8 Ekim 11:12:45–11:13:18):**
-`data/market_history/tekrar_20261008_111245_044/report.json`, dört `error`,
-ürün başına üç HTTP denemesi (12 toplam), çıkış 2. Yeni sekiz kaynak dosyası
-ve ilk alımdaki sekiz dosya rapor parmak izleriyle eşleşti; kimlikler aynı.
-Dört API JSON dosyası önceki alımla bayt düzeyinde aynı. HTML dosyaları
-farklı olmakla birlikte ürün kimlikleri ve 90'ar tablo fiyatı aynı kaldı.
-365'er grafik fiyatı pozitif ve kuruşa çevrilebilir; her üründe 89 tablo
-satırı eşleşiyor, yalnız 8 Ekim'de yukarıdaki fark sürüyor. Bu gözlem,
-uyuşmazlığın nedenini veya hangi fiyatın doğru olduğunu kanıtlamaz.
-
-**Kullanıcının tarayıcı kontrolü ve açıklama düzeltmesi (8 Ekim):** Kullanıcı
-Cimri ekranında grafik/tablonun eşleştiğini bildirdi: Galaxy S24 Ultra 512 GB
-73.920 TL, diğer üç ürün önceki tablonun değerleri. Agent daha önce ham API
-fiyatını ekrandaki grafik fiyatı gibi adlandırdı; bu eşitlik doğrulanmamıştı.
-Kanıtlanan fark, 10:49/11:12 kayıtlarındaki HTML `priceHistoryTablePrices`
-ile ayrı `priceHistoryV2` yanıtı arasındadır. Bu, kullanıcının ekranda gördüğü
-iki görünümün çeliştiği anlamına gelmez. Aynı tarih sorusu kullanıcıya iletildi;
-henüz cevabı yok. Tarayıcıdaki değerlerle kayıt zamanları farklıdır.
-
-Dört kayıtlı HTML'de bugünkü `priceHistoryTablePrices[0].minPrice`, aynı
-sayfanın `cheapestOfferPrice` ve en ucuz teklif fiyatına eşit. Görünen HTML
-fiyat tablosu değişim satırlarını gösteriyor: S24 için son satır 7 Ekim,
-S24 Ultra için 5 Ekim; gömülü günlük dizide 8 Ekim de var. Ekranda çizilen
-JavaScript grafiğinin ham API'ye uyguladığı dönüşüm bu ilk incelemede henüz
-doğrulanmamıştı; 13:12 kaynak incelemesinin sonucu aşağıdadır.
-Bu nedenle alım gününü null yapma önerisi **geri çekildi**, uygulanmadı;
-mevcut 53 kabul/dört ret/iki eşleştirme açığı ve tam eşleşme kuralı korunur.
-
-Kayıtlı HTML'de görülen `product/bce3a2248321f85510c5.js` ve
-`_common/eeecfda457fa39ee389d.js` dosyalarına web aracı erişemedi.
-Yerel `.scratch/cimri_frontend_check.py`, kullanıcının bu iki kaynak dosyasını
-ortak PageClient/kilit, dört deneme bütçesi ve 8 MB sınırıyla yeni
-`data/market_history/frontend_<tarih_saat>/` klasörüne kaydetmesi için
-hazırlandı. Dosyalar çalıştırılmaz; index.json adres, SHA-256, UTC ve istek
-sayısı tutar. Üretim kodu/HTTP davranışı değiştirilmedi; geçici yardımcının
-iki dosya kaydı ve istemci kapanışı sahte istemciyle ağsız kontrol edildi.
-
-**13:04 kaynak incelemesi:** Kullanıcı iki betiği
-`data/market_history/frontend_20261008_130454_461756/` klasörüne aldı;
-iki HTTP isteği, çıkış 0. `product.js` (258.181 bayt) ve `common.js`
-(28.174 bayt) parmak izleri doğrulandı. `priceHistoryWrapper`;
-`product`, `priceHistoryTablePrices` ve `priceHistoryDrawable` alıyor,
-ancak işleyişi ayrı 27401 modülünde. Yükleyici 1657 ve 7401 dosyalarını
-çağırıyor. Adresleri aynı dosyanın yükleme tablosunda doğrulandı:
-
-- `static/js/7401/934c195f03086024455d.js`
-- `static/js/1657/5db3b03440f8a65c81e7.js`
-
-İkisinin taban adresi `https://assets.cimri.com/assets/turbo-desktop/octopus/`.
-Web aracı bu dosyaları açamadı; yerel yardımcı yalnız bu iki ek betiği almak
-üzere güncellendi. Doğru adresler, iki kayıt/parmak izi, rapor ve istemci
-kapanışı sahte yanıtlarla ağsız doğrulandı. Bu aşamada gerçek grafik modülü
-henüz alınmamıştı; ardından kullanıcı aşağıdaki alımı yaptı.
-
-**13:12 grafik modülü incelemesi:**
-`data/market_history/frontend_20261008_131242_210133/index.json` iki HTTP
-isteği ve çıkış 0 içeriyor. `chart_7401.js` (34.598 bayt) ve `chart_1657.js`
-(433.858 bayt) parmak izleri doğrulandı. Dosyalar çalıştırılmadan metin
-olarak incelendi. 7401 dosyasının 27401 modülünde şu davranış görüldü:
-
-- İlk ekran durumu HTML'deki `priceHistoryTablePrices` dizisidir.
-- Grafik bölümü açılınca `priceHistoryV2Query` aynı ürün kimliğiyle çağrılır.
-- `product.offers[0]` varsa API `prices[0]` yerine bu teklifin `price` değeri
-  konur; kalan API fiyatları değişmez. Teklif yoksa API dizisi korunur.
-- `product.js`, `__OCTOPUS_DATA__` içeriğini `window.__NEXT_DATA__` olarak
-  atar; dolayısıyla ilk teklif kayıtlı HTML'den okunabilir.
-- Grafik tarihleri tarayıcının o gününden geriye sayılır; bu bileşen API'nin
-  `lastDay` alanını kullanmaz. Sıfır fiyat çizimde boş değer yapılır.
-- Tablo görünümü HTML dizisini kullanmayı sürdürür; `diff` sıfır olan
-  değişimsiz satırlar (son satır hariç) görünmez.
-
-Kaynak dosyaları ve üretim ayrıştırıcısı değiştirilmeden, Python belleğinde
-yalnız ilk fiyat dönüşümü denendi. 57 kayıtlı katalog ürünü için API
-`lastDay` ve UTC alınma zamanının İstanbul tarihi 8 Ekim olarak eşleşti.
-57 ürün mevcut tablo kontrolünden geçti: 20.805 nokta, 20.252 pozitif fiyat,
-553 eksik değer, 4.773 ortak tablo satırı. Tekrarlanan dört ürün de 360
-tablo satırında eşleşti; ilk üç pilotta sonuç değişmedi.
-
-Önceden kabul edilen 53 üründen 52'sinin bütün çıktısı aynı kaldı.
-S24 Ultra 1 TB'de yalnız 8 Ekim fiyatı 85.680 TL'den 86.220 TL'ye değişti;
-bu ürünün HTML tablosu 7 Ekim'de bittiğinden mevcut kontrol bugünkü fiyatı
-karşılaştırmamıştı. Bu yeni değer de aynı ilk teklif kuralından gelir.
-S24 Ultra 512 GB için kayıt zamanındaki ilk teklif/tablo 73.304 TL'dir;
-kullanıcının daha sonra gördüğü 73.920 TL'nin hangi andaki yanıttan geldiği
-bu kayıtlarla kanıtlanmaz. Kaynakta gözlenen dönüşüm, iki görünümün aynı
-olabilmesini açıklar; kaydedilmemiş tarayıcı oturumunun fiyatını kanıtlamaz.
-
-Araştırma izi aynı klasörde `offline_analysis.json`; bu bir kabul/aktarım
-raporu değildir. **Kullanıcı “uygula” onayıyla üretim düzeltmesi tamamlandı.**
-`verified_page` doğrulanmış ürünün ilk teklif fiyatını da okur. İlk teklif
-yoksa mevcut API fiyatları korunur; bozuk teklif geçerli fiyat sayılmaz.
-`history_in_kurus`, bütün ham API fiyatlarını önce doğrular; ardından yalnız
-son noktada geçerli ilk teklif fiyatını kullanır ve bütün ortak tablo günlerini
-yeniden birebir karşılaştırır. Diğer günler, sıfır/eksik değer ve eski TL
-araştırma sözleşmesi korunur. Bugünün ham API fiyatı sıfır/null ise ilk
-teklifle doldurulmaz; doğrulanmamış bu birleşim `parse` olarak kalır.
-
-Alım, HTML isteğinden önce `page_started_at_utc`, API yanıtından sonra
-`captured_at_utc` kaydeder. İlk teklif kullanılacaksa iki zaman UTC, sıralı ve
-İstanbul'da aynı gün olmalı; API `lastDay` bu güne eşit olmalıdır. Gün sınırı
-veya eski API günü `parse` üretir; tarih dizisi yine `lastDay` üzerinden
-kurulur. Ağsız yeniden doğrulama bilgisayarın o gününü kullanmaz.
-İstanbul tarihi `ZoneInfo` ile hesaplanır; Windows'ta da saat dilimi verisinin
-bulunması için zaten ortamda kurulu `tzdata` açık bağımlılık yapıldı
-([Python belgeleri](https://docs.python.org/3/library/zoneinfo.html#data-sources)).
-
-`history.summary.latest_price` alanında `day`, `rule` (`page_first_offer`
-veya `api`), `api_price_kurus`, `first_offer_price_kurus`,
-`effective_price_kurus`, `changed`, `table_comparison` kaydedilir.
-Son günün tablo satırı yoksa `unavailable` olur ve komut bunu ayrıca söyler;
-bu sınır diğer ortak günlerin eşleşmesini geçersiz kılmaz. İstek sırası,
-bütçe, kilit, çıkış kodu ve ham dosyaları koruma davranışı değişmedi.
-
-57 gerçek kaynağın küçük örnekleri kalıcı sınamalara alındı; beş regresyon
-eski kodda başarısız gösterildi. Tam kayıtlar yeni üretim ayrıştırıcısı ve
-ayrıca bağımsız tarih/Decimal hesabıyla ağsız kontrol edildi: 20.805 nokta,
-20.252 fiyat, 553 eksik, 4.773 tablo eşleşmesi. Önceki 52 ürünün bütün
-noktaları aynı; S24 Ultra 1 TB'nin yalnız son noktası değişti. Eski alımda
-sayfa isteği başlangıcı ayrı kaydedilmediğinden bütün alımın kayıtlı başlangıcı
-alt sınır kullanıldı; ikisi de aynı İstanbul günündeydi.
-Araştırma izi `frontend_20261008_131242_210133/implemented_validation.json`;
-bu da aktarım girdisi değildir. Eski raporlar/ham dosyalar değişmedi.
-**Canlı teyit tamamlandı (8 Ekim 13:51:43–13:52:25):** Kullanıcı
-`data/market_history/duzeltme_20261008_135142_423/report.json` alımında beş
-ürünü başarıyla kaydetti; 15 HTTP denemesi, çıkış 0. On ham dosyanın
-SHA-256 değeri, güncel katalog/eşleştirme ve sayfa/API kimlikleri doğrulandı.
-Rapor yeniden ayrıştırıldı; tarih ve kuruşlar ayrıca bağımsız datetime/Decimal
-hesabıyla eşleşti. Toplam 1.825 nokta, 1.754 pozitif fiyat, 71 eksik değer,
-450 tablo eşleşmesi. Beşinin de son günü bu kez tabloyla karşılaştırılabildi.
-
-S24 Ultra 1 TB'deki 71 eksik tarihin tamamı ilk katalog alımındakiyle aynı.
-Yeni ilk teklif fiyatı 85.680 TL, tablo/API de aynı; önceki HTML'deki
-86.220 TL eski alım anına aittir. S24 Ultra 512 GB'nin yeni ilk teklif ve
-tablo fiyatı 73.920 TL, API de aynı. Diğer üç üründe dönüşüm hâlâ gerekli:
-iPhone 16 Pro Max 512 GB 114.999 → 159.000 TL;
-S24 256 GB 44.500 → 44.719,29 TL;
-Redmi Note13 Pro 4G 512 GB 21.999 → 24.910,01 TL.
-Beş API dosyasından dördü ilk alımla aynı; S24 256 GB yanıtı değişmiş.
-Yeni değerler eski rakamlara zorlanmadı; her ürün kendi kayıtlı yanıtlarıyla
-doğrulandı. Yerel kontrol izi aynı klasörde `verification.json`.
-
-9.1'in uygulama ve canlı doğrulaması tamam; kullanıcı commit/push işlemini
-onayladı. Aynı commit için CI doğrulaması gönderim akışının parçasıdır. Gerçek DB, katalog, migration ve zamanlayıcı
-değişmedi. Eşleştirmesi açık iki ürün raporlandı; kapsam/gerçek aktarım
-9.3'te ele alınacak. 9.1 daha sonra `79a3f77` ile gönderildi; aynı SHA için
-CI 37767276279 başarılı. 9.2 altyapısı `c64d14f` ile gönderildi, aynı SHA için
-CI 37777433986 başarılı ve ana geçiş tamam. Kullanıcı 004’ü 8 Ekim 12:35 UTC’de
-uyguladı; şema salt okunur sorgularla doğrulandı. Gerçek ve tekrar aktarım
-9.3’te tamamlandı; aşağıdaki 9.3 bölümünde sonuçlar yer alıyor.
-
-Kullanıcı Adım 9 planını onayladı: önce yerel rapor, sonra ayrı ağsız aktarım;
-tekrar aktarımda farklı fiyat çıkarsa eski kayıt korunacak; ilk aktarımda yeni
-alım esas alınacak. 29 Eylül'deki üç rapor araştırma/test kanıtı olarak kalır.
-Aktarım altyapısı ve `004_market_history.sql` **9.2 kapsamında tamamlandı;
-004 kullanıcı tarafından gerçek veritabanına uygulandı**. 8 Ekim kararıyla
-9.3’te güncel araçla yeni toplu alım yapıldı; eski raporlara eksik doğrulama
-alanı eklenmedi.
-
-Eşleştirme dosyası `version: 1`, `source: "cimri"`, `entries` taşır. Her girdi
-`product_key`, `url`, `cimri_product_id` içerir; anahtar, URL ve Cimri kimliği
-tekrar edemez. URL yalnız Cimri'nin HTTPS telefon sayfası olabilir; ürün etkin
-katalogda bulunmalıdır. 8 Ekim web araştırmasıyla 59 ürünün 57'sinin ana
-sayfa adresi ve görünen ürün başlığı eşleştirildi. İlk üç eşleştirme aynı
-kaldı. Araştırmada 57 başlık mevcut model/kapasite kuralıyla ağsız doğrulandı;
-bu kontrol tek başına API erişimini veya gömülü kimliği kanıtlamaz.
-10:49–10:58 alımında bütün 57 sayfa/API kimliği doğrulandı; dört fiyat
-uyuşmazlığının ayrıntısı yukarıdadır.
-
-Araştırma izi yerelde
-`data/market_history/mapping_research_20261008_073732.json` içindedir:
-araştırma zamanı, görülen başlıklar, kaynak adres/kimlikleri ve açık anahtarlar.
-URL/kimlik tahmin edilmedi; ana sayfalar kullanıldı, renk sayfaları birleştirilmedi.
-Galaxy S25 512 GB (`samsung_galaxy_s25_512gb`) ve Redmi Note 14 Pro 5G
-256 GB (`xiaomi_redmi_note_14_pro_5g_256gb`) için doğru ana adres araştırmada
-doğrulanamadı. Başka kapasite, Ultra/Plus veya 4G sayfası bunların yerine
-konmadı; eşleştirmesi olmayan ürünün Cimri'de bulunmadığı varsayılmaz.
-
-Redmi Note 14 Pro'nun [256 GB](https://www.cimri.com/cep-telefonlari/en-ucuz-xiaomi-redmi-note-14-pro-fiyatlari,a2372365369)
-ve [512 GB](https://www.cimri.com/cep-telefonlari/en-ucuz-xiaomi-redmi-note-14-pro-512gb-12gb-ram-fiyatlari,a2430184601)
-başlıkları 4G yazmıyor; her iki sayfanın teknik özelliklerinde
-`Veri Aktarım Hızı: 4G` doğrulandı. [5G 512 GB](https://www.cimri.com/cep-telefonlari/en-ucuz-xiaomi-redmi-note-14-pro-5g-fiyatlari,a2428710429)
-ayrı ana sayfadır. [Poco X6 Pro](https://www.cimri.com/cep-telefonlari/en-ucuz-xiaomi-poco-x6-pro-5g-512gb-12gb-ram-fiyatlari,a2308370397)
-sayfasında marka Poco'dur; URL'deki Xiaomi metni marka yerine kullanılmadı.
-Galaxy A55 256 GB ve Redmi Note 13 Pro 5G 256 GB için 8 GB RAM ana sayfaları
-seçildi; RAM/renk eş anlamlıları veya yeni kimlik istisnası eklenmedi.
-
-Zamanlanmış tur bittikten sonra katalog alımı:
-
-```powershell
-$cimriKlasor = "data\market_history\katalog_$(Get-Date -Format yyyyMMdd_HHmmss_fff)"
-.venv\Scripts\python.exe -m app.market_history capture `
-  --mapping config\market_history.json --output-dir $cimriKlasor
-$LASTEXITCODE
-```
-
-`--product-key` tekrarlanabilir; verilmezse etkin katalogdaki bütün ürünler
-raporlanır. `--mapping` ve `--output-dir` zorunludur. Var olan klasöre yazılmaz;
-eskisini silmek yerine tarih-saatli yeni klasör kullanılır. Kilit meşgulse
-klasör oluşturulmaz. Canlı komutu kullanıcı tur saatleri dışında çalıştırır.
-İki eşleştirme açık olduğundan bütün 57 alım başarılı olsa bile katalog
-komutunun çıkışı 2 olur. `captured`/`error`/`not_attempted` kayıtları ayrıca
-incelenir; yalnız çıkış 2'den ağ veya kimlik hatası olduğu sonucu çıkarılmaz.
-
-Her ürün için aynı `PageClient` ile sayfa ve grafik okunur; yönlendirme/tekrar
-dahil dört istek bütçesi, ortak bekleme, alan adı ve 8 MB sınırı korunur.
-`__OCTOPUS_DATA__` içindeki ürün kimliği eşleştirmeyle aynı olmalıdır; marka
-katalogla, başlık ve H1'lerin her biri model/kapasiteyle doğrulanır. Kategori
-`cep-telefonlari` olmalıdır. Bunlar doğrulanmadan grafik isteği yapılmaz.
-Grafik API'si kimliği de aynı olmalıdır. HTTP `blocked` alınırsa kalan eşleşmiş
-ürünlere istek yapılmaz; diğer ürün hatalarında sıradaki ürüne devam edilir.
-
-Grafik, `lastDay`'den geriye sıralanmış en çok 366 nokta verir. Mevcut
-araştırmada doğrulanan bu biçim kullanılır; bilinmeyen biçim için tahmin
-yapılmaz. Geçersiz tarih, fiyat veya ortak tarihte tablo uyuşmazlığı hata olur.
-Fiyatlar pozitif ve en çok iki ondalıklı olmalı; mevcut `money` ile kuruşa
-çevrilir. Sayısal grafik sıfırı, aynı tarihte tablo fiyatı yoksa eksik sayılır;
-tablo fiyatıyla çelişirse reddedilir. Eksik değer `null` kalır, kısa geçmiş
-tamamlanmaz. Ham API dosyasında sıfır değeri korunur. Tabloyla ortak
-tarih yoksa `table_comparison: "unavailable"` yazılır. Tekrarlanan fiyatlar
-bağımsız günlük ölçümleri veya sabit satıcı kapsamını kanıtlamaz.
-
-Yeni klasörde `responses/<product_key>.html`, `responses/<product_key>.json`
-ve `report.json` bulunur. HTML alınmış metindir; API JSON'u, ortak HTTP
-katmanının ayrıştırdığı nesnenin UTF-8 dosyasıdır, özgün JSON baytlarının
-aynısı olduğu iddia edilmez. Her kaynak dosyasının SHA-256 parmak izi saklanır.
-HTTP/JSON ayrıştırma hatasında alınamamış gövde uydurulmaz; sayfa alınmışsa
-korunur. Kimlik/grafik doğrulaması başarısızsa kabul edilmiş geçmiş yazılmaz.
-
-Rapor sürümü 1'dir. Kaynak, başlangıç/bitiş zamanı (UTC), sonuç, katalogdaki
-ürün sayısı, eşleştirmesi henüz olmayan katalog anahtarları ve `products`
-listesi taşır. Ürün kaydı katalog kimliğini, eşleştirmeyi, istek sayısını,
-varsa sayfa/API dosyalarının yolunu ve parmak izini, doğrulanmış kimliği,
-API alınma zamanını ve `history`yi içerir. `history.points` eski tarihten yeniye
-`day` ve `price_kurus` taşır; özet tarih aralığını, nokta/eksik fiyat sayısını
-ve tablo karşılaştırmasını gösterir. Ürün durumları `captured`, `error`,
-`unmapped`, `not_attempted`, `interrupted`; genel sonuç `running`, `completed`,
-`partial`, `interrupted` veya `failed` olabilir. Hata ve durma nedeni raporda
-kalır. Yalnız seçilen üç ürünün başarılı olması bütün kataloğun alındığı
-anlamına gelmez; seçilmeyen ürünler için ağ isteği yapılmaz.
-
-Rapor her işlenen ürünün ardından geçici dosyadan atomik olarak yenilenir.
-Ctrl+C önceki kayıtları korur; disk hatasında yeni istekler durur. İstemci ve
-ortak kilit kapanır. Çıkış: 0 seçilen ürünler kaydedildi, 2 kısmi sonuç,
-1 ayar/seçim/klasör/dosya hatası, 3 ortak kilit meşgul, 130 Ctrl+C.
-
-7 Ekim web incelemesinde Xiaomi sayfasında fiyat analizi gösterilmedi;
-Galaxy S24'ün 29 Eylül fiyatı kayıtlı rapordan farklıydı. Bunlar güncel API
-erişimini veya bütün geçmişin değiştiğini kanıtlamaz. Üç ürünün 8 Ekim ham
-çıktısı, katalog alımı ve dört ürünün tekrarı yukarıda kontrol edildi;
-kullanıcının ekran kontrolünden sonra kaynakta bugünkü ilk teklif dönüşümü doğrulandı; dar düzeltme kullanıcı onayıyla uygulandı, beş ürünün canlı teyidi tamamlandı; commit/push onaylandı; CI sonucu GitHub Actions kaydından izlenir.
-[Cimri koşullarındaki](https://www.cimri.com/kullanim-kosullari)
-kopyalama/işleme sınırları sürer; kullanıcı bir defalık aktarım kararı verdi,
-teknik erişim kullanım izni olarak sunulmaz. Düzenli Cimri toplaması yapılmaz.
 
 Türkçe karakterlerin terminalde doğru görünmesi için oturum başında bir kez
 `[Console]::OutputEncoding = [Text.Encoding]::UTF8` çalıştırın. Keşif hedef
@@ -2217,17 +378,6 @@ ve zamanlanmış girişlerinde yukarı iletilir; kilit yine bırakılır.
 Zamanlanmış keşif logunda başlangıç kalır, normal `Çıkış kodu:` satırı
 yazılmaz. Scraper factory de Ctrl+C'yi `plugin` olarak sarmaz.
 
-**7 Ekim bakım 7:** kullanıcı mevcut davranışın korunmasını seçti. Üretim
-kodu değişmeden 28 kalıcı sınama eklendi (HTTP/factory 7, keşif 19, toplama 2).
-Gerçek factory ve sahte scraper'larla elle/zamanlanmış turda üç `plugin`
-hatası ve dört fiyat kaydı, `completed` durumu, çıkış 2, kapanışlar ve iki
-kilit doğrulandı. Sonraki normal tur başladı; önceki sonuçlar değişmedi.
-Keşifte yükleme/kurma hataları, Ctrl+C, dosya koruması, log ve sonraki normal
-keşif sınandı. Hedefli 43 test ve tam paket 832 test geçti; atlanan/xfail yok,
-228 PostgreSQL testi yalnız `fiyat_takip_test`, Black/Flake8 temiz. Sonuç
-**kontrol edildi ve mevcut davranış kabul edildi**; yükleyiciler birleştirilmedi.
-Bu sınamalar canlıda eklenti hatası görüldüğü anlamına gelmez.
-
 ## Keşif nasıl çalışır
 
 ### Örnek: iPhone 15 128 GB baştan sona
@@ -2293,27 +443,7 @@ Farklı SKU, grup/kategori adresi, başka alan adı veya yalnız sorguda geçen 
 canonical olarak kullanılmaz; doğrulanmış istenen ürün adresi korunur, geçerli
 aday sırf canonical farklı diye reddedilmez.
 
-6 Ekim iPhone 15 ve 7 Ekim Galaxy S24 ham kayıtlarında 36 ürün sayfasının
-canonical adresleri 13 grup (`-pm-`), 23 model/kategori adresiydi. Kabul edilen
-24 adayın özgün adresleri korundu; diğer 12 sayfa başka model olduğu için
-reddedildi. Gerçek farklı SKU canonical örneği görülmedi. Tam eşitlik koruması
-7 Ekim'de kullanıcının bakım 2'ye özel onayıyla önleyici olarak uygulandı
-([proje_plani.md](../proje_plani.md), Bölüm 7).
-
-### Otomatik güvenli keşif kabulü (Bakım 6)
-
-19 Ekim'de onaylanan planın kodu ve ağsız doğrulaması tamamlandı: 74 yeni
-test dahil 1903/0 atlama/xfail (438 PostgreSQL), Black 78 dosyada ve Flake8 temiz.
-19 Ekim toplu canlı önizlemesi ve katalog kopyasında uygulama kontrolü tamam.
-Kullanıcı katalog/otomasyon geçişini ayrıca onayladı ve 19 Ekim 15:48'de
-raporu uygulayıp görevi otomatik modda kurdu. Katalog 60 ürün/356 bağlantı/
-354 etkin; eski 59 ürün ve 348 bağlantının bütün alanları aynı.
-20 Ekim'de normal tur log–DB ve eşitleme teyidi tamamlandı: DB60/357/354.
-Bağımsız SQL–API de 60 ürün/0 fark/sekiz değişmeyen nesne/çıkış0 ile
-tamamlandı. 6.1–6.4 tamam; kullanıcı 20 Ekim'de 6.5 commit ve push
-işlemlerini açıkça onayladı. Gönderilen aynı commit'in başarılı CI sonucu
-kapanış şartıdır; sonuç Git dışı kapanış kaydında ve devir notunda izlenir.
-Gerçek DB'ye uygulama yardımcısı veya ajan tarafından yazılmadı.
+### Otomatik güvenli kabul
 
 `app/discovery/acceptance.py`, aynı sayfanın ürün koduna bağlı kimlik
 kanıtlarını toplar ve `verified` (doğrulandı), `mismatch` (uyuşmazlık),
@@ -2331,7 +461,7 @@ bulunmaması tek başına ret değildir. Hepsiburada özellikleri yalnız ürün
 ana `productState.product`/ürün kökü içinde okunur; önerilen ürüne girilmez.
 Renk kendi varyantı/ürün alanından alınır; kayıtlı satışa kapalı örneklerde
 yalnız tam başlığın açık renk son eki de kullanılır. Sınırlı renk sözlüğü,
-tanınmayan renkleri görselden tahmin etmez. Blue/Mavi eşitliği kayıtlı 6 Ekim
+tanınmayan renkleri görselden tahmin etmez (bilinen sınırı: "Bilinen sınırlar"). Blue/Mavi eşitliği kayıtlı 6 Ekim
 örneğine dayanır; genel WebColor “Çok Renkli” özgül renk sayılmaz.
 
 Etkin, tanımlı hedeflerin doğrulanan yeni kapasiteleri yeni ürün oluşturabilir;
@@ -2343,7 +473,7 @@ engellemez; `complete=false` ve kısmi çıkış kodu yine korunur.
 
 `config/discovery.json` içindeki `retired_listing_bindings`, kaldırılan
 bağlantının platform kodunu, eski listing_id, product_id ve product_key bağını
-saklar. İlk kayıt HBCV00008BCY51 → ürün58/S25 512 GB'dır. Keşif DB'ye bağlanmaz.
+saklar. İlk kayıt HBCV00008BCY51 → ürün 58 / Galaxy S25 512 GB'dır. Keşif DB'ye bağlanmaz.
 Kaldırılmış bağlantı yalnız tam yeni kanıtla aynı ürüne eski kimliğiyle
 dönebilir; başka ürüne taşınamaz. Katalogda hâlen bulunan pasif bağlantı
 kendiliğinden açılmaz. Gelecekte hedefli kalıcı kaldırmada bu kayıt güncellenir.
@@ -2386,106 +516,6 @@ katalog değişmiş olabilir; çıkış1 “hiçbir şey yazılmadı” garantis
 Yerel rapor, katalog ve hedef ayarı parmak izleri yeniden denetlenir; raporun
 kendi kabul iddiası yerine kanıttan karar tekrar hesaplanır.
 
-**Regresyon ve sınır:** önceki 25 adayın 24'ü için eldeki kaynaklar küçük
-örneklere ayrıldı: 18 ürün HTML alanı, üç arama kartı ve üç canlı ret başlığı.
-Kart/ret metni örnekleri yalnız olumsuz kapsam kanıtıdır, tam HTML sayılmaz.
-İlk iPhone 15 adayının saklanmış ürün HTML'i yok; uydurulmadı. Yeni kapsamda
-HBCV0000E8DHJL'nin 14 Ekim kaydında ek çelişki görüldü: başlık/varyant256 GB,
-aynı SKU'nun `productState.product.expends[0].properties[0]` alanı512 GB.
-Yeni kabul bu adayı `storage_mismatch` ile dışarıda tutar. Bu, eski 15/7/3
-inceleme kaydını geriye dönük değiştirmez; mevcut bağlantı otomatik silinmedi
-ve scraper davranışı değiştirilmedi. Mevcut kayda müdahale ayrı hedefli karar
-ister; hangi kaynak alanının yanlış olduğu kesinleşmedi.
-
-74 yeni test `tests/test_discovery_acceptance.py` içinde; hazırlık/katalog/son
-rapor hataları, Ctrl+C sonrası uzlaştırma ve güncel önizleme bütünlüğü ağsız
-sınandı. Ham kaynaklar Git dışında; küçük kaynak/provenans örnekleri test
-verisinde tutulur. Tam testler gerçek DB adresleri kaldırılarak yalnız izinli
-_test hesaplarıyla çalıştırıldı. İki mevcut Starlette/AnyIO deprecation
-uyarısı sürüyor.
-
-**19 Ekim 6.4 önizleme sonucu:** kullanıcı tek toplu taramayı 14:31:36'da
-başlattı. `data/discovery/kesif_2026-10-19_14-31-36.json` raporu çıkış 2 ile
-kısmi: 48 hedef/platform sonucunun 4'ü tam; arama API'sinde HTTP 403 ve
-sayım/model filtresi/HTML eksikleri var. Bu, doğrulanmış kendi ürün
-kanıtlarını geçersiz kılmaz; taramanın bütün pazarı kapsadığı da söylenmez.
-495 kimlik değerlendirmesi (236 doğrulandı / 248 uyuşmazlık / 11 kanıt yetersiz)
-yeniden hesaplandı. 429 ret, sorun kaydı sayısıdır; benzersiz telefon sayısı
-değildir. 228 mevcut bağlantı ve görülmeyen 118 bağlantı korunur.
-
-Öneri: mevcut altı ürüne yedi bağlantı ve yeni Galaxy S24 FE 128 GB
-(ürün60) için bir bağlantı; toplam 5 Trendyol / 3 Hepsiburada. Katalog
-59/348/346 → 60/356/354 olacak. Git dışı
-`artifacts/bakim_6_20261019/kabul_8/kabul_incelemesi.json`, sekiz bağlantının
-ürün/renk/URL/kanıtını ve önceki/beklenen katalog parmak izlerini içerir.
-Kopyada yalnız bu eklemeler yapıldı; eski kimlikler/alanlar korundu, ikinci
-uygulamada ekleme veya dosya yazımı olmadı. Değiştirilmiş rapor, ayar veya
-katalog parmak izi durduruldu. Özgün rapor ve gerçek katalog değişmedi.
-
-`kabul_8/katalogu_uygula_ve_gorevi_kur.ps1` yardımcısı hazır; sözdizimi,
-UTF-8 BOM ve parmak izleri ağsız doğrulandı. Seçeneksiz yalnız kontrol eder;
-`-Uygula` yalnız ayrı katalog/otomasyon kabulünden sonra kullanıcı terminalinde
-çalıştırılacak. Mevcut raporu tekrar siteye gitmeden uygular, ardından görevi
-`-OtomatikKabul` ile kurup Pazar 14.00 ve fiyat görevinin korunmasını denetler.
-Kullanıcı, sekiz bağlantılık fark ve haftalık otomasyona geçiş için ayrı
-kabulü verdi; karar Git dışındaki `kabul_8/katalog_otomasyon_kabulu.json`
-kaydına işlendi. Önceki inceleme kaydının tarihsel onay alanları değiştirilmedi.
-Kullanıcı yardımcının `-Uygula` seçeneğini çalıştırdı. Uygulama kaydı
-`kabul_8/uygulama_20261019_154759_467861/uygulama_kontrolu.json`: çıkış0,
-önceki/beklenen katalog parmak izleri aynı, yalnız 1 ürün/8 bağlantı eklendi.
-Görev kaydı `kabul_8/gorev_kontrolu_20261019_154802_283.json`: doğrulandı;
-`--scheduled --auto-accept`, Pazar14.00, sonraki çalışma 25 Ekim14.00,
-telafi/uyandırma kapalı, IgnoreNew ve iki saat sınırı korundu.
-Fiyat toplama görevinin önceki/sonraki XML parmak izleri aynı.
-Bu sonuç kullanıcının ürettiği kurulum kaydından denetlendi; ilk haftalık
-otomatik çalışmanın sonucu henüz gözlenmedi. Ajan görevi çalıştırmadı.
-
-`kabul_8/devreye_alma_incelemesi.json`, gerçek katalog farkını ve görev
-kaydını birleştirir. Tarihsel inceleme/onay/uygulama kayıtları değiştirilmedi;
-uygulama yardımcısının otomasyon=false alanı görev kurulmadan önceki anı
-gösterir. Yeni ürün/sayfaların normal tur DB eşitlemesi 20 Ekim'de
-doğrulandı; güncel60 ürünle bağımsız SQL–API teyidi de tamamlandı. Yeni ürünün
-Cimri eşleştirmesi yok; başka kapasitenin geçmişi kullanılmayacak.
-
-**20 Ekim tur42/43 teyidi:** her tur354 planlı sonuç, log–DB birebir aynı.
-Tur42'de242 fiyat/112 Tükendi/0 hata; üç network hatası ikinci okumada3/3
-düzeldi. Tur43'te240 fiyat/113 Tükendi/1 identity. Mevcut S25 256 GB sayfası
-ATWVMC'nin kapasitesi doğrulanamadı; hata fiyat veya Tükendi sayılmadı.
-Kaynak/kod nedeni bu kontrolle kesinleşmedi. Yeni sekiz sayfada her iki
-turda7 fiyat/1 Tükendi/0 hata ve doğru ürün bağları doğrulandı.
-
-Okuma hesabıyla DB60/357/354; katalog60/356/354. Eksik katalog satırı eski
-S25 sayfasının pasif DB kaydıdır; geçmiş korunur. Saf plan_sync hesabında
-ekleme/güncelleme/pasifleştirme kalmadı. Eski40 turun12.982 kontrolü tam
-alan parmak izleriyle aynı; tur41'in346 kontrolünde ML görüntüsündeki kayıtlı
-alanlar karşılaştırıldı. Cimri20.805 kayıt/553 NULL ve eski kimlikler aynı.
-Sekiz nesnenin denetim başı/sonu parmak izleri değişmedi. Kanıt:
-`artifacts/bakim_6_20261020/db_20261020_103933_675857/sonuc.json`.
-
-Bağımsız karşılaştırmayı kullanıcı 20 Ekim 10:46:59–10:47:03 arasında,
-yerel API açıkken `artifacts/bakim_6_20261020/sql_api_denetimi.ps1` ile
-çalıştırdı. Yardımcı
-mevcut `tests/manual/api_ui_check.py` aracını kullanır, yalnız okuma rolünü
-aktarır ve eski ortam değişkenlerini geri alır; yeni tarihli çıktı üretir.
-Rapor doğrulandı:60 ürünün tamamı eşleşti, ürün ve uç nokta farkı yok;
-sekiz nesnenin başlangıç/son parmak izleri aynı, çıkış0. Çıkış2 kaynak
-değişimi olduğundan kesin kabul sayılmaz. Ajan gerçek denetimi başlatmadı;
-kullanıcının raporunu ve yardımcının kaynak dosyaları değişmedi kaydını okudu.
-Kanıtlar `artifacts/bakim_6_20261020/sql_api_20261020_104658_551/` içindeki
-`report.json` ve `kontrol_kaydi.json`. Eski S25 512 GB güncel teklifsiz ve
-doğrulanmamış sonuç olarak korunuyor; yeni ürün60'ın 41.444,00 TL teklifi
-doğru sunuluyor. Tamamlanan grafik kontrolleri tekrar edilmedi.
-**6.4 tamamlandı; 6.5 belgeleri hazır ve commit/push kullanıcı tarafından
-20 Ekim'de açıkça onaylandı. Aynı commit'in başarılı CI sonucu kapanış şartıdır.**
-Gönderim sonucu `artifacts/bakim_6_20261020/kapanis_hazirligi/gonderim_kaydi.json`
-ve yerel devir notunda tutulur; önceki araştırma ve kontrol kayıtları değişmez.
-
-Katalog uygulamasından sonra tam test/biçim kontrolleri yeniden geçti:
-1903 test/0 atlama/0 başarısızlık, Black ve Flake8 temiz. Gerçek DB adresleri
-test sürecinden çıkarıldı; yalnız izinli `_test` hesapları kullanıldı.
-Kaynak dosyaları testler boyunca değişmedi. Git dışı kayıt:
-`artifacts/bakim_6_20261019/katalog_sonrasi_kontroller/sonuc.json`.
-
 ### Katalogla birleştirme (`service.py`)
 
 - Ürün kimliği: marka + model + kapasite. Bağlantı kimliği: platform + sitedeki
@@ -2511,8 +541,8 @@ kendi adaylarını** kataloğa birleştirir:
 - Rapor bir önizleme (`dry_run: true`) olmalıdır; kataloğu zaten yazmış bir
   çalışmanın raporu reddedilir. `--trace` çıktısı gibi sarmalanmış ya da bozuk
   dosya da rapor sayılmaz (sözleşme katıdır). Dosyanın başında BOM olabilir.
-- Bakım6 raporunda kanıt kararı, katalog/ayar/rapor parmak izleri ve beklenen
-  son katalog denetlenir. Eski raporlar okunabilir; fakat kanıtsız rapordan
+- Kanıtlı raporlarda (otomatik kabul sonrası biçim) kanıt kararı, katalog/ayar/rapor
+  parmak izleri ve beklenen son katalog denetlenir. Eski raporlar okunabilir; fakat kanıtsız rapordan
   yeni ekleme yapılmaz. Aynı raporun zaten uygulanmış kayıtları çoğaltılmaz.
 - Birleştirme canlı yazmayla aynı koddur (`service.py`): kilit altında
   yeniden okuma, aynı `merge_catalog`, yalnız içerik değiştiyse yazma. Önizleme
@@ -2543,7 +573,7 @@ kendi adaylarını** kataloğa birleştirir:
 | `dry_run` | Çalışma katalog yazmadan mı yapıldı. |
 | `complete` | Kullanılan kaynakların tamamı tarandı mı. Bütün pazaryerinin bulunduğunu **kanıtlamaz**. |
 | `results` | Hedef × platform başına ayrıntı: kanıtı yeterli adaylar, sayfa kararları (`decisions`), uyarılar, taranan arama/ürün sayfası sayısı. RAM yalnız kanıt varsa doldurulur; garanti kimlik yerine geçmez. |
-| `application` | Bakım6 işlem durumu, katalog yolu, önceki/sonraki katalog ve ayar/rapor parmak izleri. Eski raporda `null`; yeni ekleme yetkisi vermez. |
+| `application` | Yazma işleminin durumu, katalog yolu, önceki/sonraki katalog ve ayar/rapor parmak izleri. Eski raporda `null`; yeni ekleme yetkisi vermez. |
 | `added_products`, `added_listings` | Önizleme/hazırlıkta planlanan, `applied` sonucunda eklenen ürünler/sayfalar; `not_applied` durumda eklenmemiştir. |
 | `existing_listings` | Yeniden görülen, zaten katalogda olan sayfalar. |
 | `retained_unobserved_listings` | Etkin olduğu hâlde bu taramada görülmeyen, katalogda korunan sayfalar; güncel teklif sayılmaz. Pasif sayfalar listelenmez. |
@@ -2696,7 +726,7 @@ yazılır; hiçbiri fiyat veya Tükendi yerine geçmez.
 | `redirect` | HTTP | Yönlendirmenin hedefi yok ya da 3'ten fazla yönlendirme. |
 | `blocked` | HTTP | Kaynak 401/403/418/429 döndürdü (engellendi); tekrar denenmez. |
 | `http_error` | HTTP | Diğer 4xx (ör. 404); kalıcı sayılır, tekrar denenmez. |
-| `network` | HTTP | Bağlantı hatası, zaman aşımı veya 5xx; tekrarlardan sonra da sürdü. 5xx bilerek ayrı bir kod almaz (karar, 6 Ekim): geçicidir ve [tur sonu ikinci okuma](#tur-sonu-ikinci-okuma-adım-11) yalnız `network`'ü yeniden okuduğu için 5xx'i de kapsar. |
+| `network` | HTTP | Bağlantı hatası, zaman aşımı veya 5xx; tekrarlardan sonra da sürdü. 5xx bilerek ayrı bir kod almaz (karar, 6 Ekim): geçicidir ve [tur sonu ikinci okuma](#tur-sonu-ikinci-okuma) yalnız `network`'ü yeniden okuduğu için 5xx'i de kapsar. |
 | `too_large` | HTTP | Başarılı yanıtın gövdesi indirme sırasında 8 MB sınırını aştı; aktarım durduruldu, tekrar denenmez. |
 | `parse` | HTTP, scraper | Yanıt UTF-8 metin/JSON değil ya da sayfa verisi beklenen yapıda değil; teklif sözleşme doğrulamasından geçmedi. |
 | `identity` | scraper, keşif | Sayfa hedef ürün değil: model, kapasite, dışlanan ifade, ağ türü ya da yenilenmiş/aksesuar/yurt dışı sürüm. |
@@ -2705,14 +735,82 @@ yazılır; hiçbiri fiyat veya Tükendi yerine geçmez.
 | `plugin` | factory | Platform adaptörü yüklenemedi. |
 | `validation`, `unexpected`, `storage` | toplama turu | Gözlem doğrulanamadı veya başka sayfaya ait; beklenmeyen istisna (ayrıntı loga yazılır); veritabanı değeri reddetti. Tur üçünde de sürer. |
 
+## Kimlik kuralları
+
+Keşif ve scraper aynı fonksiyonu (`app/scraper/parsing.py → identify`) kullanır;
+böylece keşfin kabul ettiği sayfayı scraper aynı girdilerle reddetmez.
+
+- Ürün adresi kimliği de `app/scraper/parsing.py` içindeki
+  `trendyol_product_id(url)` ve `hepsiburada_sku(url)` ile ortak okunur. İki
+  scraper, iki keşif modülü ve katalog eşleştirme bu yardımcıları kullanır.
+  Kimlik yalnız ürün yolundan çıkarılır; sorgu veya alan adındaki metin kimlik
+  sayılmaz. Geçerli sorgu parametreleri, son eğik çizgi ve göreli ürün yolları
+  kabul edilir; yardımcılar adresi yeniden yazmaz.
+- Trendyol kimliği küçük harfli `-p-` ardından rakamlardır; rakama yapışık harf
+  reddedilir. Kimlik metin olarak kalır, baştaki sıfırlar korunur. Hepsiburada
+  ürün kodu `-p-HBCV…` içindeki harf/rakam SKU'sudur ve büyük harfe çevrilir.
+  Kimlik bulunamazsa ortak yardımcılar `None` döndürür. Mevcut scraper
+  doğrulaması geçersiz ürün adresinde `identity` verir; Trendyol'da sorunlu
+  satıcı teklifi fiyat seçiminden `different_product_page` gerekçesiyle elenir.
+  Hepsiburada SKU reddi ürün isteğinden önce, Trendyol scraper doğrulaması
+  mevcut ürün isteğinden sonra çalışır; istek sırası korunur.
+- Hepsiburada grup (`-pm-HBC…`) kimliği keşfe özgü ayrı kuraldır; ürün SKU'su
+  sayılmaz. Katalog eşleştirmede bilinmeyen platform `None` döndürür. Keşfin
+  kaynak/adres/sayfa karşılaştırması ve canonical tam SKU koruması bu kimliği kullanır.
+- Başlık tam modeli içermeli: "iPhone 16" hedefi "iPhone 16e", "16 Plus",
+  "16 Pro" başlıklarını; "Galaxy S24" hedefi "S24+", "S24 FE", "S24 Ultra"
+  başlıklarını; "iPhone 13" hedefi "13 mini" başlığını kabul etmez.
+- Yenilenmiş, ikinci el, teşhir, **yurt dışı sürüm** ("International Version",
+  "Global Version", "Yurt Dışı") ve aksesuar (kılıf, şarj, koruyucu…) reddedilir.
+  Kayıtlı "Kılıfı", "Adaptörü", "Kapağı" yazımları da başlıklarda bütün sözcük
+  olarak reddedilir (`kilifi`, `adaptoru`, `kapagi`). Başlık veya yapısal veri
+  doğru kapasiteyi taşısa da ret `identity` olur. Genel Türkçe ek tahmini yoktur.
+- Yenilio + isteğe bağlı Outlet + A/B/C + Kalite birleşimi de başlıkta
+  kapsam dışıdır (13 Ekim gerçek kaynak bakımı). Örnekler: "Yenilio A Kalite",
+  "Yenilio B Kalite", "Yenilio Outlet C Kalite". Normalleştirilmiş sözcük
+  sınırları ve boşluk/tire/alt çizgi korunur; tek outlet/kalite veya satıcı
+  adı yeterli ret sinyali değildir. Keşif kartı/ürün ve scraper aynı ortak
+  kurala bağlıdır; fiyat okumasından önce identity reddi vardır.
+- Keşfin kategori süzgeci "Kapağı" ve "Adaptörü" yazımlarını da reddeder;
+  "Kılıfı" mevcut `kilif` kuralıyla zaten reddediliyordu. "Cep Telefonu Kapağı"
+  ve "Cep Telefonu Adaptörü" kategori örnekleri yapay sınamadır; bu adlarla
+  gerçek bir kaynak kategorisi görüldüğü iddia edilmez.
+- Kapasite, sayfanın yapısal verisinden ve başlıktan okunur; iki kaynak
+  çelişirse sayfa reddedilir, hiçbirinde yoksa da reddedilir. TB desteklenir
+  (1 TB = 1024 GB). Ardından "RAM" yazan değer hafıza sayılmaz ("128 GB 12 GB
+  Ram" → 128). Etiketsiz iki değer varsa ("12GB+512GB") başlık kullanılmaz,
+  yapısal veri kullanılır.
+- Hepsiburada'da `variant_identity(soup, sku)` aynı SKU'nun bütün
+  `allVariantCombinations` kayıtlarını karşılaştırır. Keşif kapasite ve rengi
+  buradan alır; scraper'ın `variant_capacity` yardımcısı da aynı doğrulamaya
+  bağlıdır. Farklı geçerli kapasite veya normalize edilmiş renkler `identity`
+  üretir; başka SKU'nun çelişkisi açılan ürünü etkilemez. Eksik/ayrıştırılamayan
+  kapasite ve boş renk çelişki değildir. Tek geçerli kapasite kullanılır;
+  kapasite bulunamazsa başlık doğrulaması sürer. `1 TB`/`1024 GB` ve mevcut
+  normalizasyonla eşdeğer renk tekrarları kabul edilir; rengin ilk dolu kaynak
+  metni korunur. Renk çevirisi veya eş anlamlı eşleştirmesi yapılmaz.
+  Keşifte SKU herhangi bir listede bulunabilir; hiçbirinde yoksa reddedilir.
+  Scraper'da seçenek bulunmadığında başlıktan kapasite doğrulaması korunur.
+  Grup sayfalarının ve bağlantı kuyruğunun son dolu listeden ilerlemesi değişmedi.
+- Ayrı model sayılan ekler: Pro, Plus, Max, Ultra, FE, Lite, mini, **Edge, Air**.
+  "Galaxy S25 Edge" S25 hedefine, "iPhone 17 Air" yazan bir sayfa iPhone 17
+  hedefine girmez.
+- Satıcıların `_` ile ayırdığı adlar ("Galaxy S25 Ultra_12GB_256GB") boşlukla
+  ayrılmış gibi okunur; aksi halde "Ultra" görülmüyor ve sayfa hem S25 hem S25
+  Ultra sayılıyordu (canlıda `catalog_conflict` olarak yakalandı).
+- Hedefin `exclude_terms` ifadelerini içeren başlıklar reddedilir; hedefte
+  `network` varsa sayfanın yapısal ağ türü hedefle çelişemez.
+- Trendyol'da model adında açık 5G varsa yapısal Mobil Bağlantı Hızı değeri
+  açık 4G olduğunda verify_model_network iki tüketicide de identity verir.
+  4.5G/4,5G/LTE/4G LTE mevcut network_type ile 4G sayılır. Değer eksik/
+  tanınmıyorsa bu koruma yeni çıkarım yapmaz; 5G+, 5G NR ve 4G/5G mevcut
+  5G tanımında kabul edilir. Kontrol fiyat/adaydan önce uygulanır; modelde
+  5G yazmaması 4G kabul kuralı değildir. Kaynak 797850359, 14 Ekim.
+
 ## Veritabanı (PostgreSQL)
 
-Fiyat toplama turlarının sonuçları PostgreSQL 17'de saklanır. Bugün şema,
-`migrate`, katalog eşitleme, toplama turu, koruyucu kurallar (002) ve turlar arası
-karşılaştırılabilirlik görünümü hazırdır. İlk tam tur 28 Eylül
-2026'da 326 sayfanın tamamını 31 dakikada hatasız okudu. Günde 2 turu
-Görev Zamanlayıcı başlatır ([Zamanlanmış tur](#zamanlanmış-tur-görev-zamanlayıcı);
-durum: [proje_plani.md](../proje_plani.md) Bölüm 9).
+Fiyat toplama turlarının sonuçları PostgreSQL 17'de saklanır. Günde 2 turu
+Görev Zamanlayıcı başlatır ([Zamanlanmış tur](#zamanlanmış-tur-görev-zamanlayıcı)).
 
 ### Bir kerelik kurulum (Windows)
 
@@ -2804,19 +902,12 @@ ile bütün tur ve eşitleme testlerinde sınanır.
 | `listing_checks` | `run_id`, `listing_id`, `product_id` | Sonuç alanları **bir kez**, yalnız çalışan turda yazılır: sonuçsuz (planlı) satır ilk sonucunu alır, sonra satır donar |
 
 - **Tek istisna:** çalışan turdaki `network` hatası, aynı tur içinde yeniden
-  okunup yerine sonuç yazılabilir ([tur sonu ikinci okuma](#tur-sonu-ikinci-okuma-adım-11),
+  okunup yerine sonuç yazılabilir ([tur sonu ikinci okuma](#tur-sonu-ikinci-okuma),
   `runs.rewrite_network_result`). Başka hata kodları ve biten turun satırları
-  değiştirilemez. **`003_closed_run_guards.sql` 6 Ekim'de kullanıcı tarafından
-  gerçek veritabanına uygulandı.** `003`, ilk sonuç
-  yazımını da çalışan turla sınırlar; sonuç yazarken tur satırını işlem sonuna
-  kadar `FOR SHARE` ile kilitler, eşzamanlı kapanışı sıraya alır. Kapanmış turun
-  durumu ve bitiş zamanı değişmez, notu güncellenebilir. Mevcut kayıtlar ve
-  görünüm korunur; `001` ve `002` değişmez. 19 yeni PostgreSQL testiyle
-  toplam 571 test (`570 passed, 1 xfailed`, 0 atlandı; 219 PostgreSQL), Black ve
-  Flake8 temiz. Uygulama sonrası salt okunur denetimde migration parmak izleri,
-  iki işlevin SQL içeriği ve açık tetikleyicileri doğrulandı; 15 mevcut turun
-  sonuç sayıları korundu, görünümün 827 satırı bağımsız hesapla eşleşti
-  (`proje_plani.md`, Bölüm 7).
+  değiştirilemez. `003_closed_run_guards.sql` ilk sonuç yazımını da çalışan
+  turla sınırlar; sonuç yazarken tur satırını işlem sonuna kadar `FOR SHARE`
+  ile kilitler, eşzamanlı kapanışı sıraya alır. Kapanmış turun durumu ve bitiş
+  zamanı değişmez, notu güncellenebilir.
 - **Bilerek silme:** gerçekten gerekirse (örneğin yanlış eklenmiş bir sayfanın
   geçmişi) tablonun sahibi (`fiyat_takip`) ilgili tetikleyiciyi kapatıp işini
   yapar ve hemen açar. Önce `SELECT` ile neyin silineceğine bakılır, tur
@@ -2881,7 +972,7 @@ ORDER BY run_id;
    `[12/326] listing_id  fiyat 57.249,00 TL · satıcı (Stokta Var)` biçiminde
    ilerleme yazılır.
 6. Tur sonunda yalnız `network` hatası alan sayfalar **bir kez** yeniden okunur
-   (aşağıda [Tur sonu ikinci okuma](#tur-sonu-ikinci-okuma-adım-11)).
+   (aşağıda [Tur sonu ikinci okuma](#tur-sonu-ikinci-okuma)).
 7. Tur `completed` yapılır ve özet basılır.
 
 | `fetch()` sonucu | `listing_checks` |
@@ -2906,7 +997,7 @@ Zamanlayıcı için); verilmezse `manual`. `--prefix` kullanıldıysa turun
 notuna yazılır. Sonuç yalnızca süren tura yazılabilir; kapanmış bir tur
 yeniden kapatılmaya çalışılırsa hata verir (sessiz geçmez).
 
-#### Kapanış sonrası hata kontrolü (bakım 6)
+#### Kapanış sonrası hatalar
 
 Turun kapanışı özet sorgusundan önce, autocommit bağlantıda kalıcıdır.
 Özet SQL hatası veya özet okunurken kullanılan bağlantının kapanması, yazılmış
@@ -2918,20 +1009,7 @@ Ctrl+C mesajı kapanmış ve yarım kalmış turu ayırır:
 
 > Komut durduruldu. Tamamlanmış tur 'completed' kalır; yarım kalan tur 'interrupted' olarak kapatılır. Kapatılamadıysa bir sonraki tur kapatır.
 
-7 Ekim kontrolünde 7 kalıcı sınama eklendi: doğrudan toplama girişindeki
-özet hatası ve elle/zamanlanmış komutta üç kapanış sonrası hata durumu.
-Gerçek SQL hatası üretilir, yalnız test bağlantısı kontrollü kapatılır veya
-Ctrl+C taklit edilir; scraper'lar sahtedir. Bağımsız bağlantıdan turun bütün
-alanları (bitiş zamanı dahil) ve yedi sonucun bütün sütunları hata öncesiyle
-karşılaştırılır. Veritabanı kilidi başka bağlantıdan, dosya kilidi tekrar
-alınarak doğrulanır; sonraki tur başlar ve eski tamamlanmış turu değiştirmez.
-Zamanlanmış çalışmada hata mesajı ve çıkış kodu logda da bulunur. Eski kodda
-5 sınama geçti; 2 Ctrl+C sınaması yalnız yanıltıcı mesaj yüzünden başarısızdı.
-**Veri koruması kontrol edildi, mevcut davranış kabul edildi; kesinti mesajı
-düzeltildi.** Toplama/kapanış/özet sırası, API, şema ve çıkış kodları değişmedi.
-Bu kontrollü testler canlı turda bu hataların görüldüğü anlamına gelmez.
-
-#### Tur sonu ikinci okuma (Adım 11)
+#### Tur sonu ikinci okuma
 
 Bağlantı tur ortasında koptuysa ve tur bitmeden döndüyse (28 Eylül: 47 sayfa,
 4 Ekim: ilk 109 sayfa) `network` hatası alan sayfalar bu sırada okunabilir
@@ -2969,15 +1047,11 @@ kez daha okur:
   görünümünde](#karşılaştırılabilirlik-product_run_prices) sahte bir
   "karşılaştırılamaz" satırı oluşmaz.
 - **Sınırı:** bilgisayar uyursa ya da kesinti tur bitene kadar sürerse sayfalar
-  hatalı kalır; bu kalıcı çözüm değildir (sunucu, Aşama 9). Gerçek turda henüz
-  görülmedi: `network` hatası olmayan turlarda ikinci okuma çalışmaz.
+  hatalı kalır; bu kalıcı çözüm değildir (sürekli işletim, Aşama 9). Gerçek
+  turlarda çalıştığı görüldü: 17 Ekim tur 37'de 55/55, 19 Ekim tur 42'de 3/3
+  sayfa düzeldi.
 
 ### Zamanlanmış tur (Görev Zamanlayıcı)
-
-19 Ekim kullanıcı kararıyla günlük **10.00 ve 22.00** toplama korunur.
-Bakım 6 kapandıktan sonra sürekli işletim, ML eğitiminden önce ayrıca
-planlanacak. Amaç yeni uyku/kapanma kaynaklı veri boşluklarını azaltmak;
-barındırma ve site erişimi henüz doğrulanmadı. Mevcut görev ayarları aynı.
 
 `scripts/zamanlayici_kur.ps1`, Windows Görev Zamanlayıcı'ya
 `\FiyatTakip\FiyatToplamaTuru` görevini kurar. Yönetici izni gerekmez; tekrar
@@ -2990,7 +1064,7 @@ verip durur (görev bu değişkeni Windows kullanıcı ortamından alır).
 
 | Ayar | Değer | Neden |
 |---|---|---|
-| Tetikleyiciler | Her gün yerel saatle 10:00 ve 22:00 | Karar ([proje_plani.md](../proje_plani.md) Bölüm 9). Görev Zamanlayıcı saati varsayılan olarak UTC'ye çevirir; script yerel saat yazar. |
+| Tetikleyiciler | Her gün yerel saatle 10:00 ve 22:00 | Karar ([proje_plani.md](../proje_plani.md)). Görev Zamanlayıcı saati varsayılan olarak UTC'ye çevirir; script yerel saat yazar. |
 | Eylem | `.venv\Scripts\pythonw.exe -m app.collection --scheduled`; çalışma klasörü proje klasörü | `pythonw` pencere açmaz: 31 dakika açık kalan ve kapatılınca turu kesen bir pencere olmaz. `config\` ve `data\` yolları çalışma klasörüne göredir. |
 | Kaçan tur | "Kaçırılırsa en kısa sürede çalıştır" | Bilgisayar kapalıyken kaçan tur, açılınca **bir kez** yapılır (iki tur kaçtıysa da bir kez). |
 | Pil | Pildeyken de başlar, pile geçince durmaz | Windows'un varsayılanı yalnız şarjdayken çalıştırmaktır; dizüstünde pilde tur hiç başlamazdı. |
@@ -3025,7 +1099,7 @@ Sınırlar:
 - Tur bilgisayarın o anki internet bağlantısına bağlıdır. Bağlantı tur
   ortasında koparsa o sıradaki sayfalar `network` hatası alır, bağlantı dönünce
   tur kaldığı yerden sürer ve tamamlanır; tur sonunda bu sayfalar bir kez yeniden
-  okunur ([Tur sonu ikinci okuma](#tur-sonu-ikinci-okuma-adım-11)). Kesinti tur
+  okunur ([Tur sonu ikinci okuma](#tur-sonu-ikinci-okuma)). Kesinti tur
   bitene kadar sürerse ya da bilgisayar uyursa sayfalar hatalı kalır (28 Eylül,
   ilk zamanlanmış tur: 326 sayfanın 47'si `network`, 279'u okundu, çıkış 2; ikinci
   okuma o tarihte yoktu). İnternet hiç yoksa tur bütün sayfalara hata yazarak biter
@@ -3052,16 +1126,14 @@ Sınırlar:
 
 `scripts/kesif_zamanlayici_kur.ps1`, `\FiyatTakip\HaftalikKesif` görevini kurar
 (yönetici izni gerekmez; tekrar çalıştırmak yeniden kurar, `-Kaldir` siler;
-fiyat görevine dokunmaz). Karar (1 Ekim 2026, [proje_plani.md](../proje_plani.md)
-Bölüm 8): ilk A1 kurulumu haftalık önizleme yapar; kullanıcı raporu uygular.
-Bakım6'da iki kurulum biçimi desteklenir: seçeneksiz kurulum bu önizlemeyi
-korur; `-OtomatikKabul` otomatik kabul modunu kurar. Canlı kabul tamamlanana
-kadar mevcut görev değiştirilmez. İki biçimde de keşif DB'ye bağlanmaz.
+fiyat görevine dokunmaz). Kurulu görev **otomatik kabul** modundadır
+(`-OtomatikKabul`, 19 Ekim 2026); seçeneksiz yeniden kurulum önizleme moduna
+(`--dry-run`) döner. İki biçimde de keşif veritabanına bağlanmaz.
 
 | Ayar | Değer | Neden |
 |---|---|---|
 | Tetikleyici | Her Pazar yerel saatle 14:00 | Fiyat turları 10:00 ve 22:00'de başlayıp ~31 dk sürer; keşif (~35 dk) onlardan uzak bir saate konur. Saat yerel yazılır (UTC'ye çevrilmez). |
-| Eylem | `.venv\Scripts\pythonw.exe -m app.discovery --scheduled --dry-run`; çalışma klasörü proje klasörü | Penceresiz. `config\` ve `data\` yolları çalışma klasörüne göredir. `--dry-run` görevin kataloğa hiç yazmamasını sağlar. |
+| Eylem | Önizleme kurulumunda `.venv\Scripts\pythonw.exe -m app.discovery --scheduled --dry-run`; çalışma klasörü proje klasörü | Penceresiz. `config\` ve `data\` yolları çalışma klasörüne göredir. `--dry-run` görevin kataloğa hiç yazmamasını sağlar. |
 | Otomatik mod seçimi | Betik `-OtomatikKabul` ile çalıştırılırsa eylem `--scheduled --auto-accept` olur | Yalnız yeterli kimlik kanıtı olan adaylar eklenir. Seçeneksiz yeniden kurulum önizlemeye dönüş sağlar; Git işlemi yapmaz. |
 | Kaçan çalışma | **Telafi edilmez** | Geç açılan bir bilgisayarda telafi keşfi ortak kilidi ~35 dk tutar ve o sırada gelen 22:00 fiyat turu "kilit meşgul" (kod 3) deyip atlanırdı. Kaçan fiyat turu geriye dönük toplanamaz; keşif raporu ise elle her zaman alınabilir. |
 | Pil | Pildeyken de başlar, pile geçince durmaz | Windows'un varsayılanı yalnız şarjdayken çalıştırmaktır. |
@@ -3082,32 +1154,27 @@ Keşif ilerleme satırı yazmaz: 4 ve 5 Ekim'deki iki zamanlanmış biçimli ça
 logu yalnız başlık, özet, rapor yolu ve çıkış kodundan oluşuyordu (4 satır); tarama
 sürerken ekran ve log sessiz kalır.
 
-Önizleme modunda haftalık akış:
+Otomatik kabul modunda haftalık akış:
 
-1. Pazar 14:00'te görev başlar; yaklaşık 35 dk sonra log ve rapor oluşur.
-2. Log'un sonundaki özet satırına ve rapora bakılır: yeni ürün ve sayfalar,
-   `rejected` nedenleri, `pending` içinde beklenen `search_api` dışında bir uyarı
-   (ör. `search_fetch`, `variant_fetch`) olup olmadığı.
-3. Uygunsa `python -m app.discovery --apply-report data\discovery\kesif_<tarih-saat>.json`
-   (yukarıdaki "İncelenen raporu uygulama" bölümü).
-4. `config/catalog.json` değişikliği commit edilir; sonraki fiyat turu yeni sayfaları
-   veritabanına ekler.
-5. Bakım6'nın ayrı canlı kabulünden sonra otomatik biçime geçilir. Önceki
-   “2–3 hafta sonra değerlendir” kararı artık bu uygulama planıyla ele alınmıştır.
+1. Pazar 14:00'te görev başlar; yaklaşık 35 dk sonra log ve tarihli rapor oluşur.
+2. Yeterli kimlik kanıtı olan adaylar kataloğa eklenir; eksik veya çelişkili
+   olanlar raporda (`decisions`, `rejected`) nedenleriyle dışarıda kalır.
+   Süre dolması kabul nedeni değildir.
+3. Sonraki normal fiyat turu yeni katalogu veritabanına eşitler.
+4. `config/catalog.json` değişikliği yerelde birikir; kullanıcı ayrıca
+   onayladığında commit edilir. Otomatik Git işlemi yoktur.
+5. Katalog değiştiyse sonraki normal turdan sonra
+   [bağımsız SQL–API denetimi](#sqlapistreamlit-bağımsız-denetimi) çalıştırılabilir.
 
-Otomatik kabul açıldıktan sonra 3. adım her hafta elle yapılmaz: yeterli kanıtlı
-adaylar eklenir, eksik/çelişkili olanlar nedenleriyle dışarıda kalır. Sonraki
-normal fiyat turu yeni katalogu DB'ye eşitler. Katalog Git'te kalır; yerelde
-biriken değişiklikler kullanıcı ayrı onayladığında topluca commit/push yapılır.
+Önizleme modunda (seçeneksiz kurulum) 2. adımda katalog yazılmaz: log'un
+sonundaki özet satırına ve rapora bakılır (yeni ürün/sayfalar, `rejected`
+nedenleri, `pending` içinde beklenen `search_api` dışında bir uyarı), uygunsa
+`python -m app.discovery --apply-report data\discovery\kesif_<tarih-saat>.json`
+ile uygulanır.
+
 Otomatik ekleme, kaynakların eksiksiz tarandığı veya ML verisinin hazır olduğu
 anlamına gelmez. Yeni sayfa ilgili ürünün kapsamını değiştirebilir ve 30+7
 günlük karşılaştırılabilir dönem başlangıcını etkileyebilir; eski fiyatlar silinmez.
-
-İlk devreye alma, kullanıcı terminalinde tek toplu `--scheduled --dry-run`
-önizlemesi → rapor/katalog farkı ve otomasyon için ayrı kabul → aynı raporu
-siteye tekrar gitmeden uygulama → görevi `-OtomatikKabul` ile yeniden kurma
-şeklindedir. Komutları ajan arka planda çalıştırmaz. Yeni aday çıkmaması
-geçerli sonuçtur; sırf ekleme görmek için arama/manuel telefon kontrolü tekrarlanmaz.
 
 Görev Zamanlayıcı "Son çalıştırma sonucu"
 (`Get-ScheduledTaskInfo -TaskPath '\FiyatTakip\' -TaskName 'HaftalikKesif'`):
@@ -3123,15 +1190,10 @@ Sınırlar:
 - Fiyat turunun telafisi 14:00'e sarkarsa ya da o sırada elle canlı komut
   çalışıyorsa keşif kod 3 ile atlanır (loga yazılır) ve telafi edilmez.
 - Tarama sürerken (~35 dk) elle canlı komut çalıştırılmaz: ortak kilit tutulur.
-- Raporlar silinmez; klasör zamanla büyür. Tam taramanın raporu 5 Ekim'de ölçüldü:
-  305 KB (haftada bir dosya, yılda yaklaşık 16 MB). İnternet kesilince rapor küçük
-  kalır (4 Ekim: 78 KB, tarama 7 dk).
+- Raporlar silinmez; klasör zamanla büyür (tam tarama raporu birkaç yüz KB,
+  haftada bir dosya). İnternet kesilince rapor küçük kalır.
 - Testler komut akışını kayıtlı sonuçlarla sınar; görevin gerçek sitelerle
-  çalıştığı ve raporun doğruluğu canlı kanıt ister. Canlı kanıt: 4 Ekim'de görev
-  kendiliğinden çalıştı (`pythonw`, log ve rapor yazıldı) ama internet kesintisi
-  yüzünden tarama boş kaldı; 5 Ekim'de elle çalıştırılan tam tarama ve
-  `--apply-report` gerçek raporla çalıştı (7 sayfa eklendi). Tam taramanın Görev
-  Zamanlayıcı altında görülmesi Pazar 11 Ekim 14:00'i bekliyor.
+  çalıştığını ve raporun doğruluğunu yalnız canlı çalışma gösterir.
 
 ### Katalog eşitleme (`sync-catalog`)
 
@@ -3162,19 +1224,160 @@ eşitlemeyi çalıştırır; komut, keşiften sonra farkı gözle görmek içind
   bağımsız); toplama turları hangi katalogla yapıldığını
   `collection_runs.catalog_sha256` alanında bununla kaydeder.
 
-### Cimri geçmişinin ağsız aktarımı (Adım 9.2)
+### Migration kuralları
 
-8 Ekim: kod/test ve devreye alma tamam. `c64d14f` gönderildi,
-[aynı SHA için CI 37777433986 başarılı](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/37777433986)
-ve ana klasöre geçildi. Kullanıcı 004’ü **2026-10-08 12:35:53 UTC**’de
-uyguladı. Gerçek DB’de READ ONLY sorgularla 001–004 ad/parmak izi uyumu,
-bekleyen migration bulunmadığı, boş `market_history` tablosu ve üç etkin
-UPDATE/DELETE/TRUNCATE koruması doğrulandı. 9.2 tamamlandı.
-Gerçek geçmiş aktarımı 9.3'ün işidir. 161 yeni testin 48'i PostgreSQL'de;
-tam paket **1190 geçti, 0 atlandı/xfail**, 73,10 sn (276 PostgreSQL). Black/Flake8 temiz. Kayıtlı son beş ürün yeni dosya okuyucuyla
-ağsız kabul edildi: 10 kaynak dosyası, 1825 nokta, 71 eksik değer. Eski toplu
-raporun 53 başarılı kaydı yeni zaman/özet alanlarını taşımadığından kabul
-edilmedi; dört hata ve iki eşleştirmesiz kayıt da atlandı. Kaynaklar değişmedi.
+- Dosya adı `NNN_ad.sql`; numaralar 001'den boşluksuz artar. Uzantı büyük harfle
+  yazılmış (`.SQL`) ya da kurala uymayan ad hata verir; hiç dosya bulunamazsa da
+  hata verilir. Dosyalar pakete dahildir (`pyproject.toml`, `package-data`).
+- Her dosya tek transaction'da uygulanır; hata verirse o dosyadan hiçbir iz
+  kalmaz (PostgreSQL'de tablo oluşturma da geri alınır). Aynı anda iki
+  `migrate` çalışırsa ikincisi bekler (en çok 30 sn, bağlantının
+  `lock_timeout` ayarı; sonra hata verir).
+- **Uygulanmış dosya değiştirilmez;** değişiklik yeni numaralı dosyayla yapılır.
+  Değiştirilirse parmak izi tutmaz ve `migrate`/`status` hata verir. Parmak izi
+  satır sonundan bağımsızdır (Windows CRLF ile CI'daki LF aynı sayılır).
+- Uygulanmış dosya **yeniden adlandırılamaz** da: `schema_migrations` dosyanın
+  numarasız adını (ör. `initial`) tutar; ad değişirse `migrate` ve `status` eski
+  ve yeni adı gösteren bir hatayla durur. Numaralar boşluksuz artmazsa (atlanmış
+  ya da aynı numaralı iki dosya) hata mesajı bulunan numaraları listeler (ör.
+  `bulunan: [1, 1]`).
+- Veritabanında kodda olmayan bir sürüm varsa ("veritabanı koddan yeni") komut
+  hata verir.
+- **Yeni migration'ı koymak ile `migrate` arasında tur başlamamalı.** Dosya
+  klasördeyken veritabanı güncel değilse tur "şema güncel değil" deyip başlamaz ve
+  o tur kaçar (telafisi tek turdur). Bu yüzden yeni migration projenin kopyasında
+  geliştirilir ve gerçek klasöre yalnız bitince konur; `migrate` hemen ardından,
+  10:00–10:40 ve 22:00–22:40 tur saatleri dışında çalıştırılır.
+
+## Cimri geçmişi (bir defalık alım ve aktarım)
+
+Katalogdaki telefonların Cimri'de görünen bir yıllık fiyat geçmişi, 8 Ekim
+2026'da bir defa alınıp ayrı `market_history` tablosuna aktarıldı (57 ürün,
+20.805 tarihli kayıt, 553'ü eksik fiyat). Düzenli Cimri toplaması yapılmaz;
+Cimri serisi kendi toplama serimizle birleştirilmez ve aynı ölçüm sayılmaz.
+Kod (`app/market_history/`) olası tek bir son alım için korunur; yeni alım
+ayrı karar ister ([kullanım değerlendirmesi](#kullanım-değerlendirmesi)).
+
+### Eşleştirme dosyası
+
+Eşleştirme dosyası `version: 1`, `source: "cimri"`, `entries` taşır. Her girdi
+`product_key`, `url`, `cimri_product_id` içerir; anahtar, URL ve Cimri kimliği
+tekrar edemez. URL yalnız Cimri'nin HTTPS telefon sayfası olabilir; ürün etkin
+katalogda bulunmalıdır. 8 Ekim web araştırmasıyla 59 ürünün 57'sinin ana
+sayfa adresi ve görünen ürün başlığı eşleştirildi. İlk üç eşleştirme aynı
+kaldı. Araştırmada 57 başlık mevcut model/kapasite kuralıyla ağsız doğrulandı;
+bu kontrol tek başına API erişimini veya gömülü kimliği kanıtlamaz.
+Alım sırasında 57 sayfa/API kimliği ayrıca doğrulandı.
+
+Araştırma izi yerelde
+`data/market_history/mapping_research_20261008_073732.json` içindedir:
+araştırma zamanı, görülen başlıklar, kaynak adres/kimlikleri ve açık anahtarlar.
+URL/kimlik tahmin edilmedi; ana sayfalar kullanıldı, renk sayfaları birleştirilmedi.
+Galaxy S25 512 GB (`samsung_galaxy_s25_512gb`) ve Redmi Note 14 Pro 5G
+256 GB (`xiaomi_redmi_note_14_pro_5g_256gb`) için doğru ana adres araştırmada
+doğrulanamadı. Başka kapasite, Ultra/Plus veya 4G sayfası bunların yerine
+konmadı; eşleştirmesi olmayan ürünün Cimri'de bulunmadığı varsayılmaz.
+
+Redmi Note 14 Pro'nun [256 GB](https://www.cimri.com/cep-telefonlari/en-ucuz-xiaomi-redmi-note-14-pro-fiyatlari,a2372365369)
+ve [512 GB](https://www.cimri.com/cep-telefonlari/en-ucuz-xiaomi-redmi-note-14-pro-512gb-12gb-ram-fiyatlari,a2430184601)
+başlıkları 4G yazmıyor; her iki sayfanın teknik özelliklerinde
+`Veri Aktarım Hızı: 4G` doğrulandı. [5G 512 GB](https://www.cimri.com/cep-telefonlari/en-ucuz-xiaomi-redmi-note-14-pro-5g-fiyatlari,a2428710429)
+ayrı ana sayfadır. [Poco X6 Pro](https://www.cimri.com/cep-telefonlari/en-ucuz-xiaomi-poco-x6-pro-5g-512gb-12gb-ram-fiyatlari,a2308370397)
+sayfasında marka Poco'dur; URL'deki Xiaomi metni marka yerine kullanılmadı.
+Galaxy A55 256 GB ve Redmi Note 13 Pro 5G 256 GB için 8 GB RAM ana sayfaları
+seçildi; RAM/renk eş anlamlıları veya yeni kimlik istisnası eklenmedi.
+
+### Yerel alım (`capture`)
+
+Zamanlanmış tur bittikten sonra katalog alımı:
+
+```powershell
+$cimriKlasor = "data\market_history\katalog_$(Get-Date -Format yyyyMMdd_HHmmss_fff)"
+.venv\Scripts\python.exe -m app.market_history capture `
+  --mapping config\market_history.json --output-dir $cimriKlasor
+$LASTEXITCODE
+```
+
+`--product-key` tekrarlanabilir; verilmezse etkin katalogdaki bütün ürünler
+raporlanır. `--mapping` ve `--output-dir` zorunludur. Var olan klasöre yazılmaz;
+eskisini silmek yerine tarih-saatli yeni klasör kullanılır. Kilit meşgulse
+klasör oluşturulmaz. Canlı komutu kullanıcı tur saatleri dışında çalıştırır.
+İki eşleştirme açık olduğundan bütün 57 alım başarılı olsa bile katalog
+komutunun çıkışı 2 olur. `captured`/`error`/`not_attempted` kayıtları ayrıca
+incelenir; yalnız çıkış 2'den ağ veya kimlik hatası olduğu sonucu çıkarılmaz.
+
+Her ürün için aynı `PageClient` ile sayfa ve grafik okunur; yönlendirme/tekrar
+dahil dört istek bütçesi, ortak bekleme, alan adı ve 8 MB sınırı korunur.
+`__OCTOPUS_DATA__` içindeki ürün kimliği eşleştirmeyle aynı olmalıdır; marka
+katalogla, başlık ve H1'lerin her biri model/kapasiteyle doğrulanır. Kategori
+`cep-telefonlari` olmalıdır. Bunlar doğrulanmadan grafik isteği yapılmaz.
+Grafik API'si kimliği de aynı olmalıdır. HTTP `blocked` alınırsa kalan eşleşmiş
+ürünlere istek yapılmaz; diğer ürün hatalarında sıradaki ürüne devam edilir.
+
+Grafik, `lastDay`'den geriye sıralanmış en çok 366 nokta verir. Mevcut
+araştırmada doğrulanan bu biçim kullanılır; bilinmeyen biçim için tahmin
+yapılmaz. Geçersiz tarih, fiyat veya ortak tarihte tablo uyuşmazlığı hata olur.
+Fiyatlar pozitif ve en çok iki ondalıklı olmalı; mevcut `money` ile kuruşa
+çevrilir. Sayısal grafik sıfırı, aynı tarihte tablo fiyatı yoksa eksik sayılır;
+tablo fiyatıyla çelişirse reddedilir. Eksik değer `null` kalır, kısa geçmiş
+tamamlanmaz. Ham API dosyasında sıfır değeri korunur. Tabloyla ortak
+tarih yoksa `table_comparison: "unavailable"` yazılır. Tekrarlanan fiyatlar
+bağımsız günlük ölçümleri veya sabit satıcı kapsamını kanıtlamaz.
+
+Yeni klasörde `responses/<product_key>.html`, `responses/<product_key>.json`
+ve `report.json` bulunur. HTML alınmış metindir; API JSON'u, ortak HTTP
+katmanının ayrıştırdığı nesnenin UTF-8 dosyasıdır, özgün JSON baytlarının
+aynısı olduğu iddia edilmez. Her kaynak dosyasının SHA-256 parmak izi saklanır.
+HTTP/JSON ayrıştırma hatasında alınamamış gövde uydurulmaz; sayfa alınmışsa
+korunur. Kimlik/grafik doğrulaması başarısızsa kabul edilmiş geçmiş yazılmaz.
+
+Rapor sürümü 1'dir. Kaynak, başlangıç/bitiş zamanı (UTC), sonuç, katalogdaki
+ürün sayısı, eşleştirmesi henüz olmayan katalog anahtarları ve `products`
+listesi taşır. Ürün kaydı katalog kimliğini, eşleştirmeyi, istek sayısını,
+varsa sayfa/API dosyalarının yolunu ve parmak izini, doğrulanmış kimliği,
+API alınma zamanını ve `history`yi içerir. `history.points` eski tarihten yeniye
+`day` ve `price_kurus` taşır; özet tarih aralığını, nokta/eksik fiyat sayısını
+ve tablo karşılaştırmasını gösterir. Ürün durumları `captured`, `error`,
+`unmapped`, `not_attempted`, `interrupted`; genel sonuç `running`, `completed`,
+`partial`, `interrupted` veya `failed` olabilir. Hata ve durma nedeni raporda
+kalır. Yalnız seçilen üç ürünün başarılı olması bütün kataloğun alındığı
+anlamına gelmez; seçilmeyen ürünler için ağ isteği yapılmaz.
+
+Rapor her işlenen ürünün ardından geçici dosyadan atomik olarak yenilenir.
+Ctrl+C önceki kayıtları korur; disk hatasında yeni istekler durur. İstemci ve
+ortak kilit kapanır. Çıkış: 0 seçilen ürünler kaydedildi, 2 kısmi sonuç,
+1 ayar/seçim/klasör/dosya hatası, 3 ortak kilit meşgul, 130 Ctrl+C.
+
+**Bugünkü fiyatın ilk teklif dönüşümü.** Cimri'nin ekrandaki grafiği, ürün
+sayfasında teklif varsa API'nin son günündeki fiyatı sayfadaki ilk teklifin
+fiyatıyla değiştirir; kalan günler API'den gelir (8 Ekim'de grafik kaynak
+kodunda doğrulandı). Alım aynı kuralı uygular:
+
+`verified_page` doğrulanmış ürünün ilk teklif fiyatını da okur. İlk teklif
+yoksa mevcut API fiyatları korunur; bozuk teklif geçerli fiyat sayılmaz.
+`history_in_kurus`, bütün ham API fiyatlarını önce doğrular; ardından yalnız
+son noktada geçerli ilk teklif fiyatını kullanır ve bütün ortak tablo günlerini
+yeniden birebir karşılaştırır. Diğer günler, sıfır/eksik değer ve eski TL
+araştırma sözleşmesi korunur. Bugünün ham API fiyatı sıfır/null ise ilk
+teklifle doldurulmaz; doğrulanmamış bu birleşim `parse` olarak kalır.
+
+Alım, HTML isteğinden önce `page_started_at_utc`, API yanıtından sonra
+`captured_at_utc` kaydeder. İlk teklif kullanılacaksa iki zaman UTC, sıralı ve
+İstanbul'da aynı gün olmalı; API `lastDay` bu güne eşit olmalıdır. Gün sınırı
+veya eski API günü `parse` üretir; tarih dizisi yine `lastDay` üzerinden
+kurulur. Ağsız yeniden doğrulama bilgisayarın o gününü kullanmaz.
+İstanbul tarihi `ZoneInfo` ile hesaplanır; Windows'ta da saat dilimi verisinin
+bulunması için zaten ortamda kurulu `tzdata` açık bağımlılık yapıldı
+([Python belgeleri](https://docs.python.org/3/library/zoneinfo.html#data-sources)).
+
+`history.summary.latest_price` alanında `day`, `rule` (`page_first_offer`
+veya `api`), `api_price_kurus`, `first_offer_price_kurus`,
+`effective_price_kurus`, `changed`, `table_comparison` kaydedilir.
+Son günün tablo satırı yoksa `unavailable` olur ve komut bunu ayrıca söyler;
+bu sınır diğer ortak günlerin eşleşmesini geçersiz kılmaz. İstek sırası,
+bütçe, kilit, çıkış kodu ve ham dosyaları koruma davranışı bu kuraldan etkilenmez.
+
+### Ağsız aktarım (`import`)
 
 Komutlar:
 
@@ -3235,52 +1438,9 @@ gösterir. Kaynak dosyalarına veya giriş raporuna yazılmaz; çıktı terminal
 çelişkili ürün var; **1** yapı/kimlik/şema/veritabanı hatası; **3** kilit
 meşgul; **130** Ctrl+C. Kesintide son ürün ya tamamen yazılır ya hiç yazılmaz;
 önceki ürünler korunur. Global katalogdaki eşleştirmesiz ürünler seçili
-girdide yoksa komutun başarısını değiştirmez; katalog kapsamı 9.3'te raporlanır.
+girdide yoksa komutun başarısını değiştirmez; katalog kapsamı ayrıca raporlanır.
 
-### Gerçek aktarımın işletimi (Adım 9.3)
-
-8 Ekim kullanıcı onayıyla hazırlık başladı. 59 etkin ürünün katalog/DB
-kimlikleri READ ONLY sorgularla karşılaştırıldı: uyuşmazlık yok, 001–004 güncel,
-`market_history` boş. Mevcut 57 eşleştirme korunuyor; Galaxy S25 512 GB ve
-Redmi Note 14 Pro 5G 256 GB açık. Araştırma izi proje planının 9.3 bölümünde.
-Kullanıcının 8 Ekim 15:59–16:08 alımı incelendi:
-`data/market_history/aktarim_20261008_155952_339`. 57 captured/iki unmapped,
-171 HTTP; 114 kaynak dosyası ve 20.805 nokta ağsız yeniden doğrulandı.
-20.252 fiyat/553 NULL, her üründe 365 nokta (2025-10-09–2026-10-08).
-Tabloda ortak 4.773 ürün/gün eşleşti; 16.032 ürün/gün için tablo yok.
-52 üründe ilk teklif kuralı (dokuz fiyat değişimi), beşinde ilk teklif ve
-son gün tablo satırı yok: mevcut API kuralı korundu. Rapor ve kaynakların
-115 hash’i değişmedi. İki açık ürün dışında hata yok; ek alım gerekmiyor.
-Kullanıcının dry-run çıktısı doğrulandı: 57 × 365 = 20.805 eklenecek,
-0 aynı, 0 çelişkili ürün, iki eşleştirmesiz atlanan; çıkış 2. 57 ürünün
-özetleri ve karşılaştırılamayan tarih aralıkları kaynakla aynı. 115 girdi
-dosyası değişmedi; bağımsız 16:48 READ ONLY sorgusunda DB hâlâ 0 satır.
-Önizleme kanıtı:
-`data/market_history/dry_run_verification_9_3_20261008_135103_464459.json`.
-Doğrulama kaydı: `data/market_history/capture_verification_9_3_20261008_131025_927553.json`.
-
-Kullanıcı ilk gerçek aktarımı tamamladı: 20.805 eklendi/0 aynı/0 çelişkili
-ürün/iki atlanan, çıkış 2. 16:59 bağımsız READ ONLY / REPEATABLE READ okumada
-bütün market_history tablosu alımla karşılaştırıldı: 57 ürün/20.805 satırın
-10 alanı birebir aynı; eksik/fazla/farklı satır yok, 553 NULL korundu.
-115 kaynak/rapor dosyası değişmedi, 001–004 ve 59 katalog/DB kimliği uyumlu.
-Bütün tablo ve ürün bazında kaynak alanları parmak izi tekrar kontrolü için
-saklandı: `data/market_history/import_verification_9_3_20261008_135906_391044.json`.
-Kullanıcı aynı girdiyi tekrar aktardı: **0 yeni/20.805 aynı/0 çelişkili ürün/
-iki atlanan**, çıkış 2. 17:12 READ ONLY / REPEATABLE READ kontrolünde bütün
-10 alan yeniden kaynakla aynı bulundu; 57 ürünün hash’i ve bütün tablo hash’i
-ilk aktarımla eşleşti. İlk source_url, captured_at ve üç hash korunmuş;
-115 alım dosyası da aynı. Eksik/fazla/farklı satır yok, 553 NULL korundu.
-
-**9.3 tamamlandı:** 59 ürünün 57’si aktarılmış ve doğrulanmış; iki ürün doğru
-eşleştirme doğrulanamadığı için gerekçeli eksik. Ürünlerin kaynakta olmadığı
-iddia edilmez. Tablo karşılaştırması ve gözlem sıklığı sınırları korunur.
-Kapanış raporu bütün ürünlerin durumunu ve önceki kanıtların dosya/hash
-referanslarını içerir; tekrar çıktısı ve karşılaştırma da içindedir:
-`data/market_history/kapanis_9_3_20261008_141239_175902.json`.
-9.3 belgeleri `2c78af2` ile gönderildi;
-[aynı SHA için CI 37795271692 başarılı](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/37795271692).
-Ardından aşağıdaki Adım 7 kapanışı da tamamlandı.
+### Gerçek aktarımın akışı
 
 Her alım ayrı klasörde saklanır. Raporlar birleştirilmez/değiştirilmez; ek
 alım yalnız başarısız/denenmemiş ürünleri tamamlar. Her kabul edilen ürünün
@@ -3293,84 +1453,31 @@ karşılaştırır: ürün/kaynak/kimlik/adres/gün/kuruş/zaman ve üç hash.
 Ürün başına sayı, tarih aralığı ve NULL sayısı ayrıca raporlanır. Kullanıcının
 aynı girdiyi tekrar aktarımında 0 yeni kayıt ve ilk kaynak bilgilerinin
 korunması beklenir; atlanan ürünler nedeniyle çıkış 2 sürebilir.
-59 ürünün durumu, alım klasörleri/hash’leri ve karşılaştırma sonuçları yukarıdaki
-tarihli yerel kapanış raporunda kayıtlıdır. Önceki hazırlık/doğrulama raporları
-kanıt olarak korunur; alım dosyaları veya gerçek DB asistan tarafından değiştirilmedi.
 
-### Veritabanı aşamasının kapanışı (Adım 7)
+### Kullanım değerlendirmesi
 
-**8 Ekim’de tamamlandı.** 19:55 bağımsız denetimi gerçek DB’ye baştan
-READ ONLY / REPEATABLE READ bağlantıyla yapıldı; hiçbir yazma veya canlı
-site isteği çalıştırılmadı. 001–004 dosya adları/parmak izleri kayıtla uyumlu;
-59 ürün ve 334 sayfanın (332 etkin) bütün alanları katalogla aynı.
+Cimri'nin [kullanım koşulları](https://www.cimri.com/kullanim-kosullari)
+(2.2, 3.1, 4.12) kullanım amacını, kopyalamayı/işlemeyi ve başka mecrada
+kullanımı sınırlıyor; [kullanıcı sözleşmesi](https://www.cimri.com/kullanici-sozlesmesi)
+üyelik sözleşmesidir. 19 Ekim 2026 incelemesinin sonucu:
 
-Son zamanlanmış tur 19: 8 Ekim 10:00:01–10:31:03 yerel saat, completed;
-332 sayfa → 237 fiyat/95 Tükendi/0 hata. Logların kimlik, sonuç, fiyat,
-satıcı ve stok alanları DB ile birebir aynı. Süren tur veya tamamlanmış
-turda sonuçsuz/zamansız satır yok. `product_run_prices` görünümünün son turdaki
-59 ürününde sayılar, minimum fiyat/seçilen sayfa ve önceki cevap kümeleri
-bağımsız hesapla eşleşti; tümü önceki turla karşılaştırılabilir.
+| Projedeki amaç | Teknik inceleme sonucu | Uygun kullanım doğrulandı mı? |
+|---|---|---|
+| Yeni geçmişi indirme ve saklama | Kısıtlı | Hayır |
+| Mevcut geçmişi yerel uygulamada gösterme | Belirsiz | Hayır |
+| ML eğitiminde kullanma | Belirsiz | Hayır |
 
-Cimri kaynakları güncel okuyucuyla ağsız yeniden doğrulandı: 57 ürünün
-20.805 satırının 10 alanı aynı, 553 NULL korunmuş; bütün tablo hash’i 9.3
-kapanışıyla aynı. 115 girdi dosyası değişmedi; ilk kaynak bilgileri ve üç
-koruma tetikleyicisi korunmuş. Denetim kaydı yerel/Git dışındadır:
-`data/adim7_kapanis_20261008_165558_563093.json`.
+Bu, kesin hukuki izin kararı değildir; eğitim/staj amacı tek başına izin
+kanıtı sayılmadı. Bu yüzden yeni alım/aktarım yapılmadı; mevcut veri ve
+gösterim korunuyor. [Akakçe kullanım sözleşmesi](https://www.akakce.com/kullanim-sozlesmesi/)
+de benzer kısıtlar içerir.
 
-Kod/test değişmedi. Önceki yerel 1190 passed/0 skipped/xfail sonucu ile mevcut
-`2c78af2` için başarılı pytest/Black/Flake8 CI ayrı kanıtlardır; bu kapanışta
-pytest yeniden çalıştırılmadı. Kapanış belgeleri `3c4d030` ile gönderildi;
-[aynı SHA CI 37813840435 başarılı](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/37813840435).
+Galaxy S25 512 GB ve Redmi Note 14 Pro 5G 256 GB için doğru Cimri ana
+sayfası bulunamadı (incelenen adaylar Plus 512 GB, normal S25 256 GB,
+Redmi 5G 512 GB ve 4G 256 GB idi). Bu, ürünlerin Cimri'de olmadığı
+anlamına gelmez; başka kapasite/model bunların yerine konmaz.
 
-Kabul edilen sınırlar sürer: Hepsiburada arama kapsamı kısmi, bilgisayarın
-uyku/ağ kesintilerinde gözlem kaybı olabilir. Tur sonu network ikinci okuması
-incelenen canlı loglarda henüz görülmedi; test kanıtı vardır. 8 Ekim'de açık
-olan sağlıklı ağla kendiliğinden haftalık keşif gözlemi, 11 Ekim 14:00
-çalışmasının log/raporuyla 13 Ekim'de kapandı: 48 sonuç, ağ hatası/çakışma yok,
-bilinen kapsam uyarıları var (tam sonuç 18/48). Önizlemedeki 25 yeni sayfanın
-tamamı mevcut katalog dışında; kullanıcı incelemesi/uygulama bekliyor.
-İki Cimri eşleştirmesi ve çapraz karşılaştırma yapılamayan
-günler kayıtlıdır; eksik fiyatlar doldurulmaz ve Cimri serisi kendi toplama
-serisiyle aynı ölçüm sayılmaz.
-
-**Aşama 6 kapandı; API/arayüz başlamadı.** Bu kapanışta yalnız durum ve
-tutarlılık düzeltmeleri yapıldı; komutlar ve çalışma akışı korundu. Ardından
-kullanıcının onayladığı ayrı belge planıyla README proje tanıtımına odaklandı;
-kurulum/çalıştırma ayrıntıları bu rehberde korunup eksikleri tamamlandı.
-
-### Migration kuralları
-
-- Dosya adı `NNN_ad.sql`; numaralar 001'den boşluksuz artar. Uzantı büyük harfle
-  yazılmış (`.SQL`) ya da kurala uymayan ad hata verir; hiç dosya bulunamazsa da
-  hata verilir. Dosyalar pakete dahildir (`pyproject.toml`, `package-data`).
-- Her dosya tek transaction'da uygulanır; hata verirse o dosyadan hiçbir iz
-  kalmaz (PostgreSQL'de tablo oluşturma da geri alınır). Aynı anda iki
-  `migrate` çalışırsa ikincisi bekler (en çok 30 sn, bağlantının
-  `lock_timeout` ayarı; sonra hata verir).
-- **Uygulanmış dosya değiştirilmez;** değişiklik yeni numaralı dosyayla yapılır.
-  Değiştirilirse parmak izi tutmaz ve `migrate`/`status` hata verir. Parmak izi
-  satır sonundan bağımsızdır (Windows CRLF ile CI'daki LF aynı sayılır).
-- Uygulanmış dosya **yeniden adlandırılamaz** da: `schema_migrations` dosyanın
-  numarasız adını (ör. `initial`) tutar; ad değişirse `migrate` ve `status` eski
-  ve yeni adı gösteren bir hatayla durur. Numaralar boşluksuz artmazsa (atlanmış
-  ya da aynı numaralı iki dosya) hata mesajı bulunan numaraları listeler (ör.
-  `bulunan: [1, 1]`).
-- Veritabanında kodda olmayan bir sürüm varsa ("veritabanı koddan yeni") komut
-  hata verir.
-- **Yeni migration'ı koymak ile `migrate` arasında tur başlamamalı.** Dosya
-  klasördeyken veritabanı güncel değilse tur "şema güncel değil" deyip başlamaz ve
-  o tur kaçar (telafisi tek turdur). Bu yüzden yeni migration projenin kopyasında
-  geliştirilir ve gerçek klasöre yalnız bitince konur; `migrate` hemen ardından,
-  10:00–10:40 ve 22:00–22:40 tur saatleri dışında çalıştırılır.
-
-## Yerel API hazırlığı (Aşama 7.1)
-
-9 Ekim'de yedi alt adımlı FastAPI/Streamlit planı onaylandı. 7.1'de
-bağımlılık, okuma rolü kurulumu ve test hazırlığı tamamlandı; 7.2'de eklenen
-okuma sorguları ve 7.3 istatistikleri aşağıdaki bölümlerde açıklanır.
-7.4'te API adresleri ve bağlantı havuzu test veritabanında doğrulandı.
-Yerel istemci ve arayüz sonraki alt adımlardır; uygulama sırası proje
-planının Aşama 7 bölümündedir.
+## Yerel API: kurulum ve okuma hesabı
 
 ### Bağımlılıklar ve HTTP sınırı
 
@@ -3378,15 +1485,14 @@ planının Aşama 7 bölümündedir.
 Psycopg Pool 3.3.3, HTTPX 0.28.1 ve Altair 6.3.0 içerir. Python 3.13'te
 `pip install -e ".[dev,web]"` ile kurulur; `pip check` bağımlılık uyumunu
 denetler. Temel toplama bağımlılıkları ve yazıcı bağlantı kodu değişmedi.
-9 Ekim'de FastAPI güncel sürümü 0.143.0'dır; ilk doğrulama araştırılan
-0.142 serisiyle yapılır. [FastAPI](https://pypi.org/project/fastapi/),
+Sürümler sabittir; yükseltme ayrı karar ve tam test ister. [FastAPI](https://pypi.org/project/fastapi/),
 [Streamlit](https://pypi.org/project/streamlit/).
 
 AGENTS/mimari testine işlenen tek HTTPX istisnası
 `app/ui/api_client.py` içindir: yalnız yerel API, yönlendirme izlemeden,
-ortam proxy'si kullanmadan ve zaman aşımıyla. 7.5'te sabit
-`http://127.0.0.1:8000` istemcisi ve hedef/yönlendirme/zaman aşımı testleri
-eklendi; diğer `app/` modüllerinin HTTPX izni yok.
+ortam proxy'si kullanmadan ve zaman aşımıyla. İstemci sabit
+`http://127.0.0.1:8000` adresine gider; hedef/yönlendirme/zaman aşımı
+`tests/test_api_client.py` içinde sınanır; diğer `app/` modüllerinin HTTPX izni yok.
 Pazaryeri erişimi yalnız `app/scraper/http.py` ve curl_cffi üzerinden sürer.
 
 ### Okuma hesabının bir kerelik kurulumu
@@ -3415,16 +1521,10 @@ $apiPsql = "C:\Program Files\PostgreSQL\17\bin\psql.exe"
 & $apiPsql -X -h localhost -U postgres -d fiyat_takip_test
 ```
 
-SQL dosyası UTF-8'dir. 9 Ekim'deki kodlama ayarı verilmeden yapılan deneme,
-psql'in WIN1254 kullanması nedeniyle hata verdi; COMMIT'e ulaşılmadı ve test
-rolü oluşmadı. Yukarıdaki komut dosyadan önce bağlantının kodlamasını açıkça
+SQL dosyası UTF-8'dir. Kodlama ayarı verilmezse psql Türkçe Windows'ta
+WIN1254 kullanır ve kurulum hata verir; COMMIT'e ulaşılmaz. Yukarıdaki komut dosyadan önce bağlantının kodlamasını açıkça
 UTF8 yapar; `-X` kişisel psql başlangıç dosyasını devre dışı bırakır.
 Kurulum ancak rol hazır bildirimi, DO ve COMMIT görüldüğünde başarılı sayılır.
-Kullanıcı düzeltilmiş komutla DO/COMMIT aldı; test rolü ve sekiz SELECT izni
-bağımsız salt okunur sorguyla doğrulandı. Bildirimdeki Türkçe harfler terminalde
-bozuk görüntülendi; bu, başarılı kurulumun durumunu değiştirmedi. Kullanıcı
-şifre/pgpass hazırlığını tamamladı; rolün gerçek bağlantısıyla 43 yetki testi
-başarılı oldu.
 
 Açılan psql oturumunda `\password fiyat_takip_api_test` ile şifre belirlenir,
 `\q` ile çıkılır. Şifre mesaja veya repoya yazılmaz; mevcut
@@ -3447,10 +1547,9 @@ setx TEST_API_DATABASE_URL "postgresql://fiyat_takip_api_test@localhost:5432/fiy
 $env:TEST_API_DATABASE_URL = "postgresql://fiyat_takip_api_test@localhost:5432/fiyat_takip_test"
 ```
 
-API gerçek çalıştırması hazırlanırken ayrı `API_DATABASE_URL` değeri
-`postgresql://fiyat_takip_api@localhost:5432/fiyat_takip` olacak;
-`DATABASE_URL`'e dönüş olmayacak. Gerçek hesabın kurulması ve API/UI'nin
-birlikte kullanımı sonraki alt adımların devreye alma kontrolündedir.
+Gerçek API ayrı `API_DATABASE_URL` değeriyle çalışır:
+`postgresql://fiyat_takip_api@localhost:5432/fiyat_takip`. `DATABASE_URL`'e
+dönüş yoktur.
 
 ### Test ortamı ve sınırı
 
@@ -3465,31 +1564,18 @@ CI'da başarısız olur. CI kendi geçici sunucusunda test hesabını kurar.
 Gerçek HTTPX ağ transport'ları otomatik testlerde kapalıdır;
 MockTransport/ASGI/TestClient süreç içinde çalışır. Yerel API'ye gerçek ağ
 isteği de otomatik testte engellenir. Bu, uygulamanın dış adrese gitmeme
-kuralıyla aynı kontrol değildir; istemcinin sabit hedef sınırı 7.5'te
-ayrıca sınandı.
-
-**7.1 doğrulaması (9 Ekim):** altı sabit sürüm kuruldu, `pip check` temiz.
-51 hazırlık testinin 43'ü gerçek okuma hesabıyla PostgreSQL'de geçti;
-9 HTTP mimari sınamasıyla toplam 60 yeni test eklendi. Tam paket
-**1250 geçti, 0 atlandı/xfail (319 PostgreSQL)**, 125,77 sn; Black
-(53 dosya) ve Flake8 temiz. Veritabanı testleri yalnız `fiyat_takip_test`
-üzerinde çalıştı. Katalog ve uygulanmış 001–004 dosyalarının fiziksel
-parmak izleri oturum öncesiyle aynı. Kullanıcı onayıyla `bcbad7c` gönderildi;
-[aynı commit'in CI sonucu](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/37915304432)
-başarılı.
+kuralıyla aynı kontrol değildir; istemcinin sabit hedef sınırı
+ayrıca sınanır.
 
 Starlette 1.6.0 TestClient, mevcut HTTPX uyumu ve AnyIO takma adı için iki
 kullanım sonlandırma uyarısı veriyor; testler başarılı, uyarılar gizlenmedi.
-Onaylanan bağımlılık sürümleri korundu. Gerçek okuma hesabı daha sonra
-kullanıcı tarafından kurulacak. 7.4 API/havuzunun sınamaları test hesabıyla
-yapıldı; arayüz henüz uygulanmadı.
 
-## Salt okunur veritabanı okumaları (Aşama 7.2)
+## Salt okunur veritabanı okumaları
 
 `app/database/read.py` yalnız hazır Psycopg bağlantısıyla çalışır; ortam
 adresi seçmez, bağlantı açmaz/kapatmaz. Ürün için mevcut değiştirilemez
 `Product` sözleşmesi kullanılır; tur, sayfa sonucu ve geçmişler aynı modüldeki
-`frozen` veri sınıfları ve tuple'larla döner. Henüz HTTP/JSON cevabı değildir.
+`frozen` veri sınıfları ve tuple'larla döner; HTTP/JSON cevabına API katmanı çevirir.
 
 | İşlev | Sonuç |
 |---|---|
@@ -3542,29 +1628,14 @@ ve [Psycopg işlemleridir](https://www.psycopg.org/psycopg3/docs/basic/transacti
 - Fiyatsız turlar/günler `None` kalır; boş gün eklenmez ve seriler birleşmez.
   Kuruşlar tam sayı, zamanlar UTC, Cimri günü `date`'tir. Görünen aralığın
   dışındaki önceki tur karşılaştırması korunur. `all_history` bütün
-  tamamlanmış ürün turu özetlerini ve planlanan sayfa kimliklerini 7.3 için
-  tutar; bu adım dip/zirve/değişkenlik hesaplamaz.
+  tamamlanmış ürün turu özetlerini ve planlanan sayfa kimliklerini istatistik
+  hesabı için tutar; okuma katmanı dip/zirve/değişkenlik hesaplamaz.
 
-**7.2 doğrulaması (9 Ekim):** 57 yeni test, 43'ü gerçek
-`fiyat_takip_api_test` hesabıyla PostgreSQL'de. Tam paket **1307 geçti,
-0 atlandı/xfail (362 PostgreSQL)**, 102,93 sn; Black (55 dosya) ve Flake8
-temiz. İki bağlantılı sınamalar tur/katalog/Cimri değişiminde aynı cevabın
-tutarlılığını ve sonraki okumada yeni verinin görünmesini doğruladı.
-Sorgu hatası ve gerçek 5 saniyelik zaman aşımı sonrası bağlantı temiz kaldı.
-İki mevcut Starlette/AnyIO uyarısı sürdü; gizlenmedi. Testler yalnız
-`fiyat_takip_test` üzerinde çalıştı. Gerçek DB'ye yazılmadı; katalog,
-001–004 ve zamanlayıcılar değişmedi. Yeni kullanıcı komutu yok.
-Kullanıcı onayıyla `04d765f` gönderildi;
-[aynı commit'in CI sonucu](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/37922348048)
-başarılı.
+## Fiyat istatistikleri
 
-## Fiyat istatistikleri (Aşama 7.3)
-
-`app/price_statistics.py → calculate_statistics(snapshot)`, 7.2'nin
-`ProductSnapshot` sonucunu alır ve değiştirilemez `ProductStatistics` döndürür.
+`app/price_statistics.py → calculate_statistics(snapshot)`, `read_product`
+okumasının `ProductSnapshot` sonucunu alır ve değiştirilemez `ProductStatistics` döndürür.
 Veritabanı, ağ, dosya veya bugünün saati kullanılmaz; giriş değiştirilmez.
-Yeni bağımlılık, SQL, migration veya kullanıcı komutu yoktur.
-API/havuz 7.4 bölümünde; ekran sonraki alt adımlardadır.
 
 ### Kapsam dönemi ve sonuç alanları
 
@@ -3613,9 +1684,8 @@ Fiyatsız/uzun boşluklu tur üzerinden fiyatlar birleştirilmez.
 
 En az 14 geçerli geçiş ve 7 farklı İstanbul takvim günü gerekir.
 Günler yalnız kabul edilen geçişlerin iki ucunun gerçek kontrol zamanından,
-`ZoneInfo("Europe/Istanbul")` ile sayılır. Kullanıcının iki zaman/gün
-tercihi 9 Ekim'de planlama sırasında verildi ve uygulama planı onaylandı.
-Bu eşikler proje kararıdır; evrensel istatistiksel yeterlilik iddiası değildir.
+`ZoneInfo("Europe/Istanbul")` ile sayılır. Bu iki zaman/gün kuralı 9 Ekim
+2026'da kullanıcıyla kararlaştırıldı. Bu eşikler proje kararıdır; evrensel istatistiksel yeterlilik iddiası değildir.
 
 Hesap [`statistics.stdev`](https://docs.python.org/3.13/library/statistics.html#statistics.stdev)
 ile örnek standart sapmasını kullanır (varyansta bölen `n−1`).
@@ -3639,32 +1709,9 @@ dönemde birden fazla yeterlilik şartı eksikse ilgili gerekçeler birlikte
 `tuple` içinde döner; başarılı göstergede bu liste boştur.
 Yetersiz değer `None` kalır; fiyatlar doldurulmaz.
 
-**7.3 doğrulaması (9 Ekim):** 49 ağsız birim ve 6 gerçek okuma hesabıyla
-PostgreSQL bütünleşme testi eklendi. İlgili okuma/hesaplama paketi 112 geçti,
-0 atlandı (17,90 sn). Tam paket **1362 geçti, 0 atlandı/xfail
-(368 PostgreSQL)**, 99,30 sn; Black (57 dosya) ve Flake8 temiz.
-İki mevcut Starlette/AnyIO uyarısı sürüyor; gizlenmedi.
-İstanbul gece sınırı, 18 saat mikrosaniye sınırı ve analitik
-`100 × ln(2) × sqrt(14/13)` örneği (yaklaşık `71,93128235098797`) sınandı.
-Bu sayısal örnekler sentetiktir; canlı fiyat sonucu değildir.
-SQL'den gelen dar grafik aralığı, pasif katalog, kısmi kapsam ve stoksuz
-tur verileriyle hesaplama birlikte doğrulandı. DB testleri yalnız
-`fiyat_takip_test` üzerinde çalıştı; gerçek DB'ye yazılmadı.
-001–004, katalog ve zamanlayıcılar korunuyor. Kullanıcı onayıyla `a964c23`
-gönderildi; [aynı commit'in CI sonucu](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/37925934164)
-başarılı.
+## Salt okunur FastAPI
 
-**Kayıtlı gerçek veri kontrolü (9 Ekim, 14:39 İstanbul):** 59 etkin ürün
-mevcut kayıtlarından yalnız REPEATABLE READ, READ ONLY işlemlerle okundu;
-hesaplama bellek içinde yapıldı. 30 günlük dip 59 üründe süre yetersizliği
-nedeniyle boştu; bunların 7'sinin ilgili dönemi ayrıca fiyatsızdı.
-Mevcut kapsam zirvesi 52, değişkenlik 31 üründe hesaplandı.
-Bu, veritabanındaki kayıtlı sonuçların kontrolüdür; sitelerin bugünkü
-fiyatlarının doğrulanması veya yeni toplama değildir. Veri yazılmadı.
-
-## Salt okunur FastAPI (Aşama 7.4)
-
-`create_app()` mevcut 7.2 okumalarını ve 7.3 istatistiklerini yerel HTTP
+`create_app()` salt okunur okumaları ve fiyat istatistiklerini yerel HTTP
 adreslerinden sunar. Modül içe aktarılırken veya fabrika çağrılırken bağlantı
 açılmaz; havuz FastAPI lifespan başlangıcında açılır, kapanışta bırakılır.
 Sorgulu adresler normal `def` işlevleriyle çalışır.
@@ -3698,7 +1745,7 @@ Her veri isteğinde ayrı kısa REPEATABLE READ, READ ONLY işlemle:
 - Mevcut `pending` migration denetimi kullanılır: eksik, bilinmeyen veya
   ad/parmak izi uyuşmazlıklı migration şemayı hazır olmaktan çıkarır.
 
-Hazırlık işlemi kapanınca 7.2 okuma işlevi kendi tutarlı salt okunur
+Hazırlık işlemi kapanınca okuma işlevi (`read_product`) kendi tutarlı salt okunur
 işlemini açar; dış işlemle sarılmaz. Başarı veya hata sonrası bağlantı
 havuza geri verilir. API migration/rol kurulumu, katalog eşitleme veya
 toplama/keşif başlatmaz; tarama/tur kilidi almaz.
@@ -3713,7 +1760,7 @@ toplama/keşif başlatmaz; tarama/tur kilidi almaz.
 | `/api/v1/products/{product_key}` | Ürün cevabı; pasif ürün doğrudan okunabilir, bilinmeyen ürün 404 |
 
 Ürün parametreleri `history_days=30` ve `cimri_days=366`; ikisi de 1–366.
-7.2'nin son kayıtlı veriden açılan, sınırları dahil aralıkları korunur.
+Okuma katmanının son kayıtlı veriden açtığı, sınırları dahil aralıklar korunur.
 Adresler/cevap modelleri `/docs` ve `/openapi.json` üzerinden belgelenir.
 Önbellek yoktur; cevaplar `Cache-Control: no-store` taşır.
 
@@ -3734,7 +1781,7 @@ görüntünün bütün iç geçmişini kullanır. `all_history` JSON'a gönderil
   Gelecekteki kontrol zamanı negatif yaş yerine 0 üretir; eski sayılmaz.
   Güncel teklif yoksa yaş/eski işareti `null`; son kontrol zamanı
   `current.last_checked_at` alanında kalır.
-- İstatistik değer/gerekçe/dönem/gözlem/geçiş/gün sayıları 7.3'ten aynen gelir.
+- İstatistik değer/gerekçe/dönem/gözlem/geçiş/gün sayıları istatistik hesabından aynen gelir.
   Ham `error_message` ve tur `note` dışarı verilmez; sayfanın `error_code`
   bilgisi korunur. URL/renk/etkinlik mevcut katalog kopyasıdır.
 
@@ -3757,38 +1804,19 @@ Bağlantı adresi/şifre/SQL/ham istisna cevaba eklenmez.
 | 503 | `schema_not_ready` | Şema eksik/tutarsız |
 | 500 | `internal_error` | Beklenmeyen kod/cevap doğrulama hatası |
 
-### Yerel başlatma ve doğrulama
+### Yerel başlatma
 
-Gerçek API hesabı henüz kurulmadı; kullanıcı rol/pgpass hazırlığını sonraki
-devreye alma kontrolünde tamamlayacak. Hazır olduğunda ayrı API terminalinde:
+Ayrı bir API terminalinde:
 
 ```powershell
 $env:API_DATABASE_URL = "postgresql://fiyat_takip_api@localhost:5432/fiyat_takip"
 .venv\Scripts\python.exe -m uvicorn app.api.main:create_app --factory --host 127.0.0.1 --port 8000 --workers 1
 ```
 
-Tek çalışan süreç ve yalnız yerel adres kullanılır. Yeni zamanlayıcı görevi
-yoktur. Bu oturumda gerçek API sunucusu veya üretim rol kurulumu çalıştırılmadı.
+Tek çalışan süreç ve yalnız yerel adres kullanılır; API için zamanlayıcı
+görevi yoktur.
 
-**7.4 doğrulaması (9 Ekim):** 85 yeni test; 41 ağsız birim/sahte havuz,
-44 gerçek test okuma hesabıyla PostgreSQL. Tam paket **1447 passed,
-0 atlandı/xfail (412 PostgreSQL)**, 122,12 sn; Black (62 dosya)/Flake8 temiz.
-Mevcut iki Starlette/AnyIO uyarısı sürdü; gizlenmedi.
-
-TestClient süreç içinde çalıştı, sitelere gidilmedi. Dört bağlantı doluyken
-503 ve boşalınca yeniden okuma; kesilen API oturumunun yenilenmesi;
-başlangıç kesintisi/tekrarların tükenmesinden sonra aynı uygulamada düzelme;
-gerçek 5 sn sorgu sınırı ve temiz bağlantının yeniden kullanımı sınandı.
-Eşzamanlı tur/katalog değişiminde cevap/statistik aynı görüntüde kaldı;
-toplama kilidi tutulurken dört adres okudu, bütün tablo/görünüm sonuçları
-değişmedi. 001–004, katalog, gerçek veriler ve zamanlayıcılar korunuyor.
-
-Kullanıcı onayıyla `d8ba475` gönderildi;
-[aynı commit'in CI sonucu](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/37930206610)
-başarılı. 7.5'te ortak modeller ayrılırken bu API'nin JSON/OpenAPI
-sözleşmesi korundu; üretim sunucusu kontrolü 7.7'de doğrulandı.
-
-## Yerel API istemcisi (Aşama 7.5)
+## Yerel API istemcisi
 
 `app/ui/api_client.py` içindeki `ApiClient`, Streamlit'in kullanacağı
 eşzamanlı okuma istemcisidir. Ekran, veritabanı bağlantısı veya hesaplama
@@ -3812,8 +1840,6 @@ modüllerini içe aktarmaz. API JSON alanları ve OpenAPI bütünü öncekiyle a
 
 Anahtar mevcut `Key` kuralını, günler katı 1–366 tam sayı koşulunu sağlamalı;
 `bool`/ondalıklı sayı/metin gün sayılmaz. Geçersiz girdide HTTP yoktur.
-Mevcut 59 katalog anahtarı bu koşulla kabul edildi; bu, ürünlerin API'de
-veya pazaryerinde bugün bulunduğunu göstermez.
 
 JSON doğrudan baytlardan `validate_json(..., strict=True)` ile okunur.
 Tarihler/tuple'lar JSON karşılıklarından uygun Python türüne dönüşür;
@@ -3850,7 +1876,7 @@ nesne kurmada ağ bağlantısı açılmaz. Cevap başarı/hatada kapatılır;
 istemci `with` veya idempotent `close()` ile bırakılır. Ctrl+C aynen yükselir.
 [HTTPX istemci yaşam döngüsü](https://www.python-httpx.org/advanced/clients/)
 
-API daha sonra kullanıcı tarafından başlatıldığında kullanım örneği:
+Kullanım örneği (API açıkken):
 
 ```python
 from app.ui.api_client import ApiClient
@@ -3859,9 +1885,6 @@ with ApiClient() as client:
     products = client.list_products()
     detail = client.get_product(products[0].product_key) if products else None
 ```
-
-Bu alt adımda gerçek API hesabı kurulmadı ve sunucu başlatılmadı.
-Ekran 7.6, gerçek verilerle birlikte kullanım kontrolü 7.7 kapsamındadır.
 
 ### Hatalar
 
@@ -3884,26 +1907,7 @@ Bilinen API kodu ancak beklenen HTTP durumuyla eşleşiyorsa korunur.
 Hata boş liste veya önceki veriye çevrilmez. Beklenmeyen programlama hatası
 da bağlantı hatası gibi gizlenmez.
 
-### Doğrulama ve durum
-
-108 yeni istemci testi ve 13 yeni UI mimari testi eklendi.
-MockTransport ve gerçek FastAPI'nin süreç içi TestClient köprüsüyle
-dört adres, türler, eksik/bozuk veri, güvenli hata, tekrar/önbellek olmaması,
-hedef/proxy/yönlendirme, kapanış ve hata sonrası okuma doğrulandı.
-Ayrı süreçte import/nesne kurma DB/havuz/hesaplama/FastAPI yüklemedi ve
-ağ bağlantısı açmadı. Göreli importlar da mimari kontrolde çözülür.
-
-Tam paket **1568 passed, 0 atlandı/xfail (412 PostgreSQL)**, 138,05 sn;
-Black (66 dosya)/Flake8 temiz. İki mevcut Starlette/AnyIO uyarısı sürüyor.
-SQL sınamaları yalnız `fiyat_takip_test` üzerinde; 001–004 ve katalog
-parmak izleri aynı. Canlı HTTP/üretim DB kontrolü yapılmadı.
-Sahte zaman aşımı sınamaları gerçek ağ süresi ölçümü değildir.
-
-7.5 kullanıcı onayıyla `ec42361` olarak gönderildi;
-aynı SHA CI 37933861856 başarılı. 7.6 ekranı ayrı plan onayıyla uygulandı;
-10 Ekim'de test verili Edge kontrolü tamamlandı; commit/push onayı bekleniyor.
-
-## Streamlit ekranı (Aşama 7.6)
+## Streamlit ekranı
 
 `app/ui/main.py` aynı bilgisayardaki API'nin doğrulanmış sonuçlarını gösterir.
 `presentation.py` yalnız biçimlendirme ve grafik verisini hazırlar;
@@ -3957,6 +1961,13 @@ Kendi zaman ekseni tarayıcı saatinden etkilenmesin diye yalnız çizimde
 İstanbul duvar saati UTC ölçeğine kodlanır; gerçek API zamanları UTC kalır.
 [Vega-Lite eksik veri davranışı](https://vega.github.io/vega-lite/docs/invalid-data.html)
 
+Streamlit satırları Altair tanımından ayırıp ayrı yükler; ön yüz grafiği
+satırlar gelmeden boş başlatır. Boş başlangıçta Vega'nın `Infinite extent`
+uyarısı vermemesi için `presentation.py::price_chart` eksen sınırlarını mevcut
+satırlardan hazırlar: tarih sınırı UTC milisaniye sabit ifadesi, fiyat sınırı
+yalnız dolu fiyatlardan (`nice=True` ile). Satırlar, eksik fiyatlar ve
+boşluklar değişmez; konsol uyarısı susturulmaz.
+
 Tek `st.fragment(run_every=30)` veri/seçim bölümünü oturum açıkken yeniler.
 Elle Yenile düğmesi aynı bölümü çalıştırır. Her yenilemede ürün listesi,
 global durum ve seçilen ürün yeniden okunur; istemci `with` ile bırakılır.
@@ -3968,13 +1979,13 @@ olağan API hatası gibi gizlenmez.
 
 ### Başlatma ve test önizlemesi
 
-Normal ekran (gerçek API hesabı ve birlikte kontrol 7.7'de doğrulandı):
+Normal ekran (API açıkken):
 
 ```powershell
 .venv\Scripts\python.exe -m streamlit run app\ui\main.py --server.address 127.0.0.1 --server.port 8501 --server.headless true --browser.gatherUsageStats false
 ```
 
-7.6 görsel kontrolü için API sunucusu ve veritabanı gerektirmeyen önizleme:
+API sunucusu ve veritabanı gerektirmeyen test önizlemesi:
 
 ```powershell
 .venv\Scripts\python.exe -m streamlit run tests\manual\ui_preview.py --server.address 127.0.0.1 --server.port 8501 --server.headless true --browser.gatherUsageStats false
@@ -3993,52 +2004,12 @@ dönüş kontrol edilir. API cevabı saatinin açık oturumda yaklaşık 30 sani
 değişmesi, elle Yenile'nin hemen yenilemesi ve tercihlerin korunması gözlenir.
 Terminalde Ctrl+C önizlemeyi kapatır.
 
-### Doğrulama ve durum
+## SQL–API–Streamlit bağımsız denetimi
 
-74 yeni ağsız test; biçim/kuruş/İstanbul zamanı, grafik boşlukları ve Altair
-tanımı, AppTest ekran durumları/seçimler, hata sonrası toparlanma ve kapanış,
-aynı ekranın MockTransport önizlemesi doğrulandı. 30 sn fragment ayarı sınandı;
-AppTest gerçek tarayıcı zamanlaması veya piksel görünümü kanıtı değildir.
-[AppTest belgesi](https://docs.streamlit.io/develop/api-reference/app-testing/st.testing.v1.apptest)
-
-Tam paket **1642 passed, 0 atlandı/xfail (412 PostgreSQL)**, 149,81 sn;
-Black (71 dosya)/Flake8 temiz. Önceki iki Starlette/AnyIO uyarısı sürüyor.
-Veritabanı testleri yalnız `fiyat_takip_test` üzerinde yapıldı; 001–004,
-katalog, API/hesaplama ve zamanlayıcı dosyaları değişmedi.
-
-**7.6 tamamlandı ve `7ec1d0a` ile gönderildi; aynı SHA CI 38035484461
-başarılı. Test verili Edge kontrolü tamam; 7.7 ayrı plan/onayla başladı,
-gerçek ekranın birlikte kontrolü henüz bitmedi.**
-
-Kullanıcı 9 Ekim'de iki grafiğin ekran görüntüsünü paylaştı. Kendi grafiğinde
-eksik fiyat/kısmi kapsam, Cimri'de iki eksik fiyat günü arasında çizgi yok;
-paylaşılan görüntüler beklenen boşluk davranışını gösteriyor. Bu statik
-görüntüler seçim/dar ekran veya gerçek 30 sn yenileme kontrolü değildir.
-
-10 Ekim tarayıcı kontrolünde 11 önizleme senaryosu sınandı: telefon/aralık
-seçimi, eski/kısmi teklif, dört ürün durumu, eksik geçmiş, bağlantı/bozuk
-cevap ve boş liste. Hata ekranında önceki teklif/istatistik/grafikler
-kalktı; normal senaryoya dönünce telefon ve aralık tercihleri korundu.
-Hiçbir düğmeye basmadan cevap zamanı 00:44:57 → 00:45:27 → 00:45:57
-(İstanbul) ilerledi; elle Yenile de yeni cevap üretti. 390×844 görünümde
-kontroller ve grafikler incelendi; belge genişliği 390 piksel, yatay taşma
-yoktu. Görünüm boyutu ve ilk telefon/30–366 gün tercihleri geri alındı.
-Tarayıcının kayıtlı hata günlüğü boştu. Kaynak kodunda ek değişiklik yok;
-9 Ekim tam test sonucu ile 10 Ekim tarayıcı kanıtı ayrı doğrulamalardır.
-7.6'da gerçek API/veritabanı kullanılmadı; 7.7 doğrulaması aşağıda kayıtlı.
-7.6 kanıtları yalnız yerelde,
-Git dışında `artifacts/ui_7_6_20261010/kontrol.json` ve ekran görüntülerindedir.
-
-## SQL–API–Streamlit birlikte doğrulaması (Aşama 7.7)
-
-7.7'nin yerel ve gerçek ortam doğrulaması tamamlandı; kullanıcı onayıyla
-`c8d864b` gönderildi. Aynı SHA için
-[CI 38045257013](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/38045257013)
-başarılı oldu; Aşama 7, 10 Ekim'de kapandı. CI sonucu 13 Ekim'de herkese açık
-API'den yeniden doğrulandı. Üretim okuma hesabını kullanıcı mevcut rol dosyasıyla
-hazırladı; şifre yalnız pgpass'ta. API yalnız API_DATABASE_URL kullanır.
-API/UI başlatma komutları önceki bölümlerdedir; test önizlemesi aynı 8501
-portunda açık bırakılmaz. Üçüncü proje terminalinde bağımsız denetim:
+Yerel API'nin gerçek veritabanını doğru sunduğunu, üretim okuma/hesaplama
+kodunu kullanmadan bağımsız SQL hesabıyla karşılaştırır. Katalog veya veri
+değişikliğinden sonraki normal turun ardından, API açıkken üçüncü bir proje
+terminalinde:
 
 ```powershell
 $env:API_DATABASE_URL = "postgresql://fiyat_takip_api@localhost:5432/fiyat_takip"
@@ -4064,203 +2035,152 @@ klasörü gerekir; UTC zaman, commit/worktree_dirty, araç SHA-256'sı, kapsam,
 ürün sonuçları/farklı alan yolları ve parmak izleri raporlanır. Şifre, SQL,
 ham hata veya özel tur notları çıktıya konmaz; raporlar Git'e gönderilmez.
 
-10 Ekim 12:30 İstanbul: **59/59 eşleşti**, 49 teklif/10 stoksuzluk, 20.805
-Cimri noktası/553 NULL; endpoint farkı yok, önce/sonra parmak izleri aynı.
-Kanıt: `artifacts/ui_7_7_20261010_123030_661/report.json`, SHA-256
-`4b04662de5ecfa06c8a80e24c2647321f7889d57c3cbc95f10303f7403a4795f`.
-Kirli çalışma ağacı raporda açık; araç parmak izi mevcut dosyayla eşleşir.
+## ML veri denetimi
 
-34 yeni test (22 PostgreSQL): gerçek _test hesabı → FastAPI TestClient →
-MockTransport ApiClient → Streamlit AppTest; SQL/hesaplama sahte değil.
-Teklif/stoksuz/hata/sonuçsuz/geçmiş yok, eski başarı ayrılığı, NULL/Cimri
-boşluğu, seçim/aralık ve hata sonrası toparlanma sınandı. Araç testleri
-uyuşmazlık/değişen kaynak/rol/ek sütun yazma yetkisi/şema/aralık sınırları,
-kaynak kapanışı ve güvenli raporlamayı kapsar. **1676 passed/0 skipped/xfail
-(434 PostgreSQL)**, 159,27 sn; Black 74 dosya/Flake8 temiz. İki mevcut
-bağımlılık uyarısı sürüyor.
+Araç, mevcut tests/manual/api_ui_check.py içindeki configured_url/read_dataset
+hesap/şema denetimlerini kullanır. Yalnız API_DATABASE_URL ve SELECT hesabı;
+her görüntü REPEATABLE READ / READ ONLY, 5 saniye sorgu sınırı ve UTC ile alınır.
+Analiz önceki tek görüntüde yapılır; sonunda sekiz nesne yeniden okunup parmak
+izleri karşılaştırılır. Devam eden tur varsa başlanmaz; kaynak değişirse
+hesaplanan sayılar kesin kabul edilmez. API, internete HTTP, migration,
+katalog eşitlemesi veya gerçek DB yazması yoktur.
 
-**Gerçek tarayıcı kontrolü (10 Ekim):** Edge eklentisi politika yükleme
-hatası verdi. Kullanıcının doğrudan deneme isteği üzerine ChatGPT'nin dahili
-tarayıcısıyla aynı gerçek `127.0.0.1:8501` ekranına erişildi; Edge kontrolü
-yapılmış gibi sunulmadı. iPhone 16 128 GB (72.989,00 TL/10 sayfa), iPhone
-16 256 GB (6/6 stoksuz) ve Galaxy S25 512 GB (79.699,00 TL/1 sayfa)
-SQL/API sonuçlarıyla eşleşti. Satıcı/puan/renk/stok ve İstanbul kontrol
-zamanları, ayrı eski başarılı teklif ve istatistik değer/gerekçeleri kontrol edildi.
+Toplama ve keşif çalışmıyorken proje kökünde kullanıcı terminalinden:
 
-Üç telefonda 7/30/90/366 gün seçimlerinin **12/12'si** bağımsız SQL–API
-referansıyla eşleşti; SVG fiyat noktaları ve boşluklar kontrol edildi.
-iPhone 16 256 GB'ın 366 günlük Cimri serisindeki 103 NULL çizgiyle
-birleştirilmedi; S25 için Cimri yokluğu açık gösterildi. Gerçek ekranda test
-verisi uyarısı yoktu. İki ardışık otomatik cevap aralığı **31 ve 29 saniye**;
-elle yenileme de yeni cevap üretti. Telefon ve aralık seçimleri korundu.
-390×844 pikselde seçimler/kartlar/grafikler incelendi; viewport ayarı geri alındı.
+```powershell
+$env:API_DATABASE_URL = "postgresql://fiyat_takip_api@localhost:5432/fiyat_takip"
+$mlAuditOut = "artifacts\ml_denetim_$(Get-Date -Format yyyyMMdd_HHmmss_fff)"
+.venv\Scripts\python.exe tests/manual/ml_data_check.py --output-dir $mlAuditOut
+$LASTEXITCODE
+```
 
-Kullanıcı yalnız API'yi durdurdu. Yenilemede güvenli erişim hatası gösterildi;
-önceki fiyat, istatistikler ve iki grafik kaldırıldı. API yeniden başladıktan
-sonra aynı oturumdaki iPhone 16 128 GB ve 7/30 gün seçimleriyle fiyat/grafikler
-geri geldi. PostgreSQL, toplama veya keşif işleri durdurulmadı. Ardından
-varsayılan 30/366 gün seçildi. Tarayıcıda error düzeyinde kayıt yok;
-grafik yenilemelerinde Vega `Infinite extent` uyarıları kaydedildi. Nedeni
-kesinleştirilmedi; görünen nokta/boşluk ve SQL–API eşleşmelerinde hata bulunmadı.
+Şifre pgpass'ten okunur, komuta yazılmaz. API sunucusunu açmak veya yeni tur
+başlatmak gerekmez. Araç otomatik zamanlanmaz; eski çıktı klasörü kabul edilmez.
 
-Kanıtlar aynı yerel klasörde `browser_kontrol.json`, `range_reference.json`,
-`browser_sql_kontrol.json` ve JPEG görüntülerdir. Tarayıcı kontrolü ve API
-yeniden başlatma sonrasında sekiz nesnenin parmak izleri 12:30 raporuyla
-aynı kaldı; girdi raporunun SHA-256'sı değişmedi. Son tur 23: 235 teklif,
-97 stoksuzluk, 0 hata. Üretim kodu, katalog, migration ve zamanlayıcı değişmedi.
+| Çıkış | Anlamı |
+|---|---|
+| 0 | Denetim doğrulandı; kullanılabilir örnek sayısı sıfır olabilir. ML hazır veya kullanım izni var anlamına gelmez. |
+| 1 | Hesap/şema/girdi/DB/çıktı hatası; denetim tamamlanmadı. Ham hata ve bağlantı adresi yazdırılmaz. |
+| 2 | Kaynak değişti; sonuç kesin kabul edilmedi. Bu görüntünün ağsız tekrarı da 2 kalır. |
+| 130 | Kullanıcı durdurdu; tamamlanmış sonuç değildir. |
 
-**Gerçek ekranın ilk kullanıcı kanıtı (10 Ekim):** Kullanıcı iPhone 16 128 GB
-teklif ve iki grafik görüntüsünü paylaştı. 72.989,00 TL, Trendyol/MediaMarkt,
-8,80/10,00 puan, Beyaz/Stokta Var ve 10:50:59 İstanbul kontrol zamanı görünür.
-Kendi geçmişi ve ayrı Cimri grafiği var; Cimri aralığı 09.10.2025–08.10.2026,
-eksik fiyat 0. Test verisi uyarısı gerçek ekranda bulunmamalıdır; yalnız
-ui_preview.py ekranının en üstünde gösterilir. İlk görüntüler sayfanın en üstünü
-tam göstermiyordu; uyarının yokluğu daha sonra doğrudan tarayıcıda doğrulandı.
-Kanıtlar artifacts/ui_7_7_20261010_123030_661/iphone16_128_teklif.png ve
-iphone16_128_grafikler.png olarak yerelde korundu; report.json değiştirilmedi.
-Bu statik görüntüler diğer iki ürünün, aralık seçimlerinin, otomatik/elle
- yenilemenin, kesinti-toparlanmanın veya dar ekranın kanıtı değildir.
+Başarılı veya kaynak değişen denetim; snapshot.json, rules.json, report.json,
+source_check.json, windows.jsonl, daily.jsonl, report.md ve dosya parmak
+izlerini içeren manifest.json üretir. snapshot.json yalnız gereken alanları
+taşır; DSN/parola/tur notu/satıcı/ham hata metni içermez. Çıktı yazımı kesilirse
+failure.json varsa önceki kısmi dosyalar kesin sonuç sayılmaz. Yerel hash
+bütünlük kontrolüdür, kaynağın dijital imzası değildir. Görüntüdeki ilk
+hesaplayıcı SHA'sı ve source_check.json içindeki analysis_verifier_sha256
+ayrıdır; başka kod sürümüyle tekrar alınırsa hangi hesaplayıcının kullanıldığı bellidir.
 
-## Kimlik kuralları
+Kaydedilmiş görüntünün ağsız tekrarı da kullanıcı terminalinden:
 
-Keşif ve scraper aynı fonksiyonu (`app/scraper/parsing.py → identify`) kullanır;
-böylece keşfin kabul ettiği sayfayı scraper aynı girdilerle reddetmez.
+```powershell
+.venv\Scripts\python.exe tests/manual/ml_data_check.py --snapshot "$mlAuditOut\snapshot.json" --output-dir "${mlAuditOut}_tekrar"
+$LASTEXITCODE
+```
 
-- Ürün adresi kimliği de `app/scraper/parsing.py` içindeki
-  `trendyol_product_id(url)` ve `hepsiburada_sku(url)` ile ortak okunur. İki
-  scraper, iki keşif modülü ve katalog eşleştirme bu yardımcıları kullanır.
-  Kimlik yalnız ürün yolundan çıkarılır; sorgu veya alan adındaki metin kimlik
-  sayılmaz. Geçerli sorgu parametreleri, son eğik çizgi ve göreli ürün yolları
-  kabul edilir; yardımcılar adresi yeniden yazmaz.
-- Trendyol kimliği küçük harfli `-p-` ardından rakamlardır; rakama yapışık harf
-  reddedilir. Kimlik metin olarak kalır, baştaki sıfırlar korunur. Hepsiburada
-  ürün kodu `-p-HBCV…` içindeki harf/rakam SKU'sudur ve büyük harfe çevrilir.
-  Kimlik bulunamazsa ortak yardımcılar `None` döndürür. Mevcut scraper
-  doğrulaması geçersiz ürün adresinde `identity` verir; Trendyol'da sorunlu
-  satıcı teklifi fiyat seçiminden `different_product_page` gerekçesiyle elenir.
-  Hepsiburada SKU reddi ürün isteğinden önce, Trendyol scraper doğrulaması
-  mevcut ürün isteğinden sonra çalışır; istek sırası korunur.
-- Hepsiburada grup (`-pm-HBC…`) kimliği keşfe özgü ayrı kuraldır; ürün SKU'su
-  sayılmaz. Katalog eşleştirmede bilinmeyen platform `None` döndürür. Bakım 2'nin
-  kaynak/adres/sayfa karşılaştırması ve canonical tam SKU koruması sürer.
-- Başlık tam modeli içermeli: "iPhone 16" hedefi "iPhone 16e", "16 Plus",
-  "16 Pro" başlıklarını; "Galaxy S24" hedefi "S24+", "S24 FE", "S24 Ultra"
-  başlıklarını; "iPhone 13" hedefi "13 mini" başlığını kabul etmez.
-- Yenilenmiş, ikinci el, teşhir, **yurt dışı sürüm** ("International Version",
-  "Global Version", "Yurt Dışı") ve aksesuar (kılıf, şarj, koruyucu…) reddedilir.
-  Kayıtlı "Kılıfı", "Adaptörü", "Kapağı" yazımları da başlıklarda bütün sözcük
-  olarak reddedilir (`kilifi`, `adaptoru`, `kapagi`). Başlık veya yapısal veri
-  doğru kapasiteyi taşısa da ret `identity` olur. Genel Türkçe ek tahmini yoktur.
-- Yenilio + isteğe bağlı Outlet + A/B/C + Kalite birleşimi de başlıkta
-  kapsam dışıdır (13 Ekim gerçek kaynak bakımı). Örnekler: "Yenilio A Kalite",
-  "Yenilio B Kalite", "Yenilio Outlet C Kalite". Normalleştirilmiş sözcük
-  sınırları ve boşluk/tire/alt çizgi korunur; tek outlet/kalite veya satıcı
-  adı yeterli ret sinyali değildir. Keşif kartı/ürün ve scraper aynı ortak
-  kurala bağlıdır; fiyat okumasından önce identity reddi vardır.
-- Keşfin kategori süzgeci "Kapağı" ve "Adaptörü" yazımlarını da reddeder;
-  "Kılıfı" mevcut `kilif` kuralıyla zaten reddediliyordu. "Cep Telefonu Kapağı"
-  ve "Cep Telefonu Adaptörü" kategori örnekleri yapay sınamadır; bu adlarla
-  gerçek bir kaynak kategorisi görüldüğü iddia edilmez.
-- Kapasite, sayfanın yapısal verisinden ve başlıktan okunur; iki kaynak
-  çelişirse sayfa reddedilir, hiçbirinde yoksa da reddedilir. TB desteklenir
-  (1 TB = 1024 GB). Ardından "RAM" yazan değer hafıza sayılmaz ("128 GB 12 GB
-  Ram" → 128). Etiketsiz iki değer varsa ("12GB+512GB") başlık kullanılmaz,
-  yapısal veri kullanılır.
-- Hepsiburada'da `variant_identity(soup, sku)` aynı SKU'nun bütün
-  `allVariantCombinations` kayıtlarını karşılaştırır. Keşif kapasite ve rengi
-  buradan alır; scraper'ın `variant_capacity` yardımcısı da aynı doğrulamaya
-  bağlıdır. Farklı geçerli kapasite veya normalize edilmiş renkler `identity`
-  üretir; başka SKU'nun çelişkisi açılan ürünü etkilemez. Eksik/ayrıştırılamayan
-  kapasite ve boş renk çelişki değildir. Tek geçerli kapasite kullanılır;
-  kapasite bulunamazsa başlık doğrulaması sürer. `1 TB`/`1024 GB` ve mevcut
-  normalizasyonla eşdeğer renk tekrarları kabul edilir; rengin ilk dolu kaynak
-  metni korunur. Renk çevirisi veya eş anlamlı eşleştirmesi yapılmaz.
-  Keşifte SKU herhangi bir listede bulunabilir; hiçbirinde yoksa reddedilir.
-  Scraper'da seçenek bulunmadığında başlıktan kapasite doğrulaması korunur.
-  Grup sayfalarının ve bağlantı kuyruğunun son dolu listeden ilerlemesi değişmedi.
-- Ayrı model sayılan ekler: Pro, Plus, Max, Ultra, FE, Lite, mini, **Edge, Air**.
-  "Galaxy S25 Edge" S25 hedefine, "iPhone 17 Air" yazan bir sayfa iPhone 17
-  hedefine girmez.
-- Satıcıların `_` ile ayırdığı adlar ("Galaxy S25 Ultra_12GB_256GB") boşlukla
-  ayrılmış gibi okunur; aksi halde "Ultra" görülmüyor ve sayfa hem S25 hem S25
-  Ultra sayılıyordu (canlıda `catalog_conflict` olarak yakalandı).
-- Hedefin `exclude_terms` ifadelerini içeren başlıklar reddedilir; hedefte
-  `network` varsa sayfanın yapısal ağ türü hedefle çelişemez.
-- Trendyol'da model adında açık 5G varsa yapısal Mobil Bağlantı Hızı değeri
-  açık 4G olduğunda verify_model_network iki tüketicide de identity verir.
-  4.5G/4,5G/LTE/4G LTE mevcut network_type ile 4G sayılır. Değer eksik/
-  tanınmıyorsa bu koruma yeni çıkarım yapmaz; 5G+, 5G NR ve 4G/5G mevcut
-  5G tanımında kabul edilir. Kontrol fiyat/adaydan önce uygulanır; modelde
-  5G yazmaması 4G kabul kuralı değildir. Kaynak 797850359, 14 Ekim.
+Tekrar DB adresini okumaz/bağlanmaz ve görüntünün sabit tarihiyle hesaplar;
+aynı hesaplayıcı sürümü ve kurallarıyla
+report.json/windows.jsonl/daily.jsonl aynı olmalıdır. source_check.json içindeki
+çalışma biçimi farklıdır. Dışarıdan eklenen alanlar, tekrarlı/bozuk kimlikler,
+plan–kontrol veya sonuç–fiyat çelişkisi ve bozuk hash reddedilir.
 
-6 Ekim ekli aksesuar bakımının kaynak kanıtları: `data/trace_s25.json` içindeki
-Hepsiburada `HBCV00007I6EKM` başlığında "Hızlı Sarj Adaptörü";
-`data/trace_xiaomi_poco_x6_pro.json` içindeki Trendyol `4894840` başlığında
-"Moto G Arka Kapak Batarya Pil Kapağı Mavi";
-`data/trace_xiaomi_redmi_note_14_pro_4g.json` içindeki Hepsiburada
-`HBCV0000FS4I6K` başlığında "Telefon Kılıfı" var. Bu gerçek örnekler başka
-korumalardan zaten reddedilmişti. Regresyonlarda aynı sözcükler tek başına,
-doğru model ve kapasiteyle yapay başlıklarda sınanır; canlıda yanlış fiyat
-kaydedildiğine dair kanıt yoktur. 21 geçerli telefon örneği ise kullanıcının
-`data/kimlik_iphone15_20261006/` ham yanıtlarından çıkarılmış sabit test verisidir.
+**Günlük kurallar:** kendi verimizde başlangıç fiyatı akşam turunun ürün
+minimumu, gelecek sonucu günün iki turunda gözlenen minimumdur. Akşam fiyatı
+yoksa sabah fiyatı başlangıca taşınmaz. Her scheduled tur, başlangıcından
+önceki en yakın İstanbul 10.00/22.00 dilimine aittir; örneğin ertesi gün
+09.00 başlangıcı önceki 22.00 dilimidir. Eksik/tekrarlı dilim, kesilen tur,
+günü aşan tamamlanma, ürünün planlanmaması ve eksik/hatalı sayfa cevabı kalite
+kusurudur. İki turun ürün sayfa kimlikleri aynı olmalı; başka ürünün değişen
+kataloğu etkilemez. Manuel turlar envanterde kalır, örneklere katılmaz.
+Cimri günlük fiyatları ayrı kalır; ürün kimliği değişimi pencereyi eler,
+tarihsel satıcı kapsamının aynı olduğu varsayılmaz.
 
-7 Ekim Hepsiburada varyant bakımı **önleyici düzeltmedir**. İncelenen iPhone 15
-ve Galaxy S24 yanıtlarında (40 HTML, 37 tek dolu liste) gerçek çelişki yoktu.
-Kullanıcı yalnız bu madde için canlı çelişki örneğini bekleme şartına istisna
-verdi; yapay kapasite/renk çelişkileri canlı hata kanıtı olarak sunulmaz.
-`tests/fixtures/discovery/hepsiburada_identity_examples.json`, bu iki kayıttaki
-36 ürün sayfasının yalnız kimlik alanlarını içerir; tekrar eden altı liste
-ortak saklanır. Fiyat/stok verisi içermez, testler `data/` veya ağa bağlı değildir.
-24 kabul edilmiş adayın bütün alanları ve diğer modele ait 12 sayfanın reddi
-korundu. Yeni 75 sınama; liste sırası, tek liste içi çelişki, eşdeğer tekrar,
-eksik alan/başlık yedeği, başka SKU ve keşfin diğer adaylarla devamını kapsar.
-Eski kodda 31 yeni sınama başarısızdı (24 çelişki reddi dahil), 44'ü geçti;
-kayıtlı 36 sayfanın koruma sınamaları eski kodda da geçti.
+Geçmiş d−29…d, gelecek d+1…d+7'dir; d başlangıç günüdür. İlk 30 günde her gün
+başlangıç fiyatı ve sonraki yedi günde her gün minimum fiyat gerekir. Kendi
+37 günlük kapsamı sabit ve cevapları tam olmalı. Tükendi geçerli kaynak
+sonucudur; bütün gün fiyatsızsa doldurulmaz. Sabah fiyatı olan, akşam stoksuz
+bir gün gelecek minimumu sağlayabilir; geçmiş başlangıç fiyatını sağlayamaz.
+Eksik gelecekte gözlenen düşüş olsa dahi sıkı temel sayımda pencere dışarıda
+kalır; olumsuz etiket üretilmez. Tam sayı kuruşla
+100×gelecek_minimum ≤ 95×başlangıç ise 1, değilse 0; kullanılamayan etiket NULL.
+İçinde bulunduğumuz İstanbul günü elenir. API'nin 18 saat/14 geçiş/7 gün gibi
+gösterge eşikleri ML denetimine aktarılmaz.
 
-7 Ekim adres kimliği bakımı da **önleyici düzeltmedir**; kullanıcı bakım 2 için
-ayrı istisna verdi. Aynı iki gerçek kayıttaki 6 TY varyant/adres/sayfa kimliği ve
-36 HB ürün SKU'su eşleşti; sorunlu kaynak yanıtı veya yanlış kayıt kanıtı yok.
-`tests/fixtures/discovery/trendyol_identity_examples.json`, 6 kabul edilen
-TY adayının adresi, hedefi, varyant rengi ve sayfada kullanılan kimlik alanlarını
-saklar; fiyat/stok içermez. Bütün aday alanları gerçek raporla eşleştirilir.
-Mevcut HB fixture'ındaki 24 aday ve 12 model reddi de korunur. 31 yeni sınamada
-kimliksiz/farklı TY adresi, bozuk son ek, sorgu metninin kimlik gibi kullanılması,
-HB SKU alt dize tuzağı, geçerli sorgu/eğik çizgi/küçük harfli SKU, sayfa kimliği
-reddi ve keşfin devamı denetlendi. Eski kodda 12 yeni sınama başarısız, 19 başarılı
-oldu; kayıtlı 6 TY adayının koruma sınamaları eski kodda da geçti.
+Rapor ürün/kaynak bazında tur/sonuç sayıları, süre, eksik gün/fiyat aralıkları,
+kapsam dönemleri, azami tur boşluğu, aday/elenen/kullanılabilir pencere ve
+sınıfları verir. calendar_days takvim uzunluğu, observed_days en az bir
+kontrol sonucu/kaydı bulunan nominal gün sayısıdır; boş hazırlanan satır
+gözlem sayılmaz. Cimri'de NULL fiyatlı tarih kaydı gözlemdir, fiyat değildir.
+Elenme nedenleri birden fazla olabilir; neden sayıları
+toplamı elenen pencere sayısına eşit olmak zorunda değildir. Güncel etkin
+sayfalar değişmişse bekleme hesabı eski kapsamı sürüyormuş gibi saymaz.
+Koşullu ilk pencere sonu ve ertesi gün yapılabilecek denetim tarihi verilir;
+bu vaat değildir. Takip sayfası yoksa veya ürün pasifse tarih hesaplanmaz.
 
-7 Ekim bakım 5'te beş tüketicinin ürün adresi kuralları ortaklaştırıldı.
-Önce/sonra karşılaştırmasında 334 katalog adresinin ve kayıtlardaki 333 farklı
-aday adresinin kimliği değişmedi; katalog kayıt kimlikleri ve dosya içeriği
-korundu. Yapay sınamada eski Trendyol scraper'ı bozuk son ekli veya yalnız
-sorguda kimlik taşıyan ucuz teklifi seçebiliyordu; Hepsiburada scraper'ı da
-sorgudaki SKU'yu ürün kodu sayabiliyordu. Canlı yanlış fiyat/kayıt kanıtı yoktur.
-Kullanıcı yalnız bakım 5 için de gerçek uyuşmazlık örneğini bekleme şartına ayrı
-istisna verip önleyici düzeltme planını onayladı; genel gerçek kaynak şartı sürer.
-39 yeni sınama, tüketicilerin aynı adreslerdeki sonucu ve scraper girişlerindeki
-fiyat seçimi/kimlik reddini kapsar. Eski kodda 13'ü başarısız, 26'sı başarılıydı.
-Mevcut sabit katalog testleri, 6 TY/24 HB adayın bütün alanları ve diğer modele
-ait 12 sayfanın reddi korundu. Son tam paket 797 geçti, atlanan/xfail yok;
-219 veritabanı testi yalnız `fiyat_takip_test` üzerinde çalıştı. Black/Flake8
-temiz. Gerçek DB, katalog ve uygulanmış migration dosyaları değişmedi.
+Kaynak başına kullanılabilir ortak referans tarihlerinde ilk floor(%70),
+sonraki floor(%85)'e kadar doğrulama, kalanı testtir. Bütün ürünler aynı
+tarih bölümünü paylaşır. Önceki bölümün hedef sonu sonraki dolu bölümün ilk
+referansına eşit/sonraysa purged olarak ayrılır. first_anchor/last_anchor,
+ayırmadan önceki bölüm sınırlarıdır; distinct_anchor_days kalan günleri sayar.
+Ürün/sınıf/gün sayıları ve
+boş/tek sınıflı bölümler belirtilir; model eğitilmez, puan üretilmez.
+Çakışmayan 37 günlük pencereler en erken olandan açgözlü seçilir; bunlar da
+ürünler arası istatistiksel bağımsızlık kanıtı değildir. numerical_candidate
+yalnız bu sayımlarda engel bulunmadığıdır; yayın yeterliliği değildir.
+Mevcut Cimri serisinin eski kalması ve ML kullanım belirsizliği ayrıca gösterilir.
+
+## Piyasa geçmişi araştırma aracı
+
+Kaynak seçimi için örnekler: `apple_iphone_16_128gb`,
+`samsung_galaxy_s24_256gb`, `xiaomi_14t_pro_256gb`. Akakçe ve Cimri için
+ürün geçmişi URL'si tarayıcıda ayrı ayrı bulunur; araç otomatik arama yapmaz.
+Her çalışmada yönlendirme/tekrar dahil en çok dört HTTP denemesi yapılır ve
+`data/scrape.lock` kilidi alınır. Cimri'de önce sayfanın model/kapasitesi ve
+gömülü ürün kimliği doğrulanır; sonra aynı HTTP oturumuyla
+`POST https://www.cimri.com/api/cimri` üzerinden `priceHistoryV2Query`
+çağrılır. Örnek komut biçimi:
+
+```powershell
+.venv\Scripts\python.exe tests\manual\market_history_probe.py akakce apple_iphone_16_128gb "<ürünün HTTPS adresi>"
+.venv\Scripts\python.exe tests\manual\market_history_probe.py cimri xiaomi_14t_pro_256gb "https://www.cimri.com/cep-telefonlari/en-ucuz-xiaomi-14t-pro-fiyatlari%2Ca2372365900"
+```
+
+Rapor varsayılan olarak `artifacts/market_history_probe/<kaynak>_<product_key>.json`
+dosyasına yazılır (`--output-dir` başka bir yerel klasör gösterir); aynı örnek
+tekrar çalıştırılırsa dosya güncellenir. Terminal yalnız
+kısa özet gösterir. Cimri raporunda eski tarihten yeniye `history.points`
+(`day`, `price_tl`), nokta/eksik fiyat sayısı ve gömülü tablonun grafikle
+karşılaştırılması bulunur. `null` fiyat uydurulmadan korunur; kimlik veya ortak
+tarihte fiyat uyuşmazlığı hata olur. Çıkış 0 okuma/ayrıştırma tamamlandı ve
+**manuel inceleme gerekiyor**, 1 örnek ürün etkin katalogda yok (istek atılmaz),
+2 HTTP/kimlik/veri hatası, 3 ortak kilit meşgul demektir. Testlerin geçmesi canlı API erişimini veya her günün ayrı fiyat
+gözlemi olduğunu kanıtlamaz. Ham sayfa, veritabanı ve katalog değiştirilmez.
+
+29 Eylül 2026'da [Akakçe kullanım sözleşmesinde](https://www.akakce.com/kullanim-sozlesmesi/)
+ve [Cimri kullanım koşullarında](https://www.cimri.com/kullanim-kosullari)
+içerik kopyalama/işleme kısıtları görüldü. Az sayıda sayfa teknik araştırma
+için incelenir; düzenli geçmiş indirme ve projede saklama ayrıca
+değerlendirilir. Kaynak seçilirse yalnız onun geçmişi ele alınır; iki sitenin
+serileri birleştirilmez.
 
 ## Testler ne kanıtlar, ne kanıtlamaz
 
-- **Otomatik testler (1903; 438'i test PostgreSQL'inde):** Kuralların doğru
-  çalıştığını kayıtlı ve sahte yanıtlarla kanıtlar. Kimlik değişiklikleri gerçek
-  kaynak örneği ve regresyon ister; 7 Ekim varyant ve adres bakımları kullanıcının
-  her maddeye ayrı onayıyla yapay çelişkilere karşı önleyici koruma olarak uygulandı.
+- **Otomatik testler:** Kuralların doğru çalıştığını kayıtlı ve sahte
+  yanıtlarla kanıtlar. Kimlik değişiklikleri gerçek kaynak örneği ve regresyon
+  ister; bazı korumalar (Hepsiburada varyant tutarlılığı, adres kimliği)
+  kullanıcının ayrı istisnasıyla, gerçek uyuşmazlık görülmeden önleyici eklendi.
   Sitelerin bugün hâlâ aynı yapıda olduğunu kanıtlamaz. Veritabanı testleri
   şema kurallarının, migration koşucusunun, katalog eşitlemenin ve toplama
   turunun gerçek PostgreSQL'de doğru çalıştığını kanıtlar; tur testleri sahte
   scraper kullanır, turun gerçek sitelerle çalıştığını yalnızca canlı tur
-  gösterir. Türkçe ekler için önceki `xfail(strict=True)` testi 6 Ekim'de
-  düzeltmeyle normal teste çevrildi; güncel pakette beklenen başarısızlık yoktur.
+  gösterir.
 - **Kasıtlı bozma (mutasyon) denetimi:** Testlerin gerçekten hata
   yakalayabildiğini sınamak için kodun kritik satırları projenin bir kopyasında
   ya da yalnız bellekte (ağ kapalıyken) tek tek bozuldu ve testlerin bozmayı
-  yakalayıp yakalamadığına bakıldı (sonuçlar: proje_plani.md Bölüm 9, Adım 3 ve
-  Adım 6). Yakalanmayanlar bilinçli olarak testsiz bırakılan eşzamanlılık
+  yakalayıp yakalamadığına bakıldı (sonuçlar: [arşivdeki plan](arsiv/proje_plani_2026-10-20.md),
+  Bölüm 9, Adım 3 ve Adım 6). Yakalanmayanlar bilinçli olarak testsiz bırakılan eşzamanlılık
   korumaları ya da davranışı değiştirmeyen (eşdeğer) bozmalardır.
 - **Linux/Windows farkı:** CI Linux'ta çalışır; `pythonw`, Windows kod sayfası
   ve Görev Zamanlayıcı yalnız bu bilgisayarda, canlı turla sınanır. Kataloğun
@@ -4312,7 +2232,7 @@ temiz. Gerçek DB, katalog ve uygulanmış migration dosyaları değişmedi.
   turlarda Trendyol hiç engellenmedi. 403 `blocked` sayılır ve engel aşılmaz (vekil
   sunucu, adres döndürme, tarayıcı taklidi yok); bu yüzden toplamanın GitHub'ın
   makinelerine taşınması şimdilik uygun görünmüyor. Karar:
-  [proje_plani.md](../proje_plani.md) Bölüm 8.
+  [proje_plani.md](../proje_plani.md).
 - Arka arkaya çok tarama Trendyol'da geçici engele yol açabilir (25 Eylül'de
   yarım saatte 7 tarama sonrası 10 dakika engel). Günlük fiyat toplama bu
   yoğunlukta değildir; keşif seyrek çalışır.
@@ -4322,97 +2242,33 @@ temiz. Gerçek DB, katalog ve uygulanmış migration dosyaları değişmedi.
   TL'den 75.524 TL'ye geçti.
 - Siteler sayfa yapısını değiştirebilir; bu durumda bakım gerekebilir. Kod,
   değişiklikte sessizce yanlış sonuç üretmek yerine hatayı raporlamaya çalışır.
-- **13 Ekim log kontrolü:** 12 Ekim 22:00 turu 28'de Redmi Note 14 Pro 5G
-  256 GB'ın `hepsiburada_hbcv0000dhxkti` sayfası izinli hostların dışındaki
-  `www3.hepsiburada.com/` nedeniyle invalid_host verdi; logda 240 fiyat,
-  91 Tükendi, 1 hata/çıkış 2 var. 13 Ekim 10:00 turu 29 aynı sayfayı başarıyla
-  okudu; 332 sonuç, 241 fiyat/91 Tükendi/0 hata, çıkış 0. Geçişin nedeni ve
-  yönlendirme zinciri kesinleşmedi; izin listesi değiştirilmedi. Bu kanıt
-  mevcut loglara aittir, güncel SQL–API karşılaştırması değildir.
 
-## Geliştirme geçmişi
-
-### Kabul kontrolü (Eylül 2026)
-
-Veritabanına geçmeden önce scraper ve discovery 6 adımda, canlı veri ve tarayıcı
-karşılaştırmasıyla denetlendi. Sonuç: o günkü katalogdaki 44 sayfanın tamamı hatasız
-sınıflandı (16 Stokta Var, 5 Kritik Stok, 23 Tükendi); satıcı listeleri, fiyatlar
-ve üstü çizili fiyatlar tarayıcıda görülenle eşleşti. Bulunup düzeltilenler:
-
-| Sorun | Çözüm |
-|---|---|
-| Keşfin sessiz eleme kararları görünmüyordu | `--trace` tanılama izi |
-| Keşif ve scraper modeli farklı kurallarla kontrol ediyordu; başlığında "GB" yazmayan Hepsiburada sayfaları hiç okunamıyordu | Tek ortak kimlik kuralı (`identify`) |
-| Hepsiburada `-pm-` grup kartları görülmüyordu (bir iPhone 15 ailesi eksikti) | Grup sayfaları gerçek SKU'ya çözülüyor; eksik sayfa kataloğa eklendi |
-| Stoksuz Hepsiburada sayfaları "Tükendi" yerine hata veriyordu | Satıcı listesi boşsa doğrudan `Tükendi` |
-| Çelişkili Hepsiburada yanıtı "Tükendi" sayılıyordu | `api_error` |
-| "Yenilenmiş Cep Telefonu" telefon kategorisi sayılabiliyordu | Hariç tutuluyor |
-| Boş SKU'lu bir varyant kaydı bütün keşfi raporsuz durduruyordu | Kayıt atlanıyor, hata raporlanıyor |
-| Xiaomi'de marka filtresi bulunamıyor, arama 71.450 ürünle (çoğu kılıf) doluyordu | Marka filtre listesinden de okunuyor (129 ürün, tam tarama) |
-| Redmi Note 14 ile Note 14 5G aynı ürün sanılıyordu | `exclude_terms` |
-| Trendyol'da satıcının koşulsuz indirimi atlanıyordu | Sayfadaki indirimli fiyat kaydediliyor |
-| Tek bir tutarsız aday bütün keşif çalışmasını raporsuz durduruyordu | Yalnızca o aday atlanıyor (`catalog_conflict`) |
-| Arama aşamasındaki bozuk yanıt bütün keşfi çökertebiliyordu | Ortak kurtarılabilir hata listesi; uyarı olarak raporlanıyor |
-| Hepsiburada'nın bildirdiği sayfa adresi alan adı kontrolsüz kullanılıyordu | Yalnızca `https://www.hepsiburada.com/` kabul ediliyor |
-| Keşif, hiç kullanmadığı API paketine (`slowapi`/`limits`) bağımlıydı; ölü kod ve gelecek aşama tanımları vardı | Temizlendi; bağımlılıklar yalnızca biten aşamanınkiler |
-
-Trendyol model filtresinin (ör. "Cep Telefonu Modeli: iPhone 16") kullanılması
-değerlendirildi ve **reddedildi**: satıcıların girdiği bu özellik güvenilir
-değil (iPhone 16e sayfaları "iPhone 16" olarak etiketli) ve hiçbir marka 20
-sayfa sınırına yaklaşmadı (Apple 3–4, Samsung 6, Xiaomi 4 sayfa).
-
-### Katalog kurulumu (25–27 Eylül 2026)
-
-Kabul kontrolünden sonra katalog **sıfırdan** kuruldu: eski 6 ürün / 45
-bağlantılık katalog boşaltıldı (elle verilmiş 3 Trendyol bağlantısı ve
-stoksuz sayfalar bilinçli olarak bırakıldı; testler artık kataloğun sabit
-kopyasını okur) ve kullanıcının seçtiği 25 hedef marka marka eklendi. Her
-markada aynı döngü uygulandı: keşif → rapor incelemesi → canlı fiyat kontrolü →
-kullanıcının tarayıcı karşılaştırması. Bütün keşif ve kontrol komutlarını
-kullanıcı kendi terminalinden çalıştırdı.
-
-| Marka | Ürün | Sayfa (HB / TY) | Kullanıcının tarayıcıda kontrol ettiği |
-|---|---|---|---|
-| Apple (9 model) | 29 | 118 / 46 | 5 sayfada fiyat, satıcı, çizili fiyat, Tükendi; 2 sayfada renk seçicisi |
-| Samsung (8 model) | 17 | 56 / 41 | 4 sayfada fiyat, satıcı, stok; S25 256 GB'ın Ultra olmadığı |
-| Xiaomi (6 model) + POCO (1) | 11 | 25 / 20 | 2 sayfada "Mobil Bağlantı Hızı" alanı; satıştaki POCO X6 Pro sayfası |
-
-Kurulum sonunda 57 ürün ve 306 bağlantı; bunlardan biri (yurt dışı sürüm) pasif.
-28 Eylül'deki kapanış taraması (sıfır çakışma, sıfır ağ hatası) 21 bağlantı ve
-2 ürün daha ekledi: güncel katalog **59 ürün, 327 bağlantı** (Apple 29 ürün
-118/50, Samsung 18 ürün 62/41, Xiaomi 11 ürün 30/22, POCO 1 ürün 3/1;
-Hepsiburada/Trendyol). 5 Ekim'de ilk haftalık keşif raporu 7 sayfa ekledi (Apple
-121/50, Samsung 62/42, Xiaomi 31/24, POCO 3/1; Hepsiburada/Trendyol): katalog
-**59 ürün, 334 bağlantı**. Kurulumdaki son
-toplu fiyat kontrolünde (27 Eylül) 306 bağlantının 304'ü okundu: 163 Stokta Var,
-70 Kritik Stok, 71 Tükendi. Kalan 2 Galaxy S25 128 GB sayfası "12 GB Ram"
-başlığı yüzünden doğrulanamadı; kural düzeltildi (aşağıda).
-
-Kurulum sırasında bulunup düzeltilenler (her biri canlı örneğe dayanan testle):
-
-| Sorun | Çözüm |
-|---|---|
-| Trendyol HTML arama sayfası (`/sr`) HTTP 403 ile engelleniyordu; 9 modelin 6'sı taranamadı | Sayfa açılmıyor, API'ye yalnız `Referer` gönderiliyor; aynı komut beklemesiz 9/9 geçti |
-| Engel raporunda yalnız "blocked" yazıyordu; 429 (hız) ile 403 (erişim) ayırt edilemiyordu | Rapora HTTP kodu ve engellenen adres yazılıyor |
-| "Galaxy S25 Edge" S25, "iPhone 17 Air" iPhone 17 sayılıyordu | `edge` ve `air` ayrı model eki |
-| "Galaxy S25 Ultra_12GB_256GB" adı hem S25 hem Ultra sayıldı (`catalog_conflict`) | `_` boşluk gibi okunuyor |
-| Trendyol renkleri satıcı özelliğinden geliyordu: "Çok Renkli", genel "Mavi" | Renk, sayfanın renk seçicisindeki ad (varyant listesi) |
-| POCO `brand: "Xiaomi"` ile bulunamıyordu | Marka sitedeki etiket: `POCO` |
-| Redmi Note 14/13 Pro 4G başlıkta "4G" yazmadığı için hiç bulunamıyordu | `network` alanı: yapısal "Mobil Bağlantı Hızı" ile doğrulama |
-| `exclude_terms: ["5G"]`, 4G telefonların "4.5G" başlığını da dışlıyordu | Ondalık sayının parçası olan ifade eşleşmiyor |
-| "Galaxy S25 128 GB 12 GB Ram" başlığında hafıza belirlenemiyordu | "RAM" etiketli değer hafıza sayılmıyor |
-| Bir iPhone 16 yurt dışı sürümü ("International Version") karşılaştırmaya giriyordu; satıcı garanti alanına "Apple Türkiye Garantili" yazmıştı | Yurt dışı sürümler kapsam dışı; o bağlantı pasife alındı |
-
-Son denetimde (kodu baştan okuyan inceleme) bulunup düzeltilenler:
-
-| Sorun | Çözüm |
-|---|---|
-| Hepsiburada'da satıcı listesinde stok alanı olmayan sayfa "Tükendi" sayılıyordu | Alan yoksa `parse` hatası; Tükendi yalnız açık sinyalle |
-| 3 sn bekleme her bağlantıda yeni istemci açıldığı için uygulanmıyordu | Son istek zamanı alan adı başına, bütün istemciler arasında ortak |
-| `curl_cffi` çerez çakışması hatası bütün çalışmayı durdurabilirdi | Çerez yokmuş gibi devam ediliyor |
-| "5G+", "5G NR" ağ değerleri tanınmıyordu; 4G hedefine girebilirdi | 5G desteği söyleyen her değer 5G |
-| Katalog Windows'ta CRLF satır sonuyla yazılabiliyordu | Her zaman LF |
-
-Kararlar: RAM ve garanti türü ürün kimliğine katılmadı (gerekçe: [proje_plani.md](../proje_plani.md)
-Bölüm 6); yurt dışı sürümler kapsam dışı; POCO X5 Pro satılmadığı
-için kapatıldı.
+- **Hepsiburada sayfası başka modele dönebilir:** aynı adres başka bir modelin
+  içeriğini gösterebilir (Galaxy S25 sayfalarının S25+ içeriğine dönmesi iki kez
+  görüldü). Kimlik kuralı `identity` verir, yanlış fiyat geçmişe girmez; bağlantı
+  hedefli kararla pasife alınır veya katalogdan çıkarılır. Kalıcı çıkarılan
+  bağlantının ürün bağı `retired_listing_bindings` içinde korunur.
+- **`invalid_host` (www3.hepsiburada.com):** bazı Hepsiburada sayfaları ara sıra
+  izinli alan adı dışına (`www3.hepsiburada.com/`) gidiyor. Olaylar tek turluk ve
+  kendiliğinden geçiyor; yönlendirmenin nedeni doğrulanmadı, izin listesi
+  genişletilmedi.
+- **Otomatik kabulün renk kuralı:** kabul katmanı sayfadaki bütün renk
+  kaynaklarının normalleştirilmiş hâliyle aynı olmasını ister; eş anlam yalnız
+  `blue`→`mavi`. "Black" ile "Siyah", "Siyah Titanyum" ile "Siyah" ya da JSON-LD
+  renk alanına kapasite yazılması `color_mismatch` üretir. 19 Ekim raporunda
+  44 Trendyol sayfası yalnız bu nedenle reddedildi; 41'i katalogda etkin, doğru
+  sayfalardır. Mevcut bağlantılar korunur, ama yeni Trendyol renk sayfaları
+  otomatik kabul edilemez. Hepsiburada başlık renkleri sınırlı bir listeyle
+  (`TITLE_COLORS`) tanınır. Düzeltmesi planlandı ([proje_plani.md](../proje_plani.md)).
+- **Kaynak içi çelişkiler:** bazı satıcı sayfalarında başlık ile özellik alanları
+  çelişir: Trendyol 797850359 başlıkta 5G/12 GB RAM, özellikte 4G/8 GB RAM;
+  Hepsiburada HBCV0000E8DHJL başlık/varyantta 256 GB, ana üründe 512 GB.
+  Bunlar yeni aday olarak kabul edilmez; hangi alanın yanlış olduğu bilinmez.
+  E8DHJL eski kaydıyla katalogdadır; ona müdahale ayrı hedefli karar ister.
+- **Stoksuz Hepsiburada JSON-LD'si:** satılamayan sayfa JSON-LD'de 0,00 TL ve
+  `InStock` gösterebilir; bu alanlar fiyat veya stok kanıtı sayılmaz. Tükendi
+  kararı satıcı listesinden verilir.
+- **Cimri:** kullanım uygunluğu doğrulanmadı ([değerlendirme](#kullanım-değerlendirmesi));
+  iki ürünün eşleştirmesi yok. Seri kendi ölçümümüzle aynı kapsamda değildir;
+  tarihsel satıcı kapsamı ve günlerin bağımsız ölçülüp ölçülmediği bilinmez.
+  Akakçe'nin ilk örneği HTTP 403 verdi; engel aşılmaz.

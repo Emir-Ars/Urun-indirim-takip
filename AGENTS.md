@@ -7,48 +7,59 @@ güvenilmez; diğer araç onu göremez. Kalıcı bilgi repodaki dosyalarda durur
 
 ## Oturum başında
 
-1. `proje_plani.md`: kararların ve aşama durumunun ana kaynağı.
+1. `proje_plani.md`: kararlar, aşama durumu, açık kararlar ve sıradaki iş.
 2. `DEVAM.md` (varsa): yerel devir notu, Git dışında. Son oturumdan kalan yarım
    işi, bekleyen kararları ve sıradaki adımı içerir.
 3. `git status` ve `git log --oneline -5`: commit edilmemiş değişiklikler.
-4. Gerekirse `README.md` (proje tanıtımı) ve `docs/teknik.md` (çalıştırma,
-   işleyiş, kurallar, hata kodları).
+4. Gerekirse `docs/teknik.md` (çalıştırma, işleyiş, kurallar, hata kodları) ve
+   `README.md` (tanıtım, güncel kapsam).
 
 ## Oturum sonunda ve araç değiştirmeden önce
 
 `DEVAM.md` yeniden yazılır. Kullanıcı "devir notunu güncelle" dediğinde ya da
-oturum biterken bunu yap. Kalıcı karar ve durum bilgisi `proje_plani.md`'ye,
-çalışma kuralı bu dosyaya yazılır. İki araç aynı anda çalıştırılmaz.
-Kullanıcının geçiş adımları ve kopyala-yapıştır mesajları yerel
-`ARAC_GECISI.md` dosyasındadır (Git dışında).
+oturum biterken bunu yap. İki araç aynı anda çalıştırılmaz. Kullanıcının geçiş
+adımları ve kopyala-yapıştır mesajları yerel `ARAC_GECISI.md` dosyasındadır
+(Git dışında).
 
 `DEVAM.md` başlıkları:
 
 - Tarih, saat ve notu yazan araç
-- Aşama ve adım (`proje_plani.md` Bölüm 9)
+- Aşama ve adım (`proje_plani.md`)
 - Yapıldı, commit edilmedi: dosyalar ve ne değiştiği
 - Bekleyen kararlar: kullanıcıya sorulacaklar ve verilmiş cevaplar
 - Sıradaki iş
 - Kullanıcının çalıştırması gereken komutlar ve çıktıda neye bakılacağı
 - Riskler ve açık sorular
 
-## Belgeleri güncel tutma (kullanıcı istemeden, aynı oturumda)
+## Belgeler: hangi bilgi nereye yazılır
 
 Belgeleri bu araçlar okur ve günceller; kullanıcının ayrıca hatırlatması
 beklenmez. Güncellenen belgeyi mesajda bir cümleyle söyle.
 
 | Ne olduğunda | Hangi belge |
 |---|---|
-| Kullanıcı bir karar verdi; plan, takvim veya sıra değişti | `proje_plani.md`: ilgili adım satırı, Bölüm 8 (açık kararlar) veya takvim |
-| Bir plan adımı bitti | `proje_plani.md` durum tabloları (Bölüm 2 ve 9); README'deki sayılar (test, katalog) |
-| Kodun davranışı, komutu, çıkış kodu veya kuralı değişti | `docs/teknik.md` ilgili bölüm; gerekiyorsa README |
-| Canlıda yeni bir sınır veya hata görüldü | `proje_plani.md` Bölüm 7 (bilinen sınırlar / bakım listesi) |
+| Kullanıcı bir karar verdi; plan veya sıra değişti | `proje_plani.md`: kararlar tablosuna tarih + tek satır gerekçe, ya da açık kararlar / sıradaki işler |
+| Kodun davranışı, komutu, çıkış kodu veya kuralı değişti | `docs/teknik.md` ilgili bölüm (yalnız bugünkü davranış) |
+| Canlıda yeni bir sınır veya hata görüldü | `docs/teknik.md` "Bilinen sınırlar"; karar gerekiyorsa plandaki açık kararlar |
+| Bir plan adımı bitti, commit/push yapıldı ve CI sonucu görüldü | `docs/gecmis.md`'ye tek satır; plandaki durum satırı |
+| Kapsam sayıları değişti (katalog, test, Cimri) | `README.md` "Güncel kapsam" tablosu (tarihli) |
 | Kullanıcı kalıcı bir çalışma kuralı söyledi ("bundan sonra hep…") | Bu dosya (`AGENTS.md`) |
 | Oturum bitiyor veya araç değişecek | `DEVAM.md` |
 
-`proje_plani.md` uzun ve katmanlıdır; kullanıcı yeniden düzenlenmesini
-istemedi. Yeni bilgi ilgili yere eklenir, eski ve yeni bilgi çelişirse
-eskisi düzeltilir; belge baştan yazılmaz.
+Belge kuralları (20 Ekim kullanıcı kararı):
+
+- Oturum günlüğü yazılmaz. Süren işin ayrıntısı yalnız `DEVAM.md`'de, biten
+  adım `docs/gecmis.md`'de tek satırda, kalıcı karar planda tek satır
+  gerekçeyle durur.
+- Aynı bilgi birden fazla belgeye kopyalanmaz; diğer belge bağlantı verir.
+  Commit SHA'sı ve CI kimliği `docs/gecmis.md`'ye yazılır (planın aşama
+  tablosu yalnız aşamayı kapatan commit'i anar). Güncel kapsam sayıları
+  (katalog, test, Cimri) yalnız README "Güncel kapsam" tablosunda tarihle durur.
+- Belgeler gerektiğinde yeniden düzenlenebilir. Eski ve yeni bilgi çelişirse
+  eskisi düzeltilir veya kaldırılır; eski hâli Git geçmişinde kalır.
+- `docs/arsiv/` dondurulmuştur; içindeki dosyalar değiştirilmez.
+- Kanıt dosyaları (`data/`, `artifacts/`) Git dışındadır; belgede yalnız
+  gerektiğinde yol olarak anılır.
 
 ## Kullanıcıyla çalışma
 
@@ -56,57 +67,40 @@ eskisi düzeltilir; belge baştan yazılmaz.
   yazılır, kısa durum satırları dahil.
 - Çalışma ve durum mesajlarında hangi ana adım ve alt adımda olunduğunu
   açıkça belirt (ör. “Adım 3.2 — Erişim ve ağ kontrolü”). Tamamlanan,
-  sürdürülen ve bekleyen işleri ayır (16 Ekim kullanıcı kararı).
+  sürdürülen ve bekleyen işleri ayır.
+- Her adıma başlamadan önce sorunu, çözüm yaklaşımını, ilgili dosyaları ve
+  nasıl doğrulanacağını basit Türkçeyle açıkla; kullanıcı mühendislik
+  kararının nedenini uygulamadan önce görebilsin.
 - Adım adım ilerle ve her adımdan sonra dur. Her değişiklikte amacı, akışa
   bağlantısını, doğrulamayı ve açık sınırları anlat; terimleri açıkla. Hızlı ve
   toplu değişiklik kullanıcıyı kaybettirir.
-- Her adıma başlamadan önce sorunu, çözüm yaklaşımını, ilgili dosyaları ve
-  nasıl doğrulanacağını basit Türkçeyle açıkla; kullanıcı mühendislik
-  kararının nedenini uygulamadan önce görebilsin (14 Ekim kullanıcı kararı).
-- Yeni keşif bağlantılarını kullanıcıya tek tek tarayıcıda doğrulatmak rutin
-  iş akışı değildir (14 Ekim kullanıcı kararı). Bakımın sonuna yeterli kimlik
-  kanıtlı adayların otomatik kabulü, eksik/çelişkili adayların katalog dışında
-  tutulması Bakım 6 kapsamında uygulandı; 19 Ekim'de ayrı kullanıcı kabulüyle
-  haftalık otomatik kabul görevi kuruldu. Manuel kaynak incelemesi yeni bir
-  kaynak/kod sorununun hedefli araştırması için kullanılır. Bu karar ajanın
-  canlı komut çalıştırma veya onaysız commit/push yetkisini değiştirmez.
-- Bakım 6 kararı (19 Ekim): etkin keşif hedeflerinin doğrulanan yeni
-  kapasiteleri ürün oluşturabilir. Katalog Git'te kalır; otomatik eklemeler
-  yerelde birikir, commit/push ayrı kullanıcı onayı ister. İlk katalog ve
-  otomasyon kabulünden sonra haftalık eklemeler için tek tek kabul aranmaz.
-  Kalıcı kaldırılan bağlantının eski ürün bağı `config/discovery.json`
-  `retired_listing_bindings` içinde korunur. Tam yeni kanıtla yalnız eski
-  ürününe eski listing_id ile dönebilir; başka ürüne taşınamaz. Katalogda
-  bulunan pasif kayıt kendiliğinden açılmaz. Gelecekte hedefli bağlantı
-  kaldırırken bu kimlik kaydını da güncelle.
 - Kararlar netleşmeden kod yazma: önce plan, sonra kullanıcının onayı. Plan veya
   açıklama istendiğinde kod üretme.
 - Yeni mimari seçimleri kullanıcıyla netleştir. Kullanıcının güncel kararı eski
   bir belgeyle çelişirse çelişkiyi söyle ve belgeyi karara uydur.
 - Planlanan, uygulanmış ve karar bekleyen işleri birbirine karıştırma.
-  Tamamlanan adımın durumunu plana işle.
 - Dosyaları sorumluluğa göre ayır; gereksiz iskelet ve dosya çoğaltma.
+- Yeni keşif bağlantılarını kullanıcıya tek tek tarayıcıda doğrulatmak rutin iş
+  değildir: haftalık keşif yeterli kimlik kanıtlı adayları otomatik kabul eder,
+  eksik/çelişkili olanları dışarıda bırakır. Elle kaynak incelemesi yalnız yeni
+  bir kaynak/kod sorununun hedefli araştırması içindir.
+- Bir bağlantı katalogdan kalıcı kaldırılırken `config/discovery.json`
+  `retired_listing_bindings` kaydı da güncellenir.
 
 ## Canlı işler ve veri
 
 - Siteye giden komutları kullanıcı kendi terminalinden çalıştırır: toplama turu
-  (`python -m app.collection`), keşif (`python -m app.discovery`) ve
-  `tests/manual/*`. Sen komutu ve çıktıda neye bakılacağını ver; arka planda
+  (`python -m app.collection`), keşif (`python -m app.discovery`), Cimri alımı
+  ve `tests/manual/*`. Sen komutu ve çıktıda neye bakılacağını ver; arka planda
   canlı iş yürütme.
-- Zamanlanmış tur her gün 10:00 ve 22:00'de başlar ve yaklaşık 31 dakika sürer.
-  Görevi Görev Zamanlayıcı başlatır: `\FiyatTakip\FiyatToplamaTuru`, logları
-  `data/logs/`. O sırada canlı komut çalıştırma. Tur kodu başlarken içe
-  aktarır; o saatlerde `app/` altındaki dosyaları yarım bırakma.
+- Zamanlanmış tur her gün 10:00 ve 22:00'de başlar ve yaklaşık 31 dakika sürer
+  (`\FiyatTakip\FiyatToplamaTuru`, loglar `data/logs/`). O sırada canlı komut
+  çalıştırma. Tur kodu başlarken içe aktarır; o saatlerde `app/` altındaki
+  dosyaları yarım bırakma.
 - Zamanlanmış keşif her Pazar 14:00'te başlar ve yaklaşık 35 dakika sürer
-  (`\FiyatTakip\HaftalikKesif`; logları `data/logs/kesif_*.log`, raporları
-  `data/discovery/`). Seçeneksiz görev kurulumu önizleme (`--dry-run`), açık
-  `-OtomatikKabul` kurulumu `--auto-accept` kullanır. 19 Ekim'de kullanıcı
-  kabulüyle otomatik mod kuruldu: yeterli kimlik kanıtlı adaylar otomatik
-  eklenir; eksik/çelişkili olanlar dışarıda kalır. Seçeneksiz yeniden kurulum
-  önizleme moduna dönüş sağlar.
-  Önizleme raporu ayrıca `python -m app.discovery --apply-report <rapor>`
-  ile uygulanabilir; eski kanıtsız rapor yeni ekleme yapamaz. O sırada
-  canlı komut çalıştırma ve `app/discovery/` ile ortak dosyaları yarım bırakma.
+  (`\FiyatTakip\HaftalikKesif`, otomatik kabul modunda; loglar
+  `data/logs/kesif_*.log`, raporlar `data/discovery/`). O sırada canlı komut
+  çalıştırma; `app/discovery/` ve ortak dosyaları yarım bırakma.
 - Gerçek kaynakta bulunmayan fiyat, stok, kimlik veya kapsam bilgisini uydurma.
 - Gerçek veritabanına (`fiyat_takip`) yalnız okuma sorgusuyla bak. Testler
   yalnız adı `_test` ile biten veritabanını kullanır. Veritabanı şifresi yalnız
@@ -120,19 +114,19 @@ eskisi düzeltilir; belge baştan yazılmaz.
 - Sözleşmeleri koru:
   - Scraper'ın sözleşmesi `fetch(listing) -> PriceObservation`'dır.
   - Pazaryeri HTTP'si yalnız `app/scraper/http.py` ve `curl_cffi` ile yapılır.
-    Kullanıcının Aşama 7 için onayladığı tek istisna:
-    `app/ui/api_client.py`, HTTPX ile yalnız sabit
-    `http://127.0.0.1:8000` FastAPI adresine erişebilir;
-    yönlendirme izlemez, ortam proxy'lerini kullanmaz ve zaman aşımı uygular.
-    Diğer `app/` modülleri HTTPX veya başka HTTP kütüphanesi kullanamaz.
-    Arayüz doğrudan veritabanına bağlanmaz. Bunu `tests/test_http.py` denetler;
-    sabit hedef/yönlendirme/zaman aşımı ve cevap doğrulaması
-    `tests/test_api_client.py` içinde ayrıca sınanır.
+    Tek istisna `app/ui/api_client.py`: HTTPX ile yalnız sabit
+    `http://127.0.0.1:8000` FastAPI adresine erişir; yönlendirme izlemez,
+    ortam proxy'lerini kullanmaz ve zaman aşımı uygular. Diğer `app/`
+    modülleri HTTPX veya başka HTTP kütüphanesi kullanamaz. Arayüz doğrudan
+    veritabanına bağlanmaz. Bunu `tests/test_http.py` denetler; sabit hedef,
+    yönlendirme, zaman aşımı ve cevap doğrulaması `tests/test_api_client.py`
+    içinde ayrıca sınanır.
   - Yeni telefon veriyle, `config/discovery.json` üzerinden eklenir.
 - Scraper ve keşfin kimlik kuralları yalnız canlıda görülen gerçek bir örnekle
   değiştirilir ve her değişikliğe regresyon testi eklenir.
 - Kod tanımlayıcıları İngilizce, yorumlar ve kullanıcıya dönük mesajlar
-  Türkçedir. Yorum yalnız "neden böyle?" sorusunu yanıtlar.
+  Türkçedir. Yorum yalnız "neden böyle?" sorusunu yanıtlar; tarih veya oturum
+  anlatmaz.
 - Kod değiştiğinde bütün testleri ve biçim denetimlerini çalıştır (Windows):
   `.venv\Scripts\python.exe -m pytest -q`,
   `.venv\Scripts\python.exe -m black --check app tests` ve
@@ -155,15 +149,12 @@ eskisi düzeltilir; belge baştan yazılmaz.
   `DEVAM.md`, `ARAC_GECISI.md` ve `CLAUDE.md` gönderilmez.
 - Her plan adımı bitince tek commit atılır:
   1. Testler ve biçim denetimleri geçer.
-  2. Dosya listesi ve Türkçe commit mesajı kullanıcıya gösterilir.
-  3. Kullanıcı onaylarsa commit ve push yapılır.
-  4. Push sonrası CI (GitHub Actions) yeşil olmalıdır.
-- 14 Ekim'de kullanıcı netleştirdi: commit ve push için her seferinde ayrı
-  açık onay istenir. Önce dosya listesi, Türkçe commit mesajı ve doğrulama
-  sonucu gösterilir; kullanıcı bu gönderimi onaylamadan commit/push yapılmaz.
-  Planın uygulanması veya adımın tamamlanması gönderim yetkisi sayılmaz.
-  Önceki bakım dizisi için genel gönderim yetkisi yorumu artık geçerli değildir.
-  Uygulama planı ve katalog kabulü de ayrıca onaylanır.
+  2. Dosya listesi, Türkçe commit mesajı ve doğrulama sonucu kullanıcıya gösterilir.
+  3. Kullanıcı **bu gönderimi** açıkça onaylarsa commit ve push yapılır.
+  4. Push sonrası aynı SHA'nın CI'ı (GitHub Actions) yeşil olmalıdır.
+- Her commit/push için ayrı açık onay gerekir. Planın onaylanması veya adımın
+  tamamlanması gönderim yetkisi sayılmaz; uygulama planı ve katalog kabulü de
+  ayrıca onaylanır.
 - Commit'lerde ve PR'larda yazar yalnız kullanıcıdır (Emir-Ars).
   `Co-Authored-By` satırı veya herhangi bir yapay zekâ imzası (Claude, Codex…)
   eklenmez.
