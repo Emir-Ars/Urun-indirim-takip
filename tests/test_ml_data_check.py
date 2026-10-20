@@ -8,7 +8,7 @@ from datetime import date, datetime, timedelta, timezone
 import psycopg
 import pytest
 
-from tests.manual import ml_data_check as audit
+from tools import ml_data_check as audit
 from test_database_read import world as _world, add_run, add_market, START
 
 world = _world

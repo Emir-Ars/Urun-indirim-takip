@@ -29,7 +29,7 @@ jobs:
       # bilgisayardakiyle aynıdır.
       - name: Canlı okuma
         run: |
-          python tests/manual/live_scraper_check.py samsung_galaxy_a55_128gb > okuma.json
+          python tools/live_scraper_check.py samsung_galaxy_a55_128gb > okuma.json
           cat okuma.json
       - name: Sonuç özeti ve denetim
         run: |

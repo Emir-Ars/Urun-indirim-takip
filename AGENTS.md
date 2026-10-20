@@ -91,7 +91,7 @@ Belge kuralları (20 Ekim kullanıcı kararı):
 
 - Siteye giden komutları kullanıcı kendi terminalinden çalıştırır: toplama turu
   (`python -m app.collection`), keşif (`python -m app.discovery`), Cimri alımı
-  ve `tests/manual/*`. Sen komutu ve çıktıda neye bakılacağını ver; arka planda
+  ve `tools/*` araçları. Sen komutu ve çıktıda neye bakılacağını ver; arka planda
   canlı iş yürütme.
 - Zamanlanmış tur her gün 10:00 ve 22:00'de başlar ve yaklaşık 31 dakika sürer
   (`\FiyatTakip\FiyatToplamaTuru`, loglar `data/logs/`). O sırada canlı komut
@@ -129,8 +129,8 @@ Belge kuralları (20 Ekim kullanıcı kararı):
   anlatmaz.
 - Kod değiştiğinde bütün testleri ve biçim denetimlerini çalıştır (Windows):
   `.venv\Scripts\python.exe -m pytest -q`,
-  `.venv\Scripts\python.exe -m black --check app tests` ve
-  `.venv\Scripts\python.exe -m flake8 app tests`.
+  `.venv\Scripts\python.exe -m black --check app tests tools` ve
+  `.venv\Scripts\python.exe -m flake8 app tests tools`.
   Veritabanı testleri `TEST_DATABASE_URL`, API okuma rolü testleri ayrıca
   `TEST_API_DATABASE_URL` ister; değişken tanımlı değilse yerelde atlanır.
   Her ikisi de yalnız `_test` veritabanına bağlanır. Testlere gerçek

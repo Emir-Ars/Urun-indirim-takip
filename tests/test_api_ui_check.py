@@ -9,7 +9,7 @@ import psycopg
 import pytest
 
 from app.ui.api_client import ApiClient
-from tests.manual import api_ui_check as manual
+from tools import api_ui_check as manual
 from test_api import client as _client, world as _world
 from test_database_read import KEY, START, add_market, add_run
 

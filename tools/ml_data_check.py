@@ -14,10 +14,10 @@ from zoneinfo import ZoneInfo
 import psycopg
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, ValidationError
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from tests.manual import api_ui_check as reader  # noqa: E402
+from tools import api_ui_check as reader  # noqa: E402
 
 ISTANBUL = ZoneInfo("Europe/Istanbul")
 PositiveInt = Annotated[int, Field(gt=0)]

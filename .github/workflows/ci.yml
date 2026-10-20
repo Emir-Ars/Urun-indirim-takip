@@ -51,6 +51,6 @@ jobs:
               conn.execute(Path("scripts/api_okuma_rolu.sql").read_text(encoding="utf-8"))
               conn.execute("ALTER ROLE fiyat_takip_api_test PASSWORD 'ci_only'")
           PY
-      - run: python -m black --check app tests
-      - run: python -m flake8 app tests
+      - run: python -m black --check app tests tools
+      - run: python -m flake8 app tests tools
       - run: python -m pytest

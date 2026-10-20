@@ -38,7 +38,7 @@ from ui_samples import (
 
 ROOT = Path(__file__).resolve().parents[1]
 SCREEN = ROOT / "app/ui/main.py"
-PREVIEW = ROOT / "tests/manual/ui_preview.py"
+PREVIEW = ROOT / "tools/ui_preview.py"
 
 
 @pytest.fixture

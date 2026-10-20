@@ -28,7 +28,6 @@ API ve ekran sözleşmeleri, hata kodları ve bilinen sınırlar. Yalnız sistem
 - [Streamlit ekranı](#streamlit-ekranı)
 - [SQL–API–Streamlit bağımsız denetimi](#sqlapistreamlit-bağımsız-denetimi)
 - [ML veri denetimi](#ml-veri-denetimi)
-- [Piyasa geçmişi araştırma aracı](#piyasa-geçmişi-araştırma-aracı)
 - [Testler ne kanıtlar, ne kanıtlamaz](#testler-ne-kanıtlar-ne-kanıtlamaz)
 - [Bilinen sınırlar](#bilinen-sınırlar)
 
@@ -65,7 +64,7 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 |---|---|
 | `contracts.py` | Verinin şekilleri ve doğrulaması (Pydantic V2 strict): `Product`, `Listing`, `Catalog`, `PriceObservation`, keşif hedefleri ve raporu. Hatalı veri içeri giremez (ör. fiyat alanına "Tükendi"). Yalnızca biten aşamanın kullandığı tanımları içerir. |
 | `settings.py` | Ayar dosyalarını okur. `CATALOG_PATH`, `DISCOVERY_PATH`, `RUNTIME_PATH`, `SCRAPE_LOCK_PATH`, `LOG_DIR`, `DISCOVERY_REPORT_DIR` ortam değişkenleriyle başka dosya veya klasör gösterilebilir. |
-| `scrape_lock.py` | Siteye giden bütün girişlerin paylaştığı kilit (`data/scrape.lock`). Fiyat turu, keşif, Cimri yerel alımı/ağsız aktarımı ve üç canlı kontrol aracı (`live_scraper_check`, `live_discovery_check`, `market_history_probe`) alır; biri sürerken diğeri beklemeden "sürüyor" deyip çıkar. Süreç çökse bile işletim sistemi kilidi bırakır. |
+| `scrape_lock.py` | Siteye giden bütün girişlerin paylaştığı kilit (`data/scrape.lock`). Fiyat turu, keşif, Cimri yerel alımı/ağsız aktarımı ve iki canlı kontrol aracı (`live_scraper_check`, `live_discovery_check`) alır; biri sürerken diğeri beklemeden "sürüyor" deyip çıkar. Süreç çökse bile işletim sistemi kilidi bırakır. |
 | `console.py` | Komut satırı araçlarının ortak çıktı yardımcıları: UTF-8 çıktı (`utf8_output`; fiyat turu, keşif, `app.database` ve canlı kontrol araçları kullanır), `<ön ek>_<tarih-saat>.log` dosyası açma ve stdout/stderr'i log dosyasına da yazan `tee_output` (yalnız zamanlanmış tur ve keşif). pythonw.exe altında ekran akışları yoktur (`None`); hepsi buna dayanır. |
 | `price_statistics.py` | `ProductSnapshot.all_history` verisinden mevcut tam kapsam dönemini, 30 günlük gözlenen dibi, dönem zirvesini ve değişkenliği hesaplar; eksiklik gerekçeleri ve gözlem sayıları döndürür. Bağlantı/HTTP/dosya işlemi yapmaz; Cimri verisini kullanmaz. |
 
@@ -73,7 +72,7 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 
 | Dosya | Ne işe yarar |
 |---|---|
-| `cimri.py` | Gömülü ürün ve grafik yanıtını ağsız okur; marka/model/kapasite, kategori ve kimlik doğrulaması yapar. Piyasa geçmişi araştırma aracı da aynı grafik ayrıştırıcısını kullanır; araştırmanın TL çıktısı korunur. Yeni alım ayrıca fiyatı mevcut `money` ile kuruşa doğrular. |
+| `cimri.py` | Gömülü ürün ve grafik yanıtını ağsız okur; marka/model/kapasite, kategori ve kimlik doğrulaması yapar. Alım ayrıca fiyatı mevcut `money` ile kuruşa doğrular. |
 | `capture.py` | Eşleştirmeleri doğrular; seçilen ürünlerin HTML ve API JSON yanıtlarını yeni klasöre, parmak izlerini ve sonucu rapora yazar. Veritabanına bağlanmaz. |
 | `importer.py` | Sonlandırılmış alım raporunu ve kaynak parmak izlerini doğrular; aynı baytlardan kimlik/geçmişi yeniden hesaplar. Katalog kimliği ve rapor eşitliği zorunludur. Dosya/veritabanı yazmaz, ağa çıkmaz. |
 | `__main__.py` | `capture` ve ağsız `import`/`--dry-run` girişidir; ortak kilidi alır, Türkçe sonucu basar, çıkış kodlarını yönetir. `capture` veritabanına bağlanmaz; `import` HTTP çalışma ayarlarını okumaz. |
@@ -172,25 +171,25 @@ Test sayıları burada tutulmaz; güncel sayı `pytest -q` çıktısındadır.
 | `tests/test_api_client.py` | Yerel API istemcisi: katı girdi/JSON ve alan tamlığı, sabit hedef/proxy/yönlendirme sınırı, güvenli hatalar, tekrar/önbellek olmaması, kaynak bırakma. |
 | `tests/test_ui.py`, `tests/ui_samples.py` | Streamlit ekranı (AppTest) ve grafik verisi. `ui_samples.py` AppTest ve önizlemenin ortak yapay örnekleridir; gerçek fiyat değildir. |
 | `tests/test_api_ui_integration.py` | Gerçek test okuma hesabı → FastAPI → istemci → Streamlit zinciri; SQL ve hesaplama sahte değildir. |
-| `tests/test_api_ui_check.py`, `tests/test_ml_data_check.py`, `tests/test_live_discovery_check.py`, `tests/test_market_history_probe.py` | Aşağıdaki denetim/kontrol araçlarının kendileri. |
+| `tests/test_api_ui_check.py`, `tests/test_ml_data_check.py`, `tests/test_live_discovery_check.py` | Aşağıdaki denetim/kontrol araçlarının kendileri. |
 | `tests/test_market_history.py`, `tests/test_market_history_import.py` | Cimri alımı ve aktarımı: kimlik, tarih/fiyat/eksik veri, ham kanıt ve parmak izi, istek bütçesi, kilit, ilk/tekrar aktarım, çelişki, READ ONLY önizleme, kesinti. |
 | `tests/fixtures/` | Gerçek kaynaklardan küçültülmüş örnekler (kaynak yolu ve SHA-256 ile) ve kataloğun sabit kopyası (`discovery/catalog.json`). Testler `data/` veya ağa bağlı değildir. |
 | `.github/workflows/ci.yml` | Her push/pull request'te geçici PostgreSQL 17 (`C.UTF-8`) açar, `dev,web` bağımlılıklarını kurar; yalnız `_test` DB'de API rolünü hazırlar ve Black/Flake8/tam testleri çalıştırır. `ci_only` şifresi yalnız o işte açılıp silinen sunucunundur. |
-| `.github/workflows/bulut-deneme.yml` | Elle tetiklenen bulut erişim denemesi (zamanlama, veritabanı ve gizli anahtar yok): `tests/manual/live_scraper_check.py samsung_galaxy_a55_128gb` ile 4 sayfayı GitHub'ın makinesinden okur. Sonuç "Bilinen sınırlar"dadır. Tur saatlerinde (10:00–10:40, 22:00–22:40) tetiklenmez: `data/scrape.lock` bu makineye özgüdür. |
+| `.github/workflows/bulut-deneme.yml` | Elle tetiklenen bulut erişim denemesi (zamanlama, veritabanı ve gizli anahtar yok): `tools/live_scraper_check.py samsung_galaxy_a55_128gb` ile 4 sayfayı GitHub'ın makinesinden okur. Sonuç "Bilinen sınırlar"dadır. Tur saatlerinde (10:00–10:40, 22:00–22:40) tetiklenmez: `data/scrape.lock` bu makineye özgüdür. |
 
-### Canlı kontrol ve denetim araçları: `tests/manual/`
+### Canlı kontrol ve denetim araçları: `tools/`
 
-Otomatik test değildir; siteye veya gerçek veritabanına giden araçları
+Otomatik test değildir; `pytest` bu klasörü toplamaz. Araçlar proje kökünden
+`.venv\Scripts\python.exe tools\<araç>.py` biçiminde çalıştırılır; siteye veya gerçek veritabanına giden araçları
 kullanıcı kendi terminalinden, tur ve keşif saatleri dışında çalıştırır.
 
 | Araç | Ne işe yarar |
 |---|---|
-| `tests/manual/live_scraper_check.py` | Katalogdaki sayfaları canlı okur; bütün satıcıları gösterir. İsteğe bağlı `product_key` ön eki (ör. `samsung_`) ile yalnız o ürünler; sayfa seçimi toplama turuyla aynı fonksiyondur. Başka bir tarama sürüyorsa (ortak kilit) çıkış kodu 3'tür. |
-| `tests/manual/live_discovery_check.py` | Keşfi kataloğa yazmadan canlı çalıştırır; `--trace` ile her kararın nedenini gösterir. Normalde raporu `data/discovery_report.json` dosyasının üzerine yazar. `--save-responses KLASOR`, tek hedefin ham HTML/JSON yanıtlarını ve raporunu yeni klasöre kaydeder; karar izini de basar. |
-| `tests/manual/market_history_probe.py` | Akakçe için tek örnek sayfayı, Cimri için ürün sayfası ve grafik API'sini ortak HTTP katmanı ve tarama kilidiyle okur. Cimri'nin tarihli fiyat noktalarını Git dışındaki yerel JSON raporuna yazar; ham HTML'yi ve veritabanını yazmaz. |
-| `tests/manual/ui_preview.py` | Aynı Streamlit ekranını ağsız test istemcisiyle gösterir; kalıcı test verisi uyarısı vardır. API/DB veya canlı site gerekmez; kullanıcı görünüm/yenileme kontrolünü burada yapar. |
-| `tests/manual/ml_data_check.py` | Yalnız okuma hesabıyla günlük 30+7 ML pencereleri, %5 hedefi, eksik/kapsam nedenleri ve zaman bölümlerini hesaplar. Kendi/Cimri ayrı; `--snapshot` ile ağsız tekrar. Model eğitmez, API/site çağırmaz. |
-| `tests/manual/api_ui_check.py` | Yerel API'nin gerçek veritabanını doğru sunduğunu, üretim kodunu kullanmadan bağımsız SQL hesabıyla karşılaştırır ([bağımsız denetim](#sqlapistreamlit-bağımsız-denetimi)). |
+| `tools/live_scraper_check.py` | Katalogdaki sayfaları canlı okur; bütün satıcıları gösterir. İsteğe bağlı `product_key` ön eki (ör. `samsung_`) ile yalnız o ürünler; sayfa seçimi toplama turuyla aynı fonksiyondur. Başka bir tarama sürüyorsa (ortak kilit) çıkış kodu 3'tür. |
+| `tools/live_discovery_check.py` | Keşfi kataloğa yazmadan canlı çalıştırır; `--trace` ile her kararın nedenini gösterir. Normalde raporu `data/discovery_report.json` dosyasının üzerine yazar. `--save-responses KLASOR`, tek hedefin ham HTML/JSON yanıtlarını ve raporunu yeni klasöre kaydeder; karar izini de basar. |
+| `tools/ui_preview.py` | Aynı Streamlit ekranını ağsız test istemcisiyle gösterir; kalıcı test verisi uyarısı vardır. API/DB veya canlı site gerekmez; kullanıcı görünüm/yenileme kontrolünü burada yapar. |
+| `tools/ml_data_check.py` | Yalnız okuma hesabıyla günlük 30+7 ML pencereleri, %5 hedefi, eksik/kapsam nedenleri ve zaman bölümlerini hesaplar. Kendi/Cimri ayrı; `--snapshot` ile ağsız tekrar. Model eğitmez, API/site çağırmaz. |
+| `tools/api_ui_check.py` | Yerel API'nin gerçek veritabanını doğru sunduğunu, üretim kodunu kullanmadan bağımsız SQL hesabıyla karşılaştırır ([bağımsız denetim](#sqlapistreamlit-bağımsız-denetimi)). |
 
 ## Komutlar
 
@@ -224,8 +223,8 @@ Get-ScheduledTaskInfo -TaskPath '\FiyatTakip\' -TaskName 'FiyatToplamaTuru'
 powershell -ExecutionPolicy Bypass -File scripts\zamanlayici_kur.ps1 -Kaldir
 
 # Biçim ve kalite kontrolü (CI'daki gibi)
-.venv\Scripts\python.exe -m black --check app tests
-.venv\Scripts\python.exe -m flake8 app tests
+.venv\Scripts\python.exe -m black --check app tests tools
+.venv\Scripts\python.exe -m flake8 app tests tools
 
 # Keşif: önce kataloğu değiştirmeden rapor
 .venv\Scripts\python.exe -m app.discovery --dry-run --target apple_iphone_15
@@ -249,15 +248,15 @@ powershell -ExecutionPolicy Bypass -File scripts\kesif_zamanlayici_kur.ps1
 powershell -ExecutionPolicy Bypass -File scripts\kesif_zamanlayici_kur.ps1 -OtomatikKabul
 
 # Keşif tanılaması: rapor + her kararın izi (katalog değişmez)
-.venv\Scripts\python.exe tests\manual\live_discovery_check.py apple_iphone_15 --trace
+.venv\Scripts\python.exe tools\live_discovery_check.py apple_iphone_15 --trace
 
 # Adres kimliği incelemesi için tek hedefin ham yanıtları (yeni klasör gerekir)
-.venv\Scripts\python.exe tests\manual\live_discovery_check.py apple_iphone_15 --save-responses data\kimlik_iphone15_20261006
+.venv\Scripts\python.exe tools\live_discovery_check.py apple_iphone_15 --save-responses data\kimlik_iphone15_20261006
 
 # Canlı fiyat kontrolü: katalogdaki bütün sayfalar (veya yalnız bir ön ek)
-.venv\Scripts\python.exe tests\manual\live_scraper_check.py
-.venv\Scripts\python.exe tests\manual\live_scraper_check.py apple_iphone_15_128
-.venv\Scripts\python.exe tests\manual\live_scraper_check.py samsung_ | Out-File -Encoding utf8 data\scraper_samsung.json
+.venv\Scripts\python.exe tools\live_scraper_check.py
+.venv\Scripts\python.exe tools\live_scraper_check.py apple_iphone_15_128
+.venv\Scripts\python.exe tools\live_scraper_check.py samsung_ | Out-File -Encoding utf8 data\scraper_samsung.json
 ```
 
 Ham keşif kaydında her platform/hedef alt klasörüne HTML/JSON dosyaları ve
@@ -1306,7 +1305,9 @@ klasör oluşturulmaz. Canlı komutu kullanıcı tur saatleri dışında çalı�
 komutunun çıkışı 2 olur. `captured`/`error`/`not_attempted` kayıtları ayrıca
 incelenir; yalnız çıkış 2'den ağ veya kimlik hatası olduğu sonucu çıkarılmaz.
 
-Her ürün için aynı `PageClient` ile sayfa ve grafik okunur; yönlendirme/tekrar
+Her ürün için aynı `PageClient` ile sayfa ve grafik okunur (grafik, sayfadaki
+ürün kimliğiyle `POST https://www.cimri.com/api/cimri` üzerinden
+`priceHistoryV2Query` sorgusuyla alınır); yönlendirme/tekrar
 dahil dört istek bütçesi, ortak bekleme, alan adı ve 8 MB sınırı korunur.
 `__OCTOPUS_DATA__` içindeki ürün kimliği eşleştirmeyle aynı olmalıdır; marka
 katalogla, başlık ve H1'lerin her biri model/kapasiteyle doğrulanır. Kategori
@@ -1988,7 +1989,7 @@ Normal ekran (API açıkken):
 API sunucusu ve veritabanı gerektirmeyen test önizlemesi:
 
 ```powershell
-.venv\Scripts\python.exe -m streamlit run tests\manual\ui_preview.py --server.address 127.0.0.1 --server.port 8501 --server.headless true --browser.gatherUsageStats false
+.venv\Scripts\python.exe -m streamlit run tools\ui_preview.py --server.address 127.0.0.1 --server.port 8501 --server.headless true --browser.gatherUsageStats false
 ```
 
 Proje klasöründen çalıştırılır; tarayıcıda `http://127.0.0.1:8501` açılır.
@@ -2014,7 +2015,7 @@ terminalinde:
 ```powershell
 $env:API_DATABASE_URL = "postgresql://fiyat_takip_api@localhost:5432/fiyat_takip"
 $kontrolKlasoru = "artifacts\ui_7_7_$(Get-Date -Format yyyyMMdd_HHmmss_fff)"
-.venv\Scripts\python.exe tests\manual\api_ui_check.py --output-dir $kontrolKlasoru
+.venv\Scripts\python.exe tools\api_ui_check.py --output-dir $kontrolKlasoru
 $LASTEXITCODE
 ```
 
@@ -2037,7 +2038,7 @@ ham hata veya özel tur notları çıktıya konmaz; raporlar Git'e gönderilmez.
 
 ## ML veri denetimi
 
-Araç, mevcut tests/manual/api_ui_check.py içindeki configured_url/read_dataset
+Araç, mevcut tools/api_ui_check.py içindeki configured_url/read_dataset
 hesap/şema denetimlerini kullanır. Yalnız API_DATABASE_URL ve SELECT hesabı;
 her görüntü REPEATABLE READ / READ ONLY, 5 saniye sorgu sınırı ve UTC ile alınır.
 Analiz önceki tek görüntüde yapılır; sonunda sekiz nesne yeniden okunup parmak
@@ -2050,7 +2051,7 @@ Toplama ve keşif çalışmıyorken proje kökünde kullanıcı terminalinden:
 ```powershell
 $env:API_DATABASE_URL = "postgresql://fiyat_takip_api@localhost:5432/fiyat_takip"
 $mlAuditOut = "artifacts\ml_denetim_$(Get-Date -Format yyyyMMdd_HHmmss_fff)"
-.venv\Scripts\python.exe tests/manual/ml_data_check.py --output-dir $mlAuditOut
+.venv\Scripts\python.exe tools/ml_data_check.py --output-dir $mlAuditOut
 $LASTEXITCODE
 ```
 
@@ -2076,7 +2077,7 @@ ayrıdır; başka kod sürümüyle tekrar alınırsa hangi hesaplayıcının kul
 Kaydedilmiş görüntünün ağsız tekrarı da kullanıcı terminalinden:
 
 ```powershell
-.venv\Scripts\python.exe tests/manual/ml_data_check.py --snapshot "$mlAuditOut\snapshot.json" --output-dir "${mlAuditOut}_tekrar"
+.venv\Scripts\python.exe tools/ml_data_check.py --snapshot "$mlAuditOut\snapshot.json" --output-dir "${mlAuditOut}_tekrar"
 $LASTEXITCODE
 ```
 
@@ -2130,40 +2131,6 @@ boş/tek sınıflı bölümler belirtilir; model eğitilmez, puan üretilmez.
 ürünler arası istatistiksel bağımsızlık kanıtı değildir. numerical_candidate
 yalnız bu sayımlarda engel bulunmadığıdır; yayın yeterliliği değildir.
 Mevcut Cimri serisinin eski kalması ve ML kullanım belirsizliği ayrıca gösterilir.
-
-## Piyasa geçmişi araştırma aracı
-
-Kaynak seçimi için örnekler: `apple_iphone_16_128gb`,
-`samsung_galaxy_s24_256gb`, `xiaomi_14t_pro_256gb`. Akakçe ve Cimri için
-ürün geçmişi URL'si tarayıcıda ayrı ayrı bulunur; araç otomatik arama yapmaz.
-Her çalışmada yönlendirme/tekrar dahil en çok dört HTTP denemesi yapılır ve
-`data/scrape.lock` kilidi alınır. Cimri'de önce sayfanın model/kapasitesi ve
-gömülü ürün kimliği doğrulanır; sonra aynı HTTP oturumuyla
-`POST https://www.cimri.com/api/cimri` üzerinden `priceHistoryV2Query`
-çağrılır. Örnek komut biçimi:
-
-```powershell
-.venv\Scripts\python.exe tests\manual\market_history_probe.py akakce apple_iphone_16_128gb "<ürünün HTTPS adresi>"
-.venv\Scripts\python.exe tests\manual\market_history_probe.py cimri xiaomi_14t_pro_256gb "https://www.cimri.com/cep-telefonlari/en-ucuz-xiaomi-14t-pro-fiyatlari%2Ca2372365900"
-```
-
-Rapor varsayılan olarak `artifacts/market_history_probe/<kaynak>_<product_key>.json`
-dosyasına yazılır (`--output-dir` başka bir yerel klasör gösterir); aynı örnek
-tekrar çalıştırılırsa dosya güncellenir. Terminal yalnız
-kısa özet gösterir. Cimri raporunda eski tarihten yeniye `history.points`
-(`day`, `price_tl`), nokta/eksik fiyat sayısı ve gömülü tablonun grafikle
-karşılaştırılması bulunur. `null` fiyat uydurulmadan korunur; kimlik veya ortak
-tarihte fiyat uyuşmazlığı hata olur. Çıkış 0 okuma/ayrıştırma tamamlandı ve
-**manuel inceleme gerekiyor**, 1 örnek ürün etkin katalogda yok (istek atılmaz),
-2 HTTP/kimlik/veri hatası, 3 ortak kilit meşgul demektir. Testlerin geçmesi canlı API erişimini veya her günün ayrı fiyat
-gözlemi olduğunu kanıtlamaz. Ham sayfa, veritabanı ve katalog değiştirilmez.
-
-29 Eylül 2026'da [Akakçe kullanım sözleşmesinde](https://www.akakce.com/kullanim-sozlesmesi/)
-ve [Cimri kullanım koşullarında](https://www.cimri.com/kullanim-kosullari)
-içerik kopyalama/işleme kısıtları görüldü. Az sayıda sayfa teknik araştırma
-için incelenir; düzenli geçmiş indirme ve projede saklama ayrıca
-değerlendirilir. Kaynak seçilirse yalnız onun geçmişi ele alınır; iki sitenin
-serileri birleştirilmez.
 
 ## Testler ne kanıtlar, ne kanıtlamaz
 

@@ -22,7 +22,7 @@ from app.scrape_lock import scrape_lock
 from app.scraper.base import BaseScraper
 from app.scraper.http import FetchError
 from app.settings import Runtime
-from tests.manual import live_scraper_check
+from tools import live_scraper_check
 
 PLATFORMS = [
     {"key": "trendyol", "name": "Trendyol", "hosts": ["www.trendyol.com"]},
