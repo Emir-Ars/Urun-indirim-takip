@@ -2216,10 +2216,13 @@ Mevcut Cimri serisinin eski kalması ve ML kullanım belirsizliği ayrıca göst
 - `exclude_terms` ve `network` keşif anında uygulanır; hedefe sonradan
   eklenirse daha önce kataloğa girmiş sayfalar kendiliğinden çıkarılmaz.
 - **Bulutta çalıştırma:** GitHub'ın bulut makinelerinden Hepsiburada bilgisayardakiyle
-  aynı okundu, ama Trendyol iki denemede de okunamadı: 6 Ekim'de HTTP 403, 22
-  Ekim'de ürün verisi (`__envoy__SHARED_PROPS`) olmayan bir sayfa (`parse`,
-  "Trendyol ürün durum verisi bulunamadı"). Aynı iki sayfa 22 Ekim sabahki turda
-  evden sorunsuz okunmuştu; bilgisayardaki turlarda Trendyol hiç engellenmedi.
+  aynı okundu, ama Trendyol üç denemede de okunamadı: 6 Ekim'de HTTP 403, 22
+  Ekim'de önce ürün verisi (`__envoy__SHARED_PROPS`) olmayan bir sayfa (`parse`,
+  "Trendyol ürün durum verisi bulunamadı"), teşhis adımıyla yapılan yeniden
+  denemede yine HTTP 403. Teşhiste Trendyol'un Cloudflare çerezleri (`__cf_bm`,
+  `__cflb`, `_cfuvid`) görüldü; ret, sayfa biçiminden değil erişim engelinden.
+  Aynı iki sayfa 22 Ekim sabahki turda evden sorunsuz okunmuştu; bilgisayardaki
+  turlarda Trendyol hiç engellenmedi.
   Engel aşılmaz (vekil sunucu, adres döndürme, tarayıcı taklidi yok); toplama
   GitHub'ın makinelerine taşınmaz. Karar: [proje_plani.md](../proje_plani.md).
 - Arka arkaya çok tarama Trendyol'da geçici engele yol açabilir (25 Eylül'de

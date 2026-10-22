@@ -107,6 +107,7 @@ Bu dosyanın kendi güncellemesi bir sonraki adımın commit'ine girer.
 | 22.10 | `7a5ff8f` | Adım 4.3: Cimri kodunun kullanılmayan eski yolları (`cimri_page_data`, sıfırı ret eden TL modu) ve 3 eski test kaldırıldı; 151 kayıtlı/bozuk örneğin dönüşümü birebir aynı | [39762305991](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/39762305991) |
 | 22.10 | `cc3ec2d` | Adım 3.4 düzeltmesi: zaman aşımı testi havuzun ilk bağlantısını bekliyor (havuz büyüyüp bağlantıları sırayla verince test aralıklı düşüyordu) | [39768770708](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/39768770708) |
 | 22.10 | `7ca9be1` | Adım 5.1: otomatik kabulde Trendyol rengi renk seçicisindeki ad; 19 Ekim raporundaki 44 yanlış `color_mismatch` kalktı, diğer 451 karar değişmedi; 7 gerçek örnekle regresyon testi | [39769099983](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/39769099983) |
+| 22.10 | `b5bbb99` | Sürekli işletim: bulut denemesine Trendyol sayfa teşhisi; sonuç Trendyol'dan HTTP 403 ve Cloudflare çerezleri (GitHub yolu kapandı); karar: dizüstü sürekli açık, prizde kapak kapanınca uyumaz | [39779121760](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/39779121760) |
 
 ## Eylül 2026 ayrıntıları
 

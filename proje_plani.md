@@ -44,7 +44,7 @@ Kullanıcı arayüzde arama yaptığında canlı scraping veya model eğitimi
 | ML öncesi bakım dizisi (Bakım 1–6; otomatik güvenli keşif kabulü dahil) | ✅ Tamamlandı (20 Ekim) | `7c0988b`, CI 39393708497 |
 | Proje yapısının sadeleştirilmesi (Bölüm 8, Adım 1–5) | 🔄 Sürüyor (20 Ekim'de başladı) | — |
 | 8. ML (indirim tahmini) | 🔜 Planlandı, başlanmadı | Bölüm 9 |
-| 9. Sürekli işletim ve Docker | 🔜 Planlandı, başlanmadı; sürekli işletim ML eğitiminden önce | Bölüm 9 |
+| 9. Sürekli işletim ve Docker | 🔄 Sürekli işletim kararı verildi (22 Ekim: dizüstü sürekli açık); Docker başlanmadı | Bölüm 9 |
 
 Bugünkü işletim: fiyat turu her gün 10:00 ve 22:00'de, haftalık keşif her
 Pazar 14:00'te (otomatik güvenli kabul modunda) Windows Görev Zamanlayıcı ile
@@ -202,7 +202,8 @@ rehberde, o günkü tartışması arşivdedir.
 | 22 Ekim | Otomatik kabulde Trendyol rengi renk seçicisindeki addır; seçici adı varken satıcının "Renk"i ve JSON-LD rengi karşılaştırılmaz, kapasite yazan değer renk sayılmaz. Hepsiburada değişmez. 25 Ekim keşfinden önce devreye alınır. | 19 Ekim raporu: 44 doğru Trendyol sayfası yalnız bu yüzden reddedilmişti; 109 sayfanın hepsinde seçici adı var ve hiç çelişmiyor. Değişiklik yalnız renk etiketini etkiler, ürün kimliğini değil. |
 | 22 Ekim | Adım 4 kapsamı: katalog yazıcıları, zamanlanmış çalışma kopyası ve Cimri'nin kullanılmayan yolları sadeleşir; keşifteki eski kimlik kontrolü Adım 5'e taşınır; API'nin istek başı denetimi ve katalog okuma olduğu gibi kalır. | İnceleme: eski kimlik kontrolü ölü kod değil (rapor gerekçesi, Hepsiburada varyant kuyruğu); diğer iki madde gerekçesiyle "Bilerek değiştirilmeyen davranışlar"da. |
 | 22 Ekim | Test dosyaları birbirinden içe aktarma yapmaz (bir test denetler); ortak fixture ve yardımcılar `tests/support/`'tadır. Yalnız `test_discovery.py` bölünür; tek konulu büyük dosyalar (toplama, Cimri, veritabanı) bölünmez. | Bölme, konu karışık olduğunda testi bulmayı kolaylaştırır; tek konulu dosyada yalnız dosya sayısını artırır. |
-| 22 Ekim | Sürekli işletim için GitHub Actions + bulut PostgreSQL yolu kullanıcı isteğiyle yeniden sınandı ve kapandı: Hepsiburada okundu, Trendyol ürün verisi olmayan sayfa döndürdü. Toplama GitHub'a taşınmaz; engel aşılmaz. | `bulut-deneme.yml` (run 39772243483): aynı iki Trendyol sayfası aynı sabah evden okunmuştu; 6 Ekim'deki 403 ile birlikte iki ayrı denemede iki ayrı engel biçimi. |
+| 22 Ekim | Sürekli işletim için GitHub Actions + bulut PostgreSQL yolu kullanıcı isteğiyle yeniden sınandı ve kapandı: Hepsiburada okundu, Trendyol okunmadı. Toplama GitHub'a taşınmaz; engel aşılmaz. | `bulut-deneme.yml`: ilk denemede ürün verisi olmayan sayfa, teşhisli denemede HTTP 403 ve Cloudflare çerezleri; aynı iki sayfa aynı sabah evden okunmuştu. Sorun okuma kodunda değil, erişim engelinde. |
+| 22 Ekim | Sürekli işletim: dizüstü sürekli açık kalır (prizde, oturum açık, ekran kilitli, kapak kapalı); prizdeyken kapak kapanınca uyumaz. Görevler ve 10:00/22:00 düzeni değişmez. | Trendyol yalnız ev internetinden okunuyor; kullanıcı yeni cihaz alamıyor, eski cihazı yok. Uyku ve hazırda bekletme prizde zaten kapalıydı. |
 | 20 Ekim | Proje yapısı sadeleştirilecek (Bölüm 8). Plan, rehber ve kurallar yeniden düzenlenir; önceki "plan baştan yazılmaz" kuralı kaldırıldı, eski hâller arşivde. `app/market_history` kodu korunur; Git dışı inceleme kanıtları silinmeden proje dışına taşınır; renk kuralı Adım 5'te ele alınır. | Belgeler günlüğe dönmüştü (plan 374 KB, rehber 312 KB); karmaşa yönetimi zorlaştırıyordu. |
 
 ### Bilerek değiştirilmeyen davranışlar
@@ -258,7 +259,6 @@ Ayrıntı ve kanıtları: [teknik rehber, Bilinen sınırlar](docs/teknik.md#bil
 
 | Konu | Durum |
 |---|---|
-| Sürekli işletim | GitHub yolu kapandı (22 Ekim, Trendyol). Kalan seçenekler ev internetinde çalışan bir makine: dizüstünü açık bırakmak (ücretsiz) veya evde 7/24 açık küçük cihaz (alım). **Karar bekliyor.** |
 | Son bir Cimri alımı | Kullanıcı fikri (20 Ekim): örneğin 1 Kasım civarında son bir alım yapıp sonrasında yalnız kendi verimizle devam etmek. 19 Ekim incelemesinde kullanım uygunluğu doğrulanamadığı için **karar bekliyor**; yapılırsa ayrı onay ve mevcut güvenli aktarım yolu kullanılır. Son alım kendi serimizdeki boşlukları doldurmaz. |
 | Keşifteki eski kimlik kontrolü | Döndürdüğü aday hep atılıyor; ret gerekçesi ve Hepsiburada varyant taraması ona bağlı; ~80 test durumu atılan adayı sınıyor. Adım 5.2 olarak 25 Ekim keşfinden sonra ayrı planla ele alınacak (planlandı). |
 | HBCV0000E8DHJL | Başlık/varyant 256 GB, ana ürün alanı 512 GB. Mevcut bağlantıya müdahale **karar bekliyor**. |
@@ -282,19 +282,18 @@ Zamanlanmış görevlerin komutları (`-m app.collection`, `-m app.discovery`) d
 | 4. Kod sadeleştirme | 4.1 keşfin iki katalog/rapor yazıcısı tek yazıcıda birleşir; 4.2 tur ve keşfin zamanlanmış çalışma kopyası (log, başlık, hata, çıkış kodu) `app/console.py`'de toplanır; 4.3 Cimri kodunun kullanılmayan eski yolları kaldırılır, alım ve aktarım korunur. Keşifteki eski kimlik kontrolü Adım 5'e taşındı; API kontrolü ve katalog okuma bilerek değiştirilmez (Bölüm 5). Her alt adım ayrı commit. | ✅ Tamamlandı (22 Ekim) |
 | 5. Renk kuralı | 5.1 Otomatik kabulde Trendyol rengi renk seçicisindeki addır; seçici adı varken satıcının "Renk"i ve JSON-LD rengi karşılaştırılmaz, kapasite yazan değer renk sayılmaz; gerçek sayfalardan regresyon testleri (19 Ekim raporu). 5.2 Aynı kabul kodundaki eski kimlik kontrolü: döndürdüğü aday hep atılır, ama ret gerekçesi rapora yazılır, Hepsiburada'da doğrulanmamış sayfanın varyant taramasını belirler ve ~80 test durumu atılan adayı sınar; 25 Ekim keşfinden sonra ayrı planla. Kimlik kuralı değiştiği için her biri ayrı plan onayı ister. | 🔄 5.1 tamamlandı (22 Ekim); 5.2 25 Ekim keşfinden sonra |
 
-Sonra: sürekli işletim planı → güncel veri yeterliliği → ML.
+Sonra: güncel veri yeterliliği → ML hazırlığı (sürekli işletim kararı 22 Ekim'de verildi).
 
 ## 9. Sonraki aşamalar
 
 ### Sürekli işletim (Aşama 9'un ilk bölümü)
 
 Amaç, bilgisayarın uyuması veya kapanmasından doğan veri boşluklarını
-azaltmak. Seçenekler (sunucu, evde 7/24 cihaz, bilgisayarı uyandırma)
-kullanıcıyla değerlendirilecek. Ön bilgi: GitHub'ın bulut makinelerinden
-Hepsiburada okunabildi, Trendyol HTTP 403 verdi (6 Ekim, tek örnek). Bu karar
-satın alma veya devreye alma yetkisi değildir; mevcut Windows görevleri ve
-10:00/22:00 düzeni korunur. Docker Compose ile süreç, veri ve model kalıcılığı
-aynı aşamada değerlendirilir.
+azaltmak. Karar (22 Ekim): dizüstü sürekli açık kalır; prizdeyken kapak
+kapanınca uyumaz. GitHub'ın makinelerinde Trendyol okunmadı (Bölüm 5), evde
+ayrı cihaz yok. Görevler ve 10:00/22:00 düzeni değişmez. Etkisi birkaç gün
+sonra turların zamanında başlayıp başlamadığıyla ölçülür. Docker Compose ile
+süreç, veri ve model kalıcılığı ayrıca değerlendirilir.
 
 ### ML
 
