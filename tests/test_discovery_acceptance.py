@@ -304,6 +304,68 @@ def test_color_alias_and_optional_ram_are_not_false_conflicts():
     assert decision.status == "verified" and decision.candidate.ram_gb is None
 
 
+@pytest.mark.parametrize(
+    "sample",
+    [s for s in SAMPLES if "expected_color" in s],
+    ids=lambda s: s["evidence"]["platform_product_id"],
+)
+def test_recorded_trendyol_color_is_the_selector_name(sample):
+    # Gerçek sayfalar: satıcının "Renk"i genel ad ("Siyah", "Çok Renkli"),
+    # yapısal veri bazen kapasite ("256 GB") yazar; bunlar ret nedeni olmaz.
+    target = DiscoveryTarget.model_validate_json(json.dumps(sample["target"]))
+    saved = DiscoveryEvidence.model_validate_json(json.dumps(sample["evidence"]))
+    result = decide(saved, target)
+    assert result.status == "verified" and result.reasons == []
+    assert result.candidate.color == sample["expected_color"]
+
+
+def with_colors(*colors, pid="100", platform="trendyol"):
+    """Renk dışında tam kanıtlı sayfa; renkler (değer, kaynak) olarak eklenir."""
+    base = proof(pid, color=None, platform=platform)
+    facts = [
+        *base.evidence.facts,
+        *(
+            DiscoveryFact(field="color", value=value, owner_id=pid, source=source)
+            for value, source in colors
+        ),
+    ]
+    return decide(base.evidence.model_copy(update={"facts": facts}), TARGET)
+
+
+def test_conflicting_trendyol_selector_colors_are_still_rejected():
+    result = with_colors(
+        ("Black", "variants.products.id.DsmColor"),
+        ("Beyaz", "product.slicingAttributes.DsmColor"),
+    )
+    assert result.status == "mismatch" and result.reasons == ["color_mismatch"]
+
+
+def test_trendyol_without_selector_still_compares_real_colors():
+    conflict = with_colors(
+        ("Siyah", "product.attributes.Renk"), ("Beyaz", "jsonld.color")
+    )
+    assert conflict.status == "mismatch" and conflict.reasons == ["color_mismatch"]
+    capacity_only = with_colors(("256 GB", "jsonld.color"))
+    assert capacity_only.status == "insufficient"
+    assert capacity_only.reasons == ["color_missing"]
+    named = with_colors(
+        ("256 GB", "jsonld.color"), ("Siyah", "product.attributes.Renk")
+    )
+    assert named.status == "verified" and named.candidate.color == "Siyah"
+
+
+def test_hepsiburada_color_rule_is_not_relaxed():
+    # Hepsiburada'da renk adı uyuşmazlığının gerçek örneği görülmedi; gevşetme
+    # yalnız Trendyol'un kayıtlı sayfalarına dayanır.
+    result = with_colors(
+        ("Black", "product.properties.Renk"),
+        ("Siyah", "jsonld.color"),
+        pid="HBCV0000TEST01",
+        platform="hepsiburada",
+    )
+    assert result.status == "mismatch" and result.reasons == ["color_mismatch"]
+
+
 @pytest.fixture
 def environment(tmp_path, monkeypatch):
     catalog = Catalog(

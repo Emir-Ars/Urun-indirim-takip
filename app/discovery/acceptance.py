@@ -34,6 +34,14 @@ HOSTS = {"trendyol": "www.trendyol.com", "hepsiburada": "www.hepsiburada.com"}
 # Bu iki dildeki aynı renk 6 Ekim kayıtlı iPhone örneğinde birlikte bulunur.
 COLOR_ALIASES = {"blue": "mavi"}
 GENERIC_COLORS = {"cok renkli", "multicolor", "multi color"}
+# Trendyol'da bağlantının rengi renk seçicisindeki addır. Satıcının "Renk"
+# özelliği genel ad yazar ("Black" için "Siyah"), yapısal veri bazen kapasite
+# ("256 GB"); seçici adı varken bunlar renk karşılaştırmasına girmez. Gerçek
+# örnekler: tests/fixtures/discovery/acceptance_examples.json.
+TRENDYOL_COLOR_SELECTOR = (
+    "variants.products.id.DsmColor",
+    "product.slicingAttributes.",
+)
 # Satışa kapalı 14 Ekim sayfalarında renk yalnız tam ürün başlığında kaldı.
 TITLE_COLORS = ("Titan Gri", "Siyah", "Beyaz", "Mor", "Yeşil", "Mavi", "Pembe")
 RAM = re.compile(r"(\d+)\s*gb\s*ram\b|\bram\s*(\d+)\s*gb\b")
@@ -297,11 +305,16 @@ def decide(evidence, target):
         or urlsplit(evidence.url).hostname != HOSTS.get(platform)
     ):
         bad.append("source_url_mismatch")
+    selector_colors = []
     for fact in evidence.facts:
         if fact.owner_id.upper() != expected:
             bad.append("source_id_mismatch")
         else:
             fields[fact.field].append(fact.value)
+            if fact.field == "color" and fact.source.startswith(
+                TRENDYOL_COLOR_SELECTOR
+            ):
+                selector_colors.append(fact.value)
     if not fields["source_id"]:
         missing.append("source_identity_missing")
     elif any(value.upper() != expected for value in fields["source_id"]):
@@ -332,6 +345,9 @@ def decide(evidence, target):
     elif len(capacities) > 1:
         bad.append("storage_mismatch")
     colors = [v for v in fields["color"] if color_key(v) not in GENERIC_COLORS]
+    if platform == "trendyol":
+        named = [v for v in selector_colors if color_key(v) not in GENERIC_COLORS]
+        colors = named or [v for v in colors if storage_gb(v) is None]
     if not colors:
         missing.append("color_missing")
     elif len({color_key(v) for v in colors}) > 1:

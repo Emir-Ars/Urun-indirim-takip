@@ -468,6 +468,20 @@ yalnız tam başlığın açık renk son eki de kullanılır. Sınırlı renk s�
 tanınmayan renkleri görselden tahmin etmez (bilinen sınırı: "Bilinen sınırlar"). Blue/Mavi eşitliği kayıtlı 6 Ekim
 örneğine dayanır; genel WebColor “Çok Renkli” özgül renk sayılmaz.
 
+Trendyol'da renk, sayfanın renk seçicisindeki addır (varyant listesindeki
+`DsmColor` ve `product.slicingAttributes`): bu ad varsa satıcının "Renk"
+özelliği ve JSON-LD rengi karşılaştırmaya girmez. Satıcı alanı genel ad
+yazar ("Black" için "Siyah", "Cosmic Orange" için "Turuncu"), JSON-LD bazen
+kapasite ("256 GB"). Seçici adı yoksa diğer renkler yine birbiriyle
+karşılaştırılır; tamamı kapasite olan değer renk sayılmaz. İki seçici alanı
+çelişirse sayfa reddedilir. Kural 19 Ekim raporundaki 109 Trendyol sayfasına
+dayanır (hepsinde seçici adı vardı, iki alan hiç çelişmedi); kayıtlı
+örnekler `tests/fixtures/discovery/acceptance_examples.json` içindedir.
+Hepsiburada'da renk adı uyuşmazlığının gerçek örneği görülmediği için orada
+kural değişmedi. Kural kanıttan yeniden hesaplandığı için bu değişiklikten
+önce üretilmiş önizleme raporları `--apply-report` ile uygulanamaz; yeni
+önizleme gerekir.
+
 Etkin, tanımlı hedeflerin doğrulanan yeni kapasiteleri yeni ürün oluşturabilir;
 tanımlanmayan marka/model oluşturulmaz. Mevcut ürün/listing kimlikleri, pasif
 kayıtlar ve görülmeyen bağlantılar korunur. Aynı platform kodu aynı taramada
@@ -2226,14 +2240,12 @@ Mevcut Cimri serisinin eski kalması ve ML kullanım belirsizliği ayrıca göst
   izinli alan adı dışına (`www3.hepsiburada.com/`) gidiyor. Olaylar tek turluk ve
   kendiliğinden geçiyor; yönlendirmenin nedeni doğrulanmadı, izin listesi
   genişletilmedi.
-- **Otomatik kabulün renk kuralı:** kabul katmanı sayfadaki bütün renk
-  kaynaklarının normalleştirilmiş hâliyle aynı olmasını ister; eş anlam yalnız
-  `blue`→`mavi`. "Black" ile "Siyah", "Siyah Titanyum" ile "Siyah" ya da JSON-LD
-  renk alanına kapasite yazılması `color_mismatch` üretir. 19 Ekim raporunda
-  44 Trendyol sayfası yalnız bu nedenle reddedildi; 41'i katalogda etkin, doğru
-  sayfalardır. Mevcut bağlantılar korunur, ama yeni Trendyol renk sayfaları
-  otomatik kabul edilemez. Hepsiburada başlık renkleri sınırlı bir listeyle
-  (`TITLE_COLORS`) tanınır. Düzeltmesi planlandı ([proje_plani.md](../proje_plani.md)).
+- **Otomatik kabulün renk kuralı (Hepsiburada):** Trendyol'da renk seçicideki
+  ad olarak okunur ("Otomatik güvenli kabul"). Hepsiburada'da bütün renk
+  kaynakları normalleştirilmiş hâliyle aynı olmalıdır; eş anlam yalnız
+  `blue`→`mavi`. Orada henüz gerçek bir eş anlam uyuşmazlığı görülmedi; görülürse
+  kayıtlı örnekle ele alınır. Hepsiburada başlık renkleri sınırlı bir listeyle
+  (`TITLE_COLORS`) tanınır.
 - **Kaynak içi çelişkiler:** bazı satıcı sayfalarında başlık ile özellik alanları
   çelişir: Trendyol 797850359 başlıkta 5G/12 GB RAM, özellikte 4G/8 GB RAM;
   Hepsiburada HBCV0000E8DHJL başlık/varyantta 256 GB, ana üründe 512 GB.

@@ -7106,5 +7106,890 @@
         }
       ]
     }
+  },
+  {
+    "source_file": "data/discovery/kesif_2026-10-19_14-31-36.json",
+    "source_sha256": "a14913c5dea5d20c948f253f9ff6b93a102be1dc8df6809c992c4a3d572befd1",
+    "source_kind": "discovery_report_evidence",
+    "target": {
+      "key": "apple_iphone_15",
+      "brand": "Apple",
+      "model": "iPhone 15",
+      "active": true,
+      "exclude_terms": [],
+      "network": null
+    },
+    "previous_status": "mismatch",
+    "expected_status": "verified",
+    "expected_color": "Black",
+    "evidence": {
+      "platform": "trendyol",
+      "platform_product_id": "762254878",
+      "url": "https://www.trendyol.com/apple/iphone-15-128-gb-siyah-p-762254878",
+      "captured_at": "2026-10-19T11:32:02.136108Z",
+      "html_sha256": "a7d5cf79f635369b002e765d53dc7367141d588bcee9440be639e2c7e596e2da",
+      "facts": [
+        {
+          "field": "source_id",
+          "value": "762254878",
+          "owner_id": "762254878",
+          "source": "product.id"
+        },
+        {
+          "field": "name",
+          "value": "iPhone 15 128 GB Siyah",
+          "owner_id": "762254878",
+          "source": "product.name"
+        },
+        {
+          "field": "brand",
+          "value": "Apple",
+          "owner_id": "762254878",
+          "source": "product.brand"
+        },
+        {
+          "field": "category",
+          "value": "IOS Cep Telefonları",
+          "owner_id": "762254878",
+          "source": "product.category"
+        },
+        {
+          "field": "color",
+          "value": "Black",
+          "owner_id": "762254878",
+          "source": "variants.products.id.DsmColor"
+        },
+        {
+          "field": "category",
+          "value": "Mobile Phone",
+          "owner_id": "762254878",
+          "source": "product.businessUnitData"
+        },
+        {
+          "field": "color",
+          "value": "Black",
+          "owner_id": "762254878",
+          "source": "product.slicingAttributes.DsmColor"
+        },
+        {
+          "field": "storage",
+          "value": "128 GB",
+          "owner_id": "762254878",
+          "source": "product.slicingAttributes.Internal Memory"
+        },
+        {
+          "field": "warranty",
+          "value": "Apple Türkiye Garantili",
+          "owner_id": "762254878",
+          "source": "product.attributes.Garanti Tipi"
+        },
+        {
+          "field": "storage",
+          "value": "128 GB",
+          "owner_id": "762254878",
+          "source": "product.attributes.Dahili Hafıza"
+        },
+        {
+          "field": "network",
+          "value": "5G",
+          "owner_id": "762254878",
+          "source": "product.attributes.Mobil Bağlantı Hızı"
+        },
+        {
+          "field": "ram",
+          "value": "6 GB",
+          "owner_id": "762254878",
+          "source": "product.attributes.RAM Kapasitesi"
+        },
+        {
+          "field": "color",
+          "value": "Siyah",
+          "owner_id": "762254878",
+          "source": "product.attributes.Renk"
+        },
+        {
+          "field": "name",
+          "value": "Apple iPhone 15 128 GB Siyah",
+          "owner_id": "762254878",
+          "source": "jsonld.name"
+        },
+        {
+          "field": "color",
+          "value": "Black",
+          "owner_id": "762254878",
+          "source": "jsonld.color"
+        },
+        {
+          "field": "brand",
+          "value": "Apple",
+          "owner_id": "762254878",
+          "source": "jsonld.brand"
+        },
+        {
+          "field": "condition",
+          "value": "https://schema.org/NewCondition",
+          "owner_id": "762254878",
+          "source": "jsonld.offers.itemCondition"
+        }
+      ]
+    }
+  },
+  {
+    "source_file": "data/discovery/kesif_2026-10-19_14-31-36.json",
+    "source_sha256": "a14913c5dea5d20c948f253f9ff6b93a102be1dc8df6809c992c4a3d572befd1",
+    "source_kind": "discovery_report_evidence",
+    "target": {
+      "key": "apple_iphone_15_pro_max",
+      "brand": "Apple",
+      "model": "iPhone 15 Pro Max",
+      "active": true,
+      "exclude_terms": [],
+      "network": null
+    },
+    "previous_status": "mismatch",
+    "expected_status": "verified",
+    "expected_color": "Siyah",
+    "evidence": {
+      "platform": "trendyol",
+      "platform_product_id": "762254852",
+      "url": "https://www.trendyol.com/apple/iphone-15-pro-max-256-gb-siyah-titanyum-p-762254852",
+      "captured_at": "2026-10-19T11:34:44.955969Z",
+      "html_sha256": "fb72e2d519d992c88b735557c4250440f46082eae580ac4043a0cf0c17ce0ea0",
+      "facts": [
+        {
+          "field": "source_id",
+          "value": "762254852",
+          "owner_id": "762254852",
+          "source": "product.id"
+        },
+        {
+          "field": "name",
+          "value": "iPhone 15 Pro Max 256 GB Siyah Titanyum",
+          "owner_id": "762254852",
+          "source": "product.name"
+        },
+        {
+          "field": "brand",
+          "value": "Apple",
+          "owner_id": "762254852",
+          "source": "product.brand"
+        },
+        {
+          "field": "category",
+          "value": "IOS Cep Telefonları",
+          "owner_id": "762254852",
+          "source": "product.category"
+        },
+        {
+          "field": "category",
+          "value": "Mobile Phone",
+          "owner_id": "762254852",
+          "source": "product.businessUnitData"
+        },
+        {
+          "field": "storage",
+          "value": "256 GB",
+          "owner_id": "762254852",
+          "source": "product.slicingAttributes.Internal Memory"
+        },
+        {
+          "field": "color",
+          "value": "Siyah",
+          "owner_id": "762254852",
+          "source": "product.slicingAttributes.DsmColor"
+        },
+        {
+          "field": "warranty",
+          "value": "Apple Türkiye Garantili",
+          "owner_id": "762254852",
+          "source": "product.attributes.Garanti Tipi"
+        },
+        {
+          "field": "storage",
+          "value": "256 GB",
+          "owner_id": "762254852",
+          "source": "product.attributes.Dahili Hafıza"
+        },
+        {
+          "field": "network",
+          "value": "5G",
+          "owner_id": "762254852",
+          "source": "product.attributes.Mobil Bağlantı Hızı"
+        },
+        {
+          "field": "ram",
+          "value": "8 GB",
+          "owner_id": "762254852",
+          "source": "product.attributes.RAM Kapasitesi"
+        },
+        {
+          "field": "color",
+          "value": "Siyah",
+          "owner_id": "762254852",
+          "source": "product.attributes.Renk"
+        },
+        {
+          "field": "name",
+          "value": "Apple iPhone 15 Pro Max 256 GB Siyah Titanyum",
+          "owner_id": "762254852",
+          "source": "jsonld.name"
+        },
+        {
+          "field": "color",
+          "value": "256 GB",
+          "owner_id": "762254852",
+          "source": "jsonld.color"
+        },
+        {
+          "field": "brand",
+          "value": "Apple",
+          "owner_id": "762254852",
+          "source": "jsonld.brand"
+        },
+        {
+          "field": "condition",
+          "value": "https://schema.org/NewCondition",
+          "owner_id": "762254852",
+          "source": "jsonld.offers.itemCondition"
+        }
+      ]
+    }
+  },
+  {
+    "source_file": "data/discovery/kesif_2026-10-19_14-31-36.json",
+    "source_sha256": "a14913c5dea5d20c948f253f9ff6b93a102be1dc8df6809c992c4a3d572befd1",
+    "source_kind": "discovery_report_evidence",
+    "target": {
+      "key": "apple_iphone_17",
+      "brand": "Apple",
+      "model": "iPhone 17",
+      "active": true,
+      "exclude_terms": [],
+      "network": null
+    },
+    "previous_status": "mismatch",
+    "expected_status": "verified",
+    "expected_color": "Lavender",
+    "evidence": {
+      "platform": "trendyol",
+      "platform_product_id": "985256856",
+      "url": "https://www.trendyol.com/apple/iphone-17-256gb-lavanta-p-985256856",
+      "captured_at": "2026-10-19T11:39:43.961362Z",
+      "html_sha256": "9c3d9c66a8b22d0dbe9bd7f186ffb7ffed786cf199234d245c7161dac7a6a7cc",
+      "facts": [
+        {
+          "field": "source_id",
+          "value": "985256856",
+          "owner_id": "985256856",
+          "source": "product.id"
+        },
+        {
+          "field": "name",
+          "value": "iPhone 17 256GB Lavanta",
+          "owner_id": "985256856",
+          "source": "product.name"
+        },
+        {
+          "field": "brand",
+          "value": "Apple",
+          "owner_id": "985256856",
+          "source": "product.brand"
+        },
+        {
+          "field": "category",
+          "value": "IOS Cep Telefonları",
+          "owner_id": "985256856",
+          "source": "product.category"
+        },
+        {
+          "field": "color",
+          "value": "Lavender",
+          "owner_id": "985256856",
+          "source": "variants.products.id.DsmColor"
+        },
+        {
+          "field": "category",
+          "value": "Mobile Phone",
+          "owner_id": "985256856",
+          "source": "product.businessUnitData"
+        },
+        {
+          "field": "storage",
+          "value": "256 GB",
+          "owner_id": "985256856",
+          "source": "product.slicingAttributes.Internal Memory"
+        },
+        {
+          "field": "color",
+          "value": "Lavender",
+          "owner_id": "985256856",
+          "source": "product.slicingAttributes.DsmColor"
+        },
+        {
+          "field": "warranty",
+          "value": "Apple Türkiye Garantili",
+          "owner_id": "985256856",
+          "source": "product.attributes.Garanti Tipi"
+        },
+        {
+          "field": "storage",
+          "value": "256 GB",
+          "owner_id": "985256856",
+          "source": "product.attributes.Dahili Hafıza"
+        },
+        {
+          "field": "network",
+          "value": "5G",
+          "owner_id": "985256856",
+          "source": "product.attributes.Mobil Bağlantı Hızı"
+        },
+        {
+          "field": "ram",
+          "value": "8 GB",
+          "owner_id": "985256856",
+          "source": "product.attributes.RAM Kapasitesi"
+        },
+        {
+          "field": "color",
+          "value": "Çok Renkli",
+          "owner_id": "985256856",
+          "source": "product.attributes.Renk"
+        },
+        {
+          "field": "name",
+          "value": "Apple iPhone 17 256GB Lavanta",
+          "owner_id": "985256856",
+          "source": "jsonld.name"
+        },
+        {
+          "field": "color",
+          "value": "256 GB",
+          "owner_id": "985256856",
+          "source": "jsonld.color"
+        },
+        {
+          "field": "brand",
+          "value": "Apple",
+          "owner_id": "985256856",
+          "source": "jsonld.brand"
+        },
+        {
+          "field": "condition",
+          "value": "https://schema.org/NewCondition",
+          "owner_id": "985256856",
+          "source": "jsonld.offers.itemCondition"
+        }
+      ]
+    }
+  },
+  {
+    "source_file": "data/discovery/kesif_2026-10-19_14-31-36.json",
+    "source_sha256": "a14913c5dea5d20c948f253f9ff6b93a102be1dc8df6809c992c4a3d572befd1",
+    "source_kind": "discovery_report_evidence",
+    "target": {
+      "key": "apple_iphone_17_pro",
+      "brand": "Apple",
+      "model": "iPhone 17 Pro",
+      "active": true,
+      "exclude_terms": [],
+      "network": null
+    },
+    "previous_status": "mismatch",
+    "expected_status": "verified",
+    "expected_color": "Cosmic Orange",
+    "evidence": {
+      "platform": "trendyol",
+      "platform_product_id": "985256852",
+      "url": "https://www.trendyol.com/apple/iphone-17-pro-256gb-kozmik-turuncu-p-985256852",
+      "captured_at": "2026-10-19T11:41:13.277082Z",
+      "html_sha256": "268865b36b7e259e29bb9e8828c096a974d16ad6b0ead48c35f35af30353fcce",
+      "facts": [
+        {
+          "field": "source_id",
+          "value": "985256852",
+          "owner_id": "985256852",
+          "source": "product.id"
+        },
+        {
+          "field": "name",
+          "value": "iPhone 17 Pro 256GB Kozmik Turuncu",
+          "owner_id": "985256852",
+          "source": "product.name"
+        },
+        {
+          "field": "brand",
+          "value": "Apple",
+          "owner_id": "985256852",
+          "source": "product.brand"
+        },
+        {
+          "field": "category",
+          "value": "IOS Cep Telefonları",
+          "owner_id": "985256852",
+          "source": "product.category"
+        },
+        {
+          "field": "color",
+          "value": "Cosmic Orange",
+          "owner_id": "985256852",
+          "source": "variants.products.id.DsmColor"
+        },
+        {
+          "field": "category",
+          "value": "Mobile Phone",
+          "owner_id": "985256852",
+          "source": "product.businessUnitData"
+        },
+        {
+          "field": "color",
+          "value": "Cosmic Orange",
+          "owner_id": "985256852",
+          "source": "product.slicingAttributes.DsmColor"
+        },
+        {
+          "field": "storage",
+          "value": "256 GB",
+          "owner_id": "985256852",
+          "source": "product.slicingAttributes.Internal Memory"
+        },
+        {
+          "field": "warranty",
+          "value": "Apple Türkiye Garantili",
+          "owner_id": "985256852",
+          "source": "product.attributes.Garanti Tipi"
+        },
+        {
+          "field": "storage",
+          "value": "256 GB",
+          "owner_id": "985256852",
+          "source": "product.attributes.Dahili Hafıza"
+        },
+        {
+          "field": "network",
+          "value": "5G",
+          "owner_id": "985256852",
+          "source": "product.attributes.Mobil Bağlantı Hızı"
+        },
+        {
+          "field": "ram",
+          "value": "12 GB",
+          "owner_id": "985256852",
+          "source": "product.attributes.RAM Kapasitesi"
+        },
+        {
+          "field": "color",
+          "value": "Turuncu",
+          "owner_id": "985256852",
+          "source": "product.attributes.Renk"
+        },
+        {
+          "field": "name",
+          "value": "Apple iPhone 17 Pro 256GB Kozmik Turuncu",
+          "owner_id": "985256852",
+          "source": "jsonld.name"
+        },
+        {
+          "field": "color",
+          "value": "Cosmic Orange",
+          "owner_id": "985256852",
+          "source": "jsonld.color"
+        },
+        {
+          "field": "brand",
+          "value": "Apple",
+          "owner_id": "985256852",
+          "source": "jsonld.brand"
+        },
+        {
+          "field": "condition",
+          "value": "https://schema.org/NewCondition",
+          "owner_id": "985256852",
+          "source": "jsonld.offers.itemCondition"
+        }
+      ]
+    }
+  },
+  {
+    "source_file": "data/discovery/kesif_2026-10-19_14-31-36.json",
+    "source_sha256": "a14913c5dea5d20c948f253f9ff6b93a102be1dc8df6809c992c4a3d572befd1",
+    "source_kind": "discovery_report_evidence",
+    "target": {
+      "key": "apple_iphone_16_pro_max",
+      "brand": "Apple",
+      "model": "iPhone 16 Pro Max",
+      "active": true,
+      "exclude_terms": [],
+      "network": null
+    },
+    "previous_status": "mismatch",
+    "expected_status": "verified",
+    "expected_color": "Çöl Titanyum",
+    "evidence": {
+      "platform": "trendyol",
+      "platform_product_id": "857296109",
+      "url": "https://www.trendyol.com/apple/iphone-16-pro-max-256gb-col-titanyum-p-857296109",
+      "captured_at": "2026-10-19T11:38:26.535375Z",
+      "html_sha256": "1aabdd2ad6c5673716592e0db65c7ed68a0c1709cf1023171f334fa1e3d1e2b7",
+      "facts": [
+        {
+          "field": "source_id",
+          "value": "857296109",
+          "owner_id": "857296109",
+          "source": "product.id"
+        },
+        {
+          "field": "name",
+          "value": "iPhone 16 Pro Max 256GB Çöl Titanyum",
+          "owner_id": "857296109",
+          "source": "product.name"
+        },
+        {
+          "field": "brand",
+          "value": "Apple",
+          "owner_id": "857296109",
+          "source": "product.brand"
+        },
+        {
+          "field": "category",
+          "value": "IOS Cep Telefonları",
+          "owner_id": "857296109",
+          "source": "product.category"
+        },
+        {
+          "field": "color",
+          "value": "Çöl Titanyum",
+          "owner_id": "857296109",
+          "source": "variants.products.id.DsmColor"
+        },
+        {
+          "field": "category",
+          "value": "Mobile Phone",
+          "owner_id": "857296109",
+          "source": "product.businessUnitData"
+        },
+        {
+          "field": "color",
+          "value": "Çöl Titanyum",
+          "owner_id": "857296109",
+          "source": "product.slicingAttributes.DsmColor"
+        },
+        {
+          "field": "storage",
+          "value": "256 GB",
+          "owner_id": "857296109",
+          "source": "product.slicingAttributes.Internal Memory"
+        },
+        {
+          "field": "warranty",
+          "value": "Apple Türkiye Garantili",
+          "owner_id": "857296109",
+          "source": "product.attributes.Garanti Tipi"
+        },
+        {
+          "field": "storage",
+          "value": "256 GB",
+          "owner_id": "857296109",
+          "source": "product.attributes.Dahili Hafıza"
+        },
+        {
+          "field": "network",
+          "value": "5G",
+          "owner_id": "857296109",
+          "source": "product.attributes.Mobil Bağlantı Hızı"
+        },
+        {
+          "field": "ram",
+          "value": "8 GB",
+          "owner_id": "857296109",
+          "source": "product.attributes.RAM Kapasitesi"
+        },
+        {
+          "field": "color",
+          "value": "Bej",
+          "owner_id": "857296109",
+          "source": "product.attributes.Renk"
+        },
+        {
+          "field": "name",
+          "value": "Apple iPhone 16 Pro Max 256GB Çöl Titanyum",
+          "owner_id": "857296109",
+          "source": "jsonld.name"
+        },
+        {
+          "field": "color",
+          "value": "Çöl Titanyum",
+          "owner_id": "857296109",
+          "source": "jsonld.color"
+        },
+        {
+          "field": "brand",
+          "value": "Apple",
+          "owner_id": "857296109",
+          "source": "jsonld.brand"
+        },
+        {
+          "field": "condition",
+          "value": "https://schema.org/NewCondition",
+          "owner_id": "857296109",
+          "source": "jsonld.offers.itemCondition"
+        }
+      ]
+    }
+  },
+  {
+    "source_file": "data/discovery/kesif_2026-10-19_14-31-36.json",
+    "source_sha256": "a14913c5dea5d20c948f253f9ff6b93a102be1dc8df6809c992c4a3d572befd1",
+    "source_kind": "discovery_report_evidence",
+    "target": {
+      "key": "xiaomi_redmi_note_14_pro_4g",
+      "brand": "Xiaomi",
+      "model": "Redmi Note 14 Pro",
+      "active": true,
+      "exclude_terms": [
+        "5G"
+      ],
+      "network": "4G"
+    },
+    "previous_status": "mismatch",
+    "expected_status": "verified",
+    "expected_color": "Siyah",
+    "evidence": {
+      "platform": "trendyol",
+      "platform_product_id": "891692674",
+      "url": "https://www.trendyol.com/xiaomi/redmi-note-14-pro-8-256-siyah-xiaomi-turkiye-garantili-p-891692674",
+      "captured_at": "2026-10-19T12:00:29.999385Z",
+      "html_sha256": "84925c1181f59ba7dc1962c75c7df421947efe6627e8fcf251cd19a272946520",
+      "facts": [
+        {
+          "field": "source_id",
+          "value": "891692674",
+          "owner_id": "891692674",
+          "source": "product.id"
+        },
+        {
+          "field": "name",
+          "value": "Redmi Note 14 Pro 8+256 Siyah (Xiaomi Türkiye Garantili)",
+          "owner_id": "891692674",
+          "source": "product.name"
+        },
+        {
+          "field": "brand",
+          "value": "Xiaomi",
+          "owner_id": "891692674",
+          "source": "product.brand"
+        },
+        {
+          "field": "category",
+          "value": "Android Cep Telefonu",
+          "owner_id": "891692674",
+          "source": "product.category"
+        },
+        {
+          "field": "color",
+          "value": "Siyah",
+          "owner_id": "891692674",
+          "source": "variants.products.id.DsmColor"
+        },
+        {
+          "field": "category",
+          "value": "Mobile Phone",
+          "owner_id": "891692674",
+          "source": "product.businessUnitData"
+        },
+        {
+          "field": "storage",
+          "value": "256 GB",
+          "owner_id": "891692674",
+          "source": "product.slicingAttributes.Internal Memory"
+        },
+        {
+          "field": "color",
+          "value": "Siyah",
+          "owner_id": "891692674",
+          "source": "product.slicingAttributes.DsmColor"
+        },
+        {
+          "field": "storage",
+          "value": "256 GB",
+          "owner_id": "891692674",
+          "source": "product.attributes.Dahili Hafıza"
+        },
+        {
+          "field": "warranty",
+          "value": "Xiaomi Türkiye Garantili",
+          "owner_id": "891692674",
+          "source": "product.attributes.Garanti Tipi"
+        },
+        {
+          "field": "ram",
+          "value": "12 GB",
+          "owner_id": "891692674",
+          "source": "product.attributes.RAM Kapasitesi"
+        },
+        {
+          "field": "network",
+          "value": "4G",
+          "owner_id": "891692674",
+          "source": "product.attributes.Mobil Bağlantı Hızı"
+        },
+        {
+          "field": "color",
+          "value": "Siyah",
+          "owner_id": "891692674",
+          "source": "product.attributes.Renk"
+        },
+        {
+          "field": "name",
+          "value": "Xiaomi Redmi Note 14 Pro 8+256 Siyah (Xiaomi Türkiye Garantili)",
+          "owner_id": "891692674",
+          "source": "jsonld.name"
+        },
+        {
+          "field": "color",
+          "value": "256 GB",
+          "owner_id": "891692674",
+          "source": "jsonld.color"
+        },
+        {
+          "field": "brand",
+          "value": "Xiaomi",
+          "owner_id": "891692674",
+          "source": "jsonld.brand"
+        },
+        {
+          "field": "condition",
+          "value": "https://schema.org/NewCondition",
+          "owner_id": "891692674",
+          "source": "jsonld.offers.itemCondition"
+        }
+      ]
+    }
+  },
+  {
+    "source_file": "data/discovery/kesif_2026-10-19_14-31-36.json",
+    "source_sha256": "a14913c5dea5d20c948f253f9ff6b93a102be1dc8df6809c992c4a3d572befd1",
+    "source_kind": "discovery_report_evidence",
+    "target": {
+      "key": "samsung_galaxy_s24_fe",
+      "brand": "Samsung",
+      "model": "Galaxy S24 FE",
+      "active": true,
+      "exclude_terms": [],
+      "network": null
+    },
+    "previous_status": "mismatch",
+    "expected_status": "verified",
+    "expected_color": "Grafit",
+    "evidence": {
+      "platform": "trendyol",
+      "platform_product_id": "864687875",
+      "url": "https://www.trendyol.com/samsung/galaxy-s24-fe-8-256gb-graphite-siyah-p-864687875",
+      "captured_at": "2026-10-19T11:54:50.142215Z",
+      "html_sha256": "760500a21afea69c55844e51433b1f2f93e8b618de51ae4ed1c2a071290201cf",
+      "facts": [
+        {
+          "field": "source_id",
+          "value": "864687875",
+          "owner_id": "864687875",
+          "source": "product.id"
+        },
+        {
+          "field": "name",
+          "value": "Galaxy S24 FE 8/256GB Graphite (SİYAH)",
+          "owner_id": "864687875",
+          "source": "product.name"
+        },
+        {
+          "field": "brand",
+          "value": "Samsung",
+          "owner_id": "864687875",
+          "source": "product.brand"
+        },
+        {
+          "field": "category",
+          "value": "Android Cep Telefonu",
+          "owner_id": "864687875",
+          "source": "product.category"
+        },
+        {
+          "field": "color",
+          "value": "Grafit",
+          "owner_id": "864687875",
+          "source": "variants.products.id.DsmColor"
+        },
+        {
+          "field": "category",
+          "value": "Mobile Phone",
+          "owner_id": "864687875",
+          "source": "product.businessUnitData"
+        },
+        {
+          "field": "color",
+          "value": "Grafit",
+          "owner_id": "864687875",
+          "source": "product.slicingAttributes.DsmColor"
+        },
+        {
+          "field": "storage",
+          "value": "256 GB",
+          "owner_id": "864687875",
+          "source": "product.slicingAttributes.Internal Memory"
+        },
+        {
+          "field": "storage",
+          "value": "256 GB",
+          "owner_id": "864687875",
+          "source": "product.attributes.Dahili Hafıza"
+        },
+        {
+          "field": "warranty",
+          "value": "Samsung TR Garantili",
+          "owner_id": "864687875",
+          "source": "product.attributes.Garanti Tipi"
+        },
+        {
+          "field": "network",
+          "value": "5G",
+          "owner_id": "864687875",
+          "source": "product.attributes.Mobil Bağlantı Hızı"
+        },
+        {
+          "field": "ram",
+          "value": "Yok",
+          "owner_id": "864687875",
+          "source": "product.attributes.RAM Kapasitesi"
+        },
+        {
+          "field": "color",
+          "value": "Gri",
+          "owner_id": "864687875",
+          "source": "product.attributes.Renk"
+        },
+        {
+          "field": "name",
+          "value": "Samsung Galaxy S24 FE 8/256GB Graphite (SİYAH)",
+          "owner_id": "864687875",
+          "source": "jsonld.name"
+        },
+        {
+          "field": "color",
+          "value": "Grafit",
+          "owner_id": "864687875",
+          "source": "jsonld.color"
+        },
+        {
+          "field": "brand",
+          "value": "Samsung",
+          "owner_id": "864687875",
+          "source": "jsonld.brand"
+        },
+        {
+          "field": "condition",
+          "value": "https://schema.org/NewCondition",
+          "owner_id": "864687875",
+          "source": "jsonld.offers.itemCondition"
+        }
+      ]
+    }
   }
 ]

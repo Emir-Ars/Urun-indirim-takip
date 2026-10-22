@@ -95,7 +95,7 @@ başlatılması [teknik rehberde](docs/teknik.md#komutlar) anlatılır.
 | Katalog | 60 ürün, 356 bağlantı (354 etkin); Hepsiburada 229, Trendyol 127 |
 | Toplama düzeni | Her gün 10:00 ve 22:00; haftalık keşif Pazar 14:00 (otomatik güvenli kabul) |
 | Cimri geçmişi | 57 ürün, 20.805 tarihli kayıt (553 eksik fiyat); iki ürün eşleştirilemedi |
-| Otomatik testler | 1889 test, 0 atlanan; Black ve Flake8 temiz (22 Ekim) |
+| Otomatik testler | 1906 test, 0 atlanan; Black ve Flake8 temiz (22 Ekim) |
 
 Katalogdaki **356 bağlantının markalara göre dağılımı** (iki pasif bağlantı dahil):
 
