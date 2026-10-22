@@ -15,7 +15,7 @@ from curl_cffi.requests.exceptions import RequestException
 
 import app.scraper.http as http
 import app.scraper.factory as factory
-from app.contracts import DiscoveryConfig, DiscoveryTarget
+from app.contracts import DiscoveryConfig
 from app.discovery.base import error_code
 from app.discovery.trendyol import Discovery as TrendyolDiscovery
 from app.scraper.base import BaseScraper
@@ -24,6 +24,7 @@ from app.scraper.hepsiburada_scraper import Scraper as HepsiburadaScraper
 from app.scraper.http import FetchError, PageClient
 from app.scraper.trendyol_scraper import Scraper as TrendyolScraper
 from app.settings import Runtime
+from tests.support.discovery import target
 from tests.support.fake_http import Recorder, Reply, page_client
 
 APP = Path(__file__).parents[1] / "app"
@@ -42,11 +43,7 @@ def slept(monkeypatch):
     return calls
 
 
-def target(model="iPhone 16"):
-    return DiscoveryTarget(key="apple_iphone_16", brand="Apple", model=model)
-
-
-# Her isteğe 418 döndüren sahte oturum (test_discovery.py'den taşındı).
+# Her isteğe 418 döndüren sahte oturum.
 class Response:
     status_code = 418
     headers = {}
@@ -84,7 +81,7 @@ def call(pages, method, url=TRENDYOL):
     return getattr(pages, method)(url)
 
 
-# --- test_discovery.py'den taşınan testler ---------------------------------
+# --- Bekleme, çerez, engel ve istek bütçesi ----------------------------------
 
 
 def test_request_interval_is_shared_between_clients(monkeypatch):
