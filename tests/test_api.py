@@ -564,6 +564,9 @@ def test_real_query_timeout_returns_503_and_reuses_clean_connection(
 ):
     add_run(world, START, {"a": ("offer", 10000), "b": "sold_out", "c": "sold_out"})
     pool = client.app.state.pool
+    # İlk bağlantı hazır olmadan istenirse havuz ikinci bağlantıyı açar ve ikisini
+    # sırayla verir; o zaman "aynı bağlantı yeniden kullanıldı" ölçülemez.
+    pool.wait()
     with pool.connection() as conn:
         before_pid = conn.info.backend_pid
     original = read._rows
