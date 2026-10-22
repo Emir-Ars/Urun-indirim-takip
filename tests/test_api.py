@@ -630,7 +630,10 @@ def test_real_query_timeout_returns_503_and_reuses_clean_connection(
         nonlocal delayed
         if not delayed and query.startswith(read._PRODUCT_QUERY):
             delayed = True
-            conn.execute("SELECT pg_sleep(6)")
+            # Sunucunun gerçek iptali, 5 sn beklemeden: sınır yalnız bu işlemde
+            # düşürülür. 5 sn değerinin kendisini havuz ve okuma testleri denetler.
+            conn.execute("SET LOCAL statement_timeout = '50ms'")
+            conn.execute("SELECT pg_sleep(1)")
         return original(conn, query, params)
 
     monkeypatch.setattr(read, "_rows", rows)

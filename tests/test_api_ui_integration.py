@@ -9,6 +9,7 @@ from streamlit.testing.v1 import AppTest
 
 from app.ui import api_client
 from app.ui.api_client import ApiClient
+from tests.support.ui_samples import APP_TEST_TIMEOUT
 from test_api import client as _client, world as _world
 from test_database_read import KEY, START, add_market, add_run
 from test_ui import messages
@@ -42,7 +43,7 @@ def integrated_screen(client, monkeypatch):
             closed.append(self)
 
     monkeypatch.setattr(api_client, "ApiClient", Reader)
-    yield AppTest.from_file(SCREEN), failures, calls
+    yield AppTest.from_file(SCREEN, default_timeout=APP_TEST_TIMEOUT), failures, calls
     assert opened == closed
     assert all(reader._client.is_closed for reader in closed)
 

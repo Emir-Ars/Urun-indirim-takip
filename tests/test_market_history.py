@@ -26,7 +26,6 @@ from app.scraper.http import FetchError, PageClient
 from app.settings import Runtime
 from tests.support.fake_http import Recorder, Reply
 from tests.support.market_history import (
-    CATALOG,
     FRONTEND_SAMPLES,
     MAPPING,
     PRODUCTS,
@@ -66,7 +65,12 @@ def saved_report(directory):
 
 
 def test_config_mapping_uses_existing_catalog_and_recorded_source_ids():
-    mapping = read_mapping(ROOT / "config/market_history.json", CATALOG)
+    # Bilerek gerçek dosyalar: gerçek eşleştirme gerçek katalogdaki etkin ürünlere
+    # bağlı kalmalı; bağlı değilse gerçek alım da aynı nedenle reddedilir.
+    catalog = Catalog.model_validate_json(
+        (ROOT / "config/catalog.json").read_text(encoding="utf-8-sig")
+    )
+    mapping = read_mapping(ROOT / "config/market_history.json", catalog)
     entries = {entry.product_key: entry for entry in mapping.entries}
     assert all(entries[entry.product_key] == entry for entry in MAPPING.entries)
 

@@ -25,6 +25,7 @@ from app.ui.presentation import (
     reason_text,
 )
 from tests.support.ui_samples import (
+    APP_TEST_TIMEOUT,
     AT,
     PRODUCTS,
     SCENARIOS,
@@ -83,7 +84,7 @@ def screen(monkeypatch):
             )
 
     monkeypatch.setattr(api_client, "ApiClient", Client)
-    app = AppTest.from_file(SCREEN)
+    app = AppTest.from_file(SCREEN, default_timeout=APP_TEST_TIMEOUT)
     return app, state
 
 
@@ -534,7 +535,7 @@ def test_refresh_interval_is_registered_as_30_seconds(screen, monkeypatch):
 
 @pytest.mark.parametrize("scenario", SCENARIOS)
 def test_manual_preview_uses_same_screen_and_displays_test_banner(scenario):
-    app = AppTest.from_file(PREVIEW).run()
+    app = AppTest.from_file(PREVIEW, default_timeout=APP_TEST_TIMEOUT).run()
     app.selectbox(key="preview_scenario").set_value(scenario).run()
     assert not app.exception
     assert app.warning[0].value == "Test verisi — gerçek fiyatlar değildir"

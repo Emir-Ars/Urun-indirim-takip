@@ -12,6 +12,7 @@ from psycopg import errors, sql
 from streamlit.testing.v1 import AppTest
 
 from conftest import _no_production_database_url
+from tests.support.ui_samples import APP_TEST_TIMEOUT
 
 ROOT = Path(__file__).resolve().parents[1]
 SETUP = ROOT / "scripts/api_okuma_rolu.sql"
@@ -105,7 +106,8 @@ def test_streamlit_app_test_can_run_and_change_a_selection():
     app = AppTest.from_string(
         "import streamlit as st\n"
         "choice = st.selectbox('Telefon', ['Apple', 'Samsung'])\n"
-        "st.text(choice)\n"
+        "st.text(choice)\n",
+        default_timeout=APP_TEST_TIMEOUT,
     ).run()
     assert not app.exception
     assert app.text[0].value == "Apple"

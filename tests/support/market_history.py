@@ -5,7 +5,7 @@ from copy import deepcopy
 from datetime import date, timedelta
 from pathlib import Path
 
-from app.contracts import Catalog
+from app.contracts import Catalog, Product
 from app.market_history.capture import Mapping, MappingEntry
 from app.market_history.cimri import CIMRI_HOSTS
 
@@ -13,10 +13,15 @@ ROOT = Path(__file__).parents[2]
 RECORDED = json.loads(
     (ROOT / "tests/fixtures/cimri_recorded_samples.json").read_text(encoding="utf-8")
 )
-CATALOG = Catalog.model_validate_json(
-    (ROOT / "config/catalog.json").read_text(encoding="utf-8-sig")
-)
-PRODUCTS = {product.product_key: product for product in CATALOG.products}
+# Canlı katalog keşifle değişir; testler örneklerdeki ürünlerin sabit kopyasını okur.
+PRODUCTS = {
+    item["product_key"]: Product.model_validate(item)
+    for item in json.loads(
+        (ROOT / "tests/fixtures/cimri_catalog_products.json").read_text(
+            encoding="utf-8"
+        )
+    )["products"]
+}
 SAMPLES = RECORDED["samples"]
 FRONTEND_SAMPLES = RECORDED["frontend_history"]["samples"]
 MAPPING = Mapping(

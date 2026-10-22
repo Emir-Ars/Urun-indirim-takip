@@ -18,6 +18,10 @@ from app.api.schemas import (
 from app.contracts import Product
 from app.ui.api_client import ApiClient
 
+# AppTest'in süre sınırı yalnız takılan bir çalıştırmayı yakalamak içindir.
+# Varsayılan 3 sn, yavaş makinede (CI, ilk içe aktarmalar) doğru ekranı da
+# düşürebilir.
+APP_TEST_TIMEOUT = 30
 AT = datetime(2026, 10, 9, 9, tzinfo=timezone.utc)
 PRODUCTS = (
     Product(

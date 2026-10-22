@@ -1,0 +1,461 @@
+{
+  "provenance": "config/catalog.json ürün listesinden 22 Ekim 2026'da kopyalandı (dosyanın SHA-256'sı 2b6c1bb7137e0398f56fc4c36e67771922c6fbd0a4ba5c2cdcee3d4eaefadc41); yalnız cimri_recorded_samples.json örneklerindeki ürünler. Katalogda ürün kimlikleri değişmediği için kopya canlı katalogla aynı kalır.",
+  "products": [
+    {
+      "product_id": 1,
+      "product_key": "apple_iphone_15_128gb",
+      "brand": "Apple",
+      "model": "iPhone 15",
+      "storage_gb": 128,
+      "active": true
+    },
+    {
+      "product_id": 2,
+      "product_key": "apple_iphone_15_256gb",
+      "brand": "Apple",
+      "model": "iPhone 15",
+      "storage_gb": 256,
+      "active": true
+    },
+    {
+      "product_id": 3,
+      "product_key": "apple_iphone_15_512gb",
+      "brand": "Apple",
+      "model": "iPhone 15",
+      "storage_gb": 512,
+      "active": true
+    },
+    {
+      "product_id": 4,
+      "product_key": "apple_iphone_15_pro_128gb",
+      "brand": "Apple",
+      "model": "iPhone 15 Pro",
+      "storage_gb": 128,
+      "active": true
+    },
+    {
+      "product_id": 5,
+      "product_key": "apple_iphone_15_pro_256gb",
+      "brand": "Apple",
+      "model": "iPhone 15 Pro",
+      "storage_gb": 256,
+      "active": true
+    },
+    {
+      "product_id": 6,
+      "product_key": "apple_iphone_15_pro_512gb",
+      "brand": "Apple",
+      "model": "iPhone 15 Pro",
+      "storage_gb": 512,
+      "active": true
+    },
+    {
+      "product_id": 7,
+      "product_key": "apple_iphone_15_pro_1024gb",
+      "brand": "Apple",
+      "model": "iPhone 15 Pro",
+      "storage_gb": 1024,
+      "active": true
+    },
+    {
+      "product_id": 8,
+      "product_key": "apple_iphone_15_pro_max_256gb",
+      "brand": "Apple",
+      "model": "iPhone 15 Pro Max",
+      "storage_gb": 256,
+      "active": true
+    },
+    {
+      "product_id": 9,
+      "product_key": "apple_iphone_15_pro_max_512gb",
+      "brand": "Apple",
+      "model": "iPhone 15 Pro Max",
+      "storage_gb": 512,
+      "active": true
+    },
+    {
+      "product_id": 10,
+      "product_key": "apple_iphone_15_pro_max_1024gb",
+      "brand": "Apple",
+      "model": "iPhone 15 Pro Max",
+      "storage_gb": 1024,
+      "active": true
+    },
+    {
+      "product_id": 11,
+      "product_key": "apple_iphone_16_128gb",
+      "brand": "Apple",
+      "model": "iPhone 16",
+      "storage_gb": 128,
+      "active": true
+    },
+    {
+      "product_id": 12,
+      "product_key": "apple_iphone_16_256gb",
+      "brand": "Apple",
+      "model": "iPhone 16",
+      "storage_gb": 256,
+      "active": true
+    },
+    {
+      "product_id": 13,
+      "product_key": "apple_iphone_16_512gb",
+      "brand": "Apple",
+      "model": "iPhone 16",
+      "storage_gb": 512,
+      "active": true
+    },
+    {
+      "product_id": 14,
+      "product_key": "apple_iphone_16_pro_128gb",
+      "brand": "Apple",
+      "model": "iPhone 16 Pro",
+      "storage_gb": 128,
+      "active": true
+    },
+    {
+      "product_id": 15,
+      "product_key": "apple_iphone_16_pro_256gb",
+      "brand": "Apple",
+      "model": "iPhone 16 Pro",
+      "storage_gb": 256,
+      "active": true
+    },
+    {
+      "product_id": 16,
+      "product_key": "apple_iphone_16_pro_512gb",
+      "brand": "Apple",
+      "model": "iPhone 16 Pro",
+      "storage_gb": 512,
+      "active": true
+    },
+    {
+      "product_id": 17,
+      "product_key": "apple_iphone_16_pro_1024gb",
+      "brand": "Apple",
+      "model": "iPhone 16 Pro",
+      "storage_gb": 1024,
+      "active": true
+    },
+    {
+      "product_id": 18,
+      "product_key": "apple_iphone_16_pro_max_256gb",
+      "brand": "Apple",
+      "model": "iPhone 16 Pro Max",
+      "storage_gb": 256,
+      "active": true
+    },
+    {
+      "product_id": 19,
+      "product_key": "apple_iphone_16_pro_max_512gb",
+      "brand": "Apple",
+      "model": "iPhone 16 Pro Max",
+      "storage_gb": 512,
+      "active": true
+    },
+    {
+      "product_id": 20,
+      "product_key": "apple_iphone_16_pro_max_1024gb",
+      "brand": "Apple",
+      "model": "iPhone 16 Pro Max",
+      "storage_gb": 1024,
+      "active": true
+    },
+    {
+      "product_id": 21,
+      "product_key": "apple_iphone_17_256gb",
+      "brand": "Apple",
+      "model": "iPhone 17",
+      "storage_gb": 256,
+      "active": true
+    },
+    {
+      "product_id": 22,
+      "product_key": "apple_iphone_17_512gb",
+      "brand": "Apple",
+      "model": "iPhone 17",
+      "storage_gb": 512,
+      "active": true
+    },
+    {
+      "product_id": 23,
+      "product_key": "apple_iphone_17_pro_256gb",
+      "brand": "Apple",
+      "model": "iPhone 17 Pro",
+      "storage_gb": 256,
+      "active": true
+    },
+    {
+      "product_id": 24,
+      "product_key": "apple_iphone_17_pro_512gb",
+      "brand": "Apple",
+      "model": "iPhone 17 Pro",
+      "storage_gb": 512,
+      "active": true
+    },
+    {
+      "product_id": 25,
+      "product_key": "apple_iphone_17_pro_1024gb",
+      "brand": "Apple",
+      "model": "iPhone 17 Pro",
+      "storage_gb": 1024,
+      "active": true
+    },
+    {
+      "product_id": 26,
+      "product_key": "apple_iphone_17_pro_max_256gb",
+      "brand": "Apple",
+      "model": "iPhone 17 Pro Max",
+      "storage_gb": 256,
+      "active": true
+    },
+    {
+      "product_id": 27,
+      "product_key": "apple_iphone_17_pro_max_512gb",
+      "brand": "Apple",
+      "model": "iPhone 17 Pro Max",
+      "storage_gb": 512,
+      "active": true
+    },
+    {
+      "product_id": 28,
+      "product_key": "apple_iphone_17_pro_max_1024gb",
+      "brand": "Apple",
+      "model": "iPhone 17 Pro Max",
+      "storage_gb": 1024,
+      "active": true
+    },
+    {
+      "product_id": 29,
+      "product_key": "apple_iphone_17_pro_max_2048gb",
+      "brand": "Apple",
+      "model": "iPhone 17 Pro Max",
+      "storage_gb": 2048,
+      "active": true
+    },
+    {
+      "product_id": 30,
+      "product_key": "samsung_galaxy_s25_128gb",
+      "brand": "Samsung",
+      "model": "Galaxy S25",
+      "storage_gb": 128,
+      "active": true
+    },
+    {
+      "product_id": 31,
+      "product_key": "samsung_galaxy_s25_256gb",
+      "brand": "Samsung",
+      "model": "Galaxy S25",
+      "storage_gb": 256,
+      "active": true
+    },
+    {
+      "product_id": 32,
+      "product_key": "samsung_galaxy_s25_ultra_256gb",
+      "brand": "Samsung",
+      "model": "Galaxy S25 Ultra",
+      "storage_gb": 256,
+      "active": true
+    },
+    {
+      "product_id": 33,
+      "product_key": "samsung_galaxy_s25_ultra_512gb",
+      "brand": "Samsung",
+      "model": "Galaxy S25 Ultra",
+      "storage_gb": 512,
+      "active": true
+    },
+    {
+      "product_id": 34,
+      "product_key": "samsung_galaxy_s25_ultra_1024gb",
+      "brand": "Samsung",
+      "model": "Galaxy S25 Ultra",
+      "storage_gb": 1024,
+      "active": true
+    },
+    {
+      "product_id": 35,
+      "product_key": "samsung_galaxy_s24_128gb",
+      "brand": "Samsung",
+      "model": "Galaxy S24",
+      "storage_gb": 128,
+      "active": true
+    },
+    {
+      "product_id": 36,
+      "product_key": "samsung_galaxy_s24_256gb",
+      "brand": "Samsung",
+      "model": "Galaxy S24",
+      "storage_gb": 256,
+      "active": true
+    },
+    {
+      "product_id": 37,
+      "product_key": "samsung_galaxy_s24_ultra_256gb",
+      "brand": "Samsung",
+      "model": "Galaxy S24 Ultra",
+      "storage_gb": 256,
+      "active": true
+    },
+    {
+      "product_id": 38,
+      "product_key": "samsung_galaxy_s24_ultra_512gb",
+      "brand": "Samsung",
+      "model": "Galaxy S24 Ultra",
+      "storage_gb": 512,
+      "active": true
+    },
+    {
+      "product_id": 39,
+      "product_key": "samsung_galaxy_s24_ultra_1024gb",
+      "brand": "Samsung",
+      "model": "Galaxy S24 Ultra",
+      "storage_gb": 1024,
+      "active": true
+    },
+    {
+      "product_id": 40,
+      "product_key": "samsung_galaxy_s24_fe_256gb",
+      "brand": "Samsung",
+      "model": "Galaxy S24 FE",
+      "storage_gb": 256,
+      "active": true
+    },
+    {
+      "product_id": 41,
+      "product_key": "samsung_galaxy_s23_fe_128gb",
+      "brand": "Samsung",
+      "model": "Galaxy S23 FE",
+      "storage_gb": 128,
+      "active": true
+    },
+    {
+      "product_id": 42,
+      "product_key": "samsung_galaxy_s23_fe_256gb",
+      "brand": "Samsung",
+      "model": "Galaxy S23 FE",
+      "storage_gb": 256,
+      "active": true
+    },
+    {
+      "product_id": 43,
+      "product_key": "samsung_galaxy_a55_128gb",
+      "brand": "Samsung",
+      "model": "Galaxy A55",
+      "storage_gb": 128,
+      "active": true
+    },
+    {
+      "product_id": 44,
+      "product_key": "samsung_galaxy_a55_256gb",
+      "brand": "Samsung",
+      "model": "Galaxy A55",
+      "storage_gb": 256,
+      "active": true
+    },
+    {
+      "product_id": 45,
+      "product_key": "samsung_galaxy_a54_128gb",
+      "brand": "Samsung",
+      "model": "Galaxy A54",
+      "storage_gb": 128,
+      "active": true
+    },
+    {
+      "product_id": 46,
+      "product_key": "samsung_galaxy_a54_256gb",
+      "brand": "Samsung",
+      "model": "Galaxy A54",
+      "storage_gb": 256,
+      "active": true
+    },
+    {
+      "product_id": 47,
+      "product_key": "xiaomi_14t_pro_256gb",
+      "brand": "Xiaomi",
+      "model": "14T Pro",
+      "storage_gb": 256,
+      "active": true
+    },
+    {
+      "product_id": 48,
+      "product_key": "xiaomi_14t_pro_512gb",
+      "brand": "Xiaomi",
+      "model": "14T Pro",
+      "storage_gb": 512,
+      "active": true
+    },
+    {
+      "product_id": 49,
+      "product_key": "xiaomi_13t_pro_512gb",
+      "brand": "Xiaomi",
+      "model": "13T Pro",
+      "storage_gb": 512,
+      "active": true
+    },
+    {
+      "product_id": 50,
+      "product_key": "xiaomi_redmi_note_14_pro_5g_512gb",
+      "brand": "Xiaomi",
+      "model": "Redmi Note 14 Pro 5G",
+      "storage_gb": 512,
+      "active": true
+    },
+    {
+      "product_id": 51,
+      "product_key": "xiaomi_redmi_note_13_pro_5g_256gb",
+      "brand": "Xiaomi",
+      "model": "Redmi Note 13 Pro 5G",
+      "storage_gb": 256,
+      "active": true
+    },
+    {
+      "product_id": 52,
+      "product_key": "xiaomi_redmi_note_13_pro_5g_512gb",
+      "brand": "Xiaomi",
+      "model": "Redmi Note 13 Pro 5G",
+      "storage_gb": 512,
+      "active": true
+    },
+    {
+      "product_id": 53,
+      "product_key": "poco_x6_pro_512gb",
+      "brand": "POCO",
+      "model": "X6 Pro",
+      "storage_gb": 512,
+      "active": true
+    },
+    {
+      "product_id": 54,
+      "product_key": "xiaomi_redmi_note_14_pro_4g_256gb",
+      "brand": "Xiaomi",
+      "model": "Redmi Note 14 Pro",
+      "storage_gb": 256,
+      "active": true
+    },
+    {
+      "product_id": 55,
+      "product_key": "xiaomi_redmi_note_14_pro_4g_512gb",
+      "brand": "Xiaomi",
+      "model": "Redmi Note 14 Pro",
+      "storage_gb": 512,
+      "active": true
+    },
+    {
+      "product_id": 56,
+      "product_key": "xiaomi_redmi_note_13_pro_4g_256gb",
+      "brand": "Xiaomi",
+      "model": "Redmi Note 13 Pro",
+      "storage_gb": 256,
+      "active": true
+    },
+    {
+      "product_id": 57,
+      "product_key": "xiaomi_redmi_note_13_pro_4g_512gb",
+      "brand": "Xiaomi",
+      "model": "Redmi Note 13 Pro",
+      "storage_gb": 512,
+      "active": true
+    }
+  ]
+}

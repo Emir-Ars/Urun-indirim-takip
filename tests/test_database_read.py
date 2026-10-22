@@ -577,7 +577,10 @@ def test_query_timeout_rolls_back_and_connection_can_be_reused(api_db, monkeypat
     original = read._rows
 
     def slow(conn, query, params=()):
-        conn.execute("SELECT pg_sleep(6)")
+        # Sunucunun gerçek iptali, 5 sn beklemeden: sınır yalnız bu işlemde
+        # düşürülür. 5 sn değerini test_read_settings_are_local_... denetler.
+        conn.execute("SET LOCAL statement_timeout = '50ms'")
+        conn.execute("SELECT pg_sleep(1)")
 
     monkeypatch.setattr(read, "_rows", slow)
     with pytest.raises(errors.QueryCanceled):
