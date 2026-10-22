@@ -248,33 +248,6 @@ def merge_catalog(catalog: Catalog, candidates, bindings=()):
     return updated, added_products, added_listings, existing_listings, conflicts
 
 
-def _atomic_catalog(path: Path, catalog: Catalog):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = None
-    try:
-        # newline="\n": Windows'ta da LF yazılır; her yazımda dosyanın bütün satır
-        # sonları değişmez.
-        with tempfile.NamedTemporaryFile(
-            mode="w",
-            encoding="utf-8",
-            newline="\n",
-            dir=path.parent,
-            suffix=".tmp",
-            delete=False,
-        ) as handle:
-            temporary = Path(handle.name)
-            json.dump(
-                catalog.model_dump(mode="json"), handle, ensure_ascii=False, indent=2
-            )
-            handle.write("\n")
-            handle.flush()
-            os.fsync(handle.fileno())
-        os.replace(temporary, path)
-    finally:
-        if temporary is not None:
-            temporary.unlink(missing_ok=True)
-
-
 def observed_colors(candidates):
     """Doğrulanan renkleri kapasite ve platform bazında raporlar."""
     colors = {}
@@ -443,6 +416,8 @@ def _atomic_json(path, value):
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = None
     try:
+        # Bayt olarak yazılır: Windows'ta da LF kalır; her yazımda dosyanın bütün
+        # satır sonları değişmez.
         with tempfile.NamedTemporaryFile(
             dir=path.parent, suffix=".tmp", delete=False
         ) as handle:
@@ -458,6 +433,12 @@ def _atomic_json(path, value):
 
 def _atomic_report(path, report):
     _atomic_json(path, report.model_dump(mode="json"))
+
+
+def _atomic_catalog(path: Path, catalog: Catalog):
+    # Yazılan baytlar _json_bytes'ın aynısıdır; yazımdan sonra katalog parmak izi
+    # bununla hesaplanan application.catalog_after ile karşılaştırılır.
+    _atomic_json(path, catalog.model_dump(mode="json"))
 
 
 def _journal_path(catalog_path):

@@ -531,8 +531,10 @@ kendi kabul iddiası yerine kanıttan karar tekrar hesaplanır.
 - Katalogdaki bir sayfa bu kez başka ürün (ör. başka kapasite) olarak görülürse
   o aday yazılmaz, mevcut kayıt korunur ve rapora `catalog_conflict` yazılır;
   diğer geçerli adaylar yine eklenir.
-- Dosya kilit altında yeniden okunur ve atomik olarak (geçici dosya + yer
-  değiştirme) yazılır. `--dry-run` kataloğa hiç yazmaz.
+- Dosya kilit altında yeniden okunur ve atomik olarak (geçici dosya, diske
+  zorla yazma, yer değiştirme) yazılır. Katalog, rapor ve hazırlık kaydı aynı
+  yazıcıyı (`_atomic_json`) kullanır; yazılan baytlar parmak izi hesabındaki
+  JSON'un aynısıdır. `--dry-run` kataloğa hiç yazmaz.
 
 ### İncelenen raporu uygulama (`--apply-report`)
 

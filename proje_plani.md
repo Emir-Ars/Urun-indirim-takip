@@ -197,6 +197,7 @@ rehberde, o günkü tartışması arşivdedir.
 | 19 Ekim | Sürekli işletim, ML eğitiminden önce ayrıca planlanacak. | Bilgisayar uyuyunca/kapanınca turlar kaçıyor. |
 | 19 Ekim | Haftalık keşif otomatik güvenli kabul moduna alındı (Bölüm 4, Katalog). | Kullanıcının ayrı katalog/otomasyon kabulü. |
 | 20 Ekim | Test düzeni: canlı kontrol/denetim araçları `tools/` klasörüne taşınır; 29 Eylül'deki Cimri/Akakçe araştırma aracı (`market_history_probe`) ve testleri kaldırılır, görevini `python -m app.market_history capture` yapar; bulut deneme iş akışı korunur; Adım 3'ün her alt adımı ayrı commit. | Kullanıcı seçimi. |
+| 22 Ekim | Adım 4 kapsamı: katalog yazıcıları, zamanlanmış çalışma kopyası ve Cimri'nin kullanılmayan yolları sadeleşir; keşifteki eski kimlik kontrolü Adım 5'e taşınır; API'nin istek başı denetimi ve katalog okuma olduğu gibi kalır. | İnceleme: eski kimlik kontrolü ölü kod değil (rapor gerekçesi, Hepsiburada varyant kuyruğu); diğer iki madde gerekçesiyle "Bilerek değiştirilmeyen davranışlar"da. |
 | 22 Ekim | Test dosyaları birbirinden içe aktarma yapmaz (bir test denetler); ortak fixture ve yardımcılar `tests/support/`'tadır. Yalnız `test_discovery.py` bölünür; tek konulu büyük dosyalar (toplama, Cimri, veritabanı) bölünmez. | Bölme, konu karışık olduğunda testi bulmayı kolaylaştırır; tek konulu dosyada yalnız dosya sayısını artırır. |
 | 20 Ekim | Proje yapısı sadeleştirilecek (Bölüm 8). Plan, rehber ve kurallar yeniden düzenlenir; önceki "plan baştan yazılmaz" kuralı kaldırıldı, eski hâller arşivde. `app/market_history` kodu korunur; Git dışı inceleme kanıtları silinmeden proje dışına taşınır; renk kuralı Adım 5'te ele alınır. | Belgeler günlüğe dönmüştü (plan 374 KB, rehber 312 KB); karmaşa yönetimi zorlaştırıyordu. |
 
@@ -218,6 +219,13 @@ Denetimlerde incelenip gerekçesiyle olduğu gibi bırakılan davranışlar:
 - Tur tamamlandıktan sonra özet sorgusu düşerse çıkış 1 olur ama tur
   `completed` kalır; kayıtlar ve kilitler korunur.
 - Scraper ve keşfin iki eklenti yükleyicisi farklı sözleşmeleriyle ayrı kalır.
+- API her istekte okuma hesabının yetkisini ve şemayı denetler (~20 küçük
+  sorgu). Tek kullanıcılı yerel kullanımda maliyeti fark edilmez; API
+  çalışırken migration uygulanır veya izin değişirse ekran yanlış veri yerine
+  açık bir 503 alır.
+- Katalog altı yerde okunur ama iki ayrı kuralla: veritabanı eşitlemesi
+  parmak izini satır sonundan bağımsız hesaplar, keşif yazma güvenliği için
+  ham baytları karşılaştırır. Tek okuyucuda birleştirmek bu farkı bozar.
 
 ## 6. Bilinen sınırlar (özet)
 
@@ -268,9 +276,9 @@ Zamanlanmış görevlerin komutları (`-m app.collection`, `-m app.discovery`) d
 |---|---|---|
 | 1. Belgeler | Eski plan ve rehber `docs/arsiv/` altına olduğu gibi kopyalandı. İnce plan, yalnız bugünkü davranışı anlatan teknik rehber, `docs/gecmis.md`, kısa README ve sade `AGENTS.md`. | ✅ Tamamlandı (20 Ekim) |
 | 2. Yerel klasörler | Biten incelemelerin kanıtları (`artifacts/`, eski `data/` kayıtları, `.scratch/`) silinmeden `C:\Users\Emir\Desktop\Staj_arsiv\2026-10-20\` klasörüne taşındı: 82 kayıt, 12.038 dosya; boyut ve SHA-256 parmak izleri taşıma öncesi ve sonrası eşleşti (`MANIFEST.json`). Kodun kullandığı `data/logs`, `data/discovery` ve rapor dosyası yerinde. Codex'in kısıtlı ortamında oluşmuş, bu hesabın içeriğini okuyamadığı beş `artifacts/b3_*` test klasörü taşınamadı ve yerinde bırakıldı (silmek için yönetici izni gerekir). | ✅ Taşıma tamam (20 Ekim); belge notlarının gönderimi bekliyor |
-| 3. Test düzeni | 3.1 araçlar `tools/`'a; 3.2 ortak test yardımcıları `tests/support/`'a; 3.3 `test_discovery.py` konularına göre beş dosyaya bölünür (kimlik, Trendyol, Hepsiburada, katalog, çalıştırma); 3.4 Streamlit testlerindeki 3 sn süre ve gerçek 6 sn beklemeler düzeltilir, canlı kataloğu okuyan test sabit kopyaya bağlanır; 3.5 3.2'de gözden kaçan kısa biçimli (`from test_…`) testler arası içe aktarmalar kaldırılır ve bir testle korunur. Her alt adım ayrı commit. | 🔄 3.1–3.4 tamamlandı (20–22 Ekim); 3.5 uygulandı (gönderim onayı bekliyor) |
-| 4. Kod sadeleştirme | Keşifte sonucu her zaman atılan eski kimlik kontrolü kaldırılır; iki katalog yazıcısı birleştirilir; kopya sarmalayıcı ve katalog okuma tek yere toplanır. API'nin her istekteki yetki/şema kontrolü kullanıcı kararıyla ele alınır. Cimri kodu korunur. | 🔜 Bekliyor |
-| 5. Renk kuralı | Gerçek sayfalardan regresyon testleri; Trendyol'da renk seçicisindeki ad öncelikli, kapasite yazan renk değerleri sayılmaz. Kimlik kuralı değiştiği için ayrı plan onayı ister. | 🔜 Planlandı |
+| 3. Test düzeni | 3.1 araçlar `tools/`'a; 3.2 ortak test yardımcıları `tests/support/`'a; 3.3 `test_discovery.py` konularına göre beş dosyaya bölünür (kimlik, Trendyol, Hepsiburada, katalog, çalıştırma); 3.4 Streamlit testlerindeki 3 sn süre ve gerçek 6 sn beklemeler düzeltilir, canlı kataloğu okuyan test sabit kopyaya bağlanır; 3.5 3.2'de gözden kaçan kısa biçimli (`from test_…`) testler arası içe aktarmalar kaldırılır ve bir testle korunur. Her alt adım ayrı commit. | ✅ Tamamlandı (22 Ekim) |
+| 4. Kod sadeleştirme | 4.1 keşfin iki katalog/rapor yazıcısı tek yazıcıda birleşir; 4.2 tur ve keşfin zamanlanmış çalışma kopyası (log, başlık, hata, çıkış kodu) `app/console.py`'de toplanır; 4.3 Cimri kodunun kullanılmayan eski yolları kaldırılır, alım ve aktarım korunur. Keşifteki eski kimlik kontrolü Adım 5'e taşındı; API kontrolü ve katalog okuma bilerek değiştirilmez (Bölüm 5). Her alt adım ayrı commit. | 🔄 4.1 uygulandı (gönderim onayı bekliyor); 4.2–4.3 bekliyor |
+| 5. Renk kuralı | Gerçek sayfalardan regresyon testleri; Trendyol'da renk seçicisindeki ad öncelikli, kapasite yazan renk değerleri sayılmaz. Aynı kabul kodundaki eski kimlik kontrolü de burada ele alınır: döndürdüğü aday hep atılır, ama ret gerekçesi rapora yazılır ve Hepsiburada'da doğrulanmamış sayfanın varyantlarının taranmasını belirler. Kimlik kuralı değiştiği için ayrı plan onayı ister. | 🔜 Planlandı |
 
 Sonra: sürekli işletim planı → güncel veri yeterliliği → ML.
 
