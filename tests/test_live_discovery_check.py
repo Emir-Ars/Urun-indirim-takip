@@ -10,8 +10,8 @@ from app.contracts import DiscoveryConfig, DiscoveryReport, DiscoveryTarget
 from app.scrape_lock import ScrapeBusy
 from app.scraper.http import FetchError, PageClient
 from app.settings import Runtime
+from tests.support.fake_http import Recorder, Reply, page_client
 from tools import live_discovery_check as manual
-from tests.test_http import Recorder, Reply, page_client
 
 URL = "https://www.trendyol.com/urun-p-123"
 

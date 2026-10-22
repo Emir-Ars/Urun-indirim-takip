@@ -11,19 +11,11 @@ from psycopg.rows import dict_row
 
 from app.database import read, runs
 from app.price_statistics import calculate_statistics
+from tests.support.database import insert
 
 START = datetime(2024, 11, 1, 7, tzinfo=timezone.utc)
 KEY = "apple_iphone_15_128gb"
 OWNER = {"a": 1, "b": 1, "c": 1, "d": 2, "e": 3}
-
-
-def insert(conn, table, **values):
-    query = sql.SQL("INSERT INTO {} ({}) VALUES ({})").format(
-        sql.Identifier(table),
-        sql.SQL(", ").join(map(sql.Identifier, values)),
-        sql.SQL(", ").join(sql.Placeholder() for _ in values),
-    )
-    conn.execute(query, tuple(values.values()))
 
 
 @pytest.fixture

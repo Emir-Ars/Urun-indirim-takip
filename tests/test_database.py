@@ -24,6 +24,7 @@ from app.database.migrate import (
 from app.scraper.http import PageClient
 from app.settings import Runtime
 from conftest import ensure_test_database
+from tests.support.database import insert
 
 NOW = datetime(2026, 9, 28, 7, 0, tzinfo=timezone.utc)
 CATALOG_SHA = "0" * 64
@@ -74,15 +75,6 @@ def write(directory, name, text):
 def tables(conn):
     rows = conn.execute("SELECT tablename FROM pg_tables WHERE schemaname = 'public'")
     return {row[0] for row in rows}
-
-
-def insert(conn, table, **values):
-    query = sql.SQL("INSERT INTO {} ({}) VALUES ({})").format(
-        sql.Identifier(table),
-        sql.SQL(", ").join(map(sql.Identifier, values)),
-        sql.SQL(", ").join(sql.Placeholder() * len(values)),
-    )
-    conn.execute(query, list(values.values()))
 
 
 def start_run(conn, status="running"):

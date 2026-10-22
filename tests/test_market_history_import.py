@@ -26,9 +26,9 @@ from app.market_history.capture import Mapping, capture
 from app.market_history.importer import HistoryImportError, HistoryPoint, read_capture
 from app.scrape_lock import scrape_lock
 from app.settings import Runtime
-from tests.test_collection import FakeScrapers, OFFER, run_snapshot, write_catalog
-from tests.test_database import insert
-from tests.test_market_history import (
+from tests.support.collection import OFFER, FakeScrapers, run_snapshot, write_catalog
+from tests.support.database import insert
+from tests.support.market_history import (
     FRONTEND_SAMPLES,
     MAPPING,
     SAMPLES,

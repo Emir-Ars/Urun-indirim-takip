@@ -153,7 +153,8 @@ Test sayıları burada tutulmaz; güncel sayı `pytest -q` çıktısındadır.
 
 | Yer | Ne sınar |
 |---|---|
-| `tests/conftest.py` | Her testte gerçek curl_cffi ve HTTPX ağ transport'ları kesilir; ASGI/TestClient/MockTransport süreç içinde çalışır. Kalıcı `DATABASE_URL` ve `API_DATABASE_URL` silinir. `db` yalnız `TEST_DATABASE_URL`'deki `_test` DB'yi her testte boşaltır; ortak test kilidi en çok 30 sn bekler. `api_db` ayrıca `TEST_API_DATABASE_URL` ve `fiyat_takip_api_test` ister; iki bağlantının aynı `_test` DB olduğunu denetleyip test şemasında SELECT izinlerini yeniden kurar. Eksik test adresleri yerelde atlama, CI'da hata üretir. |
+| `tests/conftest.py` | Her testte gerçek curl_cffi ve HTTPX ağ transport'ları kesilir; ASGI/TestClient/MockTransport süreç içinde çalışır. Kalıcı `DATABASE_URL` ve `API_DATABASE_URL` silinir. `db` yalnız `TEST_DATABASE_URL`'deki `_test` DB'yi her testte boşaltır; ortak test kilidi en çok 30 sn bekler. `api_db` ayrıca `TEST_API_DATABASE_URL` ve `fiyat_takip_api_test` ister; iki bağlantının aynı `_test` DB olduğunu denetleyip test şemasında SELECT izinlerini yeniden kurar. `migrated`, `db`'ye bütün migration'ları uygular. Eksik test adresleri yerelde atlama, CI'da hata üretir. |
+| `tests/support/` | Test değildir; birden fazla test dosyasının ortak yardımcılarıdır: sahte HTTP oturumu ve yanıtı (`fake_http.py`), `_test` DB'ye satır yazan `insert` (`database.py`), toplama turunun küçük sahte kataloğu ve sahte scraper'ları (`collection.py`), Cimri kayıtlı örnekleri ve sahte istemcisi (`market_history.py`), Streamlit ekranının yapay örnekleri (`ui_samples.py`). Test dosyaları birbirinden içe aktarma yapmaz; yalnız tek dosyada kullanılan yardımcı o dosyada kalır. Buradaki `assert`'ler de pytest'in ayrıntılı hata mesajını verir (`conftest.py`'deki kayıt). |
 | `tests/test_http.py` | HTTP katmanı: hata kodları (`invalid_host` mesajı hedef alan adını yazar, sorgu metnini yazmaz), indirme sırasında 8 MB sınırı, büyük hata/yönlendirme yanıtları, yönlendirme kuralları, 5xx tekrarı ve bekleme süreleri, istekler arası bekleme, scraper factory. Mimari sınır da burada: pazaryeri HTTP'si yalnız `app/scraper/http.py` ve curl_cffi ile; HTTPX yalnız `app/ui/api_client.py` için; UI veritabanı/havuz/sunucu katmanını yüklemez. |
 | `tests/test_contracts.py` | Pydantic sözleşmeleri: satılabilir teklif fiyat ve satıcı taşır, puan ölçeği aşamaz, üstü çizili fiyat güncel fiyattan büyüktür, katalog kimlik/referans/alan adı kuralları, `money()` kuruş çevirimi. |
 | `tests/test_url_identity.py` | Ortak ürün adresi kimliği: ürün yolu, sorgu, son eğik çizgi, küçük harfli SKU, eksik/bozuk kimlik ve bütün tüketicilerin aynı kimliği okuması. |
@@ -169,7 +170,7 @@ Test sayıları burada tutulmaz; güncel sayı `pytest -q` çıktısındadır.
 | `tests/test_api_foundation.py` | API okuma rolünün izinleri (yazamaması, kalıcı nesne kuramaması) ve test ortamının ağ/adres korumaları. |
 | `tests/test_api.py` | FastAPI: dört adres ve OpenAPI, kuruş/UTC/NULL, fiyat yaşı, rol/şema hataları, dört bağlantı sınırı, kesinti ve yeniden bağlantı, 5 sn sorgu zaman aşımı, tutarlı cevap. |
 | `tests/test_api_client.py` | Yerel API istemcisi: katı girdi/JSON ve alan tamlığı, sabit hedef/proxy/yönlendirme sınırı, güvenli hatalar, tekrar/önbellek olmaması, kaynak bırakma. |
-| `tests/test_ui.py`, `tests/ui_samples.py` | Streamlit ekranı (AppTest) ve grafik verisi. `ui_samples.py` AppTest ve önizlemenin ortak yapay örnekleridir; gerçek fiyat değildir. |
+| `tests/test_ui.py` | Streamlit ekranı (AppTest) ve grafik verisi. Yapay örnekler `tests/support/ui_samples.py`'dedir; AppTest ve önizleme ortak kullanır, gerçek fiyat değildir. |
 | `tests/test_api_ui_integration.py` | Gerçek test okuma hesabı → FastAPI → istemci → Streamlit zinciri; SQL ve hesaplama sahte değildir. |
 | `tests/test_api_ui_check.py`, `tests/test_ml_data_check.py`, `tests/test_live_discovery_check.py` | Aşağıdaki denetim/kontrol araçlarının kendileri. |
 | `tests/test_market_history.py`, `tests/test_market_history_import.py` | Cimri alımı ve aktarımı: kimlik, tarih/fiyat/eksik veri, ham kanıt ve parmak izi, istek bütçesi, kilit, ilk/tekrar aktarım, çelişki, READ ONLY önizleme, kesinti. |
@@ -1996,7 +1997,7 @@ Proje klasöründen çalıştırılır; tarayıcıda `http://127.0.0.1:8501` aç
 İki ekran aynı portta birlikte başlatılmaz. Önizleme aynı `render_app`
 işlevine testteki MockTransport istemcisini verir; üretim demo modu yoktur.
 “Test verisi — gerçek fiyatlar değildir” uyarısı sürekli görünür.
-`tests/ui_samples.py` örnekleri AppTest ve önizleme için ortaktır; gerçek
+`tests/support/ui_samples.py` örnekleri AppTest ve önizleme için ortaktır; gerçek
 fiyat kanıtı değildir. Sidebar'dan teklif/boşluk, eski/kısmi fiyat, stoksuzluk,
 doğrulanamama, yalnız Cimri, eksik geçmiş, API hatası ve boş liste denenir.
 

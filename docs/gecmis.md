@@ -97,7 +97,8 @@ Bu dosyanın kendi güncellemesi bir sonraki adımın commit'ine girer.
 |---|---|---|---|
 | 20.10 | `6ad6fcd` | Adım 1: belgeleri sadeleştir; planı ve teknik rehberi yeniden düzenle, eski hâllerini arşivle | [39410273669](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/39410273669) |
 | 20.10 | `093dafc` | Adım 2: Git dışı inceleme kanıtları (12.038 dosya, ~330 MB) `Desktop\Staj_arsiv\2026-10-20\` klasörüne taşındı; belge notları | [39417566957](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/39417566957) |
-| 20.10 | (bekliyor) | Adım 3.1: canlı kontrol ve denetim araçları `tools/` klasörüne taşındı; eski piyasa geçmişi araştırma aracı kaldırıldı | — |
+| 20.10 | `df35c7d` | Adım 3.1: canlı kontrol ve denetim araçları `tools/` klasörüne taşındı; eski piyasa geçmişi araştırma aracı kaldırıldı | [39462078926](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/39462078926) |
+| 22.10 | (bekliyor) | Adım 3.2: ortak test yardımcıları `tests/support/` altında toplandı; testler arası içe aktarmalar ve `insert`/`migrated` kopyaları kaldırıldı | — |
 
 ## Eylül 2026 ayrıntıları
 

@@ -11,7 +11,6 @@ import types
 from pathlib import Path
 
 import pytest
-from curl_cffi.curl import CURL_WRITEFUNC_ERROR
 from curl_cffi.requests.exceptions import RequestException
 
 import app.scraper.http as http
@@ -25,6 +24,7 @@ from app.scraper.hepsiburada_scraper import Scraper as HepsiburadaScraper
 from app.scraper.http import FetchError, PageClient
 from app.scraper.trendyol_scraper import Scraper as TrendyolScraper
 from app.settings import Runtime
+from tests.support.fake_http import Recorder, Reply, page_client
 
 APP = Path(__file__).parents[1] / "app"
 TRENDYOL = "https://www.trendyol.com/"
@@ -61,19 +61,6 @@ class Session:
         pass
 
 
-class Reply:
-    """Sahte yanıt. Başlık anahtarı küçük harftir: http.py "location" okur."""
-
-    def __init__(self, status=200, content=b"{}", location=None):
-        self.status_code = status
-        self.content = content
-        self.headers = {} if location is None else {"location": location}
-
-    def iter_chunks(self):
-        for offset in range(0, len(self.content), 16384):
-            yield self.content[offset : offset + 16384]
-
-
 class ChunkedReply:
     def __init__(self, chunks, status=200, location=None):
         self.chunks = chunks
@@ -89,42 +76,6 @@ class ChunkedReply:
         for chunk in self.chunks:
             self.delivered += 1
             yield chunk
-
-
-class Recorder:
-    """Verilen yanıtları sırayla döndürür (istisnayı fırlatır), çağrıları kaydeder."""
-
-    def __init__(self, *replies):
-        self.replies = list(replies)
-        self.calls = []
-        self.closed = False
-
-    def request(self, method, url, **kwargs):
-        self.calls.append((method, url, kwargs))
-        reply = self.replies.pop(0)
-        if isinstance(reply, Exception):
-            raise reply
-        callback = kwargs.get("content_callback")
-        if callback is not None:
-            for chunk in reply.iter_chunks():
-                if isinstance(chunk, Exception):
-                    raise chunk
-                if callback(chunk) == CURL_WRITEFUNC_ERROR:
-                    raise RequestException("Yanıt aktarımı durduruldu", response=reply)
-        return reply
-
-    def close(self):
-        self.closed = True
-
-
-def page_client(session, request_budget=None, **runtime):
-    settings = {"request_interval_seconds": 0, **runtime}
-    return PageClient(
-        ["www.trendyol.com"],
-        Runtime(**settings),
-        client=session,
-        request_budget=request_budget,
-    )
 
 
 def call(pages, method, url=TRENDYOL):

@@ -9,10 +9,10 @@ Testler gerçek PostgreSQL test veritabanında küçük bir dünyayla çalışı
 from datetime import datetime, timedelta, timezone
 
 import pytest
-from psycopg import sql
 from psycopg.rows import dict_row
 
 from app.database.migrate import migrate
+from tests.support.database import insert
 
 START = datetime(2026, 10, 1, 7, 0, tzinfo=timezone.utc)
 PAGES = {1: ["trendyol_a", "trendyol_b", "trendyol_c"], 2: ["trendyol_d"]}
@@ -27,15 +27,6 @@ RESULT_FIELDS = {
     "error": {"outcome": "error", "error_code": "network"},
     "planned": {},
 }
-
-
-def insert(conn, table, **values):
-    query = sql.SQL("INSERT INTO {} ({}) VALUES ({})").format(
-        sql.Identifier(table),
-        sql.SQL(", ").join(map(sql.Identifier, values)),
-        sql.SQL(", ").join(sql.Placeholder() * len(values)),
-    )
-    conn.execute(query, list(values.values()))
 
 
 @pytest.fixture

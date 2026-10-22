@@ -24,7 +24,7 @@ from app.ui.presentation import (
     price_chart,
     reason_text,
 )
-from ui_samples import (
+from tests.support.ui_samples import (
     AT,
     PRODUCTS,
     SCENARIOS,

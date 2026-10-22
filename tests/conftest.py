@@ -21,6 +21,10 @@ from curl_cffi import requests as curl_requests
 from app.database.connection import connect
 from app.database.migrate import migrate
 
+# Ortak yardımcılardaki `assert`'ler de test dosyalarındaki gibi ayrıntılı
+# hata mesajı versin; kayıt, modüller içe aktarılmadan önce yapılmalı.
+pytest.register_assert_rewrite("tests.support")
+
 # Advisory kilit numaraları veritabanında ortaktır: migrate.py (_LOCK_ID
 # 2026_0928) ve runs.py (_RUN_LOCK_ID 2026_0929) ile aynı olmamalı; testler
 # kendi bağlantılarında o kilitleri alırken bu kilit tutuluyor.
@@ -105,6 +109,12 @@ def db():
         yield conn
     finally:
         conn.close()
+
+
+@pytest.fixture
+def migrated(db):
+    migrate(db)
+    return db
 
 
 @pytest.fixture

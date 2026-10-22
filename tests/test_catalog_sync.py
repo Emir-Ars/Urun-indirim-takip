@@ -15,7 +15,6 @@ from app.database.catalog_sync import (
     read_catalog,
     sync_catalog,
 )
-from app.database.migrate import migrate
 
 FIXTURE = Path(__file__).parent / "fixtures" / "discovery" / "catalog.json"
 PLATFORM = {
@@ -231,12 +230,6 @@ def test_catalog_checksum_ignores_line_endings(tmp_path):
 
 
 # --- sync_catalog: gerçek veritabanı ---------------------------------------------
-
-
-@pytest.fixture
-def migrated(db):
-    migrate(db)
-    return db
 
 
 def test_fixture_catalog_is_synced_once(migrated):
