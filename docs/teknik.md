@@ -1365,8 +1365,8 @@ kodunda doğrulandı). Alım aynı kuralı uygular:
 yoksa mevcut API fiyatları korunur; bozuk teklif geçerli fiyat sayılmaz.
 `history_in_kurus`, bütün ham API fiyatlarını önce doğrular; ardından yalnız
 son noktada geçerli ilk teklif fiyatını kullanır ve bütün ortak tablo günlerini
-yeniden birebir karşılaştırır. Diğer günler, sıfır/eksik değer ve eski TL
-araştırma sözleşmesi korunur. Bugünün ham API fiyatı sıfır/null ise ilk
+yeniden birebir karşılaştırır. Diğer günler ile sıfır/eksik değer kuralı
+korunur (grafikteki sayısal sıfır eksik sayılır, tabloyla çelişirse ret). Bugünün ham API fiyatı sıfır/null ise ilk
 teklifle doldurulmaz; doğrulanmamış bu birleşim `parse` olarak kalır.
 
 Alım, HTML isteğinden önce `page_started_at_utc`, API yanıtından sonra

@@ -17,7 +17,6 @@ from app.market_history.capture import Mapping, MappingEntry, capture, read_mapp
 from app.market_history.cimri import (
     CIMRI_API_URL,
     CIMRI_HOSTS,
-    cimri_history,
     history_in_kurus,
     verified_page,
 )
@@ -214,15 +213,6 @@ def test_graph_zero_with_table_price_is_rejected(table_price):
             SAMPLES[0]["cimri_product_id"],
             [{"date": "29/09/2026", "minPrice": table_price}],
         )
-    assert error.value.code == "parse"
-
-
-@pytest.mark.parametrize("price", [0, 0.0])
-def test_legacy_history_keeps_zero_rejection(price):
-    _, response = source_pair()
-    response["data"]["priceHistoryV2"]["prices"][0] = price
-    with pytest.raises(FetchError) as error:
-        cimri_history(response, SAMPLES[0]["cimri_product_id"], [])
     assert error.value.code == "parse"
 
 
@@ -998,17 +988,3 @@ def test_cli_latest_table_gap_is_reported_and_lock_is_released(
     assert created[0].closed
     with scrape_lock(lock_path):
         pass
-
-
-def test_legacy_tl_history_does_not_apply_frontend_adjustment():
-    sample = next(
-        s
-        for s in FRONTEND_SAMPLES
-        if s["product_key"] == "apple_iphone_16_pro_max_512gb"
-    )
-    with pytest.raises(FetchError, match="tablo ve grafik"):
-        cimri_history(
-            sample["response"],
-            sample["mapping"]["cimri_product_id"],
-            sample["page"]["priceHistoryTablePrices"],
-        )

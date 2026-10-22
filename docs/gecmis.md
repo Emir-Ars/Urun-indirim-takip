@@ -103,7 +103,8 @@ Bu dosyanın kendi güncellemesi bir sonraki adımın commit'ine girer.
 | 22.10 | `50c1721` | Adım 3.4: AppTest süre sınırı 30 sn; iki zaman aşımı testi 5 sn beklemeden; Cimri testleri canlı katalog yerine sabit ürün kopyasıyla | [39740220867](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/39740220867) |
 | 22.10 | `158eade` | Adım 3.5: kalan kısa biçimli testler arası içe aktarmalar (5 dosya) kaldırıldı; `world`/`client`/`stub` fixture'ları `tests/support/` altında `pytest_plugins` ile; koruma testi eklendi | [39743212204](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/39743212204) |
 | 22.10 | `1b9e937` | Adım 4.1: keşfin iki katalog/rapor yazıcısı tek yazıcıda birleşti (çıktı bayt bayt aynı) | [39750026839](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/39750026839) |
-| 22.10 | (bekliyor) | Adım 4.2: tur ve keşfin zamanlanmış çalışma kopyası `app/console.py` `run_logged` yardımcısında toplandı; komutlar ve log içeriği aynı | — |
+| 22.10 | `764b5f3` | Adım 4.2: tur ve keşfin zamanlanmış çalışma kopyası `app/console.py` `run_logged` yardımcısında toplandı; komutlar ve log içeriği aynı | [39760818472](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/39760818472) |
+| 22.10 | (bekliyor) | Adım 4.3: Cimri kodunun kullanılmayan eski yolları (`cimri_page_data`, sıfırı ret eden TL modu) ve 3 eski test kaldırıldı; 151 kayıtlı/bozuk örneğin dönüşümü birebir aynı | — |
 
 ## Eylül 2026 ayrıntıları
 

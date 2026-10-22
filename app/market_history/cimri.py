@@ -101,13 +101,6 @@ def _page_data(soup: BeautifulSoup) -> dict:
     return data
 
 
-def cimri_page_data(html: str) -> tuple[str, list]:
-    data = _page_data(BeautifulSoup(html, "html.parser"))
-    return _cimri_product_id(data["product"]["id"]), data.get(
-        "priceHistoryTablePrices", []
-    )
-
-
 def verified_page(html: str, product, expected_id: str) -> tuple[dict, list]:
     soup = BeautifulSoup(html, "html.parser")
     data = _page_data(soup)
@@ -140,9 +133,7 @@ def verified_page(html: str, product, expected_id: str) -> tuple[dict, list]:
     }, data.get("priceHistoryTablePrices", [])
 
 
-def cimri_history(
-    response: dict, product_id: str, table_rows: list, *, zero_as_missing: bool = False
-) -> dict:
+def cimri_history(response: dict, product_id: str) -> dict:
     try:
         history = response["data"]["priceHistoryV2"]
         response_id = _cimri_product_id(history["productId"])
@@ -161,9 +152,10 @@ def cimri_history(
             day = last_day - timedelta(days=offset)
         except OverflowError as exc:
             raise FetchError("parse", "Cimri tarih dizisi geçersiz") from exc
+        # Grafikteki sayısal sıfır o gün fiyat olmadığı anlamına gelir; aynı gün
+        # tabloda fiyat varsa history_in_kurus'taki karşılaştırma reddeder.
         if (
-            zero_as_missing
-            and isinstance(raw_price, (int, float))
+            isinstance(raw_price, (int, float))
             and not isinstance(raw_price, bool)
             and raw_price == 0
         ):
@@ -172,7 +164,6 @@ def cimri_history(
             _cimri_price(raw_price)
         points.append({"day": day.isoformat(), "price_tl": raw_price})
     points.reverse()
-    compared = _compare_table(points, table_rows)
 
     return {
         "summary": {
@@ -181,8 +172,10 @@ def cimri_history(
             "newest_day": points[-1]["day"],
             "point_count": len(points),
             "missing_price_count": sum(p["price_tl"] is None for p in points),
-            "table_compared_rows": compared,
-            "table_comparison": "matched" if compared else "unavailable",
+            # Tablo karşılaştırmasını history_in_kurus yapıp bu iki alanı doldurur;
+            # yerleri rapordaki alan sırasını korur.
+            "table_compared_rows": 0,
+            "table_comparison": "unavailable",
             "interpretation": "Tekrarlanan fiyatlar ayrı günlük gözlemleri kanıtlamaz.",
         },
         "points": points,
@@ -218,7 +211,7 @@ def history_in_kurus(
     page_started_at_utc: str | None = None,
     captured_at_utc: str | None = None,
 ) -> dict:
-    history = cimri_history(response, product_id, [], zero_as_missing=True)
+    history = cimri_history(response, product_id)
     points = [
         {
             "day": point["day"],
