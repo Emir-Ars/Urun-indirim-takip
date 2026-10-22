@@ -27,13 +27,11 @@ hatasında katalog değişmiş olabilir ve kalıcı hazırlık kaydı uzlaştır
 import argparse
 import json
 import sys
-import traceback
-from datetime import datetime
 from pathlib import Path
 
 from pydantic import ValidationError
 
-from app.console import open_log, tee_output, utf8_output
+from app.console import run_logged, utf8_output
 from app.contracts import DiscoveryReport
 from app.discovery.service import (
     DEFAULT_REPORT_PATH,
@@ -83,27 +81,16 @@ def main(argv=None):
     if not args.scheduled:
         return scan(args.dry_run, args.target)
     settings = Settings()
-    try:
-        log = open_log(settings.log_dir, "kesif")
-    except OSError as exc:
-        print(f"Log dosyası açılamadı: {exc}", file=sys.stderr)
-        return 1
-    with log, tee_output(log):
-        mode = "önizleme" if args.dry_run else "otomatik kabul"
-        print(
-            f"Zamanlanmış keşif ({mode}) · {datetime.now():%Y-%m-%d %H:%M:%S} "
-            "(yerel saat)"
-        )
+    mode = "önizleme" if args.dry_run else "otomatik kabul"
+
+    def scheduled_scan(log):
         # Rapor, logla aynı zaman damgasını taşır: ikisi birlikte aranır.
-        report_path = settings.discovery_report_dir / f"{Path(log.name).stem}.json"
-        try:
-            code = scan(args.dry_run, args.target, report_path, print_json=False)
-        except Exception:
-            # Program hatası: ayrıntısı ekransız çalışmada da kaybolmasın.
-            traceback.print_exc()
-            code = 1
-        print(f"Çıkış kodu: {code}")
-        return code
+        report_path = settings.discovery_report_dir / f"{log.stem}.json"
+        return scan(args.dry_run, args.target, report_path, print_json=False)
+
+    return run_logged(
+        settings.log_dir, "kesif", f"Zamanlanmış keşif ({mode})", scheduled_scan
+    )
 
 
 def scan(dry_run, target_key, report_path=None, print_json=True):

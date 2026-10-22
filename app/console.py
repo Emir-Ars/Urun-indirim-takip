@@ -7,6 +7,7 @@ zamanlanmış keşif) çıktısını bir log dosyasına da yazar; ekran akışla
 
 import contextlib
 import sys
+import traceback
 from datetime import datetime
 from pathlib import Path
 
@@ -55,3 +56,26 @@ def tee_output(log):
         yield
     finally:
         sys.stdout, sys.stderr = saved
+
+
+def run_logged(log_dir: Path, prefix: str, title: str, work) -> int:
+    """Zamanlanmış komutu log dosyasıyla çalıştırır ve çıkış kodunu döndürür.
+
+    Ekransız çalışmanın tek yazılı kaydı log olduğu için log açılamazsa iş hiç
+    başlamaz (1). `work` açılan log dosyasının yolunu alır ve çıkış kodu döndürür.
+    """
+    try:
+        log = open_log(log_dir, prefix)
+    except OSError as exc:
+        print(f"Log dosyası açılamadı: {exc}", file=sys.stderr)
+        return 1
+    with log, tee_output(log):
+        print(f"{title} · {datetime.now():%Y-%m-%d %H:%M:%S} (yerel saat)")
+        try:
+            code = work(Path(log.name))
+        except Exception:
+            # Program hatası: ayrıntısı ekransız çalışmada da kaybolmasın.
+            traceback.print_exc()
+            code = 1
+        print(f"Çıkış kodu: {code}")
+        return code

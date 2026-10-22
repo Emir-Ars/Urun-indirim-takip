@@ -16,14 +16,12 @@ Zamanlayıcı'da yalnız "son sonuç 0x1" görünür.
 
 import argparse
 import sys
-import traceback
-from datetime import datetime
 
 import psycopg
 from pydantic import ValidationError
 
 from app.collection.service import CollectionError, RunInProgress, collect
-from app.console import open_log, tee_output, utf8_output
+from app.console import run_logged, utf8_output
 from app.database.catalog_sync import CatalogConflict
 from app.database.connection import connect, database_url
 from app.database.migrate import MigrationError
@@ -54,21 +52,9 @@ def main(argv=None) -> int:
     settings = Settings()
     if not args.scheduled:
         return run(args, settings)
-    try:
-        log = open_log(settings.log_dir, "tur")
-    except OSError as exc:
-        print(f"Log dosyası açılamadı: {exc}", file=sys.stderr)
-        return 1
-    with log, tee_output(log):
-        print(f"Zamanlanmış tur · {datetime.now():%Y-%m-%d %H:%M:%S} (yerel saat)")
-        try:
-            code = run(args, settings)
-        except Exception:
-            # Program hatası: ayrıntısı ekransız çalışmada da kaybolmasın.
-            traceback.print_exc()
-            code = 1
-        print(f"Çıkış kodu: {code}")
-        return code
+    return run_logged(
+        settings.log_dir, "tur", "Zamanlanmış tur", lambda log: run(args, settings)
+    )
 
 
 def run(args, settings: Settings) -> int:
