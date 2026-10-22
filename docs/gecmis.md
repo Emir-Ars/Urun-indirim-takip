@@ -106,7 +106,7 @@ Bu dosyanın kendi güncellemesi bir sonraki adımın commit'ine girer.
 | 22.10 | `764b5f3` | Adım 4.2: tur ve keşfin zamanlanmış çalışma kopyası `app/console.py` `run_logged` yardımcısında toplandı; komutlar ve log içeriği aynı | [39760818472](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/39760818472) |
 | 22.10 | `7a5ff8f` | Adım 4.3: Cimri kodunun kullanılmayan eski yolları (`cimri_page_data`, sıfırı ret eden TL modu) ve 3 eski test kaldırıldı; 151 kayıtlı/bozuk örneğin dönüşümü birebir aynı | [39762305991](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/39762305991) |
 | 22.10 | `cc3ec2d` | Adım 3.4 düzeltmesi: zaman aşımı testi havuzun ilk bağlantısını bekliyor (havuz büyüyüp bağlantıları sırayla verince test aralıklı düşüyordu) | [39768770708](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/39768770708) |
-| 22.10 | (bekliyor) | Adım 5.1: otomatik kabulde Trendyol rengi renk seçicisindeki ad; 19 Ekim raporundaki 44 yanlış `color_mismatch` kalktı, diğer 451 karar değişmedi; 7 gerçek örnekle regresyon testi | — |
+| 22.10 | `7ca9be1` | Adım 5.1: otomatik kabulde Trendyol rengi renk seçicisindeki ad; 19 Ekim raporundaki 44 yanlış `color_mismatch` kalktı, diğer 451 karar değişmedi; 7 gerçek örnekle regresyon testi | [39769099983](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/39769099983) |
 
 ## Eylül 2026 ayrıntıları
 

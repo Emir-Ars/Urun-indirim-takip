@@ -180,7 +180,7 @@ Test sayıları burada tutulmaz; güncel sayı `pytest -q` çıktısındadır.
 | `tests/test_market_history.py`, `tests/test_market_history_import.py` | Cimri alımı ve aktarımı: kimlik, tarih/fiyat/eksik veri, ham kanıt ve parmak izi, istek bütçesi, kilit, ilk/tekrar aktarım, çelişki, READ ONLY önizleme, kesinti. |
 | `tests/fixtures/` | Gerçek kaynaklardan küçültülmüş örnekler (kaynak yolu ve SHA-256 ile), kataloğun sabit kopyası (`discovery/catalog.json`) ve Cimri örneklerindeki 57 ürünün sabit kopyası (`cimri_catalog_products.json`). Testler `data/` veya ağa bağlı değildir; sonuçları canlı `config/catalog.json` içeriğine bağlı değildir. İstisna, gerçek dosyaları bilerek denetleyen üç test: `test_real_config_files_match_contracts` (keşif ayarı ve katalog sözleşmeye uyar), `test_config_mapping_uses_existing_catalog_and_recorded_source_ids` (Cimri eşleştirmesi gerçek katalogdaki etkin ürünlere bağlı) ve `test_existing_catalog_keys_can_use_client_validation` (her gerçek ürün anahtarı ekran istemcisinin anahtar kuralından geçer). ML veri denetimi testleri dosyayı yalnız SHA-256 parmak izi için okur. |
 | `.github/workflows/ci.yml` | Her push/pull request'te geçici PostgreSQL 17 (`C.UTF-8`) açar, `dev,web` bağımlılıklarını kurar; yalnız `_test` DB'de API rolünü hazırlar ve Black/Flake8/tam testleri çalıştırır. `ci_only` şifresi yalnız o işte açılıp silinen sunucunundur. |
-| `.github/workflows/bulut-deneme.yml` | Elle tetiklenen bulut erişim denemesi (zamanlama, veritabanı ve gizli anahtar yok): `tools/live_scraper_check.py samsung_galaxy_a55_128gb` ile 4 sayfayı GitHub'ın makinesinden okur. Sonuç "Bilinen sınırlar"dadır. Tur saatlerinde (10:00–10:40, 22:00–22:40) tetiklenmez: `data/scrape.lock` bu makineye özgüdür. |
+| `.github/workflows/bulut-deneme.yml` | Elle tetiklenen bulut erişim denemesi (zamanlama, veritabanı ve gizli anahtar yok): `tools/live_scraper_check.py samsung_galaxy_a55_128gb` ile 4 sayfayı GitHub'ın makinesinden okur; ardından iki Trendyol sayfası için gelen sayfanın kısa özetini (boyut, dil, başlık, veri blokları, koruma izleri, çerez adları) yazar. Sonuç "Bilinen sınırlar"dadır. Tur saatlerinde (10:00–10:40, 22:00–22:40) tetiklenmez: `data/scrape.lock` bu makineye özgüdür. |
 
 ### Canlı kontrol ve denetim araçları: `tools/`
 
@@ -2216,11 +2216,12 @@ Mevcut Cimri serisinin eski kalması ve ML kullanım belirsizliği ayrıca göst
 - `exclude_terms` ve `network` keşif anında uygulanır; hedefe sonradan
   eklenirse daha önce kataloğa girmiş sayfalar kendiliğinden çıkarılmaz.
 - **Bulutta çalıştırma:** GitHub'ın bulut makinelerinden Hepsiburada bilgisayardakiyle
-  aynı okundu, ama Trendyol HTTP 403 verdi (6 Ekim, tek örnek). Bilgisayardaki
-  turlarda Trendyol hiç engellenmedi. 403 `blocked` sayılır ve engel aşılmaz (vekil
-  sunucu, adres döndürme, tarayıcı taklidi yok); bu yüzden toplamanın GitHub'ın
-  makinelerine taşınması şimdilik uygun görünmüyor. Karar:
-  [proje_plani.md](../proje_plani.md).
+  aynı okundu, ama Trendyol iki denemede de okunamadı: 6 Ekim'de HTTP 403, 22
+  Ekim'de ürün verisi (`__envoy__SHARED_PROPS`) olmayan bir sayfa (`parse`,
+  "Trendyol ürün durum verisi bulunamadı"). Aynı iki sayfa 22 Ekim sabahki turda
+  evden sorunsuz okunmuştu; bilgisayardaki turlarda Trendyol hiç engellenmedi.
+  Engel aşılmaz (vekil sunucu, adres döndürme, tarayıcı taklidi yok); toplama
+  GitHub'ın makinelerine taşınmaz. Karar: [proje_plani.md](../proje_plani.md).
 - Arka arkaya çok tarama Trendyol'da geçici engele yol açabilir (25 Eylül'de
   yarım saatte 7 tarama sonrası 10 dakika engel). Günlük fiyat toplama bu
   yoğunlukta değildir; keşif seyrek çalışır.

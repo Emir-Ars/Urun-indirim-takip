@@ -2,7 +2,8 @@ name: Bulut deneme (canlı okuma)
 
 # Elle tetiklenir: GitHub -> Actions -> "Bulut deneme (canlı okuma)" -> Run workflow.
 # Soru: Trendyol ve Hepsiburada, GitHub'ın bulut makinelerinin adreslerinden
-# okunabiliyor mu? Bir deneme olduğu için zamanlama (cron) bilerek yoktur; veritabanı
+# okunabiliyor mu? Okunamıyorsa Trendyol'un ne gönderdiği son adımda özetlenir.
+# Bir deneme olduğu için zamanlama (cron) bilerek yoktur; veritabanı
 # ve gizli anahtar kullanılmaz, katalog ve repo değişmez, yalnız okunur ve ekrana
 # yazılır. Kilit bu makineye özgüdür: bilgisayardaki tur (10:00-10:40, 22:00-22:40)
 # sürerken tetiklenirse aynı siteye iki yerden gidilir; o saatlerden kaçının.
@@ -74,4 +75,92 @@ jobs:
                   "ölçeğinde engel olup olmadığını göstermez.\n"
               )
           sys.exit(0 if basarili else 1)
+          PY
+      # Trendyol buluttan okunamadığında gelen sayfanın ne olduğunu gösterir: koruma
+      # sayfası mı, başka ülke/dil sürümü mü, yoksa yeni bir sayfa biçimi mi. Sayfanın
+      # tamamı değil kısa özeti yazılır; çerezlerin yalnız adları (değerleri değil).
+      # Koruma izleri listesindeki kelimeler gerçek Trendyol ürün sayfalarında geçmez.
+      - name: Trendyol sayfa teşhisi
+        if: ${{ !cancelled() }}
+        run: |
+          python - <<'PY'
+          import os
+          import re
+          import time
+
+          from bs4 import BeautifulSoup
+
+          from app.collection.service import plan_listings
+          from app.contracts import Catalog
+          from app.scraper.http import FetchError, PageClient
+          from app.settings import Settings
+
+          KORUMA_IZLERI = (
+              "captcha",
+              "challenge",
+              "cf-chl",
+              "_abck",
+              "perimeterx",
+              "access denied",
+              "verify you are human",
+              "robot olmad",
+          )
+
+
+          def sayfa_ozeti(html):
+              soup = BeautifulSoup(html, "html.parser")
+              kucuk = html.lower()
+              bloklar = list(
+                  dict.fromkeys(
+                      re.findall(
+                          r"window(?:\[\s*['\"]([^'\"]+)['\"]\s*\]|\.([A-Za-z_$][\w$]*))\s*=",
+                          html,
+                      )
+                  )
+              )
+              bloklar = [ad1 or ad2 for ad1, ad2 in bloklar]
+              kanonik = soup.find("link", rel="canonical")
+              for etiket in soup(["script", "style", "noscript"]):
+                  etiket.decompose()
+              metin = " ".join(soup.get_text(" ", strip=True).split())
+              return [
+                  f"  boyut: {len(html.encode('utf-8')) // 1024} KB",
+                  f"  dil: {(soup.html.get('lang') if soup.html else None) or '-'}",
+                  f"  başlık: {soup.title.get_text(strip=True) if soup.title else '-'}",
+                  f"  kanonik adres: {kanonik.get('href') if kanonik else '-'}",
+                  f"  ürün veri bloğu (__envoy__SHARED_PROPS): "
+                  f"{'var' if '__envoy__SHARED_PROPS' in bloklar else 'YOK'}",
+                  f"  veri blokları ({len(bloklar)}): {', '.join(bloklar[:10]) or '-'}",
+                  f"  koruma izleri: "
+                  f"{', '.join(iz for iz in KORUMA_IZLERI if iz in kucuk) or '-'}",
+                  f"  görünen metin: {metin[:300] or '-'}",
+              ]
+
+
+          settings = Settings()
+          runtime = settings.runtime()
+          katalog = Catalog.model_validate_json(
+              settings.catalog_path.read_text(encoding="utf-8-sig")
+          )
+          platform = next(p for p in katalog.platforms if p.key == "trendyol")
+          istemci = PageClient(platform.hosts, runtime)
+          # İstek aralığı yalnız aynı süreç içinde korunur; önceki adım aynı siteye
+          # az önce gitti.
+          time.sleep(runtime.request_interval_seconds)
+          satirlar = []
+          for sayfa in plan_listings(katalog, "samsung_galaxy_a55_128gb"):
+              if sayfa.platform != "trendyol":
+                  continue
+              satirlar.append(f"{sayfa.listing_id} {sayfa.url}")
+              try:
+                  satirlar += sayfa_ozeti(istemci.get(sayfa.url))
+              except FetchError as hata:
+                  satirlar.append(f"  istek hatası: {hata.code}: {hata}")
+          cerezler = sorted(set(istemci.client.cookies.keys()))
+          satirlar.append(f"çerez adları: {', '.join(cerezler) or '-'}")
+          istemci.close()
+          metin = "\n".join(satirlar)
+          print(metin)
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as ozet:
+              ozet.write(f"## Trendyol sayfa teşhisi\n\n```\n{metin}\n```\n")
           PY
