@@ -29,6 +29,7 @@ from tests.support.ui_samples import (
     AT,
     PRODUCTS,
     SCENARIOS,
+    messages,
     preview_client,
     sample_history,
     sample_market,
@@ -86,14 +87,6 @@ def screen(monkeypatch):
     monkeypatch.setattr(api_client, "ApiClient", Client)
     app = AppTest.from_file(SCREEN, default_timeout=APP_TEST_TIMEOUT)
     return app, state
-
-
-def messages(app):
-    return "\n".join(
-        str(element.value)
-        for kind in ("caption", "text", "info", "warning", "error")
-        for element in app.get(kind)
-    )
 
 
 def chart_specs(app):

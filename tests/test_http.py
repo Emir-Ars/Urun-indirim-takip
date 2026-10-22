@@ -869,3 +869,44 @@ def test_local_api_http_exception_is_limited_to_one_module(
     else:
         with pytest.raises(AssertionError):
             test_app_does_not_import_other_http_libraries()
+
+
+# --- Mimari kural: test dosyaları birbirinden içe aktarma yapmaz -----------------
+
+
+def imported_test_modules(paths):
+    """Dosyalardaki, adı `test_` ile başlayan modül içe aktarmaları (dosya, modül)."""
+    for path in paths:
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                modules = [alias.name for alias in node.names]
+            elif isinstance(node, ast.ImportFrom):
+                modules = [node.module or ""]
+                if node.level or node.module == "tests":
+                    modules += [alias.name for alias in node.names]
+            else:
+                continue
+            for module in modules:
+                if any(part.startswith("test_") for part in module.split(".")):
+                    yield path, module
+
+
+def test_test_files_do_not_import_each_other(tmp_path):
+    # Ortak fixture ve yardımcılar tests/support/'tadır: bir test dosyasından kod
+    # almak, oradaki değişikliği adı geçmeyen testlere sessizce taşır.
+    samples = {
+        "short.py": "from test_api import client",
+        "package.py": "from tests.test_http import Reply",
+        "plain.py": "import test_ui",
+        "member.py": "from tests import test_collection",
+        "allowed.py": "from tests.support.fake_http import Reply\nimport conftest",
+    }
+    for name, source in samples.items():
+        (tmp_path / name).write_text(source, encoding="utf-8")
+    found = {path.name for path, _ in imported_test_modules(tmp_path.glob("*.py"))}
+    assert found == {"short.py", "package.py", "plain.py", "member.py"}
+
+    root = APP.parent
+    paths = sorted([*(root / "tests").rglob("*.py"), *(root / "tools").glob("*.py")])
+    assert list(imported_test_modules(paths)) == []

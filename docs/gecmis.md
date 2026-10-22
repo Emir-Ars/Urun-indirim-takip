@@ -100,7 +100,8 @@ Bu dosyanın kendi güncellemesi bir sonraki adımın commit'ine girer.
 | 20.10 | `df35c7d` | Adım 3.1: canlı kontrol ve denetim araçları `tools/` klasörüne taşındı; eski piyasa geçmişi araştırma aracı kaldırıldı | [39462078926](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/39462078926) |
 | 22.10 | `3b9e2e0` | Adım 3.2: ortak test yardımcıları `tests/support/` altında toplandı; `tests.test_…` biçimindeki testler arası içe aktarmalar ve `insert`/`migrated` kopyaları kaldırıldı (kısa `from test_…` biçimindekiler kaldı) | [39733231717](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/39733231717) |
 | 22.10 | `18c77e5` | Adım 3.3: `test_discovery.py` (3.176 satır) konularına göre beş dosyaya bölündü; ortak keşif örnekleri `tests/support/discovery.py`'de | [39735381454](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/39735381454) |
-| 22.10 | (bekliyor) | Adım 3.4: AppTest süre sınırı 30 sn; iki zaman aşımı testi 5 sn beklemeden; Cimri testleri canlı katalog yerine sabit ürün kopyasıyla | — |
+| 22.10 | `50c1721` | Adım 3.4: AppTest süre sınırı 30 sn; iki zaman aşımı testi 5 sn beklemeden; Cimri testleri canlı katalog yerine sabit ürün kopyasıyla | [39740220867](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/39740220867) |
+| 22.10 | (bekliyor) | Adım 3.5: kalan kısa biçimli testler arası içe aktarmalar (5 dosya) kaldırıldı; `world`/`client`/`stub` fixture'ları `tests/support/` altında `pytest_plugins` ile; koruma testi eklendi | — |
 
 ## Eylül 2026 ayrıntıları
 

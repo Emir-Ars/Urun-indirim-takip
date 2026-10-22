@@ -13,9 +13,7 @@ from pydantic import ValidationError
 
 from app.api.schemas import HealthResponse
 from app.ui.api_client import ApiClient, ApiClientError, _validate_target
-from test_api import stub as _stub
 
-stub = _stub
 ROOT = Path(__file__).resolve().parents[1]
 KEY = "apple_iphone_15_128gb"
 AT = "2026-10-09T15:00:00+03:00"
@@ -610,7 +608,7 @@ def test_client_reads_real_fastapi_routes_without_network(stub):
 def test_real_api_product_conversion_matches_shared_client_contract(stub, monkeypatch):
     from app.api.models import product_response
     from app.api import main
-    from test_price_statistics import CIMRI, START, run, snapshot
+    from tests.support.price_statistics import CIMRI, START, run, snapshot
 
     _, server = stub
     data = snapshot(

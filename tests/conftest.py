@@ -25,6 +25,10 @@ from app.database.migrate import migrate
 # hata mesajı versin; kayıt, modüller içe aktarılmadan önce yapılmalı.
 pytest.register_assert_rewrite("tests.support")
 
+# Birden fazla test dosyasının kullandığı fixture'lar (`world`, `client`, `stub`)
+# burada kaydedilir; testler onları içe aktarmadan adıyla kullanır.
+pytest_plugins = ["tests.support.read_world", "tests.support.api"]
+
 # Advisory kilit numaraları veritabanında ortaktır: migrate.py (_LOCK_ID
 # 2026_0928) ve runs.py (_RUN_LOCK_ID 2026_0929) ile aynı olmamalı; testler
 # kendi bağlantılarında o kilitleri alırken bu kilit tutuluyor.

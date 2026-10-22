@@ -9,13 +9,9 @@ from streamlit.testing.v1 import AppTest
 
 from app.ui import api_client
 from app.ui.api_client import ApiClient
-from tests.support.ui_samples import APP_TEST_TIMEOUT
-from test_api import client as _client, world as _world
-from test_database_read import KEY, START, add_market, add_run
-from test_ui import messages
+from tests.support.read_world import KEY, START, add_market, add_run
+from tests.support.ui_samples import APP_TEST_TIMEOUT, messages
 
-client = _client
-world = _world
 SCREEN = Path(__file__).resolve().parents[1] / "app/ui/main.py"
 
 

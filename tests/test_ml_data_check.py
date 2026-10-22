@@ -9,9 +9,8 @@ import psycopg
 import pytest
 
 from tools import ml_data_check as audit
-from test_database_read import world as _world, add_run, add_market, START
+from tests.support.read_world import START, add_market, add_run
 
-world = _world
 DAY = date(2026, 1, 1)
 
 

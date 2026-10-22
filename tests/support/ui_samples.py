@@ -405,3 +405,11 @@ def preview_client(scenario: str) -> ApiClient:
         return httpx.Response(200, json=snapshot.model_dump(mode="json"))
 
     return ApiClient(transport=httpx.MockTransport(respond))
+
+
+def messages(app):
+    return "\n".join(
+        str(element.value)
+        for kind in ("caption", "text", "info", "warning", "error")
+        for element in app.get(kind)
+    )
