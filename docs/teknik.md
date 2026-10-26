@@ -1141,6 +1141,23 @@ Sınırlar:
   uyanma anındaki sayfalar `network` hatası alabilir (tur 7: 1 sayfa, DNS
   çözülemedi); tur tamamlanır. Tur sonu ikinci okuma bu sayfaları yeniden dener;
   düzelmezlerse çıkış kodu 2 olur.
+- **Bu bilgisayarın güç ayarları:** dizüstünün uyku türü Modern Standby'dır;
+  ekran bir zamanlayıcıyla kapanınca (kilit ekranında 30 sn, aksi hâlde 10 dk)
+  bilgisayar da uykuya geçer ve tur durur. Kapak kapalı ve ekran kilitliyken
+  turların çalışması için prizdeyken (AC) kapak eylemi "hiçbir şey yapma",
+  uyku (`STANDBYIDLE`), ekran kapanma (`VIDEOIDLE`) ve kilit ekranında ekran
+  kapanma (`VIDEOCONLOCK`) süreleri 0 olmalıdır. ASUS Armoury Crate güç planını
+  kendiliğinden değiştirir (prizde "Performance", pilde "Silent"); bu yüzden
+  ayarlar üç planın (Dengeli, Silent, Performance) hepsine yazılır. Şarj
+  kablosunda temassızlık var (14 günde 52 kez 1–9 sn kesinti); kapak eylemi
+  pildeyken de "hiçbir şey yapma"dır, yoksa kısa bir kesinti kapağı kapalı
+  bilgisayarı uyutuyordu. Pildeki ekran ve uyku süreleri değişmedi (kilitliyken
+  30 sn, aksi hâlde 3–4 dk). Pilde uyuyan bilgisayar kablo dönünce kendiliğinden
+  uyanmaz; kilitliyken kısa kesintide uyuyup uyumadığı henüz sınanmadı. 22–23 Ekim:
+  ayar yalnız "Dengeli"deyken 22:00 turu kaçtı, telafi turu (tur 48) 22:52'de
+  başlayıp gece uykuda bekledi ve ertesi sabah 09:32'de bitti; üç plan
+  düzeltildikten sonra tur 49 kapak kapalıyken 10:00'da başladı ve sayfalar
+  arasında en uzun ara 42 sn oldu.
 
 ### Zamanlanmış keşif (Görev Zamanlayıcı)
 
@@ -2215,6 +2232,12 @@ Mevcut Cimri serisinin eski kalması ve ML kullanım belirsizliği ayrıca göst
   renk kaynağı gibi bir kural değişirse katalog yeniden kurulur.
 - `exclude_terms` ve `network` keşif anında uygulanır; hedefe sonradan
   eklenirse daha önce kataloğa girmiş sayfalar kendiliğinden çıkarılmaz.
+- **Sürekli işletim:** üç güç planının priz ayarları doğru olsa da bütün
+  turların zamanında başlaması henüz doğrulanmadı. 26 Ekim kontrolünde geciken
+  tur ve ayrı bir turda DNS/zaman aşımı hataları görüldü. Görev Zamanlayıcı
+  geçmişi kapalı olduğundan gecikmenin nedeni doğrulanamadı; yalnız geç
+  başlangıçtan uyku veya güç ayarı arızası sonucu çıkarılmaz. Güç ayarları ve
+  pilde çalışma riski için [zamanlanmış tur](#zamanlanmış-tur-görev-zamanlayıcı).
 - **Bulutta çalıştırma:** GitHub'ın bulut makinelerinden Hepsiburada bilgisayardakiyle
   aynı okundu, ama Trendyol üç denemede de okunamadı: 6 Ekim'de HTTP 403, 22
   Ekim'de önce ürün verisi (`__envoy__SHARED_PROPS`) olmayan bir sayfa (`parse`,

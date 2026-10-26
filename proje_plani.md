@@ -1,6 +1,6 @@
 # Akıllı Telefon İndirim Takip ve Tahmin Sistemi — Proje Planı
 
-Son güncelleme: 22 Ekim 2026.
+Son güncelleme: 26 Ekim 2026.
 
 Bu belge **kararların, aşama durumunun ve sıradaki işin** tek kaynağıdır ve
 kısa tutulur. Diğer bilgiler şuralardadır:
@@ -192,7 +192,7 @@ rehberde, o günkü tartışması arşivdedir.
 | 14 Ekim | Trendyol'da açık 5G model + açık 4G ürün özelliği → `identity`. | Gerçek örnek: 797850359. |
 | 14 Ekim | Yeni keşif adaylarını tek tek tarayıcıda doğrulatmak rutin iş değildir; yerine yeterli kanıta dayalı otomatik kabul gelir. Her commit/push için ayrı açık onay gerekir; genel gönderim yetkisi yoktur. | Elle kontrol gün sürüyordu; gönderim kontrolü kullanıcıda kalmalı. |
 | 16 Ekim | Başka modele dönen bağlantı (HBCV00008BCY51, S25 512 GB → S25+) pasife alınmak yerine katalogdan çıkarıldı; ürün ve geçmişi korunur. | Kullanıcı tercihi; kimlik bağı `retired_listing_bindings`'te korunuyor. |
-| 19 Ekim | Cimri'den yeni alım/aktarım yapılmadı; mevcut kayıtlar korunur. | Resmî belgelerde projeye uygun kullanım doğrulanamadı; iki ürünün doğru Cimri sayfası bulunamadı. |
+| 19 Ekim | Cimri'den yeni alım/aktarım yapılmadı; mevcut kayıtlar korunur. 23 Ekim kararıyla değişti. | Resmî belgelerde projeye uygun kullanım doğrulanamadı; iki ürünün doğru Cimri sayfası bulunamadı. |
 | 19 Ekim | Cimri geçmişi eksik diye ürün katalogdan çıkarılmaz; yeterli verisi olmayan ürün ileride ML tahmini dışında tutulur. | Kendi toplama verimiz ayrı değerlendirilir. |
 | 19 Ekim | ML örnek kuralları: ürün başına günde bir örnek; kendi verimizde başlangıç fiyatı 22:00 turunun ürün minimumu, gelecek gün sonucu iki turda gözlenen minimum; 30 gün geçmiş + 7 gün gelecek; hedef `100 × gelecek_minimum ≤ 95 × başlangıç`; eksik etiket NULL; zaman bölümleri %70/%15/%15. | Bakım 5 veri denetimi; API gösterge eşikleri ML şartı sayılmaz. |
 | 19 Ekim | 10:00 ve 22:00 turları korunur; sabah turunun katkısı veri birikince ölçülür. Tek tura geçiş ayrıca planlanır. | Sabah görülen düşük fiyat akşama kadar kaybolabilir; günlük örnek tek ölçüm gerektirmez. |
@@ -204,6 +204,7 @@ rehberde, o günkü tartışması arşivdedir.
 | 22 Ekim | Test dosyaları birbirinden içe aktarma yapmaz (bir test denetler); ortak fixture ve yardımcılar `tests/support/`'tadır. Yalnız `test_discovery.py` bölünür; tek konulu büyük dosyalar (toplama, Cimri, veritabanı) bölünmez. | Bölme, konu karışık olduğunda testi bulmayı kolaylaştırır; tek konulu dosyada yalnız dosya sayısını artırır. |
 | 22 Ekim | Sürekli işletim için GitHub Actions + bulut PostgreSQL yolu kullanıcı isteğiyle yeniden sınandı ve kapandı: Hepsiburada okundu, Trendyol okunmadı. Toplama GitHub'a taşınmaz; engel aşılmaz. | `bulut-deneme.yml`: ilk denemede ürün verisi olmayan sayfa, teşhisli denemede HTTP 403 ve Cloudflare çerezleri; aynı iki sayfa aynı sabah evden okunmuştu. Sorun okuma kodunda değil, erişim engelinde. |
 | 22 Ekim | Sürekli işletim: dizüstü sürekli açık kalır (prizde, oturum açık, ekran kilitli, kapak kapalı); prizdeyken kapak kapanınca uyumaz. Görevler ve 10:00/22:00 düzeni değişmez. | Trendyol yalnız ev internetinden okunuyor; kullanıcı yeni cihaz alamıyor, eski cihazı yok. Uyku ve hazırda bekletme prizde zaten kapalıydı. |
+| 23 Ekim | Cimri'den son bir defalık alım yapılır ve Cimri geçmişi ML eğitiminde kullanılır. Alım mevcut güvenli yolla (`python -m app.market_history capture`), kullanıcının terminalinden ve ayrı onayla, ML hazırlığına başlarken yapılır; sonrasında yalnız kendi verimiz birikir. Düzenli Cimri toplaması yine yoktur. | Kullanıcı kararı: proje yayınlanmayan bir staj projesi; Cimri'ye yazılan e-postaya yanıt gelmedi. Kullanım uygunluğu resmî olarak doğrulanmadı; bu bilinen sınır olarak kalır. |
 | 20 Ekim | Proje yapısı sadeleştirilecek (Bölüm 8). Plan, rehber ve kurallar yeniden düzenlenir; önceki "plan baştan yazılmaz" kuralı kaldırıldı, eski hâller arşivde. `app/market_history` kodu korunur; Git dışı inceleme kanıtları silinmeden proje dışına taşınır; renk kuralı Adım 5'te ele alınır. | Belgeler günlüğe dönmüştü (plan 374 KB, rehber 312 KB); karmaşa yönetimi zorlaştırıyordu. |
 
 ### Bilerek değiştirilmeyen davranışlar
@@ -259,11 +260,11 @@ Ayrıntı ve kanıtları: [teknik rehber, Bilinen sınırlar](docs/teknik.md#bil
 
 | Konu | Durum |
 |---|---|
-| Son bir Cimri alımı | Kullanıcı fikri (20 Ekim): örneğin 1 Kasım civarında son bir alım yapıp sonrasında yalnız kendi verimizle devam etmek. 19 Ekim incelemesinde kullanım uygunluğu doğrulanamadığı için **karar bekliyor**; yapılırsa ayrı onay ve mevcut güvenli aktarım yolu kullanılır. Son alım kendi serimizdeki boşlukları doldurmaz. |
-| Keşifteki eski kimlik kontrolü | Döndürdüğü aday hep atılıyor; ret gerekçesi ve Hepsiburada varyant taraması ona bağlı; ~80 test durumu atılan adayı sınıyor. Adım 5.2 olarak 25 Ekim keşfinden sonra ayrı planla ele alınacak (planlandı). |
+| Keşifteki eski kimlik kontrolü | Döndürdüğü aday hep atılıyor; ret gerekçesi ve Hepsiburada varyant taraması ona bağlı; ~80 test durumu atılan adayı sınıyor. 25 Ekim keşfi incelendi; Adım 5.2 için ayrı plan ve kullanıcı onayı bekleniyor, kod değişmedi. |
 | HBCV0000E8DHJL | Başlık/varyant 256 GB, ana ürün alanı 512 GB. Mevcut bağlantıya müdahale **karar bekliyor**. |
 | `hepsiburada_hbcv0000atwvmc` (Galaxy S25 256 GB) | Tur 43–47'de (20–22 Ekim) üst üste `identity`: sayfa adları yalnız "Samsung Galaxy" / "Samsung Galaxy S25", kapasite yok; tur 42'ye kadar 50.000 TL okunuyordu. Ürün diğer 13 sayfasıyla izleniyor (en ucuzu bu sayfa değildi). 25 Ekim keşif raporundaki kanıtla sayfanın tutulması/pasife alınması **karar bekliyor**. |
-| ML ayrıntıları | Özellikler, değerlendirme yöntemi, Cimri verisinin kullanılıp kullanılmayacağı ML aşamasında kararlaştırılacak. |
+| Sürekli işletimin doğrulanması | [Teknik rehberdeki işletim sınırı](docs/teknik.md#bilinen-sınırlar) kapanmadı; geciken turun nedeni açık. Güç ayarlarına yeni müdahale kararı verilmedi. |
+| ML ayrıntıları | Kullanıcı model eğitimi için ayrı bir araştırma yapacak; ML bu belgeye göre ilerler. Özellikler (ham fiyat mı göreli fiyat mı), değerlendirme yöntemi, Cimri ile kendi verimizin birlikte nasıl kullanılacağı ve örnek kurallarının (kapsam değişikliği, kusurlu gün) gevşetilip gevşetilmeyeceği ML aşamasında kararlaştırılacak. |
 
 ## 8. Sıradaki işler: proje yapısının sadeleştirilmesi (20 Ekim kararı)
 
@@ -280,17 +281,30 @@ Zamanlanmış görevlerin komutları (`-m app.collection`, `-m app.discovery`) d
 | 2. Yerel klasörler | Biten incelemelerin kanıtları (`artifacts/`, eski `data/` kayıtları, `.scratch/`) silinmeden `C:\Users\Emir\Desktop\Staj_arsiv\2026-10-20\` klasörüne taşındı: 82 kayıt, 12.038 dosya; boyut ve SHA-256 parmak izleri taşıma öncesi ve sonrası eşleşti (`MANIFEST.json`). Kodun kullandığı `data/logs`, `data/discovery` ve rapor dosyası yerinde. Codex'in kısıtlı ortamında oluşmuş, bu hesabın içeriğini okuyamadığı beş `artifacts/b3_*` test klasörü taşınamadı ve yerinde bırakıldı (silmek için yönetici izni gerekir). | ✅ Taşıma tamam (20 Ekim); belge notlarının gönderimi bekliyor |
 | 3. Test düzeni | 3.1 araçlar `tools/`'a; 3.2 ortak test yardımcıları `tests/support/`'a; 3.3 `test_discovery.py` konularına göre beş dosyaya bölünür (kimlik, Trendyol, Hepsiburada, katalog, çalıştırma); 3.4 Streamlit testlerindeki 3 sn süre ve gerçek 6 sn beklemeler düzeltilir, canlı kataloğu okuyan test sabit kopyaya bağlanır; 3.5 3.2'de gözden kaçan kısa biçimli (`from test_…`) testler arası içe aktarmalar kaldırılır ve bir testle korunur. Her alt adım ayrı commit. | ✅ Tamamlandı (22 Ekim) |
 | 4. Kod sadeleştirme | 4.1 keşfin iki katalog/rapor yazıcısı tek yazıcıda birleşir; 4.2 tur ve keşfin zamanlanmış çalışma kopyası (log, başlık, hata, çıkış kodu) `app/console.py`'de toplanır; 4.3 Cimri kodunun kullanılmayan eski yolları kaldırılır, alım ve aktarım korunur. Keşifteki eski kimlik kontrolü Adım 5'e taşındı; API kontrolü ve katalog okuma bilerek değiştirilmez (Bölüm 5). Her alt adım ayrı commit. | ✅ Tamamlandı (22 Ekim) |
-| 5. Renk kuralı | 5.1 Otomatik kabulde Trendyol rengi renk seçicisindeki addır; seçici adı varken satıcının "Renk"i ve JSON-LD rengi karşılaştırılmaz, kapasite yazan değer renk sayılmaz; gerçek sayfalardan regresyon testleri (19 Ekim raporu). 5.2 Aynı kabul kodundaki eski kimlik kontrolü: döndürdüğü aday hep atılır, ama ret gerekçesi rapora yazılır, Hepsiburada'da doğrulanmamış sayfanın varyant taramasını belirler ve ~80 test durumu atılan adayı sınar; 25 Ekim keşfinden sonra ayrı planla. Kimlik kuralı değiştiği için her biri ayrı plan onayı ister. | 🔄 5.1 tamamlandı (22 Ekim); 5.2 25 Ekim keşfinden sonra |
+| 5. Renk kuralı | 5.1 Otomatik kabulde Trendyol rengi renk seçicisindeki addır; seçici adı varken satıcının "Renk"i ve JSON-LD rengi karşılaştırılmaz, kapasite yazan değer renk sayılmaz; gerçek sayfalardan regresyon testleri (19 Ekim raporu). 5.2 Aynı kabul kodundaki eski kimlik kontrolü: döndürdüğü aday hep atılır, ama ret gerekçesi rapora yazılır, Hepsiburada'da doğrulanmamış sayfanın varyant taramasını belirler ve ~80 test durumu atılan adayı sınar; 25 Ekim keşfinden sonra ayrı planla. Kimlik kuralı değiştiği için her biri ayrı plan onayı ister. | 🔄 5.1 tamamlandı (22 Ekim); 25 Ekim keşfi incelendi, 5.2 plan/onay bekliyor |
 
-Sonra: güncel veri yeterliliği → ML hazırlığı (sürekli işletim kararı 22 Ekim'de verildi).
+Sonra (23 Ekim'de kararlaştırılan sıra; veri yeterliliği 23 Ekim'de ölçüldü, Bölüm 9):
+
+1. 25 Ekim keşif raporu, `hepsiburada_hbcv0000atwvmc` kararı ve Adım 5.2;
+   sadeleştirme kapanır.
+2. Ekran iyileştirmeleri (ML'den önce, her biri ayrı plan ve onayla):
+   fiyat değişmediğinde ekranda kırmızı "artış" oku görünmesin; ekrandaki
+   bağlantı ürün sayfası yerine en ucuz teklife gitsin. Trendyol'da satıcıya
+   özel adres sayfa verisinde var; Hepsiburada'da önce canlı bir örnekle
+   araştırılır. Adres yeni bir sütunda (yeni migration) saklanır; ML
+   çalışması sırasında şema değişmesin diye önce yapılır.
+3. Kullanıcının ML araştırma belgesi (paralel) → Cimri son alımı → ML
+   hazırlığı.
 
 ## 9. Sonraki aşamalar
 
 ### Sürekli işletim (Aşama 9'un ilk bölümü)
 
 Amaç, bilgisayarın uyuması veya kapanmasından doğan veri boşluklarını
-azaltmak. Karar (22 Ekim): dizüstü sürekli açık kalır; prizdeyken kapak
-kapanınca uyumaz. GitHub'ın makinelerinde Trendyol okunmadı (Bölüm 5), evde
+azaltmak. Karar (22 Ekim): dizüstü sürekli açık kalır; prizdeyken kapak,
+uyku ve ekran zamanlayıcıları uyku başlatmaz (üç ASUS güç planında; ayrıntı
+[teknik rehber](docs/teknik.md#zamanlanmış-tur-görev-zamanlayıcı), 23 Ekim'de
+kapak kapalıyken tur 49 ile doğrulandı). GitHub'ın makinelerinde Trendyol okunmadı (Bölüm 5), evde
 ayrı cihaz yok. Görevler ve 10:00/22:00 düzeni değişmez. Etkisi birkaç gün
 sonra turların zamanında başlayıp başlamadığıyla ölçülür. Docker Compose ile
 süreç, veri ve model kalıcılığı ayrıca değerlendirilir.
@@ -305,10 +319,13 @@ süreç, veri ve model kalıcılığı ayrıca değerlendirilir.
 - Kapsamı değişen pencereler eğitimde kullanılmaz; en az 30 günlük geçmiş veya
   doğrulanmış model yoksa olasılık gösterilmez. Zaman sıralı değerlendirme ve
   sabit referanstan iyi Brier skoru olmadan model yayımlanmaz.
-- Veri durumu (19 Ekim denetimi): kendi serimizde henüz kullanılabilir 30+7
-  pencere yok; mevcut kapsam sürerse ilk pencereler Kasım sonunda oluşur.
-  Cimri'de sayısal olarak 17.668 pencere var, ancak kullanım uygunluğu
-  doğrulanmadığı için eğitim başlatılmadı.
+- Veri durumu (23 Ekim denetimi, `tools/ml_data_check.py`): kendi serimizde
+  kullanılabilir 30+7 pencere yok; koşullu en erken denetim 29 Kasım. Bütün
+  ürünleri etkileyen kusurlu günler (17 Ekim: tur gece yarısını 5 dk geçti;
+  22 Ekim: tur 48 ertesi sabah bitti) ve keşfin eklediği sayfalar (18 ürün)
+  sayacı sıfırlıyor; 6 eski iPhone 16 günün hiçbirinde, 4'ü yarısından
+  fazlasında fiyatsız (stok yok). Cimri'de 57 ürün için 17.668 pencere (%10
+  olumlu); 23 Ekim kararıyla eğitimde kullanılacak.
 
 ## 10. Çalışma ve Git disiplini
 

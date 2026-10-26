@@ -121,7 +121,7 @@ canlı ağa çıkmaz; veritabanı testleri yalnız test veritabanını kullanır
 | FastAPI ve Streamlit ile verileri sunma ve görüntüleme | ✅ Tamamlandı |
 | ML öncesi bakım ve otomatik güvenli keşif kabulü | ✅ Tamamlandı |
 | Proje yapısının sadeleştirilmesi | 🔄 Sürüyor |
-| Sürekli çalışma ortamı (bilgisayar kapalıyken de toplama) | 🔜 ML eğitiminden önce planlanacak |
+| Sürekli çalışma ortamı | 🔄 Dizüstü sürekli açık kararı uygulandı; işletim doğrulaması sürüyor ([plan](proje_plani.md)) |
 | ML ile indirim olasılığı tahmini | 🔜 Sürekli işletim ve yeterli veri sonrasında |
 
 ## 📚 Belgeler
