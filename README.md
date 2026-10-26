@@ -86,26 +86,26 @@ başlatılması [teknik rehberde](docs/teknik.md#komutlar) anlatılır.
 
 ## 📊 Güncel kapsam
 
-20 Ekim 2026 itibarıyla:
+26 Ekim 2026 itibarıyla (katalog; test sonucu kendi tarihini taşır):
 
 | Alan | Durum |
 |---|---|
 | Fiyat kaynakları | Trendyol ve Hepsiburada |
 | Keşif hedefleri | 25 (24 etkin): Apple 9, Samsung 8, Xiaomi 6, POCO 2 |
-| Katalog | 60 ürün, 356 bağlantı (354 etkin); Hepsiburada 229, Trendyol 127 |
+| Katalog | 60 ürün, 369 bağlantı (366 etkin); Hepsiburada 234, Trendyol 135 |
 | Toplama düzeni | Her gün 10:00 ve 22:00; haftalık keşif Pazar 14:00 (otomatik güvenli kabul) |
 | Cimri geçmişi | 57 ürün, 20.805 tarihli kayıt (553 eksik fiyat); iki ürün eşleştirilemedi |
 | Otomatik testler | 1906 test, 0 atlanan; Black ve Flake8 temiz (22 Ekim) |
 
-Katalogdaki **356 bağlantının markalara göre dağılımı** (iki pasif bağlantı dahil):
+Katalogdaki **369 bağlantının markalara göre dağılımı** (üç pasif bağlantı dahil):
 
 ```mermaid
 pie showData
-    title Katalogdaki bağlantılar — 20 Ekim 2026
-    "Apple" : 176
-    "Samsung" : 109
-    "Xiaomi" : 67
-    "POCO" : 4
+    title Katalogdaki bağlantılar — 26 Ekim 2026
+    "Apple" : 177
+    "Samsung" : 115
+    "Xiaomi" : 72
+    "POCO" : 5
 ```
 
 Katalog pazaryerlerinin tamamını kapsamaz; Hepsiburada araması kısmi

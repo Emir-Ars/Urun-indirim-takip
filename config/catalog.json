@@ -1882,7 +1882,7 @@
       "platform": "hepsiburada",
       "url": "https://www.hepsiburada.com/samsung-galaxy-s25-p-HBCV0000ATWVMC",
       "color": "Gümüş",
-      "active": true
+      "active": false
     },
     {
       "listing_id": "trendyol_889950708",
@@ -3346,6 +3346,110 @@
       "platform": "hepsiburada",
       "url": "https://www.hepsiburada.com/xiaomi-redmi-note-14-pro-5g-12-512-gb-siyah-p-HBCV0000MGP8L9",
       "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv0000o4w353",
+      "product_id": 1,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-15-128gb-black-p-HBCV0000O4W353",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_794323021",
+      "product_id": 53,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/poco/x6-pro-5g-512gb-12gb-ram-siyah-cep-telefonu-turkiye-garantili-p-794323021",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_816445676",
+      "product_id": 44,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-a55-256-gb-siyah-cep-telefonu-samsung-turkiye-garantili-p-816445676",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_857140576",
+      "product_id": 60,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s24-fe-8-gb-ram-128-gb-grafit-p-857140576",
+      "color": "Grafit",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_1173057129",
+      "product_id": 37,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s24-ultra-12gb-256gb-akilli-cep-telefonu-ithalatci-garantili-p-1173057129",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_922444342",
+      "product_id": 37,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s24-ultra-5g-dual-sim-titanium-gray-12gb-ram-256gb-p-922444342",
+      "color": "Titanium Gray",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00005mll3v",
+      "product_id": 39,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s24-ultra-1-tb-12-gb-ram-samsung-turkiye-garantili-mor-p-HBCV00005MLL3V",
+      "color": "Mor",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_792557589",
+      "product_id": 39,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s24-ultra-1-tb-titanyum-mor-samsung-turkiye-garantili-p-792557589",
+      "color": "Mor",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_859623146",
+      "product_id": 48,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/xiaomi/14t-pro-512-gb-mavi-xiaomi-turkiye-garantili-p-859623146",
+      "color": "Mavi",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_864687923",
+      "product_id": 48,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/xiaomi/14t-pro-12-512-gb-akilli-telefon-titanyum-grisi-p-864687923",
+      "color": "Gri",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00007a36vo",
+      "product_id": 51,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/redmi-note-13-pro-5g-12gb-ram-256-gb-turkiye-garantili-p-HBCV00007A36VO",
+      "color": "Mavi",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv0000a1gtqo",
+      "product_id": 51,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/redmi-note-13-pro-5g-8gb-ram-256-gb-akilli-cep-telefonu-turkiye-garantili-p-HBCV0000A1GTQO",
+      "color": "Mor",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv0000af2ybs",
+      "product_id": 51,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/redmi-note-13-pro-5g-12-gb-ram-256-gb-beyaz-cep-telefonu-turkiye-garantili-p-HBCV0000AF2YBS",
+      "color": "Beyaz",
       "active": true
     }
   ]

@@ -205,6 +205,7 @@ rehberde, o günkü tartışması arşivdedir.
 | 22 Ekim | Sürekli işletim için GitHub Actions + bulut PostgreSQL yolu kullanıcı isteğiyle yeniden sınandı ve kapandı: Hepsiburada okundu, Trendyol okunmadı. Toplama GitHub'a taşınmaz; engel aşılmaz. | `bulut-deneme.yml`: ilk denemede ürün verisi olmayan sayfa, teşhisli denemede HTTP 403 ve Cloudflare çerezleri; aynı iki sayfa aynı sabah evden okunmuştu. Sorun okuma kodunda değil, erişim engelinde. |
 | 22 Ekim | Sürekli işletim: dizüstü sürekli açık kalır (prizde, oturum açık, ekran kilitli, kapak kapalı); prizdeyken kapak kapanınca uyumaz. Görevler ve 10:00/22:00 düzeni değişmez. | Trendyol yalnız ev internetinden okunuyor; kullanıcı yeni cihaz alamıyor, eski cihazı yok. Uyku ve hazırda bekletme prizde zaten kapalıydı. |
 | 23 Ekim | Cimri'den son bir defalık alım yapılır ve Cimri geçmişi ML eğitiminde kullanılır. Alım mevcut güvenli yolla (`python -m app.market_history capture`), kullanıcının terminalinden ve ayrı onayla, ML hazırlığına başlarken yapılır; sonrasında yalnız kendi verimiz birikir. Düzenli Cimri toplaması yine yoktur. | Kullanıcı kararı: proje yayınlanmayan bir staj projesi; Cimri'ye yazılan e-postaya yanıt gelmedi. Kullanım uygunluğu resmî olarak doğrulanmadı; bu bilinen sınır olarak kalır. |
+| 26 Ekim | Galaxy S25 256 GB'ın `hepsiburada_hbcv0000atwvmc` bağlantısı kullanıcı onayıyla pasife alındı; katalog kaydı ve geçmişi korunur. | Tur 43–54'te kapasite doğrulanamadı; kullanıcının ekran görüntüsünde satış kapalı ve görünen bölümde kapasite yok. Ürün diğer bağlantılarıyla izleniyor. |
 | 20 Ekim | Proje yapısı sadeleştirilecek (Bölüm 8). Plan, rehber ve kurallar yeniden düzenlenir; önceki "plan baştan yazılmaz" kuralı kaldırıldı, eski hâller arşivde. `app/market_history` kodu korunur; Git dışı inceleme kanıtları silinmeden proje dışına taşınır; renk kuralı Adım 5'te ele alınır. | Belgeler günlüğe dönmüştü (plan 374 KB, rehber 312 KB); karmaşa yönetimi zorlaştırıyordu. |
 
 ### Bilerek değiştirilmeyen davranışlar
@@ -262,7 +263,6 @@ Ayrıntı ve kanıtları: [teknik rehber, Bilinen sınırlar](docs/teknik.md#bil
 |---|---|
 | Keşifteki eski kimlik kontrolü | Döndürdüğü aday hep atılıyor; ret gerekçesi ve Hepsiburada varyant taraması ona bağlı; ~80 test durumu atılan adayı sınıyor. 25 Ekim keşfi incelendi; Adım 5.2 için ayrı plan ve kullanıcı onayı bekleniyor, kod değişmedi. |
 | HBCV0000E8DHJL | Başlık/varyant 256 GB, ana ürün alanı 512 GB. Mevcut bağlantıya müdahale **karar bekliyor**. |
-| `hepsiburada_hbcv0000atwvmc` (Galaxy S25 256 GB) | Tur 43–47'de (20–22 Ekim) üst üste `identity`: sayfa adları yalnız "Samsung Galaxy" / "Samsung Galaxy S25", kapasite yok; tur 42'ye kadar 50.000 TL okunuyordu. Ürün diğer 13 sayfasıyla izleniyor (en ucuzu bu sayfa değildi). 25 Ekim keşif raporundaki kanıtla sayfanın tutulması/pasife alınması **karar bekliyor**. |
 | Sürekli işletimin doğrulanması | [Teknik rehberdeki işletim sınırı](docs/teknik.md#bilinen-sınırlar) kapanmadı; geciken turun nedeni açık. Güç ayarlarına yeni müdahale kararı verilmedi. |
 | ML ayrıntıları | Kullanıcı model eğitimi için ayrı bir araştırma yapacak; ML bu belgeye göre ilerler. Özellikler (ham fiyat mı göreli fiyat mı), değerlendirme yöntemi, Cimri ile kendi verimizin birlikte nasıl kullanılacağı ve örnek kurallarının (kapsam değişikliği, kusurlu gün) gevşetilip gevşetilmeyeceği ML aşamasında kararlaştırılacak. |
 
@@ -285,8 +285,7 @@ Zamanlanmış görevlerin komutları (`-m app.collection`, `-m app.discovery`) d
 
 Sonra (23 Ekim'de kararlaştırılan sıra; veri yeterliliği 23 Ekim'de ölçüldü, Bölüm 9):
 
-1. 25 Ekim keşif raporu, `hepsiburada_hbcv0000atwvmc` kararı ve Adım 5.2;
-   sadeleştirme kapanır.
+1. Adım 5.2'nin ayrı plan ve onayla uygulanması; sadeleştirme kapanır.
 2. Ekran iyileştirmeleri (ML'den önce, her biri ayrı plan ve onayla):
    fiyat değişmediğinde ekranda kırmızı "artış" oku görünmesin; ekrandaki
    bağlantı ürün sayfası yerine en ucuz teklife gitsin. Trendyol'da satıcıya

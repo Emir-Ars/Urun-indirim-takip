@@ -109,6 +109,7 @@ Bu dosyanın kendi güncellemesi bir sonraki adımın commit'ine girer.
 | 22.10 | `7ca9be1` | Adım 5.1: otomatik kabulde Trendyol rengi renk seçicisindeki ad; 19 Ekim raporundaki 44 yanlış `color_mismatch` kalktı, diğer 451 karar değişmedi; 7 gerçek örnekle regresyon testi | [39769099983](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/39769099983) |
 | 22.10 | `b5bbb99` | Sürekli işletim: bulut denemesine Trendyol sayfa teşhisi; sonuç Trendyol'dan HTTP 403 ve Cloudflare çerezleri (GitHub yolu kapandı); karar: dizüstü sürekli açık, prizde kapak kapanınca uyumaz | [39779121760](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/39779121760) |
 | 22.10 | `1d82c9c` | Sürekli işletim kararını belgeledi: dizüstü sürekli açık, toplama evdeki bilgisayarda; buluta taşıma yolu kapandı | [39784217016](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/39784217016) |
+| 26.10 | `6dcef3b` | Sürekli işletim, Cimri/ML hazırlığı ve iş sırası belgelerini güncelle | [40282132834](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/40282132834) |
 
 ## Eylül 2026 ayrıntıları
 
