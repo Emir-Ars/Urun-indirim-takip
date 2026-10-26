@@ -18,10 +18,10 @@ import app.database.market_history as storage
 import app.market_history.__main__ as command
 import app.market_history.capture as captures
 import app.market_history.importer as reader
-from app.database.catalog_sync import sync_catalog
+from app.database.catalog_sync import read_catalog, sync_catalog
 from app.database.connection import connect
-from app.database.migrate import MIGRATIONS_DIR, MigrationError, migrate, pending
-from app.database.runs import try_lock_runs, unlock_runs
+from app.database.migrate import MIGRATIONS_DIR, MigrationError, migrate
+from app.database.runs import finish_run, start_run, try_lock_runs, unlock_runs
 from app.market_history.capture import Mapping, capture
 from app.market_history.importer import HistoryImportError, HistoryPoint, read_capture
 from app.scrape_lock import scrape_lock
@@ -763,9 +763,7 @@ def test_schema_accepts_null_bigint_and_rejects_duplicate(prepared):
     assert len(rows(conn)) == 2
 
 
-def test_migration_upgrade_keeps_existing_runs_and_comparability(
-    db, tmp_path, monkeypatch
-):
+def test_migration_upgrade_keeps_existing_runs_and_comparability(db, tmp_path):
     old_migrations = tmp_path / "old_migrations"
     old_migrations.mkdir()
     for path in MIGRATIONS_DIR.glob("00[123]_*.sql"):
@@ -795,16 +793,34 @@ def test_migration_upgrade_keeps_existing_runs_and_comparability(
             out=lambda line: None,
         )
 
-    with monkeypatch.context() as patch:
-        patch.setattr(collection, "pending", lambda conn: pending(conn, old_migrations))
-        first = collect()
-    before = run_snapshot(db, first.run_id)
+    # Yeni toplayıcı henüz olmayan offer_url sütununa yazar; eski turu eski
+    # şemanın alanlarıyla kurarak gerçek yükseltme öncesi kaydı temsil ederiz.
+    catalog, digest = read_catalog(catalog_path)
+    sync_catalog(db, catalog)
+    pages = db.execute(
+        "SELECT listing_id, product_id FROM listings WHERE active"
+    ).fetchall()
+    first_id = start_run(db, trigger="manual", catalog_sha256=digest, listings=pages)
+    db.execute(
+        "UPDATE listing_checks SET outcome='offer', checked_at=now(),"
+        " current_price=%s, seller_name=%s, stock_status=%s WHERE run_id=%s",
+        (OFFER["current_price"], OFFER["seller_name"], OFFER["stock_status"], first_id),
+    )
+    finish_run(db, first_id, "completed")
+    before = run_snapshot(db, first_id)
+
+    def assert_legacy_rows_unchanged():
+        run, checks = run_snapshot(db, first_id)
+        assert run == before[0]
+        assert [row[:-1] for row in checks] == before[1]
+        assert all(row[-1] is None for row in checks)
+
     view = db.execute(
         "SELECT * FROM product_run_prices ORDER BY product_id, run_id"
     ).fetchall()
-    assert [m.version for m in migrate(db)] == [4]
+    assert [m.version for m in migrate(db)] == [4, 5]
     assert migrate(db) == []
-    assert run_snapshot(db, first.run_id) == before
+    assert_legacy_rows_unchanged()
     assert (
         db.execute(
             "SELECT * FROM product_run_prices ORDER BY product_id, run_id"
@@ -812,8 +828,8 @@ def test_migration_upgrade_keeps_existing_runs_and_comparability(
         == view
     )
     second = collect()
-    assert not second.errors and second.run_id != first.run_id
-    assert run_snapshot(db, first.run_id) == before
+    assert not second.errors and second.run_id != first_id
+    assert_legacy_rows_unchanged()
 
 
 def test_pending_migration_prevents_import_without_writing(db, input_files, tmp_path):

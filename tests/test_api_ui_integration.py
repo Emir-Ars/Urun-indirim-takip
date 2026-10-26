@@ -9,10 +9,59 @@ from streamlit.testing.v1 import AppTest
 
 from app.ui import api_client
 from app.ui.api_client import ApiClient
-from tests.support.read_world import KEY, START, add_market, add_run
+from app.contracts import PriceObservation
+from app.collection.service import to_result
+from app.database import runs
+from tests.support.read_world import KEY, START, add_market, add_run, close_run
 from tests.support.ui_samples import APP_TEST_TIMEOUT, messages
 
 SCREEN = Path(__file__).resolve().parents[1] / "app/ui/main.py"
+
+
+def test_selected_link_survives_collection_database_api_and_screen(
+    world, integrated_screen, client
+):
+    add_run(world, START, {"a": ("offer", 30000)})
+    app, _, _ = integrated_screen
+    app.run()
+    assert app.get("link_button")[0].proto.label == "Ürün sayfasını aç"
+    run_id = add_run(
+        world,
+        START + timedelta(hours=12),
+        {"a": "planned", "b": "planned"},
+        status="running",
+    )
+    urls = {}
+    for page, price, merchant in [("a", 20000, 9), ("b", 10000, 11)]:
+        product_url = f"https://www.trendyol.com/phone-p-{merchant}"
+        urls[page] = product_url + f"?merchantId={merchant}"
+        world.execute(
+            "UPDATE listings SET url=%s WHERE listing_id=%s", (product_url, page)
+        )
+        observation = PriceObservation(
+            listing_id=page,
+            product_id=1,
+            platform="trendyol",
+            product_name="Apple iPhone 15 128 GB",
+            product_url=product_url,
+            offer_url=urls[page],
+            current_price=price,
+            seller_name=f"Satıcı {page}",
+            stock_status="Stokta Var",
+            timestamp=START + timedelta(hours=12, minutes=1),
+        )
+        runs.record_result(world, run_id, page, to_result(observation))
+    close_run(world, run_id, START + timedelta(hours=12))
+    response = client.get(f"/api/v1/products/{KEY}")
+    assert response.status_code == 200
+    result = response.json()
+    assert result["best_offer"]["listing_id"] == "b"
+    assert result["best_offer"]["offer_url"] == urls["b"]
+    assert {row["listing_id"]: row["offer_url"] for row in result["checks"]} == urls
+    app.button(key="refresh").click().run()
+    assert not app.exception
+    button = app.get("link_button")[0].proto
+    assert button.label == "Satıcı teklifini aç" and button.url == urls["b"]
 
 
 @pytest.fixture

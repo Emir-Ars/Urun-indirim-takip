@@ -94,6 +94,7 @@ def to_result(observation: PriceObservation) -> runs.CheckResult:
         )
     return runs.CheckResult(
         outcome="offer",
+        offer_url=observation.offer_url,
         checked_at=observation.timestamp,
         current_price=observation.current_price,
         original_price=observation.original_price,

@@ -44,6 +44,30 @@ def observation(**fields):
     return PriceObservation(**values)
 
 
+@pytest.mark.parametrize(
+    "url",
+    [
+        "http://www.trendyol.com/phone-p-1?merchantId=9",
+        "https://example.com/phone-p-1?merchantId=9",
+        "https://www.hepsiburada.com/phone-p-HBCV1?magaza=x",
+        "https://user@www.trendyol.com/phone-p-1?merchantId=9",
+        "https://www.trendyol.com/phone-p-1?merchantId=9#fragment",
+        "https://www.trendyol.com/phone-p-1?merchantId=9\n",
+    ],
+)
+def test_observation_rejects_unsafe_or_other_platform_offer_url(url):
+    with pytest.raises(ValidationError):
+        observation(offer_url=url)
+
+
+def test_offer_url_is_optional_and_sold_out_cannot_carry_it():
+    assert observation().offer_url is None
+    url = URL + "?merchantId=9"
+    assert observation(offer_url=url).offer_url == url
+    with pytest.raises(ValidationError):
+        observation(offer_url=url, current_price=None, stock_status="Tükendi")
+
+
 @pytest.mark.parametrize("stock", ["Stokta Var", "Kritik Stok"])
 def test_purchasable_observation_is_valid(stock):
     item = observation(

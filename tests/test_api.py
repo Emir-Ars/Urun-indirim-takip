@@ -349,7 +349,7 @@ def test_migration_state_is_checked_without_repairing_it(client, world, change):
     elif change == "unknown":
         world.execute(
             "INSERT INTO schema_migrations (version,name,checksum)"
-            " VALUES (5,'unknown',%s)",
+            " VALUES (999,'unknown',%s)",
             ("0" * 64,),
         )
     else:

@@ -109,6 +109,7 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 | `migrations/002_guards_and_comparability.sql` | İki yeni `CHECK` (Tükendi satırı fiyat taşımaz, çizili fiyat güncel fiyattan büyüktür), beş tabloda 15 tetikleyici (silmeyi ve `TRUNCATE`'i reddeder, kimlik alanlarını korur, yazılmış sayfa sonucunu dondurur), `product_run_prices` görünümü. |
 | `migrations/003_closed_run_guards.sql` | İki tetikleyici işlevini yeniler: kapanmış turun sonuçsuz satırına yazımı ve kapanmış turun durum/bitiş zamanı değişimini reddeder; ilk sonuç ve `network` yeniden yazımını tur kapanışıyla sıraya alır. Veri satırlarını ve görünümü değiştirmez. |
 | `migrations/004_market_history.sql` | Ayrı Cimri geçmişi tablosu; ürün/kaynak/gün tekilliği, pozitif kuruş/NULL ve ilk kaydın güncelleme/silme korumaları. |
+| `migrations/005_listing_offer_url.sql` | Seçilen teklifin ölçüm anındaki satıcı bağlantısı; yalnız `offer` sonucunda dolabilir, eski kayıtlar `NULL` kalır. |
 | `market_history.py` | Ağsız aktarımın SQL işlemleri: kimlik ön kontrolü, salt okunur önizleme, ürün başına transaction, tekrar/çelişki koruması ve tur kilidi. |
 | `catalog_sync.py` | `catalog.json`'u veritabanındaki kopyaya eşitler: `plan_sync` farkı veritabanına dokunmadan hesaplar, `sync_catalog` tek transaction'da yazar. |
 | `runs.py` | Tur SQL'leri: veritabanı tur kilidi, yarım kalan turu kapatma, turu ve planlanan sayfaları açma, sayfa sonucunu (bir kez, yalnızca süren tura) yazma, süren turdaki `network` hatası satırını ikinci okumanın sonucuyla değiştirme (`rewrite_network_result`, tek istisna), turu kapatma, özet. |
@@ -730,6 +731,7 @@ kullanımı için 8 MB garantisi değildir; metin/JSON ayrıştırması ayrıca 
 | `product_id` | Model ve kapasite düzeyindeki ürün kimliği |
 | `platform` | Teklifin geldiği platform |
 | `product_name`, `product_url` | Katalogdaki ürün adı ve kontrol edilen sayfa |
+| `offer_url` | Seçilen satıcının doğrulanmış teklif adresi veya `null` |
 | `current_price` | Güncel fiyat (kuruş) |
 | `original_price` | Üstü çizili fiyat (kuruş) veya `null` |
 | `seller_name`, `seller_rating`, `seller_rating_scale` | Seçilen teklifin satıcısı ve puanı (puan yoksa `null`) |
@@ -739,6 +741,27 @@ kullanımı için 8 MB garantisi değildir; metin/JSON ayrıştırması ayrıca 
 `null` hata anlamına gelmez; kaynakta o bilginin güvenilir olarak bulunmadığını
 gösterir. Satıcıların bütün teklifleri tek tek kaydedilmez; yalnızca seçilen
 teklif döner. Bütün teklifler canlı kontrol aracında (`all_offers`) görülebilir.
+
+### Satıcı teklifinin adresi
+
+`offer_url`, fiyatı seçilen satıcının ölçüm anındaki adresidir. Trendyol'da
+kazanan satıcının kendi `merchant.url` alanından okunur; `merchantId` seçimi
+bulunmalı ve kaynakta satıcı kimliği varsa onunla eşleşmelidir. Hepsiburada'da
+satıcı listesi ile fiyat yanıtının `listingId`, `merchantId` ve satıcı adı
+eşleşirse ürün adresindeki `magaza` parametresi kazananın URL kodlanmış
+adıyla değiştirilir. Başka satıcıya ait mevcut `magaza` seçimi taşınmaz.
+
+Adres HTTPS, platformun izinli alan adı ve aynı ürün yol kimliğiyle
+doğrulanır. Eksik veya çelişkili bağlantı `null` kalır; geçerli fiyatı,
+satıcı seçimini veya mevcut kabul/ret kararını değiştirmez. Bunun için
+ek pazaryeri isteği gönderilmez. Stoksuz, hatalı veya bakılmamış sonuç
+satıcı bağlantısı taşımaz.
+
+Bağlantı `listing_checks.offer_url` alanında fiyatla birlikte saklanır.
+005 migration'ı eski satırlara `NULL` ekler; kapanmış gözlemler geriye dönük
+doldurulmaz ve mevcut değişiklik korumaları sürer. Yeni adresler ancak yeni
+toplama sonuçlarıyla dolar. Link ölçüm anındaki satıcıyı hedefler; pazaryerinde
+sonradan değişen fiyatı, stoku veya satıcının satıştan kalkmasını engellemez.
 
 ### Hata kodları
 
@@ -1544,7 +1567,7 @@ Pazaryeri erişimi yalnız `app/scraper/http.py` ve curl_cffi üzerinden sürer.
 
 ### Okuma hesabının bir kerelik kurulumu
 
-Önce 001–004 uygulanmış olmalıdır. `scripts/api_okuma_rolu.sql` yönetici
+Önce 001–005 uygulanmış olmalıdır. `scripts/api_okuma_rolu.sql` yönetici
 hesabıyla çalışır; yeni tablo/migration yoktur. `fiyat_takip` DB'sinde
 `fiyat_takip_api`, `_test` DB'sinde `fiyat_takip_api_test` seçilir. Diğer DB
 adları reddedilir. Script tekrar çalışabilir; mevcut rolün yönetici/üye/sahip
@@ -1817,6 +1840,11 @@ Adresler/cevap modelleri `/docs` ve `/openapi.json` üzerinden belgelenir.
 Tek `read_product` çağrısının görüntüsünden hazırlanır; istatistikler aynı
 görüntünün bütün iç geçmişini kullanır. `all_history` JSON'a gönderilmez.
 
+- `checks`, `best_offer` ve `last_successful_offer` kayıtları `offer_url`
+  alanını açıkça taşır; adres yoksa JSON `null` döner. `url` mevcut katalog
+  adresidir; ölçüm anındaki satıcı adresinin yerine geçirilmez. Alanın
+  eklenmesi nedeniyle API ve katı cevap doğrulayan yerel istemci birlikte
+  güncellenip yeniden başlatılır; endpoint adresleri değişmez.
 - Para alanları tam sayı TRY kuruşudur; float'a çevrilmez. Zamanlar UTC
   RFC 3339 metni, Cimri günü `YYYY-MM-DD`, tuple'lar JSON dizisidir.
   Eksikler `null`, olmayan seriler `[]` kalır; seriler birleştirilmez.
@@ -1958,7 +1986,7 @@ da bağlantı hatası gibi gizlenmez.
 
 `app/ui/main.py` aynı bilgisayardaki API'nin doğrulanmış sonuçlarını gösterir.
 `presentation.py` yalnız biçimlendirme ve grafik verisini hazırlar;
-veritabanına veya pazaryerine erişmez. API/JSON sözleşmeleri aynı kaldı.
+veritabanına veya pazaryerine erişmez. API ve ekran ortak cevap sözleşmesini kullanır.
 
 ### Ekran ve veri anlamı
 
@@ -1971,7 +1999,12 @@ veritabanına veya pazaryerine erişmez. API/JSON sözleşmeleri aynı kaldı.
 - Platform/satıcı/puan/ölçek/renk/stok ve gerçek kontrol zamanı gösterilir.
   Kritik stok kayıtlı durumdan, eski fiyat uyarısı API'nin `is_stale`
   değerinden gelir. Güncel fiyat farkı yalnız API karşılaştırılabilir diyorsa
-  önceki fiyatla hesaplanır. Satıcının eski fiyatı ayrıca etiketlenir.
+  önceki fiyatla hesaplanır. Sıfır fark `0,00 TL`, gri ve oksuzdur; düşüş
+  yeşil aşağı, artış kırmızı yukarı okla gösterilir. Yön ve renk, para metni
+  yerine tamsayı kuruş farkından seçilir. Satıcının eski fiyatı ayrıca etiketlenir.
+- Güncel teklifin `offer_url` alanı doluysa “Satıcı teklifini aç” düğmesi
+  bu adresi kullanır. Boşsa “Ürün sayfasını aç” düğmesi katalog adresine gider
+  ve satıcıya özel bağlantının bulunmadığı açıklanır.
 - Fiyat/stok cevabı sayısı, hata ve kontrol edilmeyen sayfa sayısı ayrı
   gösterilir. Kısmi kapsam uyarısı vardır. Sayfa tablosu bugün pasif olan
   sayfa/platformu elemez; adres/renk/etkinlik mevcut katalog bilgisidir.

@@ -9,7 +9,8 @@ import psycopg
 import pytest
 
 from app.ui.api_client import ApiClient
-from tests.support.read_world import KEY, START, add_market, add_run
+from app.database import runs
+from tests.support.read_world import KEY, START, add_market, add_run, close_run
 from tools import api_ui_check as manual
 
 
@@ -40,6 +41,27 @@ def test_reference_compares_complete_api_against_base_tables(
     assert report["before"] == report["after"]
     assert all(row["matched"] for row in report["products"])
     assert report["products"][0]["cimri_missing"] == 1
+
+
+def test_independent_sql_comparison_includes_recorded_offer_link(client, api_db, world):
+    run_id = add_run(world, START, {"a": "planned"}, status="running")
+    url = "https://www.trendyol.com/phone-p-1?merchantId=9"
+    runs.record_result(
+        world,
+        run_id,
+        "a",
+        runs.CheckResult(
+            outcome="offer",
+            checked_at=START + timedelta(minutes=1),
+            current_price=10000,
+            seller_name="Satıcı a",
+            stock_status="Stokta Var",
+            offer_url=url,
+        ),
+    )
+    close_run(world, run_id, START)
+    with bridge(client) as reader:
+        assert manual.check_api(api_db, reader, {"products": []}) == 0
 
 
 def test_empty_database_is_valid(client, api_db, world):

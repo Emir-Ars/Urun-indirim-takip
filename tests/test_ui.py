@@ -10,6 +10,7 @@ import pyarrow.ipc as arrow_ipc
 import streamlit as st
 from streamlit.elements.vega_charts import VegaLiteChartProto, _marshall_chart_data
 from streamlit.testing.v1 import AppTest
+from streamlit.proto.Metric_pb2 import Metric
 
 from app.ui import api_client
 from app.ui.api_client import ApiClientError
@@ -442,15 +443,17 @@ def test_unknown_seller_rating_and_stock_are_not_invented(screen):
 
 
 @pytest.mark.parametrize(
-    "comparable,previous,expected",
+    "comparable,previous,expected,color,direction",
     [
-        (True, 3000001, "−700,00 TL"),
-        (True, None, None),
-        (False, 3000001, None),
+        (True, 3000001, "−700,00 TL", Metric.GREEN, Metric.DOWN),
+        (True, 2900001, "+300,00 TL", Metric.RED, Metric.UP),
+        (True, 2930001, "0,00 TL", Metric.GRAY, Metric.NONE),
+        (True, None, None, Metric.GRAY, Metric.NONE),
+        (False, 3000001, None, Metric.GRAY, Metric.NONE),
     ],
 )
 def test_price_change_requires_api_comparability(
-    screen, comparable, previous, expected
+    screen, comparable, previous, expected, color, direction
 ):
     app, state = screen
     state.snapshot = state.snapshot.model_copy(
@@ -466,6 +469,26 @@ def test_price_change_requires_api_comparability(
     app.run()
     assert not app.exception
     assert app.metric[0].delta == (expected or "")
+    assert app.metric[0].proto.color == color
+    assert app.metric[0].proto.direction == direction
+
+
+@pytest.mark.parametrize("has_offer_url", [True, False])
+def test_offer_button_uses_recorded_seller_link_or_explains_fallback(
+    screen, has_offer_url
+):
+    app, state = screen
+    url = "https://www.trendyol.com/apple/phone-p-1?merchantId=9"
+    offer = sample_offer(offer_url=url if has_offer_url else None)
+    state.snapshot = state.snapshot.model_copy(update={"best_offer": offer})
+    app.run()
+    assert not app.exception
+    button = app.get("link_button")[0].proto
+    assert button.url == (url if has_offer_url else offer.url)
+    assert button.label == (
+        "Satıcı teklifini aç" if has_offer_url else "Ürün sayfasını aç"
+    )
+    assert ("satıcıya özel bağlantı bulunmuyor" in messages(app)) is (not has_offer_url)
 
 
 @pytest.mark.parametrize(

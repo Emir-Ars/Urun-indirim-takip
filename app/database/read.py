@@ -52,6 +52,7 @@ class ListingResult:
     stock_status: str | None
     error_code: str | None
     error_message: str | None
+    offer_url: str | None = None
 
 
 @dataclass(frozen=True)
@@ -129,7 +130,7 @@ SELECT c.run_id, c.listing_id, c.product_id, l.platform,
        l.url, l.color, l.active AS listing_active,
        c.checked_at, c.outcome, c.current_price, c.original_price,
        c.seller_name, c.seller_rating, c.seller_rating_scale, c.stock_status,
-       c.error_code, c.error_message
+       c.error_code, c.error_message, c.offer_url
 FROM listing_checks c
 JOIN listings l ON l.listing_id = c.listing_id
 JOIN platforms p ON p.key = l.platform

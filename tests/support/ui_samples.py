@@ -92,6 +92,7 @@ def sample_offer(run_id=7, **updates) -> ListingResponse:
         platform_name="Trendyol",
         platform_active=True,
         url="https://example.com/ornek-telefon",
+        offer_url=None,
         color="Siyah",
         listing_active=True,
         checked_at=AT + timedelta(minutes=5),

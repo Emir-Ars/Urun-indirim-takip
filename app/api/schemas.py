@@ -5,7 +5,7 @@ from typing import Annotated, Literal
 
 from pydantic import AfterValidator, AwareDatetime, ConfigDict, Field, FiniteFloat
 
-from app.contracts import Contract, Product, Reason, Stock, URL
+from app.contracts import Contract, OfferURL, Product, Reason, Stock, URL
 
 UTCDateTime = Annotated[
     AwareDatetime, AfterValidator(lambda value: value.astimezone(timezone.utc))
@@ -53,6 +53,7 @@ class ListingResponse(APIModel):
     platform_name: str
     platform_active: bool
     url: URL
+    offer_url: OfferURL | None
     color: str
     listing_active: bool
     checked_at: UTCDateTime | None

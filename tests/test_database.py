@@ -199,12 +199,68 @@ def test_cli_without_database_url_fails(monkeypatch, capsys):
     assert "DATABASE_URL tanımlı değil" in capsys.readouterr().err
 
 
+def test_offer_url_upgrade_keeps_closed_rows_and_guards(db, tmp_path):
+    for migration in load()[:4]:
+        write(tmp_path, migration.file_name, migration.sql)
+    migrate(db, tmp_path)
+    insert(db, "platforms", key="trendyol", name="Trendyol", active=True)
+    insert(
+        db,
+        "products",
+        product_id=1,
+        product_key="apple_iphone_15_128gb",
+        brand="Apple",
+        model="iPhone 15",
+        storage_gb=128,
+        active=True,
+    )
+    insert(db, "listings", **{**CATALOG_ROWS["listings"], "listing_id": "trendyol_1"})
+    run_id = start_run(db)
+    check(db, run_id, **OFFER)
+    db.execute(
+        "UPDATE collection_runs SET status='completed', finished_at=started_at"
+        " WHERE run_id=%s",
+        (run_id,),
+    )
+    before = db.execute("SELECT * FROM listing_checks").fetchone()
+    assert [m.version for m in migrate(db)] == [5]
+    after = db.execute("SELECT * FROM listing_checks").fetchone()
+    assert after[:-1] == before and after[-1] is None
+    with pytest.raises(errors.IntegrityConstraintViolation):
+        db.execute(
+            "UPDATE listing_checks SET offer_url=%s",
+            ("https://www.trendyol.com/phone-p-9?merchantId=1",),
+        )
+
+
+@pytest.mark.parametrize(
+    "result", [SOLD_OUT, ERROR, {}], ids=["sold_out", "error", "unchecked"]
+)
+def test_non_offer_cannot_store_offer_url(schema, result):
+    db, run_id = schema
+    with pytest.raises(errors.CheckViolation):
+        check(
+            db,
+            run_id,
+            **result,
+            offer_url="https://www.trendyol.com/phone-p-1?merchantId=9",
+        )
+
+
+def test_offer_can_store_its_link(schema):
+    db, run_id = schema
+    url = "https://www.trendyol.com/phone-p-1?merchantId=9"
+    check(db, run_id, **OFFER, offer_url=url)
+    assert db.execute("SELECT offer_url FROM listing_checks").fetchone() == (url,)
+
+
 def test_migrate_applies_each_file_once(db):
     files = [
         "001_initial.sql",
         "002_guards_and_comparability.sql",
         "003_closed_run_guards.sql",
         "004_market_history.sql",
+        "005_listing_offer_url.sql",
     ]
     assert [m.file_name for m in migrate(db)] == files
     assert migrate(db) == []
@@ -214,6 +270,7 @@ def test_migrate_applies_each_file_once(db):
         (2, "guards_and_comparability"),
         (3, "closed_run_guards"),
         (4, "market_history"),
+        (5, "listing_offer_url"),
     ]
     assert {
         "schema_migrations",

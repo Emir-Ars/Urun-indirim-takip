@@ -31,6 +31,7 @@ class CheckResult:
     stock_status: str | None = None
     error_code: str | None = None
     error_message: str | None = None
+    offer_url: str | None = None
 
 
 _RESULT_COLUMNS = [f.name for f in fields(CheckResult)]

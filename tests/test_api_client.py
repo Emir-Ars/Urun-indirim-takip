@@ -37,6 +37,7 @@ def product_payload():
         "platform_name": "Hepsiburada",
         "platform_active": True,
         "url": "https://www.hepsiburada.com/telefon-p-HBC123",
+        "offer_url": None,
         "color": "Siyah",
         "listing_active": False,
         "checked_at": AT,
@@ -154,6 +155,38 @@ def assert_error(error, code, status=None):
     assert error.value.message == str(error.value)
     assert "private" not in str(error.value)
     assert "SELECT" not in str(error.value)
+
+
+@pytest.mark.parametrize(
+    "offer_url", [None, "https://www.hepsiburada.com/phone-p-HBCV1?magaza=Ornek"]
+)
+def test_offer_url_is_explicitly_nullable_and_reaches_client(offer_url):
+    payload = product_payload()
+    payload["best_offer"]["offer_url"] = offer_url
+    transport = Recorder(reply(payload))
+    with ApiClient(transport=transport) as reader:
+        assert reader.get_product(KEY).best_offer.offer_url == offer_url
+
+
+@pytest.mark.parametrize(
+    "offer_url", ["http://www.hepsiburada.com/phone", "https://example.com/phone"]
+)
+def test_client_rejects_unsafe_offer_url(offer_url):
+    payload = product_payload()
+    payload["best_offer"]["offer_url"] = offer_url
+    with ApiClient(transport=Recorder(reply(payload))) as reader:
+        with pytest.raises(ApiClientError) as error:
+            reader.get_product(KEY)
+    assert error.value.code == "invalid_response"
+
+
+def test_client_rejects_missing_offer_url_field():
+    payload = product_payload()
+    del payload["best_offer"]["offer_url"]
+    with ApiClient(transport=Recorder(reply(payload))) as reader:
+        with pytest.raises(ApiClientError) as error:
+            reader.get_product(KEY)
+    assert error.value.code == "invalid_response"
 
 
 def test_four_methods_use_fixed_get_paths_and_typed_data():

@@ -1,6 +1,6 @@
 """Trendyol satıcı tekliflerini doğrular ve en ucuz geçerli teklifi döndürür."""
 
-from urllib.parse import urljoin
+from urllib.parse import parse_qs, urljoin, urlsplit
 
 from bs4 import BeautifulSoup
 
@@ -16,6 +16,7 @@ from app.scraper.parsing import (
     trendyol_product_id,
     verify_identity,
     verify_model_network,
+    verified_offer_url,
 )
 
 
@@ -63,6 +64,28 @@ def _condition_text(merchant: dict, offer_url: str) -> str:
     return normalize(" ".join(values))
 
 
+def _merchant_offer_url(merchant: dict, listing) -> str | None:
+    value = merchant.get("url")
+    if not isinstance(value, str) or not value:
+        return None
+    try:
+        value = verified_offer_url(
+            urljoin("https://www.trendyol.com", value), listing.url, listing.platform
+        )
+        if value is None:
+            return None
+        merchant_ids = parse_qs(urlsplit(value).query, keep_blank_values=True).get(
+            "merchantId", []
+        )
+        if len(merchant_ids) != 1 or not merchant_ids[0]:
+            return None
+        if merchant.get("id") is not None and str(merchant["id"]) != merchant_ids[0]:
+            return None
+        return value
+    except ValueError:
+        return None
+
+
 def _offer(
     merchant: dict,
     variant: dict,
@@ -105,6 +128,7 @@ def _offer(
     score = (merchant.get("sellerScore") or {}).get("value")
     listing_id = variant.get("listingId")
     return {
+        "verified_offer_url": _merchant_offer_url(merchant, listing),
         "listing_id": str(listing_id) if listing_id not in (None, "") else None,
         "seller_name": str(seller_name) if seller_name else None,
         "seller_rating": float(score) if score is not None else None,
@@ -207,6 +231,7 @@ class Scraper(BaseScraper):
         return self.observation(
             listing,
             current_price=selected["current_price"],
+            offer_url=selected["verified_offer_url"],
             original_price=selected["original_price"],
             seller_name=selected["seller_name"],
             seller_rating=selected["seller_rating"],

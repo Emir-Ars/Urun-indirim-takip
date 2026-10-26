@@ -9,8 +9,64 @@ from app.discovery.service import _url_identity
 from app.discovery.trendyol import Discovery as TrendyolDiscovery
 from app.scraper.hepsiburada_scraper import _sku_from_url
 from app.scraper.http import FetchError
+from app.scraper.parsing import verified_offer_url
 from app.scraper.trendyol_scraper import _product_id
 from app.settings import Runtime
+
+
+@pytest.mark.parametrize(
+    "platform,product_url,offer_url,valid",
+    [
+        (
+            "trendyol",
+            "https://www.trendyol.com/phone-p-123",
+            "https://www.trendyol.com/phone-p-123?merchantId=9",
+            True,
+        ),
+        (
+            "trendyol",
+            "https://www.trendyol.com/phone-p-123",
+            "https://www.trendyol.com/phone-p-124?merchantId=9",
+            False,
+        ),
+        (
+            "trendyol",
+            "https://www.trendyol.com/phone-p-123",
+            "https://www.trendyol.com/phone?ref=other-p-123",
+            False,
+        ),
+        (
+            "trendyol",
+            "https://www.trendyol.com/phone-p-123",
+            "https://evil.example/phone-p-123?merchantId=9",
+            False,
+        ),
+        (
+            "trendyol",
+            "https://www.trendyol.com/phone-p-123",
+            "https://[invalid/phone-p-123",
+            False,
+        ),
+        (
+            "hepsiburada",
+            "https://www.hepsiburada.com/phone-p-HBCV123",
+            "https://www.hepsiburada.com/phone-p-HBCV123?magaza=dogabilisim",
+            True,
+        ),
+        (
+            "hepsiburada",
+            "https://www.hepsiburada.com/phone-p-HBCV123",
+            "https://www.hepsiburada.com/phone-p-HBCV124?magaza=dogabilisim",
+            False,
+        ),
+    ],
+)
+def test_offer_link_requires_permitted_host_and_same_product(
+    platform, product_url, offer_url, valid
+):
+    assert verified_offer_url(offer_url, product_url, platform) == (
+        offer_url if valid else None
+    )
 
 
 @pytest.mark.parametrize(

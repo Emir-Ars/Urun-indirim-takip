@@ -41,6 +41,7 @@ CHECK_FIELDS = (
     "current_price",
     "original_price",
     "seller_name",
+    "offer_url",
     "seller_rating",
     "seller_rating_scale",
     "stock_status",

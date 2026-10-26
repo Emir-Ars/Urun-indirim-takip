@@ -26,6 +26,7 @@ aracı ve testler okur, üretim sonucu yalnız seçilen tekliftir.
 """
 
 import json
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from uuid import uuid4
 
 from bs4 import BeautifulSoup
@@ -42,7 +43,34 @@ from app.scraper.parsing import (
     product_jsonld,
     storage_gb,
     verify_identity,
+    verified_offer_url,
 )
+
+
+def _merchant_offer_url(source: dict, offer: dict, listing) -> str | None:
+    merchant_id = source.get("merchantId")
+    seller = offer.get("merchantName")
+    if (
+        not merchant_id
+        or merchant_id != offer.get("merchantId")
+        or source.get("listingId") != offer.get("listingId")
+        or not isinstance(seller, str)
+        or not seller.strip()
+        or seller != source.get("merchantName")
+        or any(ord(char) < 32 for char in seller)
+    ):
+        return None
+    try:
+        parts = urlsplit(listing.url)
+        query = [
+            (key, value) for key, value in parse_qsl(parts.query) if key != "magaza"
+        ]
+        query.append(("magaza", seller))
+        value = urlunsplit(parts._replace(query=urlencode(query)))
+        return verified_offer_url(value, listing.url, listing.platform)
+    except ValueError:
+        return None
+
 
 API_URL = "https://www.hepsiburada.com/api/v1/otherMerchants"
 LISTINGS_URL = "https://www.hepsiburada.com/api/v1/product/listings/{sku}"
@@ -366,7 +394,7 @@ class Scraper(BaseScraper):
                 "current_price": current,
                 "original_price": original,
                 "stock_status": "Stokta Var" if salable is True else "Tükendi",
-                "offer_url": listing.url,
+                "offer_url": None,
                 "eligible": salable is True and current is not None,
                 "rejection_reason": None,
                 "selected": False,
@@ -492,8 +520,10 @@ class Scraper(BaseScraper):
                 original = None
             # Puan fiyat yanıtından değil, satıcı listesindeki kayıttan okunur.
             rating = _seller_rating(full_listing)
+            offer_url = _merchant_offer_url(full_listing, offer, listing)
             if diagnostic is not None:
                 diagnostic.update(
+                    offer_url=offer_url,
                     current_price=current,
                     original_price=original,
                     seller_name=str(offer["merchantName"]),
@@ -509,6 +539,7 @@ class Scraper(BaseScraper):
                     "listing_id": str(listing_id),
                     "original": original,
                     "rating": rating,
+                    "offer_url": offer_url,
                     # Kazanan bu kayıtla işaretlenir: diagnostic_by_id ham listingId
                     # ile anahtarlı; str(listing_id) ile arama sayı kimlikte eşleşmez.
                     "diagnostic": diagnostic,
@@ -529,6 +560,7 @@ class Scraper(BaseScraper):
         return self.observation(
             listing,
             current_price=winner["current"],
+            offer_url=winner["offer_url"],
             original_price=winner["original"],
             seller_name=winner["seller"],
             seller_rating=winner["rating"],

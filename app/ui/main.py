@@ -57,15 +57,21 @@ def _current(snapshot: ProductResponse) -> None:
         if snapshot.state == "offer":
             offer = snapshot.best_offer
             delta = None
+            delta_color = "off"
+            delta_arrow = "off"
             if current.comparable_with_previous and current.previous_best_price:
-                delta = format_money(
-                    offer.current_price - current.previous_best_price, signed=True
-                )
+                difference = offer.current_price - current.previous_best_price
+                delta = format_money(difference, signed=True)
+                if difference < 0:
+                    delta_color, delta_arrow = "green", "down"
+                elif difference > 0:
+                    delta_color, delta_arrow = "red", "up"
             st.metric(
                 "Takip edilen en ucuz teklif",
                 format_money(offer.current_price),
                 delta=delta,
-                delta_color="inverse",
+                delta_color=delta_color,
+                delta_arrow=delta_arrow,
             )
             if delta is not None:
                 st.caption("Değişim: önceki karşılaştırılabilir ürün turuna göre.")
@@ -81,7 +87,14 @@ def _current(snapshot: ProductResponse) -> None:
                 st.warning("Kaynak kritik stok bildiriyor.")
             if snapshot.is_stale:
                 st.warning("Bu teklifin kontrolü en az 18 saat önce yapıldı.")
-            st.link_button("Ürün sayfasını aç", offer.url)
+            if offer.offer_url is not None:
+                st.link_button("Satıcı teklifini aç", offer.offer_url)
+            else:
+                st.link_button("Ürün sayfasını aç", offer.url)
+                st.caption(
+                    "Bu kayıtta satıcıya özel bağlantı bulunmuyor; "
+                    "genel ürün sayfası açılır."
+                )
         elif snapshot.state == "sold_out":
             st.info("Takip edilen bütün sayfalarda stok yok.")
         elif snapshot.state == "unverified":

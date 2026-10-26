@@ -142,6 +142,38 @@ def test_parses_winner_offer(scraper, listing):
     assert observation.stock_status == "Stokta Var"
 
 
+def test_selected_cheapest_merchant_keeps_its_source_url(scraper, listing):
+    merchant = other_merchant("Ucuz satıcı", "cheap", price=1000, inStock=True)
+    merchant["id"] = 9
+    observation = scraper.parse(product_html(others=[merchant]), listing)
+    assert observation.seller_name == "Ucuz satıcı"
+    assert observation.current_price == 100000
+    assert observation.offer_url == "https://www.trendyol.com" + merchant["url"]
+
+
+@pytest.mark.parametrize(
+    "url,merchant_id",
+    [
+        (None, 9),
+        ("/apple/phone-p-762254881", 9),
+        ("/apple/phone-p-762254881?merchantId=10", 9),
+        ("/apple/phone-p-762254881?merchantId=9&merchantId=10", 9),
+        ("https://example.com/apple/phone-p-762254881?merchantId=9", 9),
+        ("http://www.trendyol.com/apple/phone-p-762254881?merchantId=9", 9),
+        ("https://user@www.trendyol.com/apple/phone-p-762254881?merchantId=9", 9),
+    ],
+)
+def test_unverified_merchant_link_does_not_change_selected_price(
+    scraper, listing, url, merchant_id
+):
+    merchant = other_merchant("Ucuz satıcı", "cheap", price=1000, inStock=True)
+    merchant.update(url=url, id=merchant_id)
+    observation = scraper.parse(product_html(others=[merchant]), listing)
+    assert observation.seller_name == "Ucuz satıcı"
+    assert observation.current_price == 100000
+    assert observation.offer_url is None
+
+
 def test_fetch_downloads_listing_page_once(scraper, session, listing):
     session.responses.append(FakeResponse(product_html()))
 
@@ -564,10 +596,10 @@ def test_saved_new_phone_scope_preserves_offer(scraper, example):
     observation = scraper.parse(
         saved_scope_html(example), ProductListing.model_validate(example["listing"])
     )
-    assert (
-        observation.model_dump(mode="json", exclude={"timestamp"})
-        == example["expected_observation"]
-    )
+    assert observation.model_dump(mode="json", exclude={"timestamp"}) == {
+        "offer_url": None,
+        **example["expected_observation"],
+    }
 
 
 def test_yenilio_seller_name_alone_preserves_offer(scraper, listing):
@@ -607,10 +639,10 @@ def test_saved_network_preserves_offer(scraper, example):
     observation = scraper.parse(
         saved_scope_html(example), ProductListing.model_validate(example["listing"])
     )
-    assert (
-        observation.model_dump(mode="json", exclude={"timestamp"})
-        == example["expected_observation"]
-    )
+    assert observation.model_dump(mode="json", exclude={"timestamp"}) == {
+        "offer_url": None,
+        **example["expected_observation"],
+    }
 
 
 @pytest.mark.parametrize(
@@ -645,10 +677,10 @@ def test_derived_network_values_control_offer(scraper, value, accepted):
     listing = ProductListing.model_validate(example["listing"])
     if accepted:
         observation = scraper.parse(saved_scope_html(example), listing)
-        assert (
-            observation.model_dump(mode="json", exclude={"timestamp"})
-            == example["expected_observation"]
-        )
+        assert observation.model_dump(mode="json", exclude={"timestamp"}) == {
+            "offer_url": None,
+            **example["expected_observation"],
+        }
     else:
         with pytest.raises(FetchError, match="Ağ türü") as error:
             scraper.parse(saved_scope_html(example), listing)

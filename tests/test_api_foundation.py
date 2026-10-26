@@ -11,6 +11,7 @@ from fastapi.testclient import TestClient
 from psycopg import errors, sql
 from streamlit.testing.v1 import AppTest
 
+from app.database.migrate import load
 from conftest import _no_production_database_url
 from tests.support.ui_samples import APP_TEST_TIMEOUT
 
@@ -174,7 +175,7 @@ def test_api_role_can_read_a_consistent_snapshot(api_db):
         assert api_db.execute("SHOW transaction_read_only").fetchone() == ("on",)
         assert api_db.execute(
             "SELECT count(*) FROM public.schema_migrations"
-        ).fetchone() == (4,)
+        ).fetchone() == (len(load()),)
 
 
 def test_role_setup_can_be_repeated_without_changing_project_rows(api_db, db):
@@ -184,7 +185,9 @@ def test_role_setup_can_be_repeated_without_changing_project_rows(api_db, db):
         db.execute("SELECT * FROM schema_migrations ORDER BY version").fetchall()
         == before
     )
-    assert api_db.execute("SELECT count(*) FROM schema_migrations").fetchone() == (4,)
+    assert api_db.execute("SELECT count(*) FROM schema_migrations").fetchone() == (
+        len(load()),
+    )
 
 
 def test_role_setup_rejects_write_grants_and_rolls_back_its_grants(api_db, db):
@@ -203,4 +206,6 @@ def test_role_setup_rejects_missing_schema_objects(api_db, db):
     with pytest.raises(errors.RaiseException, match="eksik nesne: product_run_prices"):
         db.execute(SETUP.read_text(encoding="utf-8"))
     db.rollback()
-    assert db.execute("SELECT count(*) FROM schema_migrations").fetchone() == (4,)
+    assert db.execute("SELECT count(*) FROM schema_migrations").fetchone() == (
+        len(load()),
+    )

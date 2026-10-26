@@ -8,6 +8,7 @@ from urllib.parse import urlsplit
 
 from bs4 import BeautifulSoup
 
+from app.contracts import public_offer_url
 from app.scraper.http import FetchError
 
 # Keşif ve scraper aynı kimlik kurallarını kullanır; kurallar yalnız burada tutulur.
@@ -54,6 +55,25 @@ def trendyol_product_id(url: str) -> str | None:
 def hepsiburada_sku(url: str) -> str | None:
     """Ürün yolundaki SKU'yu büyük harfe çevirir; grup adresi SKU değildir."""
     return _path_identity(url, _HEPSIBURADA_SKU)
+
+
+def verified_offer_url(value: str, product_url: str, platform: str) -> str | None:
+    """Bozuk ek bağlantı, geçerli fiyat sonucunu kaybettirmesin."""
+    try:
+        public_offer_url(value)
+        identity = {
+            "trendyol": trendyol_product_id,
+            "hepsiburada": hepsiburada_sku,
+        }[platform]
+        if (
+            urlsplit(value).hostname == f"www.{platform}.com"
+            and identity(product_url) is not None
+            and identity(value) == identity(product_url)
+        ):
+            return value
+    except (ValueError, TypeError, KeyError):
+        pass
+    return None
 
 
 def money(value) -> int:

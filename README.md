@@ -30,7 +30,8 @@ hesaplamaktır.
   saklar; kendi gözlemlerimizle birleştirmez.
 - 🌐 **Yerel API ve ekran:** kayıtlı teklifleri, iki ayrı fiyat geçmişini ve
   veri yeterliliği açıklanan istatistikleri salt okunur sunar; Streamlit ekranı
-  telefon seçimi, teklif/istatistik kartları ve iki grafik gösterir.
+  telefon seçimi, teklif/istatistik kartları ve iki grafik gösterir. Doğrulanmış
+  satıcı bağlantısını açar; sıfır fiyat farkını gri ve oksuz gösterir.
 
 ## 🔄 Çalışma akışı
 
@@ -95,7 +96,7 @@ başlatılması [teknik rehberde](docs/teknik.md#komutlar) anlatılır.
 | Katalog | 60 ürün, 369 bağlantı (366 etkin); Hepsiburada 234, Trendyol 135 |
 | Toplama düzeni | Her gün 10:00 ve 22:00; haftalık keşif Pazar 14:00 (otomatik güvenli kabul) |
 | Cimri geçmişi | 57 ürün, 20.805 tarihli kayıt (553 eksik fiyat); iki ürün eşleştirilemedi |
-| Otomatik testler | 1930 test, 0 atlanan; Black ve Flake8 temiz (26 Ekim) |
+| Otomatik testler | 1975 test, 0 atlanan; Black ve Flake8 temiz (26 Ekim) |
 
 Katalogdaki **369 bağlantının markalara göre dağılımı** (üç pasif bağlantı dahil):
 
@@ -120,7 +121,7 @@ canlı ağa çıkmaz; veritabanı testleri yalnız test veritabanını kullanır
 | Fiyat okuma, keşif, katalog, veritabanı ve zamanlanmış toplama | ✅ Tamamlandı |
 | FastAPI ve Streamlit ile verileri sunma ve görüntüleme | ✅ Tamamlandı |
 | ML öncesi bakım ve otomatik güvenli keşif kabulü | ✅ Tamamlandı |
-| Proje yapısının sadeleştirilmesi | 🔄 Sürüyor |
+| Proje yapısının sadeleştirilmesi | ✅ Tamamlandı (26 Ekim) |
 | Sürekli çalışma ortamı | 🔄 Dizüstü sürekli açık kararı uygulandı; işletim doğrulaması sürüyor ([plan](proje_plani.md)) |
 | ML ile indirim olasılığı tahmini | 🔜 Sürekli işletim ve yeterli veri sonrasında |
 

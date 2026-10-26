@@ -155,6 +155,47 @@ def scraper_with(listings, offers, *, html=None):
     return Scraper(["www.hepsiburada.com"], runtime, client=session), session
 
 
+@pytest.mark.parametrize("seller", ["dogabilisim", "CeSE Market", "Örnek & İletişim+"])
+def test_cheapest_offer_link_uses_matching_seller_and_encodes_name(listing, seller):
+    from urllib.parse import parse_qs, urlsplit
+
+    cheap = response_offer("cheap", seller, 1000)
+    cheap["merchantId"] = "merchant-cheap"
+    expensive = response_offer("main", "Ana satıcı", 2000)
+    expensive["merchantId"] = "merchant-main"
+    scraper, session = scraper_with(
+        [full_listing("main", "Ana satıcı", 2000), full_listing("cheap", seller, 1000)],
+        [expensive, cheap],
+    )
+    page = listing.model_copy(update={"url": URL + "?magaza=Eski&tracking=1"})
+    observation = scraper.fetch(page)
+    assert observation.seller_name == seller
+    assert observation.current_price == 100000
+    parts = urlsplit(observation.offer_url)
+    assert parts.path == urlsplit(URL).path
+    assert parse_qs(parts.query) == {"magaza": [seller], "tracking": ["1"]}
+    assert len(session.calls) == 3
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {},
+        {"merchantId": "another"},
+        {"merchantId": None},
+        {"merchantName": "Başka ad", "merchantId": "merchant-cheap"},
+    ],
+)
+def test_missing_or_conflicting_seller_link_keeps_price(listing, changes):
+    offer = response_offer("cheap", "Ucuz satıcı", 1000)
+    offer.update(changes)
+    scraper, _ = scraper_with([full_listing("cheap", "Ucuz satıcı", 1000)], [offer])
+    observation = scraper.fetch(listing)
+    assert observation.current_price == 100000
+    assert observation.seller_name == offer["merchantName"]
+    assert observation.offer_url is None
+
+
 @pytest.mark.parametrize(
     "url",
     [

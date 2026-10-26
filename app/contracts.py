@@ -36,6 +36,18 @@ def public_url(value: str) -> str:
 Money = Annotated[int, Field(gt=0)]
 Key = Annotated[str, Field(pattern=r"^[a-z][a-z0-9_]*$")]
 URL = Annotated[str, AfterValidator(public_url)]
+
+
+def public_offer_url(value: str) -> str:
+    public_url(value)
+    if any(char.isspace() or ord(char) < 32 for char in value) or urlsplit(
+        value
+    ).hostname not in {"www.trendyol.com", "www.hepsiburada.com"}:
+        raise ValueError("Teklif adresi izin verilen pazaryeri alanında olmalı")
+    return value
+
+
+OfferURL = Annotated[str, AfterValidator(public_offer_url)]
 Stock = Literal["Stokta Var", "Kritik Stok", "Tükendi"]
 Reason = Literal[
     "no_history",
@@ -142,6 +154,7 @@ class PriceObservation(Contract):
     platform: Key
     product_name: str
     product_url: URL
+    offer_url: OfferURL | None = None
     current_price: Money | None
     original_price: Money | None = None
     seller_name: str | None = None
@@ -153,6 +166,14 @@ class PriceObservation(Contract):
 
     @model_validator(mode="after")
     def purchasable_offer(self):
+        if self.offer_url is not None:
+            if (
+                self.stock_status == "Tükendi"
+                or urlsplit(self.offer_url).hostname != f"www.{self.platform}.com"
+            ):
+                raise ValueError(
+                    "Teklif adresi satılabilir teklife ve platforma ait olmalı"
+                )
         if self.stock_status in ("Stokta Var", "Kritik Stok"):
             if self.current_price is None or not self.seller_name:
                 raise ValueError("Satılabilir teklif fiyat ve satıcı içermeli")
