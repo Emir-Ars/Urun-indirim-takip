@@ -110,6 +110,7 @@ Bu dosyanın kendi güncellemesi bir sonraki adımın commit'ine girer.
 | 22.10 | `b5bbb99` | Sürekli işletim: bulut denemesine Trendyol sayfa teşhisi; sonuç Trendyol'dan HTTP 403 ve Cloudflare çerezleri (GitHub yolu kapandı); karar: dizüstü sürekli açık, prizde kapak kapanınca uyumaz | [39779121760](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/39779121760) |
 | 22.10 | `1d82c9c` | Sürekli işletim kararını belgeledi: dizüstü sürekli açık, toplama evdeki bilgisayarda; buluta taşıma yolu kapandı | [39784217016](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/39784217016) |
 | 26.10 | `6dcef3b` | Sürekli işletim, Cimri/ML hazırlığı ve iş sırası belgelerini güncelle | [40282132834](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/40282132834) |
+| 26.10 | `8b933c2` | Haftalık keşif eklemelerini kaydet; kapasitesi doğrulanamayan S25 bağlantısını pasife al ve kapsam belgelerini güncelle | [40282854404](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/40282854404) |
 
 ## Eylül 2026 ayrıntıları
 

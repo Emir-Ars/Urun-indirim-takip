@@ -63,8 +63,11 @@ def test_trendyol_url_identity_agrees_across_consumers(monkeypatch, url, expecte
             assert opened == []
         else:
             candidate = discovery._candidate(address, expected)
-            assert candidate.platform_product_id == expected
-            assert candidate.url == address
+            assert candidate is None
+            decision = discovery.decisions[0]
+            assert decision.evidence.platform_product_id == expected
+            assert decision.evidence.url == address
+            assert "new_condition_missing" in decision.reasons
             assert opened == [address]
     finally:
         discovery.close()

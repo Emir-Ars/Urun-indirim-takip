@@ -42,7 +42,7 @@ Kullanıcı arayüzde arama yaptığında canlı scraping veya model eğitimi
 | 6. Veritabanı ve zamanlanmış toplama (Cimri geçmişinin bir defalık aktarımı dahil) | ✅ Tamamlandı (8 Ekim) | `3c4d030`, CI 37813840435 |
 | 7. FastAPI ve Streamlit | ✅ Tamamlandı (10 Ekim) | `c8d864b`, CI 38045257013 |
 | ML öncesi bakım dizisi (Bakım 1–6; otomatik güvenli keşif kabulü dahil) | ✅ Tamamlandı (20 Ekim) | `7c0988b`, CI 39393708497 |
-| Proje yapısının sadeleştirilmesi (Bölüm 8, Adım 1–5) | 🔄 Sürüyor (20 Ekim'de başladı) | — |
+| Proje yapısının sadeleştirilmesi (Bölüm 8, Adım 1–5) | 🔄 Adım 5.2 uygulandı ve yerelde doğrulandı; gönderim/CI bekliyor | — |
 | 8. ML (indirim tahmini) | 🔜 Planlandı, başlanmadı | Bölüm 9 |
 | 9. Sürekli işletim ve Docker | 🔄 Sürekli işletim kararı verildi (22 Ekim: dizüstü sürekli açık); Docker başlanmadı | Bölüm 9 |
 
@@ -206,6 +206,7 @@ rehberde, o günkü tartışması arşivdedir.
 | 22 Ekim | Sürekli işletim: dizüstü sürekli açık kalır (prizde, oturum açık, ekran kilitli, kapak kapalı); prizdeyken kapak kapanınca uyumaz. Görevler ve 10:00/22:00 düzeni değişmez. | Trendyol yalnız ev internetinden okunuyor; kullanıcı yeni cihaz alamıyor, eski cihazı yok. Uyku ve hazırda bekletme prizde zaten kapalıydı. |
 | 23 Ekim | Cimri'den son bir defalık alım yapılır ve Cimri geçmişi ML eğitiminde kullanılır. Alım mevcut güvenli yolla (`python -m app.market_history capture`), kullanıcının terminalinden ve ayrı onayla, ML hazırlığına başlarken yapılır; sonrasında yalnız kendi verimiz birikir. Düzenli Cimri toplaması yine yoktur. | Kullanıcı kararı: proje yayınlanmayan bir staj projesi; Cimri'ye yazılan e-postaya yanıt gelmedi. Kullanım uygunluğu resmî olarak doğrulanmadı; bu bilinen sınır olarak kalır. |
 | 26 Ekim | Galaxy S25 256 GB'ın `hepsiburada_hbcv0000atwvmc` bağlantısı kullanıcı onayıyla pasife alındı; katalog kaydı ve geçmişi korunur. | Tur 43–54'te kapasite doğrulanamadı; kullanıcının ekran görüntüsünde satış kapalı ve görünen bölümde kapasite yok. Ürün diğer bağlantılarıyla izleniyor. |
+| 26 Ekim | Adım 5.2 davranışı koruyarak uygulanır: kullanılmayan aday üretimi kaldırılır; kabul kuralları, ayrıntılı retler ve Hepsiburada seçenek taraması korunur. | Kullanıcının kapsam seçimi ve uygulama onayı; eski yolun tamamını kaldırmak tarama kapsamını değiştirebilirdi. |
 | 20 Ekim | Proje yapısı sadeleştirilecek (Bölüm 8). Plan, rehber ve kurallar yeniden düzenlenir; önceki "plan baştan yazılmaz" kuralı kaldırıldı, eski hâller arşivde. `app/market_history` kodu korunur; Git dışı inceleme kanıtları silinmeden proje dışına taşınır; renk kuralı Adım 5'te ele alınır. | Belgeler günlüğe dönmüştü (plan 374 KB, rehber 312 KB); karmaşa yönetimi zorlaştırıyordu. |
 
 ### Bilerek değiştirilmeyen davranışlar
@@ -261,7 +262,6 @@ Ayrıntı ve kanıtları: [teknik rehber, Bilinen sınırlar](docs/teknik.md#bil
 
 | Konu | Durum |
 |---|---|
-| Keşifteki eski kimlik kontrolü | Döndürdüğü aday hep atılıyor; ret gerekçesi ve Hepsiburada varyant taraması ona bağlı; ~80 test durumu atılan adayı sınıyor. 25 Ekim keşfi incelendi; Adım 5.2 için ayrı plan ve kullanıcı onayı bekleniyor, kod değişmedi. |
 | HBCV0000E8DHJL | Başlık/varyant 256 GB, ana ürün alanı 512 GB. Mevcut bağlantıya müdahale **karar bekliyor**. |
 | Sürekli işletimin doğrulanması | [Teknik rehberdeki işletim sınırı](docs/teknik.md#bilinen-sınırlar) kapanmadı; geciken turun nedeni açık. Güç ayarlarına yeni müdahale kararı verilmedi. |
 | ML ayrıntıları | Kullanıcı model eğitimi için ayrı bir araştırma yapacak; ML bu belgeye göre ilerler. Özellikler (ham fiyat mı göreli fiyat mı), değerlendirme yöntemi, Cimri ile kendi verimizin birlikte nasıl kullanılacağı ve örnek kurallarının (kapsam değişikliği, kusurlu gün) gevşetilip gevşetilmeyeceği ML aşamasında kararlaştırılacak. |
@@ -278,14 +278,15 @@ Zamanlanmış görevlerin komutları (`-m app.collection`, `-m app.discovery`) d
 | Adım | İş | Durum |
 |---|---|---|
 | 1. Belgeler | Eski plan ve rehber `docs/arsiv/` altına olduğu gibi kopyalandı. İnce plan, yalnız bugünkü davranışı anlatan teknik rehber, `docs/gecmis.md`, kısa README ve sade `AGENTS.md`. | ✅ Tamamlandı (20 Ekim) |
-| 2. Yerel klasörler | Biten incelemelerin kanıtları (`artifacts/`, eski `data/` kayıtları, `.scratch/`) silinmeden `C:\Users\Emir\Desktop\Staj_arsiv\2026-10-20\` klasörüne taşındı: 82 kayıt, 12.038 dosya; boyut ve SHA-256 parmak izleri taşıma öncesi ve sonrası eşleşti (`MANIFEST.json`). Kodun kullandığı `data/logs`, `data/discovery` ve rapor dosyası yerinde. Codex'in kısıtlı ortamında oluşmuş, bu hesabın içeriğini okuyamadığı beş `artifacts/b3_*` test klasörü taşınamadı ve yerinde bırakıldı (silmek için yönetici izni gerekir). | ✅ Taşıma tamam (20 Ekim); belge notlarının gönderimi bekliyor |
+| 2. Yerel klasörler | Biten incelemelerin kanıtları (`artifacts/`, eski `data/` kayıtları, `.scratch/`) silinmeden `C:\Users\Emir\Desktop\Staj_arsiv\2026-10-20\` klasörüne taşındı: 82 kayıt, 12.038 dosya; boyut ve SHA-256 parmak izleri taşıma öncesi ve sonrası eşleşti (`MANIFEST.json`). Kodun kullandığı `data/logs`, `data/discovery` ve rapor dosyası yerinde. Codex'in kısıtlı ortamında oluşmuş, bu hesabın içeriğini okuyamadığı beş `artifacts/b3_*` test klasörü taşınamadı ve yerinde bırakıldı (silmek için yönetici izni gerekir). | ✅ Tamamlandı (20 Ekim) |
 | 3. Test düzeni | 3.1 araçlar `tools/`'a; 3.2 ortak test yardımcıları `tests/support/`'a; 3.3 `test_discovery.py` konularına göre beş dosyaya bölünür (kimlik, Trendyol, Hepsiburada, katalog, çalıştırma); 3.4 Streamlit testlerindeki 3 sn süre ve gerçek 6 sn beklemeler düzeltilir, canlı kataloğu okuyan test sabit kopyaya bağlanır; 3.5 3.2'de gözden kaçan kısa biçimli (`from test_…`) testler arası içe aktarmalar kaldırılır ve bir testle korunur. Her alt adım ayrı commit. | ✅ Tamamlandı (22 Ekim) |
 | 4. Kod sadeleştirme | 4.1 keşfin iki katalog/rapor yazıcısı tek yazıcıda birleşir; 4.2 tur ve keşfin zamanlanmış çalışma kopyası (log, başlık, hata, çıkış kodu) `app/console.py`'de toplanır; 4.3 Cimri kodunun kullanılmayan eski yolları kaldırılır, alım ve aktarım korunur. Keşifteki eski kimlik kontrolü Adım 5'e taşındı; API kontrolü ve katalog okuma bilerek değiştirilmez (Bölüm 5). Her alt adım ayrı commit. | ✅ Tamamlandı (22 Ekim) |
-| 5. Renk kuralı | 5.1 Otomatik kabulde Trendyol rengi renk seçicisindeki addır; seçici adı varken satıcının "Renk"i ve JSON-LD rengi karşılaştırılmaz, kapasite yazan değer renk sayılmaz; gerçek sayfalardan regresyon testleri (19 Ekim raporu). 5.2 Aynı kabul kodundaki eski kimlik kontrolü: döndürdüğü aday hep atılır, ama ret gerekçesi rapora yazılır, Hepsiburada'da doğrulanmamış sayfanın varyant taramasını belirler ve ~80 test durumu atılan adayı sınar; 25 Ekim keşfinden sonra ayrı planla. Kimlik kuralı değiştiği için her biri ayrı plan onayı ister. | 🔄 5.1 tamamlandı (22 Ekim); 25 Ekim keşfi incelendi, 5.2 plan/onay bekliyor |
+| 5. Renk ve aday üretimi | 5.1 Trendyol rengi renk seçicisindeki addır; seçici adı varken satıcının "Renk"i ve JSON-LD rengi karşılaştırılmaz. 5.2 Adaptörler yalnız kanıt kararı `verified` ise aday döndürür; diğer sayfalarda ayrıntılı ret ve Hepsiburada seçenek taraması denetimleri korunur, atıl aday üretimi kaldırılır. Kabul kuralları ve raporun son kontrolü değişmedi. | 🔄 5.1 tamamlandı (22 Ekim); 5.2 yerelde doğrulandı, gönderim/CI bekliyor |
 
 Sonra (23 Ekim'de kararlaştırılan sıra; veri yeterliliği 23 Ekim'de ölçüldü, Bölüm 9):
 
-1. Adım 5.2'nin ayrı plan ve onayla uygulanması; sadeleştirme kapanır.
+1. Adım 5.2'nin ayrı onayla gönderilmesi; aynı commit'in CI'ı
+   yeşil olunca sadeleştirme kapanır.
 2. Ekran iyileştirmeleri (ML'den önce, her biri ayrı plan ve onayla):
    fiyat değişmediğinde ekranda kırmızı "artış" oku görünmesin; ekrandaki
    bağlantı ürün sayfası yerine en ucuz teklife gitsin. Trendyol'da satıcıya

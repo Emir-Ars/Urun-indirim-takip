@@ -435,17 +435,19 @@ yazılmaz. Scraper factory de Ctrl+C'yi `plugin` olarak sarmaz.
    **aday olmaz**; yalnızca gerçek ürün SKU'larına çözülür.
 3. Arama API'si denenir; bugün engellenir (`search_api: blocked`). Engel olsa da
    HTML'den bulunanlar korunur.
-4. Her ürün sayfası açılır, kimlik doğrulanır (hedefte `network` varsa ürün
-   özelliklerindeki "Mobil Bağlantı Hızı" kaydı da) ve sayfadaki
-   `allVariantCombinations` (bütün renk/kapasite seçenekleri) kuyruğa eklenir.
-   Stoksuz olduğu için aramada görünmeyen kapasiteler de böyle bulunur.
+4. Her ürün sayfası açılır ve kimlik kanıtı kaydedilir. Doğrulanmış sayfa aday
+   üretir ve `allVariantCombinations` (bütün renk/kapasite seçenekleri) kuyruğa
+   eklenir. Kabul edilmeyen sayfada marka/kategori, kendi SKU'sunun seçenekleri,
+   model/kapasite ve hedefte varsa ağ denetimleri gezinmenin devamını belirler.
+   Bu denetimlerden geçen sayfanın seçenekleri taranır ama kendisi aday olmaz;
+   hata veren sayfanın seçenekleri eklenmez. Stoksuz olduğu için aramada
+   görünmeyen kapasiteler de bu yolla bulunur.
 
-Canonical adresi aynı ürünün adresi olmayabilir. Keşif yalnız
-`https://www.hepsiburada.com/` adresinde, ürün yolundan çıkarılan SKU beklenen
-SKU'ya **tam eşitse** canonical adresini kullanır; küçük harfli SKU eşdeğerdir.
-Farklı SKU, grup/kategori adresi, başka alan adı veya yalnız sorguda geçen SKU
-canonical olarak kullanılmaz; doğrulanmış istenen ürün adresi korunur, geçerli
-aday sırf canonical farklı diye reddedilmez.
+Doğrulanmış adayın adresi, kanıtın toplandığı istenen ürün adresidir; canonical
+bu adresin yerine yazılmaz. Canonical ürün yolundaki SKU başka bir ürünü
+gösterirse `source_id_mismatch` kimlik çelişkisi oluşturur. Aynı SKU'nun başka
+bir yazımı veya yolundan SKU çıkarılamayan bir canonical, aday adresini
+değiştirmez. Küçük harfli SKU eşdeğerdir; yalnız sorgudaki SKU kullanılmaz.
 
 ### Otomatik güvenli kabul
 
@@ -457,6 +459,12 @@ NewCondition birlikte aranır. Garanti yazısı yeni ürün kanıtı değildir;
 yenilenmiş/aksesuar/ikinci el/teşhir kanıtı NewCondition etiketinden önce gelir.
 Fiyat/satıcı/stok, kimlik kararı yerine kullanılmaz; kimliği tam stoksuz aday
 kabul edilebilir. Yanlış başka SKU'nun fiyatı veya özelliği ödünç alınmaz.
+
+İki adaptör de yalnız `verified` kararındaki adayı döndürür. Doğrulanmayan
+sayfalarda eski kimlik denetimleri ayrıntılı `candidate_rejected` açıklamasını,
+Hepsiburada'da ayrıca seçenek taramasının sınırını korur; bu denetimler ikinci
+bir aday üretmez. Son rapor kontrolü bütün kararları kanıttan yeniden hesaplar;
+`mismatch` ve `insufficient` sayfalar ret/eksik kanıt gerekçeleriyle raporlanır.
 
 Ağ ayrımı hedefin kimliğine dahilse olumlu kanıt gerekir: kendi başlığında
 açık 5G veya aynı kodun ağ özelliği. 5G yazmaması 4G kanıtı değildir; 4.5G

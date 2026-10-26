@@ -4,7 +4,7 @@ from urllib.parse import parse_qsl, urlencode, urljoin, urlsplit, urlunsplit
 
 from bs4 import BeautifulSoup
 
-from app.contracts import DiscoveryCandidate, DiscoveryResult
+from app.contracts import DiscoveryResult
 from app.discovery.acceptance import trendyol_evidence
 from app.discovery.base import RECOVERABLE, BaseDiscovery, error_code
 from app.discovery.matching import phone_category
@@ -17,7 +17,6 @@ from app.scraper.parsing import (
     identify,
     matches_model,
     normalize,
-    storage_gb,
     trendyol_product_id,
     verify_model_network,
 )
@@ -266,13 +265,14 @@ class Discovery(BaseDiscovery):
         )
         if decision.status == "verified":
             return decision.candidate
+        # Bu kontroller kabul üretmez; rapordaki ayrıntılı ret gerekçesini korur.
         if normalize(brand) != normalize(self.target.brand) or not phone_category(
             category
         ):
             raise FetchError(
                 "identity", f"Trendyol telefon/marka doğrulanamadı: {name[:160]}"
             )
-        capacity = identify(
+        identify(
             [name],
             self.target.model,
             product_capacity(product),
@@ -282,26 +282,7 @@ class Discovery(BaseDiscovery):
         verify_model_network(self.target.model, attribute(attrs, "Mobil Bağlantı Hızı"))
         if self.target.network:
             self.verify_network(attribute(attrs, "Mobil Bağlantı Hızı"), [name])
-        # Renk, sayfanın renk seçicisindeki addır (varyant listesi, ör. "Abis").
-        # Satıcının "Renk" özelliği ("Çok Renkli" gibi) yalnız bu ad yoksa kullanılır.
-        color = variant_color or attribute(attrs, "Renk", "WebColor") or ""
-        ram = storage_gb(
-            attribute(attrs, "RAM Kapasitesi", "Ram (System Memory)") or ""
-        )
-        warranty = attribute(attrs, "Garanti Tipi", "Warranty Type")
-        return DiscoveryCandidate(
-            target_key=self.target.key,
-            platform=self.platform,
-            platform_product_id=expected_id,
-            url=url,
-            brand=self.target.brand,
-            model=self.target.model,
-            storage_gb=capacity,
-            color=color,
-            ram_gb=ram,
-            warranty_text=warranty,
-            warranty_source="product.attributes" if warranty else None,
-        )
+        return None
 
     def discover(self):
         found = {}
@@ -366,9 +347,9 @@ class Discovery(BaseDiscovery):
                 self.issue("product_limit", "Ürün sayfası sınırı doldu")
                 break
             try:
-                found[product_id] = self._candidate(
-                    url, product_id, colors.get(product_id)
-                )
+                candidate = self._candidate(url, product_id, colors.get(product_id))
+                if candidate is not None:
+                    found[product_id] = candidate
             except RECOVERABLE as exc:
                 self.record_failure(url, product_id)
                 self.issue("candidate_rejected", f"{product_id}: {exc}")

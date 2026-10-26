@@ -1,6 +1,7 @@
 """Keşif testlerinin ortak örnek dosyaları, sabit katalog ve hedefleri."""
 
 import json
+from html import escape
 from pathlib import Path
 
 from app.contracts import DiscoveryCandidate, DiscoveryTarget
@@ -12,6 +13,35 @@ CATALOG = FIXTURES / "catalog.json"
 
 def fixture(name):
     return json.loads((FIXTURES / name).read_text(encoding="utf-8"))
+
+
+def acceptance_sample(product_id):
+    return next(
+        sample
+        for sample in fixture("acceptance_examples.json")
+        if sample["evidence"]["platform_product_id"] == product_id
+    )
+
+
+def page_html(page, platform):
+    scripts = [
+        f'<script type="application/ld+json">{json.dumps(p)}</script>'
+        for p in page["jsonld"]
+    ]
+    if platform == "trendyol":
+        state = {"product": page["product"]}
+        scripts.append(
+            f"<script>window['__envoy__SHARED_PROPS'] = {json.dumps(state)};</script>"
+        )
+    else:
+        state = {
+            "productState": {"product": page["details"][0] if page["details"] else {}},
+            "recommendations": page["details"][1:],
+            "allVariantCombinations": page["variants"],
+        }
+        scripts.append(f'<script type="application/json">{json.dumps(state)}</script>')
+        scripts.append(f'<h1>{escape(page["heading"])}</h1>')
+    return "\n".join(scripts)
 
 
 def target(model="iPhone 16"):

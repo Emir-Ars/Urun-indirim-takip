@@ -27,6 +27,11 @@ from app.discovery import service
 from app.discovery.__main__ import main
 from app.discovery.acceptance import decide, hepsiburada_evidence, trendyol_evidence
 from app.discovery.base import BaseDiscovery
+from app.discovery.hepsiburada import Discovery as HepsiburadaDiscovery
+from app.discovery.trendyol import Discovery as TrendyolDiscovery
+from app.scraper.http import FetchError
+from app.settings import Runtime
+from tests.support.discovery import acceptance_sample, page_html
 
 ROOT = Path(__file__).resolve().parents[1]
 SAMPLES = json.loads(
@@ -35,27 +40,6 @@ SAMPLES = json.loads(
     )
 )
 TARGET = DiscoveryTarget(key="apple_iphone_15", brand="Apple", model="iPhone 15")
-
-
-def page_html(page, platform):
-    scripts = [
-        f'<script type="application/ld+json">{json.dumps(p)}</script>'
-        for p in page["jsonld"]
-    ]
-    if platform == "trendyol":
-        state = {"product": page["product"]}
-        scripts.append(
-            f"<script>window['__envoy__SHARED_PROPS'] = {json.dumps(state)};</script>"
-        )
-    else:
-        state = {
-            "productState": {"product": page["details"][0] if page["details"] else {}},
-            "recommendations": page["details"][1:],
-            "allVariantCombinations": page["variants"],
-        }
-        scripts.append(f'<script type="application/json">{json.dumps(state)}</script>')
-        scripts.append(f'<h1>{escape(page["heading"])}</h1>')
-    return "\n".join(scripts)
 
 
 def extract(sample, page=None):
@@ -80,6 +64,158 @@ def test_recorded_acceptance_decisions(sample):
         actual = decide(extract(sample), target)
         assert actual.status == sample["expected_status"]
         assert actual.reasons == decide(saved, target).reasons
+
+
+@pytest.mark.parametrize(
+    "sample",
+    [sample for sample in SAMPLES if "page" in sample],
+    ids=lambda sample: sample["evidence"]["platform_product_id"],
+)
+def test_recorded_adapters_return_only_proven_candidates(monkeypatch, sample):
+    target = DiscoveryTarget.model_validate(sample["target"])
+    evidence = sample["evidence"]
+    platform, pid, url = (
+        evidence["platform"],
+        evidence["platform_product_id"],
+        evidence["url"],
+    )
+    adapter = TrendyolDiscovery if platform == "trendyol" else HepsiburadaDiscovery
+    discovery = adapter(target, DiscoveryConfig(targets=[target]), Runtime())
+    monkeypatch.setattr(discovery, "get", lambda _: page_html(sample["page"], platform))
+    errors = {
+        "HBCV00005PZUWG": "Hepsiburada SKU seçeneklerde bulunamadı",
+        "HBCV0000A1GTQO": "Hepsiburada SKU seçeneklerde bulunamadı",
+        "797850359": "Ağ türü modelle eşleşmiyor",
+    }
+    try:
+
+        def read():
+            if platform == "trendyol":
+                return discovery._candidate(url, pid)
+            candidate, variants = discovery._product(url, pid)
+            assert variants == sample["page"]["variants"]
+            return candidate
+
+        if pid in errors:
+            with pytest.raises(FetchError, match=errors[pid]) as error:
+                read()
+            assert error.value.code == "identity"
+        else:
+            candidate = read()
+            expected = decide(
+                DiscoveryEvidence.model_validate_json(json.dumps(evidence)), target
+            )
+            assert candidate == expected.candidate
+        decision = discovery.decisions[0]
+        assert decision.status == sample["expected_status"]
+        assert (
+            decision.reasons
+            == decide(
+                DiscoveryEvidence.model_validate_json(json.dumps(evidence)), target
+            ).reasons
+        )
+        assert discovery.product_pages == 1
+    finally:
+        discovery.close()
+
+
+@pytest.mark.parametrize(
+    "pid, expand, reason",
+    [
+        ("HBCV0000E8DHJL", True, "storage_mismatch"),
+        ("HBCV00005PZUWE", True, "network_missing"),
+        ("HBCV00005PZUWG", False, "network_missing"),
+        ("HBCV0000A1GTQO", False, "color_missing"),
+    ],
+)
+def test_unproven_hepsiburada_page_preserves_variant_traversal(
+    monkeypatch, pid, expand, reason
+):
+    sample, child = acceptance_sample(pid), acceptance_sample("HBCV00007A36P9")
+    target = DiscoveryTarget.model_validate(sample["target"])
+    config = DiscoveryConfig(targets=[target])
+    discovery = HepsiburadaDiscovery(target, config, Runtime())
+    url, child_url = sample["evidence"]["url"], child["evidence"]["url"]
+    child_id = child["evidence"]["platform_product_id"]
+    page = deepcopy(sample["page"])
+    # Yalnız gezinti bağlantısı eklenir; iki sayfanın kimlik kanıtı değiştirilmez.
+    page["variants"].append(
+        {"sku": child_id, "urlName": child_url.split("/")[-1].rsplit("-p-", 1)[0]}
+    )
+    pages = {
+        url: page_html(page, "hepsiburada"),
+        child_url: page_html(child["page"], "hepsiburada"),
+    }
+    requested = []
+
+    def get(link):
+        requested.append(link)
+        return pages[link]
+
+    monkeypatch.setattr(discovery, "get", get)
+    monkeypatch.setattr(discovery, "_search", lambda: {pid: url})
+    try:
+        raw = discovery.discover()
+        assert requested == ([url, child_url] if expand else [url])
+        assert pid not in [
+            candidate.platform_product_id for candidate in raw.candidates
+        ]
+        assert reason in raw.decisions[0].reasons
+        queued = [
+            entry
+            for entry in discovery.trace
+            if entry["kind"] == "variant_queue" and entry["sku"] == pid
+        ]
+        assert queued == (
+            [{"kind": "variant_queue", "sku": pid, "added": [child_id]}]
+            if expand
+            else []
+        )
+        if not expand:
+            assert raw.issues[0].reason == "candidate_rejected"
+            assert raw.issues[0].detail == (
+                f"{pid}: Hepsiburada SKU seçeneklerde bulunamadı"
+            )
+        guarded = service._guard_results([raw], config)[0]
+        assert not guarded.complete
+        assert any(reason in issue.detail for issue in guarded.issues)
+        if pid == "HBCV0000E8DHJL":
+            assert guarded.candidates == [raw.decisions[1].candidate]
+            assert guarded.candidates[0].platform_product_id == child_id
+    finally:
+        discovery.close()
+
+
+@pytest.mark.parametrize("condition", [None, "https://schema.org/UsedCondition"])
+def test_unproven_trendyol_page_is_reported_without_candidate(monkeypatch, condition):
+    sample = acceptance_sample("859623143")
+    page = deepcopy(sample["page"])
+    for product in page["jsonld"]:
+        for offer in product["offers"]:
+            if condition is None:
+                offer.pop("itemCondition", None)
+            else:
+                offer["itemCondition"] = condition
+    target = DiscoveryTarget.model_validate(sample["target"])
+    config = DiscoveryConfig(targets=[target])
+    discovery = TrendyolDiscovery(target, config, Runtime())
+    pid, url = sample["evidence"]["platform_product_id"], sample["evidence"]["url"]
+    monkeypatch.setattr(discovery, "get", lambda _: page_html(page, "trendyol"))
+    monkeypatch.setattr(discovery, "_search_candidates", lambda: ({}, {pid: url}, True))
+    try:
+        raw = discovery.discover()
+        assert raw.candidates == [] and raw.issues == []
+        assert raw.decisions[0].candidate is None
+        assert raw.decisions[0].status == (
+            "insufficient" if condition is None else "mismatch"
+        )
+        guarded = service._guard_results([raw], config)[0]
+        assert not guarded.complete and not guarded.candidates
+        assert [issue.reason for issue in guarded.issues] == [
+            "evidence_missing" if condition is None else "identity_mismatch"
+        ]
+    finally:
+        discovery.close()
 
 
 def hb_sample():

@@ -5,7 +5,7 @@ from urllib.parse import urlencode, urljoin, urlsplit
 
 from bs4 import BeautifulSoup
 
-from app.contracts import DiscoveryCandidate, DiscoveryResult
+from app.contracts import DiscoveryResult
 from app.discovery.acceptance import hepsiburada_evidence
 from app.discovery.base import RECOVERABLE, BaseDiscovery, error_code
 from app.discovery.matching import phone_category
@@ -197,6 +197,8 @@ class Discovery(BaseDiscovery):
         )
         if decision.status == "verified":
             return decision.candidate, variants
+        # Kabul edilmeyen sayfada bu kontroller ret gerekçesini ve seçeneklere
+        # devam edilip edilmeyeceğini belirler; tarama kapsamı değişmemelidir.
         detail = next(
             (item for item in details if phone_category(item["definitionName"])),
             None,
@@ -211,11 +213,10 @@ class Discovery(BaseDiscovery):
         selected = variant_identity(soup, expected_sku)
         if selected is None:
             raise FetchError("identity", "Hepsiburada SKU seçeneklerde bulunamadı")
-        structured_capacity, color = selected
-        capacity = identify(
+        identify(
             names,
             self.target.model,
-            structured_capacity,
+            selected[0],
             exclude=self.target.exclude_terms,
         )
         if self.target.network:
@@ -223,25 +224,7 @@ class Discovery(BaseDiscovery):
             for fact in decision.evidence.facts:
                 if fact.field == "network":
                     self.verify_network(fact.value, names)
-        canonical = soup.select_one('link[rel="canonical"][href]')
-        if canonical is not None:
-            canonical_url = canonical["href"]
-            # Yalnız https://www.hepsiburada.com adresi kabul edilir; başka alan
-            # adı katalog doğrulamasını ve bütün çalışmayı bozardı.
-            if canonical_url.startswith(HOME):
-                if hepsiburada_sku(canonical_url) == expected_sku:
-                    url = canonical_url
-        candidate = DiscoveryCandidate(
-            target_key=self.target.key,
-            platform=self.platform,
-            platform_product_id=expected_sku,
-            url=url,
-            brand=self.target.brand,
-            model=self.target.model,
-            storage_gb=capacity,
-            color=color,
-        )
-        return candidate, variants
+        return None, variants
 
     def _group(self, url):
         """-pm- grup sayfasındaki varyantları döndürür; kendisi aday olmaz."""
@@ -298,7 +281,8 @@ class Discovery(BaseDiscovery):
                     variants = self._group(url)
                 else:
                     candidate, variants = self._product(url, key)
-                    found[key] = candidate
+                    if candidate is not None:
+                        found[key] = candidate
                 queued = self._enqueue(variants, queue, seen)
                 self.note("variant_queue", sku=key, added=queued)
             except RECOVERABLE as exc:

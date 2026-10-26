@@ -5,12 +5,21 @@ from html import escape
 from urllib.parse import parse_qs, urlsplit
 
 import pytest
+from bs4 import BeautifulSoup
 
 from app.contracts import DiscoveryCandidate, DiscoveryConfig, DiscoveryTarget
 from app.discovery.hepsiburada import Discovery as HepsiburadaDiscovery
+from app.scraper.hepsiburada_scraper import product_names, variant_identity
 from app.scraper.http import FetchError
+from app.scraper.parsing import page_capacity
 from app.settings import Runtime
-from tests.support.discovery import fixture, network_target, target
+from tests.support.discovery import (
+    acceptance_sample,
+    fixture,
+    network_target,
+    page_html,
+    target,
+)
 
 
 def test_hepsiburada_network_target_reads_page_property(monkeypatch):
@@ -42,7 +51,8 @@ def test_hepsiburada_network_target_reads_page_property(monkeypatch):
     url = f"https://www.hepsiburada.com/xiaomi-redmi-note-14-pro-p-{sku}"
     monkeypatch.setattr(discovery, "get", lambda url: page("4.5G"))
     candidate, _ = discovery._product(url, sku)
-    assert candidate.storage_gb == 256
+    assert candidate is None
+    assert discovery.decisions[-1].reasons == ["new_condition_missing"]
     monkeypatch.setattr(discovery, "get", lambda url: page("5G"))
     with pytest.raises(FetchError, match="Ağ türü"):
         discovery._product(url, sku)
@@ -79,7 +89,9 @@ def test_hepsiburada_trace_keeps_rejected_page_name(monkeypatch):
     discovery.close()
 
 
-def test_hepsiburada_group_card_resolves_to_verified_variant(monkeypatch):
+def test_hepsiburada_group_card_resolves_to_variant_without_bypassing_acceptance(
+    monkeypatch,
+):
     # Canlı iPhone 15 model sayfasındaki 6. kart: -pm- grup bağlantısı.
     discovery = HepsiburadaDiscovery(
         target("iPhone 15"),
@@ -134,12 +146,11 @@ def test_hepsiburada_group_card_resolves_to_verified_variant(monkeypatch):
     monkeypatch.setattr(discovery, "_api", blocked)
     result = discovery.discover()
 
-    assert [item.platform_product_id for item in result.candidates] == [
-        "HBCV0000D3AULB"
-    ]
-    assert result.candidates[0].storage_gb == 128
-    assert result.candidates[0].color == "Siyah"
-    assert result.candidates[0].url.endswith(
+    assert result.candidates == []
+    assert result.decisions[0].evidence.platform_product_id == "HBCV0000D3AULB"
+    assert result.decisions[0].status == "insufficient"
+    assert result.decisions[0].reasons == ["new_condition_missing"]
+    assert result.decisions[0].evidence.url.endswith(
         "apple-iphone-15-siyah-128gb-p-HBCV0000D3AULB"
     )
     assert [issue.reason for issue in result.issues] == ["search_api"]
@@ -166,15 +177,13 @@ def test_hepsiburada_variant_identity(monkeypatch):
         "</script></html>"
     )
     monkeypatch.setattr(discovery, "get", lambda url: html)
-    candidate, found = discovery._product(
-        "https://www.hepsiburada.com/apple-iphone-15-128-gb-mavi-p-HBCV00004X9ZCK",
-        "HBCV00004X9ZCK",
-    )
-    assert candidate.storage_gb == 128
-    assert candidate.color == "Mavi"
+    url = "https://www.hepsiburada.com/apple-iphone-15-128-gb-mavi-p-HBCV00004X9ZCK"
+    candidate, found = discovery._product(url, "HBCV00004X9ZCK")
+    assert candidate is None
+    assert discovery.decisions[-1].reasons == ["new_condition_missing"]
     assert len(found) == 3
     with pytest.raises(FetchError):
-        discovery._product(candidate.url, "HBCVWRONG")
+        discovery._product(url, "HBCVWRONG")
 
     # Canlı S24 verisindeki gibi SKU'su boş bir varyant kaydı taramayı çökertmez.
     state["allVariantCombinations"] = [{"sku": None, "Renk": None}, *items]
@@ -183,8 +192,9 @@ def test_hepsiburada_variant_identity(monkeypatch):
         f"window.DATA = {json.dumps(state)};"
         "</script></html>"
     )
-    candidate, _ = discovery._product(candidate.url, "HBCV00004X9ZCK")
-    assert candidate.color == "Mavi"
+    candidate, _ = discovery._product(url, "HBCV00004X9ZCK")
+    assert candidate is None
+    assert discovery.decisions[-1].reasons == ["new_condition_missing"]
     discovery.close()
 
 
@@ -316,21 +326,25 @@ def test_hepsiburada_variant_lists_reject_conflicting_identity(
         "earlier-list",
     ],
 )
-def test_hepsiburada_variant_lists_accept_consistent_identity(
+def test_hepsiburada_variant_lists_preserve_consistent_identity(
     monkeypatch, variant_lists, capacity, color, name
 ):
     sku = "HBCV00004X9ZCK"
     discovery = HepsiburadaDiscovery(
         target("iPhone 15"), DiscoveryConfig(targets=[]), Runtime()
     )
-    monkeypatch.setattr(
-        discovery, "get", lambda url: hepsiburada_variant_html(variant_lists, name=name)
-    )
+    html = hepsiburada_variant_html(variant_lists, name=name)
+    monkeypatch.setattr(discovery, "get", lambda url: html)
     try:
         candidate, found = discovery._product(
             f"https://www.hepsiburada.com/iphone-15-p-{sku}", sku
         )
-        assert (candidate.storage_gb, candidate.color) == (capacity, color)
+        assert candidate is None
+        soup = BeautifulSoup(html, "html.parser")
+        selected = variant_identity(soup, sku)
+        assert page_capacity(product_names(soup, sku), selected[0]) == capacity
+        assert selected[1] == color
+        assert "new_condition_missing" in discovery.decisions[0].reasons
         assert found == variant_lists[-1]
     finally:
         discovery.close()
@@ -361,7 +375,11 @@ def test_hepsiburada_variant_conflict_does_not_stop_other_candidates(monkeypatch
     monkeypatch.setattr(discovery, "get", pages.__getitem__)
     try:
         result = discovery.discover()
-        assert [c.platform_product_id for c in result.candidates] == [good_sku]
+        assert result.candidates == []
+        good = next(
+            d for d in result.decisions if d.evidence.platform_product_id == good_sku
+        )
+        assert good.status == "insufficient" and "new_condition_missing" in good.reasons
         assert [i.reason for i in result.issues] == ["candidate_rejected"]
         assert bad_sku in result.issues[0].detail
         assert not result.complete
@@ -377,7 +395,7 @@ HEPSIBURADA_IDENTITY_EXAMPLES = fixture("hepsiburada_identity_examples.json")
     HEPSIBURADA_IDENTITY_EXAMPLES["pages"],
     ids=lambda example: example["sku"],
 )
-def test_hepsiburada_saved_variant_identity_preserves_candidate(monkeypatch, example):
+def test_hepsiburada_saved_variant_identity_preserves_diagnostics(monkeypatch, example):
     html = (
         f'<script type="application/ld+json">{json.dumps(example["json_ld"])}</script>'
     )
@@ -409,7 +427,17 @@ def test_hepsiburada_saved_variant_identity_preserves_candidate(monkeypatch, exa
             assert "Sayfadaki model hedefle eşleşmiyor" in str(error.value)
         else:
             candidate, _ = discovery._product(example["url"], example["sku"])
-            assert candidate.model_dump(mode="json") == example["expected_candidate"]
+            assert candidate is None
+            soup = BeautifulSoup(html, "html.parser")
+            selected = variant_identity(soup, example["sku"])
+            expected = example["expected_candidate"]
+            assert (
+                page_capacity(product_names(soup, example["sku"]), selected[0])
+                == expected["storage_gb"]
+            )
+            assert selected[1] == expected["color"]
+            assert discovery.decisions[0].evidence.url == example["url"]
+            assert "new_condition_missing" in discovery.decisions[0].reasons
     finally:
         discovery.close()
 
@@ -711,114 +739,96 @@ def test_hepsiburada_product_page_limit_stops_queue(monkeypatch):
     discovery.close()
 
 
-def test_hepsiburada_canonical_url_must_stay_on_platform(monkeypatch):
+def test_hepsiburada_verified_candidate_keeps_requested_url(monkeypatch):
+    sample = acceptance_sample("HBCV00007A36P9")
+    target = DiscoveryTarget.model_validate(sample["target"])
     discovery = HepsiburadaDiscovery(
-        target("iPhone 15"),
-        DiscoveryConfig(targets=[]),
-        Runtime(request_interval_seconds=0),
+        target, DiscoveryConfig(targets=[target]), Runtime()
     )
-    state = {
-        "sku": "HBCV00004X9ZCK",
-        "definitionName": "Cep Telefonu",
-        "brand": "Apple",
-        "allVariantCombinations": fixture("hepsiburada_variants.json")[
-            "allVariantCombinations"
-        ],
-    }
-    url = "https://www.hepsiburada.com/apple-iphone-15-128-gb-mavi-p-HBCV00004X9ZCK"
-
-    def page(canonical):
-        return (
-            f'<html><link rel="canonical" href="{canonical}">'
-            "<h1>Apple iPhone 15 128 GB Mavi</h1>"
-            f"<script>window.DATA = {json.dumps(state)};</script></html>"
-        )
-
-    foreign = "https://m.hepsiburada.com/iphone-15-mavi-p-HBCV00004X9ZCK"
-    monkeypatch.setattr(discovery, "get", lambda link: page(foreign))
-    candidate, _ = discovery._product(url, "HBCV00004X9ZCK")
-    assert candidate.url == url
-
-    same_site = "https://www.hepsiburada.com/iphone-15-mavi-p-HBCV00004X9ZCK"
-    monkeypatch.setattr(discovery, "get", lambda link: page(same_site))
-    candidate, _ = discovery._product(url, "HBCV00004X9ZCK")
-    assert candidate.url == same_site
-    discovery.close()
+    sku, url = sample["evidence"]["platform_product_id"], sample["evidence"]["url"]
+    try:
+        for host in ("m.hepsiburada.com", "www.hepsiburada.com"):
+            canonical = f"https://{host}/other-p-{sku}"
+            html = page_html(sample["page"], "hepsiburada")
+            html += f'<link rel="canonical" href="{canonical}">'
+            monkeypatch.setattr(discovery, "get", lambda link: html)
+            candidate, _ = discovery._product(url, sku)
+            assert discovery.decisions[-1].status == "verified"
+            assert candidate.url == url
+    finally:
+        discovery.close()
 
 
 @pytest.mark.parametrize(
-    "canonical, use_canonical",
+    "canonical, mismatch",
     [
-        ("https://www.hepsiburada.com/other-p-HBCV00004X9ZCKX", False),
-        ("https://www.hepsiburada.com/HBCV00004X9ZCK/other-p-HBCV00000000", False),
-        (
-            "https://www.hepsiburada.com/other-p-HBCV00000000?ref=HBCV00004X9ZCK",
-            False,
-        ),
+        ("https://www.hepsiburada.com/other-p-HBCV00004X9ZCKX", True),
+        ("https://www.hepsiburada.com/HBCV00004X9ZCK/other-p-HBCV00000000", True),
+        ("https://www.hepsiburada.com/other-p-HBCV00000000?ref=HBCV00004X9ZCK", True),
         ("https://www.hepsiburada.com/other?ref=phone-p-HBCV00004X9ZCK", False),
-        ("https://www.hepsiburada.com/other-p-HBCV00004X9ZCK", True),
-        ("https://www.hepsiburada.com/other-p-HBCV00004X9ZCK?ref=1", True),
-        ("https://www.hepsiburada.com/other-p-HBCV00004X9ZCK/", True),
-        ("https://www.hepsiburada.com/other-p-hbcv00004x9zck", True),
+        ("https://www.hepsiburada.com/other-p-HBCV00004X9ZCK", False),
+        ("https://www.hepsiburada.com/other-p-HBCV00004X9ZCK?ref=1", False),
+        ("https://www.hepsiburada.com/other-p-HBCV00004X9ZCK/", False),
+        ("https://www.hepsiburada.com/other-p-hbcv00004x9zck", False),
         ("https://www.hepsiburada.com/other-pm-HBC000123", False),
         ("https://www.hepsiburada.com/apple-iphone-15-cep-telefonlari", False),
         ("https://m.hepsiburada.com/other-p-HBCV00004X9ZCK", False),
         (None, False),
     ],
 )
-def test_hepsiburada_canonical_requires_exact_path_sku(
-    monkeypatch, canonical, use_canonical
+def test_hepsiburada_canonical_identity_controls_proven_candidate(
+    monkeypatch, canonical, mismatch
 ):
+    sample = acceptance_sample("HBCV00007A36P9")
+    target = DiscoveryTarget.model_validate(sample["target"])
     discovery = HepsiburadaDiscovery(
-        target("iPhone 15"), DiscoveryConfig(targets=[]), Runtime()
+        target, DiscoveryConfig(targets=[target]), Runtime()
     )
-    sku = "HBCV00004X9ZCK"
-    url = "https://www.hepsiburada.com/apple-iphone-15-128-gb-mavi-p-" + sku
-    state = {
-        "sku": sku,
-        "definitionName": "Cep Telefonu",
-        "brand": "Apple",
-        "allVariantCombinations": fixture("hepsiburada_variants.json")[
-            "allVariantCombinations"
-        ],
-    }
-    html = "<h1>Apple iPhone 15 128 GB Mavi</h1>"
+    sku, url = sample["evidence"]["platform_product_id"], sample["evidence"]["url"]
+    html = page_html(sample["page"], "hepsiburada")
     if canonical is not None:
+        canonical = canonical.replace("HBCV00004X9ZCK", sku).replace(
+            "hbcv00004x9zck", sku.lower()
+        )
         html += f'<link rel="canonical" href="{escape(canonical, quote=True)}">'
-    html += f'<script type="application/json">{json.dumps(state)}</script>'
     monkeypatch.setattr(discovery, "get", lambda link: html)
     try:
         candidate, _ = discovery._product(url, sku)
-        assert candidate.url == (canonical if use_canonical else url)
-        assert candidate.platform_product_id == sku
-        assert (candidate.storage_gb, candidate.color) == (128, "Mavi")
+        decision = discovery.decisions[0]
+        if mismatch:
+            assert candidate is None
+            assert decision.status == "mismatch"
+            assert decision.reasons == ["source_id_mismatch"]
+        else:
+            assert decision.status == "verified"
+            assert candidate.url == url
+            assert candidate.platform_product_id == sku
+            assert (candidate.storage_gb, candidate.color) == (256, "Mor")
     finally:
         discovery.close()
 
 
-def test_hepsiburada_wrong_canonical_keeps_discovery_candidate(monkeypatch):
-    discovery = HepsiburadaDiscovery(
-        target("iPhone 15"), DiscoveryConfig(targets=[]), Runtime()
-    )
-    sku = "HBCV00004X9ZCK"
-    url = "https://www.hepsiburada.com/apple-iphone-15-128-gb-mavi-p-" + sku
-    canonical = url + "X"
-    state = {
-        "sku": sku,
-        "definitionName": "Cep Telefonu",
-        "brand": "Apple",
-        "allVariantCombinations": [{"sku": sku, "Kapasite": "128 GB", "Renk": "Mavi"}],
-    }
-    html = (
-        f'<link rel="canonical" href="{canonical}">'
-        "<h1>Apple iPhone 15 128 GB Mavi</h1>"
-        f'<script type="application/json">{json.dumps(state)}</script>'
-    )
+def test_hepsiburada_wrong_canonical_is_rejected_by_report_guard(monkeypatch):
+    from app.discovery.service import _guard_results
+
+    sample = acceptance_sample("HBCV00007A36P9")
+    target = DiscoveryTarget.model_validate(sample["target"])
+    config = DiscoveryConfig(targets=[target])
+    discovery = HepsiburadaDiscovery(target, config, Runtime())
+    sku, url = sample["evidence"]["platform_product_id"], sample["evidence"]["url"]
+    html = page_html(sample["page"], "hepsiburada")
+    html += f'<link rel="canonical" href="{url}X">'
     monkeypatch.setattr(discovery, "_search", lambda: {sku: url})
     monkeypatch.setattr(discovery, "get", lambda link: html)
     try:
-        result = discovery.discover()
-        assert [item.url for item in result.candidates] == [url]
-        assert result.complete and result.issues == []
+        raw = discovery.discover()
+        assert raw.candidates == []
+        assert raw.decisions[0].status == "mismatch"
+        assert raw.decisions[0].reasons == ["source_id_mismatch"]
+        guarded = _guard_results([raw], config)[0]
+        assert not guarded.complete and not guarded.candidates
+        assert [(i.reason, i.detail) for i in guarded.issues] == [
+            ("identity_mismatch", f"{sku}: source_id_mismatch")
+        ]
     finally:
         discovery.close()

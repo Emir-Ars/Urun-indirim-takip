@@ -351,8 +351,15 @@ def test_trendyol_color_prefers_page_color_selector(monkeypatch):
     monkeypatch.setattr(discovery, "get", lambda url: html)
     url = "https://www.trendyol.com/apple/iphone-17-pro-max-256gb-abis-p-985256830"
 
-    assert discovery._candidate(url, "985256830", "Abis").color == "Abis"
-    assert discovery._candidate(url, "985256830").color == "Çok Renkli"
+    assert discovery._candidate(url, "985256830", "Abis") is None
+    first = discovery.decisions[-1]
+    assert [fact.value for fact in first.evidence.facts if fact.field == "color"] == [
+        "Abis",
+        "Çok Renkli",
+    ]
+    assert first.reasons == ["new_condition_missing"]
+    assert discovery._candidate(url, "985256830") is None
+    assert discovery.decisions[-1].reasons == ["color_missing", "new_condition_missing"]
     discovery.close()
 
 
@@ -382,10 +389,12 @@ def test_trendyol_network_target_checks_page_attribute(monkeypatch):
 
     url = "https://www.trendyol.com/xiaomi/redmi-note-14-pro-8-256-siyah-p-891692674"
     monkeypatch.setattr(discovery, "get", lambda url: page("4G"))
-    assert discovery._candidate(url, "891692674").storage_gb == 256
-    # Satıcılar alanı çoğu zaman boş bırakır: alanı olmayan sayfa 4G sayılır.
+    assert discovery._candidate(url, "891692674") is None
+    assert discovery.decisions[-1].reasons == ["color_missing", "new_condition_missing"]
+    # Eksik ağ alanı tanılamadan geçer; kabul için olumlu ağ kanıtı gerekir.
     monkeypatch.setattr(discovery, "get", lambda url: page(None))
-    assert discovery._candidate(url, "891692674").storage_gb == 256
+    assert discovery._candidate(url, "891692674") is None
+    assert "network_missing" in discovery.decisions[-1].reasons
     # Yalnız açıkça 5G yazan özellik reddedilir.
     monkeypatch.setattr(discovery, "get", lambda url: page("5G"))
     with pytest.raises(FetchError, match="Ağ türü"):
@@ -673,7 +682,7 @@ def test_trendyol_saved_network_conflict_rejects_candidate(monkeypatch):
     TRENDYOL_NETWORK_EXAMPLES["consistent_products"],
     ids=lambda example: str(example["product"]["id"]),
 )
-def test_trendyol_saved_network_preserves_candidate(monkeypatch, example):
+def test_trendyol_saved_network_preserves_diagnostics(monkeypatch, example):
     discovery = TrendyolDiscovery(
         DiscoveryTarget.model_validate(TRENDYOL_NETWORK_EXAMPLES["target"]),
         DiscoveryConfig(targets=[]),
@@ -684,7 +693,8 @@ def test_trendyol_saved_network_preserves_candidate(monkeypatch, example):
     )
     try:
         candidate = discovery._candidate(example["url"], str(example["product"]["id"]))
-        assert candidate.model_dump(mode="json") == example["expected_candidate"]
+        assert candidate is None
+        assert "new_condition_missing" in discovery.decisions[0].reasons
     finally:
         discovery.close()
 
@@ -729,7 +739,8 @@ def test_trendyol_derived_network_values_control_candidate(
     try:
         if accepted:
             candidate = discovery._candidate(example["url"], str(product["id"]))
-            assert candidate.model_dump(mode="json") == example["expected_candidate"]
+            assert candidate is None
+            assert "new_condition_missing" in discovery.decisions[0].reasons
         else:
             with pytest.raises(FetchError, match="Ağ türü") as error:
                 discovery._candidate(example["url"], str(product["id"]))
@@ -798,7 +809,7 @@ def test_trendyol_saved_yenilio_grade_product_is_rejected(monkeypatch, example):
     TRENDYOL_SCOPE_EXAMPLES["new_products"],
     ids=lambda example: str(example["product"]["id"]),
 )
-def test_trendyol_saved_new_phone_scope_preserves_candidate(monkeypatch, example):
+def test_trendyol_saved_new_phone_scope_requires_full_evidence(monkeypatch, example):
     discovery = TrendyolDiscovery(
         DiscoveryTarget.model_validate(TRENDYOL_SCOPE_EXAMPLES["target"]),
         DiscoveryConfig(targets=[]),
@@ -809,10 +820,13 @@ def test_trendyol_saved_new_phone_scope_preserves_candidate(monkeypatch, example
     )
     try:
         candidate = discovery._candidate(example["url"], str(example["product"]["id"]))
-        assert candidate.platform_product_id == str(example["product"]["id"])
-        assert candidate.model == example["listing"]["model"]
-        assert candidate.storage_gb == example["listing"]["storage_gb"]
-        assert candidate.warranty_text == "Apple Türkiye Garantili"
+        assert candidate is None
+        decision = discovery.decisions[0]
+        assert decision.evidence.platform_product_id == str(example["product"]["id"])
+        assert "new_condition_missing" in decision.reasons
+        assert [
+            fact.value for fact in decision.evidence.facts if fact.field == "warranty"
+        ] == ["Apple Türkiye Garantili"]
     finally:
         discovery.close()
 
@@ -822,7 +836,7 @@ def test_trendyol_saved_new_phone_scope_preserves_candidate(monkeypatch, example
     TRENDYOL_IDENTITY_EXAMPLES,
     ids=lambda example: str(example["product"]["id"]),
 )
-def test_trendyol_saved_address_identity_preserves_candidate(monkeypatch, example):
+def test_trendyol_saved_address_identity_preserves_evidence(monkeypatch, example):
     discovery = TrendyolDiscovery(
         DiscoveryTarget.model_validate(example["target"]),
         DiscoveryConfig(targets=[]),
@@ -835,7 +849,11 @@ def test_trendyol_saved_address_identity_preserves_candidate(monkeypatch, exampl
         candidate = discovery._candidate(
             example["url"], str(example["product"]["id"]), example["variant_color"]
         )
-        assert candidate.model_dump(mode="json") == example["expected_candidate"]
+        assert candidate is None
+        decision = discovery.decisions[0]
+        assert decision.evidence.url == example["url"]
+        assert decision.evidence.platform_product_id == str(example["product"]["id"])
+        assert "new_condition_missing" in decision.reasons
     finally:
         discovery.close()
 
@@ -884,8 +902,9 @@ def test_trendyol_candidate_accepts_matching_address(monkeypatch, suffix):
     url = example["url"] + suffix
     try:
         candidate = discovery._candidate(url, "762254881", example["variant_color"])
-        expected = {**example["expected_candidate"], "url": url}
-        assert candidate.model_dump(mode="json") == expected
+        assert candidate is None
+        assert discovery.decisions[0].evidence.url == url
+        assert "new_condition_missing" in discovery.decisions[0].reasons
         assert opened == [url]
     finally:
         discovery.close()
@@ -932,7 +951,9 @@ def test_trendyol_wrong_variant_address_keeps_other_candidates(monkeypatch, path
     monkeypatch.setattr(discovery, "get", get)
     try:
         result = discovery.discover()
-        assert [item.platform_product_id for item in result.candidates] == ["762254881"]
+        assert result.candidates == []
+        assert result.decisions[0].evidence.platform_product_id == "762254881"
+        assert result.decisions[0].status == "insufficient"
         assert opened == [example["url"]]
         assert [issue.reason for issue in result.issues] == ["candidate_rejected"]
         assert (
