@@ -115,6 +115,7 @@ Bu dosyanın kendi güncellemesi bir sonraki adımın commit'ine girer.
 | 26.10 | `dd2e262` | Ekran 1–2 kodu ve yerel geçiş: sıfır fiyat farkı gri/oksuz, seçilen satıcının offer_url akışı ve 005 migration; gerçek düğme kontrolü ilk yeni tur sonrası | [40310082371](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/40310082371) |
 | 28.10 | `94045bd` | Trendyol ana satıcı adresi kaydındaki satıcı kimliğinden (`?merchantId=`); tur 58'de Trendyol 107/107, Hepsiburada 144/144 adres; tarayıcı örneklemesi ve iki pazaryerinin ekran düğmeleri doğrulandı; ekran 1–2 kapandı | [40643349065](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/40643349065) |
 | 28.10 | `ddca8ae` | Kalan sıra 2: GPT ve Claude ML araştırma raporları eklendi; kaynakları ve gerçek veriyle uyumu denetlendi; K1–K8 ML kararları plana yazıldı; son Cimri alımı için aktarım çakışması ve 57/60 eşleştirme açık karar oldu | [40653290005](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/40653290005) |
+| 28.10 | `a2e124f` | Kalan sıra 3.1: Cimri aktarımında alım günü yarım gün sayılır; yarım gün farkı çelişki değil, ilk satır korunur ve fark raporlanır; 9 regresyon testi; arşivdeki 13:51 alımının önizlemesi eski kodla çıkış 2, yeni kodla 1 yarım gün farkı ve çıkış 0 | [40659279633](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/40659279633) |
 
 ## Eylül 2026 ayrıntıları
 

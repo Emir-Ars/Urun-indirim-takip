@@ -1357,6 +1357,18 @@ Galaxy S25 512 GB (`samsung_galaxy_s25_512gb`) ve Redmi Note 14 Pro 5G
 doğrulanamadı. Başka kapasite, Ultra/Plus veya 4G sayfası bunların yerine
 konmadı; eşleştirmesi olmayan ürünün Cimri'de bulunmadığı varsayılmaz.
 
+28 Ekim web aramasıyla, katalogda sonradan eklenen Galaxy S24 FE 128 GB
+(`samsung_galaxy_s24_fe_128gb`) için [ana sayfa](https://www.cimri.com/cep-telefonlari/en-ucuz-samsung-galaxy-s24-fe-fiyatlari,a2372356868)
+eklendi; dosyada 58 eşleştirme var. Bu sayfanın adında kapasite yazmıyor.
+Modelin ilk çıktığı kapasitenin ana sayfası böyle adlandırılıyor; Galaxy
+S25 128 GB eşleştirmesi de aynı kalıptadır. Renk sayfasında 128 GB yazıyor;
+S24 FE 256 GB ise ayrı bir ana sayfadır. Cimri sayfası web aracına 403
+verdiği için kimlik henüz doğrulanmadı. Kimliği alımın kendi kontrolleri
+(sayfa ve API kimliği, marka, kategori, başlık ve H1'lerin model/kapasitesi)
+doğrular; bunlardan biri tutmazsa ürün `error` olur ve aktarılmaz. Aynı
+aramada diğer iki ürün için yine yalnız başka ürünlere ait sayfalar çıktı.
+Galaxy S25 512 GB'ın katalogda etkin sayfası da yoktur.
+
 Redmi Note 14 Pro'nun [256 GB](https://www.cimri.com/cep-telefonlari/en-ucuz-xiaomi-redmi-note-14-pro-fiyatlari,a2372365369)
 ve [512 GB](https://www.cimri.com/cep-telefonlari/en-ucuz-xiaomi-redmi-note-14-pro-512gb-12gb-ram-fiyatlari,a2430184601)
 başlıkları 4G yazmıyor; her iki sayfanın teknik özelliklerinde
@@ -1381,7 +1393,7 @@ $LASTEXITCODE
 raporlanır. `--mapping` ve `--output-dir` zorunludur. Var olan klasöre yazılmaz;
 eskisini silmek yerine tarih-saatli yeni klasör kullanılır. Kilit meşgulse
 klasör oluşturulmaz. Canlı komutu kullanıcı tur saatleri dışında çalıştırır.
-İki eşleştirme açık olduğundan bütün 57 alım başarılı olsa bile katalog
+İki eşleştirme açık olduğundan bütün 58 alım başarılı olsa bile katalog
 komutunun çıkışı 2 olur. `captured`/`error`/`not_attempted` kayıtları ayrıca
 incelenir; yalnız çıkış 2'den ağ veya kimlik hatası olduğu sonucu çıkarılmaz.
 

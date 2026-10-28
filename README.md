@@ -95,7 +95,7 @@ başlatılması [teknik rehberde](docs/teknik.md#komutlar) anlatılır.
 | Keşif hedefleri | 25 (24 etkin): Apple 9, Samsung 8, Xiaomi 6, POCO 2 |
 | Katalog | 60 ürün, 369 bağlantı (366 etkin); Hepsiburada 234, Trendyol 135 |
 | Toplama düzeni | Her gün 10:00 ve 22:00; haftalık keşif Pazar 14:00 (otomatik güvenli kabul) |
-| Cimri geçmişi | 57 ürün, 20.805 tarihli kayıt (553 eksik fiyat); iki ürün eşleştirilemedi |
+| Cimri geçmişi | 57 ürün, 20.805 tarihli kayıt (553 eksik fiyat); eşleştirme 58/60, iki ürün eşleştirilemedi (28 Ekim) |
 | Otomatik testler | 1991 test, 0 atlanan; Black ve Flake8 temiz (28 Ekim) |
 
 Katalogdaki **369 bağlantının markalara göre dağılımı** (üç pasif bağlantı dahil):

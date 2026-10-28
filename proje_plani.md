@@ -229,6 +229,7 @@ rehberde, o günkü tartışması arşivdedir.
 | 28 Ekim | ML gösterim kapısı: Cimri deneyi (gösterim yok) → kendi verimizde gölge mod (tahmin kaydedilir, gösterilmez) → olasılık ekrana ancak gölge modda en az 60–90 günlük, bir kampanya ve bir sakin dönem içeren dönemde en az 30 farklı düşüş olayı, Brier skill > 0 ve büyük kalibrasyon sapması olmamasıyla çıkar. Ürün bazında geçmiş 30 günden azsa, son 14 günde eksik gün %30'u aşıyorsa veya ailesi eğitimde hiç görülmediyse "yetersiz veri" gösterilir. Ekran, olasılığın takip edilen sayfalara ve hangi 22:00 fiyatına göre olduğunu yazar. Model kaydı, yeniden eğitim ve geri alma ML hazırlığı planında. | Cimri'deki iyi sonuç, farklı ölçüm ve kapsam yüzünden kendi verimizde doğrulanmadan yeterli değildir. Eşikler proje tercihidir, sonra güncellenebilir. Kullanıcı bedeli kabul etti: ekranda olasılık en erken birkaç ay sonra çıkar. |
 | 28 Ekim | Son Cimri alımı Kasım başında, aktarım çakışması ve eşleştirme ön koşulları çözülünce yapılır; kalan sıra değişmez. Cimri serisi 9 Ekim 2025'ten alım gününe kadar uzanır (grafik alım gününden geriye en çok 366 gün verir); alım günü yarım gündür. | Kullanıcı projeyi bir ay bekletmek istemiyor. Bilinen bedel: Kasım 2026 kampanyaları Cimri verisine girmez; kendi verimizle örtüşme ~5 hafta kalır. |
 | 28 Ekim | Cimri aktarımında yarım gün kuralı: günü, alım anının İstanbul tarihine eşit olan değer yarım gündür. Ortak günde yarım gün farkı çelişki sayılmaz; ilk satır korunur, fark raporlanır, ürünün yeni günleri eklenir. Tam gün farkı ve Cimri kimliği farkı çelişki kalır. Şema ve "kayıt değişmez" koruması değişmez. ML yarım günü gözlenmemiş gün sayar. | 8 Ekim satırları alım gününün 16:00 değeridir (57 satır, 5'i boş); gün sonu değeri farklı gelirse ürün tümden reddedilirdi. 8 Ekim alımları arasında 19.292 geçmiş gün değeri değişmedi. Arşivdeki 13:51 alımının önizlemesi eski kodla S24 256 GB'ı reddetti (çıkış 2), yeni kodla 1 yarım gün farkı raporladı (çıkış 0). Kullanıcı tabloyu değiştiren migration yerine bu yolu seçti. |
+| 28 Ekim | Cimri eşleştirmesi 58/60: Galaxy S24 FE 128 GB, ana sayfası (`a2372356868`) ile eklenir; kimliğini son alımın kendi kontrolleri doğrular, tutmazsa ürün aktarılmaz. Galaxy S25 512 GB ve Redmi Note 14 Pro 5G 256 GB eşleştirmesiz kalır; yerlerine başka kapasite veya model konmaz. Ayrı doğrulama alımı yapılmaz. | Web aramasında S24 FE 128 GB için S25 128 GB ile aynı kalıpta ana sayfa bulundu; diğer ikisi için yine yalnız başka ürünlerin sayfaları çıktı. S25 512 GB'ın katalogda sayfası yok. Üç ürünün ailesi Cimri'de olduğu için ML engellenmez. |
 
 ### Bilerek değiştirilmeyen davranışlar
 
@@ -285,7 +286,6 @@ Ayrıntı ve kanıtları: [teknik rehber, Bilinen sınırlar](docs/teknik.md#bil
 |---|---|
 | HBCV0000E8DHJL | Başlık/varyant 256 GB, ana ürün alanı 512 GB. Mevcut bağlantıya müdahale **karar bekliyor**. |
 | Sürekli işletimin doğrulanması | [Teknik rehberdeki işletim sınırı](docs/teknik.md#bilinen-sınırlar) kapanmadı; geciken turun nedeni açık. Güç ayarlarına yeni müdahale kararı verilmedi. |
-| Cimri eşleştirmesi 57/60 | Galaxy S25 512 GB ve Redmi Note 14 Pro 5G 256 GB'ın Cimri sayfası doğrulanamadı; Galaxy S24 FE 128 GB sonradan eklendi, eşleştirmesi yok. Son alımdan önce bakılacak. |
 
 ## 8. Proje yapısının sadeleştirilmesi (tamamlandı)
 
@@ -351,9 +351,10 @@ beklenen davranışı ve sonuca güvenmek için gereken kanıtlar açıklanır.
 1. **Ekranın canlı kontrolü:** ✅ Tamamlandı (28 Ekim; [kayıt](docs/gecmis.md)).
 2. **[ML araştırma raporları](docs/arastirma/asama_08_ml/):** ✅ Tamamlandı
    (28 Ekim); kararlar Bölüm 5'te, özet Bölüm 9'da.
-3. **Son Cimri alımı (Kasım başı):** aktarımın yarım gün kuralı hazır
-   (Bölüm 5); önce Bölüm 7'deki eşleştirme konusu çözülür. Alım ayrı onayla
-   ve kullanıcının terminalinden son bir defa yapılır.
+3. **Son Cimri alımı (Kasım başı):** aktarımın yarım gün kuralı ve 58/60
+   eşleştirme hazır (Bölüm 5). 1 Kasım keşfi yeni ürün eklerse alımdan önce
+   eşleştirmesi bakılır. Alım ayrı onayla ve kullanıcının terminalinden son
+   bir defa yapılır.
 4. **ML hazırlığı:** onaylanan veri ve deney planı uygulanacak.
 
 Öğrenme turu bu sıranın dışında, pasif (28 Ekim kararı).
