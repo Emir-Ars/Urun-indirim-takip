@@ -45,7 +45,7 @@ Kullanıcı arayüzde arama yaptığında canlı scraping veya model eğitimi
 | Proje yapısının sadeleştirilmesi (Bölüm 8, Adım 1–5) | ✅ Tamamlandı (26 Ekim) | `75d4732` |
 | ML öncesi ekran iyileştirmeleri 1–2 | ✅ Tamamlandı (28 Ekim) | `dd2e262`, `94045bd`, CI 40643349065 |
 | Proje mühendisliğini pekiştirme | ⏸️ Pasif (28 Ekim kararı): iş sırasında değil; kullanıcı istediğinde Oturum 2'den sürer | Program aşağıda; oturum ilerlemesi yerel devir notunda |
-| 8. ML (indirim tahmini) | 🔜 Planlandı, başlanmadı | Bölüm 9 |
+| 8. ML (indirim tahmini) | 🔄 Hazırlık planlandı (28 Ekim), adımlar 4.0–4.6 | Bölüm 9 |
 | 9. Sürekli işletim ve Docker | 🔄 Sürekli işletim kararı verildi (22 Ekim: dizüstü sürekli açık); Docker başlanmadı | Bölüm 9 |
 
 Bugünkü işletim: fiyat turu her gün 10:00 ve 22:00'de, haftalık keşif her
@@ -230,6 +230,9 @@ rehberde, o günkü tartışması arşivdedir.
 | 28 Ekim | Son Cimri alımı Kasım başında, aktarım çakışması ve eşleştirme ön koşulları çözülünce yapılır; kalan sıra değişmez. Cimri serisi 9 Ekim 2025'ten alım gününe kadar uzanır (grafik alım gününden geriye en çok 366 gün verir); alım günü yarım gündür. | Kullanıcı projeyi bir ay bekletmek istemiyor. Bilinen bedel: Kasım 2026 kampanyaları Cimri verisine girmez; kendi verimizle örtüşme ~5 hafta kalır. |
 | 28 Ekim | Cimri aktarımında yarım gün kuralı: günü, alım anının İstanbul tarihine eşit olan değer yarım gündür. Ortak günde yarım gün farkı çelişki sayılmaz; ilk satır korunur, fark raporlanır, ürünün yeni günleri eklenir. Tam gün farkı ve Cimri kimliği farkı çelişki kalır. Şema ve "kayıt değişmez" koruması değişmez. ML yarım günü gözlenmemiş gün sayar. | 8 Ekim satırları alım gününün 16:00 değeridir (57 satır, 5'i boş); gün sonu değeri farklı gelirse ürün tümden reddedilirdi. 8 Ekim alımları arasında 19.292 geçmiş gün değeri değişmedi. Arşivdeki 13:51 alımının önizlemesi eski kodla S24 256 GB'ı reddetti (çıkış 2), yeni kodla 1 yarım gün farkı raporladı (çıkış 0). Kullanıcı tabloyu değiştiren migration yerine bu yolu seçti. |
 | 28 Ekim | Cimri eşleştirmesi 58/60: Galaxy S24 FE 128 GB, ana sayfası (`a2372356868`) ile eklenir; kimliğini son alımın kendi kontrolleri doğrular, tutmazsa ürün aktarılmaz. Galaxy S25 512 GB ve Redmi Note 14 Pro 5G 256 GB eşleştirmesiz kalır; yerlerine başka kapasite veya model konmaz. Ayrı doğrulama alımı yapılmaz. | Web aramasında S24 FE 128 GB için S25 128 GB ile aynı kalıpta ana sayfa bulundu; diğer ikisi için yine yalnız başka ürünlerin sayfaları çıktı. S25 512 GB'ın katalogda sayfası yok. Üç ürünün ailesi Cimri'de olduğu için ML engellenmez. |
+| 28 Ekim | Kasım başındaki alımı beklerken önce E8DHJL kararı verilir, ardından ML hazırlığı (kalan sıra 4) mevcut Cimri verisiyle (9 Ekim 2025–8 Ekim 2026) planlanır. Alım gelince aynı adımlar uzatılmış veriyle yeniden çalıştırılır. | Kullanıcı projenin beklemesini istemiyor; model kararı gereği Cimri'de eğitilecek, mevcut bir yıllık veri hazırlığa başlamaya yeter. |
+| 28 Ekim | `hepsiburada_hbcv0000e8dhjl` (Redmi Note 13 Pro 5G 256 GB) olduğu gibi katalogda kalır ve izlenir. | Başlık ve varyant 256 GB/8 GB RAM (512 GB sürüm 12 GB RAM). Fiyatı 20.999–23.999 TL (ortası 21.999) ile diğer 256 GB sayfalarıyla aynı aralıkta; 512 GB ürünün en ucuzu 23.999–25.999 TL. 26 turda hiç en ucuz sayfa olmadı. Ana kayıttaki 512 GB alanı satıcı hatası sayıldı; kesin kanıt değildir. |
+| 28 Ekim | ML hazırlığının yapısı: hesaplama yeni `app/ml` paketinde (seriler, etiketler, girdiler, bölme, ölçütler, modeller, deney), SQL `app/database/ml_data.py`'de, komut `python -m app.ml`. Gerçek DB okuma hesabıyla bir kez parmak izli görüntü dosyasına okunur; etiket ve deney bu dosyadan ağsız çalışır. Kütüphaneler: numpy, scikit-learn, LightGBM (yeni `ml` grubu, kesin sürümler); pandas yok. Kendi verimizde gelecek gün, başlangıç sayfalarından o gün planlananların hepsi cevap verdiyse gözlenmiş sayılır. Adımlar 4.0–4.6 (Bölüm 9), her biri ayrı commit ve onay. | Mevcut klasör düzeni ve sorumluluk sınırları korunur. Görüntü dosyası aynı veriyle aynı sonucu verir ve testler DB istemez. Hata veren ucuz sayfa gerçek düşüşü saklayamaz. |
 
 ### Bilerek değiştirilmeyen davranışlar
 
@@ -284,7 +287,6 @@ Ayrıntı ve kanıtları: [teknik rehber, Bilinen sınırlar](docs/teknik.md#bil
 
 | Konu | Durum |
 |---|---|
-| HBCV0000E8DHJL | Başlık/varyant 256 GB, ana ürün alanı 512 GB. Mevcut bağlantıya müdahale **karar bekliyor**. |
 | Sürekli işletimin doğrulanması | [Teknik rehberdeki işletim sınırı](docs/teknik.md#bilinen-sınırlar) kapanmadı; geciken turun nedeni açık. Güç ayarlarına yeni müdahale kararı verilmedi. |
 
 ## 8. Proje yapısının sadeleştirilmesi (tamamlandı)
@@ -355,7 +357,9 @@ beklenen davranışı ve sonuca güvenmek için gereken kanıtlar açıklanır.
    eşleştirme hazır (Bölüm 5). 1 Kasım keşfi yeni ürün eklerse alımdan önce
    eşleştirmesi bakılır. Alım ayrı onayla ve kullanıcının terminalinden son
    bir defa yapılır.
-4. **ML hazırlığı:** onaylanan veri ve deney planı uygulanacak.
+4. **ML hazırlığı:** onaylanan veri ve deney planı uygulanacak. Alımı
+   beklerken mevcut Cimri verisiyle planlanmaya başlar; önce E8DHJL kararı
+   (28 Ekim kararı).
 
 Öğrenme turu bu sıranın dışında, pasif (28 Ekim kararı).
 
@@ -400,6 +404,22 @@ süreç, veri ve model kalıcılığı ayrıca değerlendirilir.
   yok). Cimri'de 57 ürün için 17.668 pencere (%10 olumlu); 23 Ekim kararıyla
   eğitimde kullanılacak. Cimri'nin 8 Ekim satırları ve son alımın kendi günü
   yarım gündür; ML'de gözlenmemiş sayılır (Bölüm 5, 28 Ekim).
+
+ML hazırlığının adımları (kalan sıra 4; yapı kararı Bölüm 5, 28 Ekim):
+
+| Adım | İş | Durum |
+|---|---|---|
+| 4.0 | Bekleyen belge değişiklikleri | Sürüyor |
+| 4.1 | `ml` bağımlılık grubu, CI, salt okunur veri görüntüsü (`python -m app.ml snapshot`) | Planlandı |
+| 4.2 | Günlük seriler ve etiketler; etiket raporu; sıkı varyantın eski araçla çapraz kontrolü | Planlandı |
+| 4.3 | Girdiler ve sızıntı testi | Planlandı |
+| 4.4 | Zaman bölmesi (purge, ileri yürüyen katlar) ve ölçütler | Planlandı |
+| 4.5 | R0–R2, LightGBM, kalibrasyon ve deney raporu | Planlandı |
+| 4.6 | Mevcut Cimri verisiyle ilk deney; son %15 test açılmaz | Planlandı |
+
+Bu aşamada tahmin gösterilmez, gölge mod kurulmaz ve DB'ye yazılmaz; bunlar
+ayrı planlardır. Kasım alımından sonra 4.1–4.6 komutları uzatılmış veriyle
+yeniden çalıştırılır; model seçimi ancak o zaman dondurulur.
 
 ## 10. Çalışma ve Git disiplini
 

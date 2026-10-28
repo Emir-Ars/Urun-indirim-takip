@@ -56,7 +56,7 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 | `discovery.json` | Takip edilecek telefonlar ve tarama sınırları | Kullanıcı |
 | `catalog.json` | Keşfin doğruladığı ürünler ve sayfalar | Keşif (elle yazılmaz) |
 | `runtime.json` | Zaman aşımı, tekrar deneme, istekler arası bekleme (3 sn) | Kullanıcı, nadiren |
-| `market_history.json` | Bir defalık Cimri alımı: `product_key`, URL ve beklenen Cimri kimliği. 57 ürünün ana adresi doğrulandı; Galaxy S25 512 GB ve Redmi Note 14 Pro 5G 256 GB eşleştirmesiz, yeni eklenen Galaxy S24 FE 128 GB için eşleştirme yapılmadı. | Araştırma ve gerçek çıktı kontrolüyle |
+| `market_history.json` | Bir defalık Cimri alımı: `product_key`, URL ve beklenen Cimri kimliği. 58 eşleştirme: 57'si 8 Ekim alımında doğrulandı, Galaxy S24 FE 128 GB (28 Ekim) son alımda doğrulanacak; Galaxy S25 512 GB ve Redmi Note 14 Pro 5G 256 GB eşleştirmesiz ([ayrıntı](#eşleştirme-dosyası)). | Araştırma ve gerçek çıktı kontrolüyle |
 
 ### Ortak parçalar: `app/`
 
@@ -2355,7 +2355,9 @@ Mevcut Cimri serisinin eski kalması ve ML kullanım belirsizliği ayrıca göst
   çelişir: Trendyol 797850359 başlıkta 5G/12 GB RAM, özellikte 4G/8 GB RAM;
   Hepsiburada HBCV0000E8DHJL başlık/varyantta 256 GB, ana üründe 512 GB.
   Bunlar yeni aday olarak kabul edilmez; hangi alanın yanlış olduğu bilinmez.
-  E8DHJL eski kaydıyla katalogdadır; ona müdahale ayrı hedefli karar ister.
+  E8DHJL eski kaydıyla katalogda kalır ve izlenir (28 Ekim kararı). Varyantı
+  8 GB RAM'dir; fiyatı diğer 256 GB sayfalarıyla aynı aralıktadır ve hiç en
+  ucuz sayfa olmamıştır ([plan](../proje_plani.md)).
 - **Stoksuz Hepsiburada JSON-LD'si:** satılamayan sayfa JSON-LD'de 0,00 TL ve
   `InStock` gösterebilir; bu alanlar fiyat veya stok kanıtı sayılmaz. Tükendi
   kararı satıcı listesinden verilir.
