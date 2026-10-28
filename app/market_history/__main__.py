@@ -154,6 +154,7 @@ def run_import(args, settings) -> int:
     print(
         f"Toplam: {sum(p.added for p in result.products)} {action}, "
         f"{sum(p.unchanged for p in result.products)} aynı; "
+        f"yarım gün farkı: {sum(len(p.partial_days) for p in result.products)}; "
         f"çelişkili ürün: {sum(bool(p.conflicts) for p in result.products)}; "
         f"atlanan ürün: {result.skipped}."
     )

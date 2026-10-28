@@ -227,6 +227,8 @@ rehberde, o günkü tartışması arşivdedir.
 | 28 Ekim | ML bölme ve sızıntı: zaman sıralı %70/%15/%15 ve purge korunur; son %15 test, bütün seçimler dondurulduktan sonra tek kez kullanılır. Model seçimi ilk %85 içinde en az 4 ileri yürüyen katla yapılır (genişleyen eğitim, aylık doğrulama). Bütün ürünler aynı tarihte kesilir; kalibrasyon modelin eğitilmediği dilimde, ön işlemler yalnız eğitim kısmından öğrenilir. | Ardışık günlerin 7 günlük gelecekleri 6 gün ortaktır; rastgele bölme cevabı sızdırır. Tek dönemde iyi sonuç şans olabilir (Ma & Fildes 2022). Kampanya günleri bütün ürünleri birlikte etkiler. |
 | 28 Ekim | ML başarı ölçütü: referans basamakları R0 (sabit oran), R1 (dipten uzaklık kovalarına göre basit kural), R2 (lojistik regresyon). LightGBM, R2'yi PR-AUC'de tarih bloklu bootstrap güven aralığıyla geçerse ve kalibrasyondan sonra Brier ile log loss'ta R2'den kötü değilse seçilir. Raporlananlar: PR-AUC (taban oranla), Brier, log loss, Brier skill, güvenilirlik diyagramı; marka ve ürün kırılımı (5'ten az olaylı hücre "yetersiz"); "yanlış bekle" TL kaybı ikincil rapor. | Olumlu oran ~%10; "hiç düşmez" diyen model %90 doğru görünür. PR eğrisi dengesiz veride ROC'tan bilgilendiricidir (Saito & Rehmsmeier 2015). Ardışık günler bağımsız değildir. Yalnız sabit referansı geçmek düşük bir çıtadır. |
 | 28 Ekim | ML gösterim kapısı: Cimri deneyi (gösterim yok) → kendi verimizde gölge mod (tahmin kaydedilir, gösterilmez) → olasılık ekrana ancak gölge modda en az 60–90 günlük, bir kampanya ve bir sakin dönem içeren dönemde en az 30 farklı düşüş olayı, Brier skill > 0 ve büyük kalibrasyon sapması olmamasıyla çıkar. Ürün bazında geçmiş 30 günden azsa, son 14 günde eksik gün %30'u aşıyorsa veya ailesi eğitimde hiç görülmediyse "yetersiz veri" gösterilir. Ekran, olasılığın takip edilen sayfalara ve hangi 22:00 fiyatına göre olduğunu yazar. Model kaydı, yeniden eğitim ve geri alma ML hazırlığı planında. | Cimri'deki iyi sonuç, farklı ölçüm ve kapsam yüzünden kendi verimizde doğrulanmadan yeterli değildir. Eşikler proje tercihidir, sonra güncellenebilir. Kullanıcı bedeli kabul etti: ekranda olasılık en erken birkaç ay sonra çıkar. |
+| 28 Ekim | Son Cimri alımı Kasım başında, aktarım çakışması ve eşleştirme ön koşulları çözülünce yapılır; kalan sıra değişmez. Cimri serisi 9 Ekim 2025'ten alım gününe kadar uzanır (grafik alım gününden geriye en çok 366 gün verir); alım günü yarım gündür. | Kullanıcı projeyi bir ay bekletmek istemiyor. Bilinen bedel: Kasım 2026 kampanyaları Cimri verisine girmez; kendi verimizle örtüşme ~5 hafta kalır. |
+| 28 Ekim | Cimri aktarımında yarım gün kuralı: günü, alım anının İstanbul tarihine eşit olan değer yarım gündür. Ortak günde yarım gün farkı çelişki sayılmaz; ilk satır korunur, fark raporlanır, ürünün yeni günleri eklenir. Tam gün farkı ve Cimri kimliği farkı çelişki kalır. Şema ve "kayıt değişmez" koruması değişmez. ML yarım günü gözlenmemiş gün sayar. | 8 Ekim satırları alım gününün 16:00 değeridir (57 satır, 5'i boş); gün sonu değeri farklı gelirse ürün tümden reddedilirdi. 8 Ekim alımları arasında 19.292 geçmiş gün değeri değişmedi. Arşivdeki 13:51 alımının önizlemesi eski kodla S24 256 GB'ı reddetti (çıkış 2), yeni kodla 1 yarım gün farkı raporladı (çıkış 0). Kullanıcı tabloyu değiştiren migration yerine bu yolu seçti. |
 
 ### Bilerek değiştirilmeyen davranışlar
 
@@ -283,7 +285,6 @@ Ayrıntı ve kanıtları: [teknik rehber, Bilinen sınırlar](docs/teknik.md#bil
 |---|---|
 | HBCV0000E8DHJL | Başlık/varyant 256 GB, ana ürün alanı 512 GB. Mevcut bağlantıya müdahale **karar bekliyor**. |
 | Sürekli işletimin doğrulanması | [Teknik rehberdeki işletim sınırı](docs/teknik.md#bilinen-sınırlar) kapanmadı; geciken turun nedeni açık. Güç ayarlarına yeni müdahale kararı verilmedi. |
-| Son Cimri alımında aktarım çakışması | 8 Ekim alımında son gün gün ortası değeridir (52 üründe sayfadaki ilk teklif). Aktarım, ortak bir günde farklı fiyat görürse o ürünün hiçbir yeni gününü yazmaz; Cimri'nin 8 Ekim tam gün değeri farklıysa birçok ürün tümden reddedilebilir. Son alımdan önce **karar bekliyor**. |
 | Cimri eşleştirmesi 57/60 | Galaxy S25 512 GB ve Redmi Note 14 Pro 5G 256 GB'ın Cimri sayfası doğrulanamadı; Galaxy S24 FE 128 GB sonradan eklendi, eşleştirmesi yok. Son alımdan önce bakılacak. |
 
 ## 8. Proje yapısının sadeleştirilmesi (tamamlandı)
@@ -350,8 +351,9 @@ beklenen davranışı ve sonuca güvenmek için gereken kanıtlar açıklanır.
 1. **Ekranın canlı kontrolü:** ✅ Tamamlandı (28 Ekim; [kayıt](docs/gecmis.md)).
 2. **[ML araştırma raporları](docs/arastirma/asama_08_ml/):** ✅ Tamamlandı
    (28 Ekim); kararlar Bölüm 5'te, özet Bölüm 9'da.
-3. **Son Cimri alımı:** netleşen ihtiyaçlarla, ayrı onay ve kullanıcının
-   terminalinden son bir defalık alım yapılacak.
+3. **Son Cimri alımı (Kasım başı):** aktarımın yarım gün kuralı hazır
+   (Bölüm 5); önce Bölüm 7'deki eşleştirme konusu çözülür. Alım ayrı onayla
+   ve kullanıcının terminalinden son bir defa yapılır.
 4. **ML hazırlığı:** onaylanan veri ve deney planı uygulanacak.
 
 Öğrenme turu bu sıranın dışında, pasif (28 Ekim kararı).
@@ -395,7 +397,8 @@ süreç, veri ve model kalıcılığı ayrıca değerlendirilir.
   etiketli satırlar Kasım başında beklenir (hesap; denetimle doğrulanmadı).
   6 eski iPhone 16 günün hiçbirinde, 4'ü yarısından fazlasında fiyatsız (stok
   yok). Cimri'de 57 ürün için 17.668 pencere (%10 olumlu); 23 Ekim kararıyla
-  eğitimde kullanılacak.
+  eğitimde kullanılacak. Cimri'nin 8 Ekim satırları ve son alımın kendi günü
+  yarım gündür; ML'de gözlenmemiş sayılır (Bölüm 5, 28 Ekim).
 
 ## 10. Çalışma ve Git disiplini
 

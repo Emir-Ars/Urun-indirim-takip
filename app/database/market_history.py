@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 from datetime import timedelta
+from zoneinfo import ZoneInfo
 
 import psycopg
 
@@ -14,6 +15,8 @@ from app.market_history.importer import (
     product_identity,
 )
 
+ISTANBUL = ZoneInfo("Europe/Istanbul")
+
 
 class HistoryImportBusy(RuntimeError):
     """Aynı veritabanında tur veya aktarım sürüyor."""
@@ -25,6 +28,7 @@ class ProductImportResult:
     added: int
     unchanged: int
     conflicts: tuple[str, ...] = ()
+    partial_days: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -38,8 +42,9 @@ class ImportResult:
 
 
 class _ProductConflict(Exception):
-    def __init__(self, conflicts):
+    def __init__(self, conflicts, partial_days):
         self.conflicts = conflicts
+        self.partial_days = partial_days
 
 
 def _prepare(conn, batch):
@@ -61,29 +66,41 @@ def _prepare(conn, batch):
 
 def _existing(conn, product):
     rows = conn.execute(
-        "SELECT day, price_kurus, source_product_id FROM market_history"
+        "SELECT day, price_kurus, source_product_id, captured_at FROM market_history"
         " WHERE product_id = %s AND source = 'cimri' AND day = ANY(%s)",
         (product.product.product_id, [point.day for point in product.points]),
     ).fetchall()
-    return {day: (price, source_id) for day, price, source_id in rows}
+    return {row[0]: row[1:] for row in rows}
+
+
+def _partial_day(day, captured_at):
+    # Alım günü Cimri'de henüz kapanmamıştır; o günün değeri gün içinde değişir.
+    return day == captured_at.astimezone(ISTANBUL).date()
 
 
 def _compare(product, existing):
-    conflicts = []
+    conflicts, partial_days = [], []
+    source = product.mapping.cimri_product_id
     for point in product.points:
         if point.day not in existing:
             continue
-        old_price, old_source = existing[point.day]
-        if (old_price, old_source) != (
-            point.price_kurus,
-            product.mapping.cimri_product_id,
+        old_price, old_source, old_captured_at = existing[point.day]
+        if (old_price, old_source) == (point.price_kurus, source):
+            continue
+        if old_source == source and (
+            _partial_day(point.day, old_captured_at)
+            or _partial_day(point.day, product.captured_at)
         ):
-            conflicts.append(
+            partial_days.append(
                 f"{point.day}: eski fiyat={old_price}, yeni fiyat={point.price_kurus} "
-                f"kuruş; eski Cimri={old_source}, "
-                f"yeni Cimri={product.mapping.cimri_product_id}"
+                "kuruş"
             )
-    return tuple(conflicts)
+            continue
+        conflicts.append(
+            f"{point.day}: eski fiyat={old_price}, yeni fiyat={point.price_kurus} "
+            f"kuruş; eski Cimri={old_source}, yeni Cimri={source}"
+        )
+    return tuple(conflicts), tuple(partial_days)
 
 
 def _insert(conn, product):
@@ -120,21 +137,21 @@ def _import_product(conn, product: CapturedProduct) -> ProductImportResult:
     try:
         with conn.transaction():
             conn.execute("SET TRANSACTION ISOLATION LEVEL READ COMMITTED")
-            conflicts = _compare(product, _existing(conn, product))
+            conflicts, partial_days = _compare(product, _existing(conn, product))
             if conflicts:
-                raise _ProductConflict(conflicts)
+                raise _ProductConflict(conflicts, partial_days)
             added = _insert(conn, product)
             # DO NOTHING eşzamanlı farklı fiyatı da atlayabilir; yeni görünümle
             # karşılaştırmadan commit edersek ürünün bir kısmını yazmış oluruz.
             existing = _existing(conn, product)
-            conflicts = _compare(product, existing)
+            conflicts, partial_days = _compare(product, existing)
             if conflicts:
-                raise _ProductConflict(conflicts)
+                raise _ProductConflict(conflicts, partial_days)
             if len(existing) != len(product.points):
                 raise HistoryImportError(f"{key}: yazılan günler doğrulanamadı")
             committing = True
     except _ProductConflict as exc:
-        return ProductImportResult(key, 0, 0, exc.conflicts)
+        return ProductImportResult(key, 0, 0, exc.conflicts, exc.partial_days)
     except (psycopg.OperationalError, psycopg.InterfaceError) as exc:
         if committing:
             raise HistoryImportError(
@@ -143,7 +160,8 @@ def _import_product(conn, product: CapturedProduct) -> ProductImportResult:
                 "tekrar aktarım kayıt çoğaltmaz"
             ) from exc
         raise
-    return ProductImportResult(key, added, len(product.points) - added)
+    unchanged = len(product.points) - added - len(partial_days)
+    return ProductImportResult(key, added, unchanged, (), partial_days)
 
 
 def _day_ranges(days):
@@ -172,6 +190,10 @@ def _report_product(product, result, dry_run, out):
             f"{result.product_key}: {result.added} {action}, "
             f"{result.unchanged} aynı"
         )
+    if result.partial_days:
+        out(f"  Yarım gün farkı (eski kayıt {'korunacak' if dry_run else 'korundu'}):")
+        for difference in result.partial_days:
+            out(f"    {difference}")
     summary = product.summary
     out(
         f"  {len(product.points)} nokta, {product.points[0].day}–"
@@ -198,12 +220,13 @@ def _process(conn, batch, dry_run, out):
     for product in batch.verified:
         if dry_run:
             existing = _existing(conn, product)
-            conflicts = _compare(product, existing)
+            conflicts, partial_days = _compare(product, existing)
             result = ProductImportResult(
                 product.product.product_key,
                 0 if conflicts else len(product.points) - len(existing),
-                0 if conflicts else len(existing),
+                0 if conflicts else len(existing) - len(partial_days),
                 conflicts,
+                partial_days,
             )
         else:
             result = _import_product(conn, product)

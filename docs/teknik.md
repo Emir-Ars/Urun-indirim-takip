@@ -1331,7 +1331,8 @@ eşitlemeyi çalıştırır; komut, keşiften sonra farkı gözle görmek içind
 
 Katalogdaki telefonların Cimri'de görünen bir yıllık fiyat geçmişi, 8 Ekim
 2026'da bir defa alınıp ayrı `market_history` tablosuna aktarıldı (57 ürün,
-20.805 tarihli kayıt, 553'ü eksik fiyat). Düzenli Cimri toplaması yapılmaz;
+20.805 tarihli kayıt, 553'ü eksik fiyat; her ürünün 8 Ekim satırı
+[yarım gündür](#ağsız-aktarım-import)). Düzenli Cimri toplaması yapılmaz;
 Cimri serisi kendi toplama serimizle birleştirilmez ve aynı ölçüm sayılmaz.
 Kod (`app/market_history/`) olası tek bir son alım için korunur; yeni alım
 ayrı karar ister ([kullanım değerlendirmesi](#kullanım-değerlendirmesi)).
@@ -1501,20 +1502,34 @@ DELETE/TRUNCATE mevcut `reject_delete` işleviyle engellenir. 001–003 değişm
 
 Aynı günün fiyatı ve Cimri kimliği aynıysa ilk satır bütün alanlarıyla
 korunur; adres/zaman/parmak izi değişimi tek başına çelişki değildir.
-NULL–NULL aynı, NULL–fiyat farklıdır. Bir gündeki fiyat veya Cimri kimliği
-farklıysa o üründe hiç yeni gün yazılmaz; diğer doğrulanmış ürünler devam
-eder. SQL/bağlantı hatasında komut durur, tamamlanan ürünler kalır. COMMIT
+NULL–NULL aynı, NULL–fiyat farklıdır. Tam bir günde fiyat ya da herhangi bir
+günde Cimri kimliği farklıysa o üründe hiç yeni gün yazılmaz; diğer
+doğrulanmış ürünler devam eder.
+
+**Yarım gün:** Alım günü Cimri'de henüz kapanmamıştır; o günün değeri gün
+içinde değişir. 8 Ekim'deki alımlar arasında 19.292 geçmiş gün değerinin
+hiçbiri değişmedi; alım gününün değeri ise 53 üründe 5 kez değişti. Günü,
+alım anının (`captured_at`) İstanbul tarihine eşit olan değer yarım gündür.
+Ortak bir günde fiyat farklıysa ve eski satır ya da gelen değer yarım günse
+bu çelişki sayılmaz: ilk satır korunur, fark ürünün altında "Yarım gün farkı"
+olarak raporlanır ve ürünün yeni günleri eklenir. Cimri kimliği farkı yarım
+günde de çelişkidir. Yarım gün farkı "aynı" sayısına girmez ve çıkış kodunu
+değiştirmez.
+
+SQL/bağlantı hatasında komut durur, tamamlanan ürünler kalır. COMMIT
 yanıtı kaybolduğunda son ürünün sonucu belirsiz olarak bildirilir; yeniden
 çalıştırma aynı kaydı çoğaltmadan sonucu netleştirir.
 
 `--dry-run` tek REPEATABLE READ, READ ONLY transaction'da çalışır; INSERT
 deneyip geri almaz. Önizleme yazma yetkisi veya sonuç rezervasyonu değildir;
 normal komut bütün kontrolleri yeniden yapar. Çıktı her ürünü, eklenecek/aynı
-kayıtları, çelişkili tarihleri ve eski/yeni kuruş fiyatı ile Cimri kimliğini
-gösterir. Kaynak dosyalarına veya giriş raporuna yazılmaz; çıktı terminaldedir.
+kayıtları, yarım gün farklarını, çelişkili tarihleri ve eski/yeni kuruş fiyatı
+ile Cimri kimliğini gösterir. Kaynak dosyalarına veya giriş raporuna
+yazılmaz; çıktı terminaldedir.
 [PostgreSQL READ ONLY belgeleri](https://www.postgresql.org/docs/17/sql-set-transaction.html)
 
-Çıkışlar: **0** girdideki ürünler aktarıldı/zaten aynı; **2** atlanan veya
+Çıkışlar: **0** girdideki ürünler aktarıldı/zaten aynı (yarım gün farkı olsa
+da); **2** atlanan veya
 çelişkili ürün var; **1** yapı/kimlik/şema/veritabanı hatası; **3** kilit
 meşgul; **130** Ctrl+C. Kesintide son ürün ya tamamen yazılır ya hiç yazılmaz;
 önceki ürünler korunur. Global katalogdaki eşleştirmesiz ürünler seçili

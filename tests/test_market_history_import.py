@@ -414,6 +414,144 @@ def test_null_and_price_conflicts_skip_all_new_days(prepared, old, new):
         assert len(rows(conn)) == 2
 
 
+# NOW İstanbul'da 8 Ekim 15:00'tir; 8 Ekim satırı alım gününün yarım değeridir.
+LATER = NOW + timedelta(days=28)
+
+
+@pytest.mark.parametrize("old,new", [(100, 101), (None, 100), (100, None)])
+def test_partial_day_difference_keeps_old_row_and_adds_new_days(prepared, old, new):
+    conn, directory, catalog, _ = prepared
+    batch = read_capture(directory, catalog)
+    item = batch.verified[0]
+    day = date(2026, 10, 8)
+    storage.import_history(
+        conn, single(batch, replace(item, points=(HistoryPoint(day, old),)))
+    )
+    previous = rows(conn)
+    incoming = replace(
+        item,
+        captured_at=LATER,
+        points=(HistoryPoint(day - timedelta(days=1), 999), HistoryPoint(day, new)),
+    )
+    candidate = single(batch, incoming)
+    preview = storage.import_history(conn, candidate, dry_run=True)
+    actual = storage.import_history(conn, candidate)
+    assert actual == preview and not actual.partial
+    result = actual.products[0]
+    assert (result.added, result.unchanged, result.conflicts) == (1, 0, ())
+    assert result.partial_days == (
+        f"2026-10-08: eski fiyat={old}, yeni fiyat={new} kuruş",
+    )
+    assert [row for row in rows(conn) if row[4] == day] == previous
+    assert len(rows(conn)) == 2
+
+
+def test_incoming_partial_day_does_not_override_complete_row(prepared):
+    conn, directory, catalog, _ = prepared
+    batch = read_capture(directory, catalog)
+    item = batch.verified[0]
+    day = date(2026, 10, 7)
+    storage.import_history(
+        conn, single(batch, replace(item, points=(HistoryPoint(day, 100),)))
+    )
+    previous = rows(conn)
+    earlier = replace(
+        item,
+        captured_at=NOW - timedelta(days=1),
+        points=(HistoryPoint(day - timedelta(days=1), 999), HistoryPoint(day, 101)),
+    )
+    result = storage.import_history(conn, single(batch, earlier))
+    assert not result.partial and result.products[0].added == 1
+    assert len(result.products[0].partial_days) == 1
+    assert [row for row in rows(conn) if row[4] == day] == previous
+
+
+def test_complete_day_difference_still_rejects_whole_product(prepared):
+    conn, directory, catalog, _ = prepared
+    batch = read_capture(directory, catalog)
+    item = batch.verified[0]
+    complete, partial = date(2026, 10, 7), date(2026, 10, 8)
+    stored = (HistoryPoint(complete, 100), HistoryPoint(partial, 100))
+    storage.import_history(conn, single(batch, replace(item, points=stored)))
+    previous = rows(conn)
+    incoming = replace(
+        item,
+        captured_at=LATER,
+        points=(
+            HistoryPoint(complete - timedelta(days=1), 999),
+            HistoryPoint(complete, 101),
+            HistoryPoint(partial, 101),
+        ),
+    )
+    candidate = single(batch, incoming)
+    preview = storage.import_history(conn, candidate, dry_run=True)
+    actual = storage.import_history(conn, candidate)
+    assert actual == preview and actual.partial and rows(conn) == previous
+    result = actual.products[0]
+    assert result.added == 0 and len(result.conflicts) == 1
+    assert result.conflicts[0].startswith("2026-10-07:")
+
+
+def test_source_identity_change_on_partial_day_is_a_conflict(prepared):
+    conn, directory, catalog, _ = prepared
+    batch = read_capture(directory, catalog)
+    item = batch.verified[0]
+    day = date(2026, 10, 8)
+    storage.import_history(
+        conn, single(batch, replace(item, points=(HistoryPoint(day, 100),)))
+    )
+    previous = rows(conn)
+    moved = replace(
+        item,
+        captured_at=LATER,
+        mapping=item.mapping.model_copy(update={"cimri_product_id": "99999"}),
+        points=(HistoryPoint(day - timedelta(days=1), 999), HistoryPoint(day, 100)),
+    )
+    result = storage.import_history(conn, single(batch, moved))
+    assert result.partial and rows(conn) == previous
+    assert result.products[0].conflicts and not result.products[0].partial_days
+
+
+@pytest.mark.parametrize(
+    "day,conflict", [(date(2026, 10, 8), True), (date(2026, 10, 9), False)]
+)
+def test_partial_day_uses_istanbul_date_of_capture(prepared, day, conflict):
+    conn, directory, catalog, _ = prepared
+    batch = read_capture(directory, catalog)
+    item = batch.verified[0]
+    # UTC'de hâlâ 8 Ekim, İstanbul'da 9 Ekim 00:30.
+    midnight = datetime(2026, 10, 8, 21, 30, tzinfo=timezone.utc)
+    stored = replace(item, captured_at=midnight, points=(HistoryPoint(day, 100),))
+    storage.import_history(conn, single(batch, stored))
+    incoming = replace(item, captured_at=LATER, points=(HistoryPoint(day, 101),))
+    result = storage.import_history(conn, single(batch, incoming))
+    assert result.partial is conflict
+    assert bool(result.products[0].partial_days) is not conflict
+
+
+def test_cli_reports_partial_day_difference_and_exits_zero(prepared, capsys):
+    conn, directory, catalog, _ = prepared
+    batch = read_capture(directory, catalog)
+    item = batch.verified[0]
+    last = item.points[-1]
+    earlier = replace(
+        item,
+        captured_at=datetime(2026, 9, 29, 12, tzinfo=timezone.utc),
+        points=(replace(last, price_kurus=last.price_kurus + 1),),
+    )
+    storage.import_history(conn, single(batch, earlier))
+    previous = rows(conn)
+    capsys.readouterr()
+    assert command.main(["import", str(directory), "--dry-run"]) == 0
+    assert "Yarım gün farkı (eski kayıt korunacak):" in capsys.readouterr().out
+    assert command.main(["import", str(directory)]) == 0
+    output = capsys.readouterr().out
+    assert "Yarım gün farkı (eski kayıt korundu):" in output
+    assert f"2026-09-29: eski fiyat={last.price_kurus + 1}" in output
+    assert "yarım gün farkı: 1; çelişkili ürün: 0" in output
+    assert len(rows(conn)) == 9 and all(row in rows(conn) for row in previous)
+
+
 def test_missing_prices_and_uncompared_dates_survive_cli(prepared, capsys):
     conn, directory, catalog, _ = prepared
     page, response = source_pair()
