@@ -1,6 +1,6 @@
 # Akıllı Telefon İndirim Takip ve Tahmin Sistemi — Proje Planı
 
-Son güncelleme: 26 Ekim 2026.
+Son güncelleme: 27 Ekim 2026.
 
 Bu belge **kararların, aşama durumunun ve sıradaki işin** tek kaynağıdır ve
 kısa tutulur. Diğer bilgiler şuralardadır:
@@ -43,7 +43,8 @@ Kullanıcı arayüzde arama yaptığında canlı scraping veya model eğitimi
 | 7. FastAPI ve Streamlit | ✅ Tamamlandı (10 Ekim) | `c8d864b`, CI 38045257013 |
 | ML öncesi bakım dizisi (Bakım 1–6; otomatik güvenli keşif kabulü dahil) | ✅ Tamamlandı (20 Ekim) | `7c0988b`, CI 39393708497 |
 | Proje yapısının sadeleştirilmesi (Bölüm 8, Adım 1–5) | ✅ Tamamlandı (26 Ekim) | `75d4732` |
-| ML öncesi ekran iyileştirmeleri 1–2 | 🔄 Kod uygulandı; otomatik kontroller, migration ve yerel API/ekran geçişi doğrulandı | Gönderim/CI ve ilk yeni tur sonrası gerçek satıcı düğmeleri bekliyor |
+| ML öncesi ekran iyileştirmeleri 1–2 | 🔄 Kod ve canlı kontroller tamamlandı (28 Ekim: tur 58'de Trendyol 107/107, Hepsiburada 144/144 satıcı adresi; iki pazaryerinde satıcı düğmeleri doğrulandı) | `dd2e262`; Trendyol ana satıcı düzeltmesinin commit/push ve CI'ı bekliyor |
+| Proje mühendisliğini pekiştirme | ⏸️ Ertelendi: ML raporlarından sonra, son Cimri alımı ve ML hazırlığından önce sürer | Program ve iş sırası aşağıda; oturum ilerlemesi yerel devir notunda |
 | 8. ML (indirim tahmini) | 🔜 Planlandı, başlanmadı | Bölüm 9 |
 | 9. Sürekli işletim ve Docker | 🔄 Sürekli işletim kararı verildi (22 Ekim: dizüstü sürekli açık); Docker başlanmadı | Bölüm 9 |
 
@@ -212,6 +213,11 @@ rehberde, o günkü tartışması arşivdedir.
 
 | 26 Ekim | Ekranın sıfır fiyat farkı ve satıcı bağlantısı iyileştirmeleri tek paket/commit olacak. Sıfır fark gri ve oksuz; doğrulanmış satıcı adresi yoksa açıklamayla ürün sayfası açılır. | Kullanıcının birlikte uygulama ve gösterim tercihleri; fiyat ve kabul kuralları korunur. |
 
+| 26 Ekim | Geliştirme sırasından önce 18 oturumluk proje mühendisliği öğrenme turu yapılır; temelden, 20–30 dakikalık tek konularla, kod ve sistem değişikliği olmadan ilerlenir. | Kullanıcı projeyi pekiştirerek öğrenmek istiyor; otomatik görevler sürer, bekleyen dört işe turdan sonra dönülür. Sırası 27 Ekim kararıyla değişti. |
+| 27 Ekim | Öğrenme turu geçici olarak beklemeye alınır; Claude araştırması için ML promptu tekrar hazırlanır. | Kullanıcı araştırmayı başlatmak istiyor; öğrenme programı ve geliştirme sırası korunur, kod/eğitim/alım başlatılmaz. |
+| 27 Ekim | Kalan sıra: ekranın canlı kontrolü → ML raporlarının incelenmesi → öğrenme turu (Oturum 2'den) → son Cimri alımı → ML hazırlığı. | Kullanıcı öğrenmeyi ML modeline geçmeden önce tamamlamak istiyor; Cimri alımı 23 Ekim kararı gereği ML hazırlığına başlarken yapılır, tur bu ikisini ayırmaz. |
+| 27 Ekim | Trendyol'da ana satıcının teklif adresi, kaydındaki satıcı kimliğinden üretilir. Önce canlı kanıt (kimlik alanı var mı, adres tarayıcıda o satıcıyı açıyor mu), sonra gerçek örnekli regresyon testiyle kod; uygulama planı ve gönderim ayrı onaylanır. | Tur 57'de 106 Trendyol fiyatının yalnız 3'ü adres aldı: ana satıcının kaydında satıcıya özel adres yok ([teknik rehber](docs/teknik.md#satıcı-teklifinin-adresi)). Kullanıcı özelliği bir kerede tamamlamak istiyor. |
+
 ### Bilerek değiştirilmeyen davranışlar
 
 Denetimlerde incelenip gerekçesiyle olduğu gibi bırakılan davranışlar:
@@ -267,7 +273,7 @@ Ayrıntı ve kanıtları: [teknik rehber, Bilinen sınırlar](docs/teknik.md#bil
 |---|---|
 | HBCV0000E8DHJL | Başlık/varyant 256 GB, ana ürün alanı 512 GB. Mevcut bağlantıya müdahale **karar bekliyor**. |
 | Sürekli işletimin doğrulanması | [Teknik rehberdeki işletim sınırı](docs/teknik.md#bilinen-sınırlar) kapanmadı; geciken turun nedeni açık. Güç ayarlarına yeni müdahale kararı verilmedi. |
-| ML ayrıntıları | Kullanıcı model eğitimi için ayrı bir araştırma yapacak; ML bu belgeye göre ilerler. Özellikler (ham fiyat mı göreli fiyat mı), değerlendirme yöntemi, Cimri ile kendi verimizin birlikte nasıl kullanılacağı ve örnek kurallarının (kapsam değişikliği, kusurlu gün) gevşetilip gevşetilmeyeceği ML aşamasında kararlaştırılacak. |
+| ML ayrıntıları | GPT ve Claude araştırma raporları `docs/arastirma/asama_08_ml/` içine eklendi; birlikte kaynak ve mevcut sistem uyumu denetimi bekliyor. Özellikler, değerlendirme, Cimri ile kendi verimizin kullanımı ve örnek kurallarındaki olası değişiklikler henüz kararlaştırılmadı; rapor önerileri uygulama kararı değildir. |
 
 ## 8. Proje yapısının sadeleştirilmesi (tamamlandı)
 
@@ -286,18 +292,61 @@ Zamanlanmış görevlerin komutları (`-m app.collection`, `-m app.discovery`) d
 | 4. Kod sadeleştirme | 4.1 keşfin iki katalog/rapor yazıcısı tek yazıcıda birleşir; 4.2 tur ve keşfin zamanlanmış çalışma kopyası (log, başlık, hata, çıkış kodu) `app/console.py`'de toplanır; 4.3 Cimri kodunun kullanılmayan eski yolları kaldırılır, alım ve aktarım korunur. Keşifteki eski kimlik kontrolü Adım 5'e taşındı; API kontrolü ve katalog okuma bilerek değiştirilmez (Bölüm 5). Her alt adım ayrı commit. | ✅ Tamamlandı (22 Ekim) |
 | 5. Renk ve aday üretimi | 5.1 Trendyol rengi renk seçicisindeki addır; seçici adı varken satıcının "Renk"i ve JSON-LD rengi karşılaştırılmaz. 5.2 Adaptörler yalnız kanıt kararı `verified` ise aday döndürür; diğer sayfalarda ayrıntılı ret ve Hepsiburada seçenek taraması denetimleri korunur, atıl aday üretimi kaldırılır. Kabul kuralları ve raporun son kontrolü değişmedi. | ✅ Tamamlandı (26 Ekim) |
 
-Sıradaki işler (23 Ekim'de kararlaştırılan sıra; veri yeterliliği 23 Ekim'de ölçüldü, Bölüm 9):
+## Öğrenme programı: proje mühendisliğini pekiştirme
 
-1. Ekran iyileştirmeleri 1–2 birlikte uygulandı: fiyat farkının doğru
-   renk/okla gösterimi ve seçilen satıcının teklif bağlantısı. Otomatik
-   kontroller geçti; kullanıcı 005 migration'ını uyguladı ve API/ekranı
-   yeniden başlattı. Yeni API alanı yerelde okundu; eski kayıtlar boş
-   bağlantıyla korunuyor. Hepsiburada bağlantı biçimi kullanıcı tarafından
-   katalogdaki gerçek bir telefonla doğrulandı. İlk yeni tur sonrası iki
-   pazaryerinde gerçek düğmeler kontrol edilecek. Tek commit için ayrıca
-   gönderim onayı ve aynı SHA'nın yeşil CI sonucu gerekiyor; aşama kapanmadı.
-2. Kullanıcının ML araştırma belgesi (paralel) → Cimri son alımı → ML
-   hazırlığı.
+**Durum (27 Ekim):** Ertelendi. ML raporları incelenip kararlar
+netleştikten sonra, son Cimri alımı ve ML hazırlığından önce Oturum 2'den
+sürdürülür (aşağıdaki iş sırasında 3. madde).
+
+Kullanıcı onaylı program: temelden, kendi projemiz üzerinden 18 öğrenme
+oturumu. Her oturum yaklaşık 20–30 dakika; toplam yaklaşık 6–9 saat,
+kullanıcının temposuna göre bölünür. Kod yazma, satır satır kod dersi, canlı
+komut veya sistem değişikliği yapılmaz. Otomatik toplama ve keşif sürer.
+Mevcut belgeler, şemalar, ekranlar ve kayıtlı örnekler kullanılır.
+
+Her oturum: problem → yöntemin ve terimlerin açıklaması → seçim, alternatif
+ve bedelleri → proje örneği → iki kısa senaryo ve kullanıcının özeti.
+Oturum sonunda durulur; anlaşılmayan yer farklı örnekle pekiştirilir.
+Sonraki oturuma kullanıcı devam etmek istediğinde geçilir. İlerleme yalnız
+`DEVAM.md`'de; temel başvuru [teknik rehber](docs/teknik.md).
+
+| Oturum | Konu ve projedeki karşılığı | Beklenen kazanım |
+|---|---|---|
+| 1 | Problem, gereksinimler ve başarı ölçütü: amaç, kapsam, kullanıcı beklentisi ve doğru sonuç | Bir ihtiyacı sınanabilir kabul ölçütüne çevirmek |
+| 2 | Uçtan uca harita: keşif → katalog → toplama → DB → API → ekran; ayrı Cimri kolu | Bir fiyatın yolunu ve bileşenlerin sorumluluklarını anlatmak |
+| 3 | Ürün ve veri kimliği: ürün, kapasite, renk sayfası, satıcı, teklif ve ölçüm | Model/kapasite ayrımını ve renklerin aynı ürüne bağını açıklamak |
+| 4 | Modüller, sözleşmeler ve ayarlar: sorumluluklar, Pydantic ve yapılandırma | Bileşenler arasındaki veri anlaşmasının neyi koruduğunu açıklamak |
+| 5 | HTTP ve ağ: GET/POST, HTTPS, durum kodları, zaman aşımı ve curl_cffi | Erişim hatasıyla hatalı kaynak verisini ayırmak |
+| 6 | Keşif ve ayrıştırma: HTML/JSON, BeautifulSoup, adaptörler, kimlik kanıtı ve kabul | Bağlantı bulmakla doğru fiyatı okumayı ayırmak |
+| 7 | Toplama yaşam döngüsü: tur, planlanan sayfa, sonuç, yeniden deneme ve yarıda kalma | Tek sayfa hatasının tura etkisini anlatmak |
+| 8 | Veritabanı: PostgreSQL, ilişkiler, anahtarlar, kısıtlar, indeks ve görünüm | Tablo ayrımını ve hatalı kayıt engellerini açıklamak |
+| 9 | Kayıt güvenliği: işlem, geri alma, kapanmış kayıt ve migration | Yarım işlem riskini ve uygulanmış migration'ın değişmezliğini açıklamak |
+| 10 | Fiyat karşılaştırması: minimum, eksik veri, stok, kapsam, zaman ve Cimri | Fiyat hareketinin hangi koşullarda karşılaştırılabileceğini açıklamak |
+| 11 | API ve erişim: FastAPI, Uvicorn, okuma hesabı, havuz ve HTTPX istemcisi | Ekranın DB'ye doğrudan bağlanmamasının gerekçesini anlatmak |
+| 12 | Sunum: Streamlit, Altair, veri yaşı, grafik, uyarı ve satıcı bağlantısı | Doğru sayının bağlamı ve sınırlamalarıyla gösterilmesini değerlendirmek |
+| 13 | İşletim: Windows zamanlayıcısı, kilit, log, çıkış kodu ve güç durumu | Başarısız veya kaçan turu hangi kanıtlardan araştıracağını seçmek |
+| 14 | Test: pytest, birim/entegrasyon/regresyon, sahte kaynak ve _test DB | Testin kanıtını ve canlı doğrulama ihtiyacını ayırmak |
+| 15 | Ortam: Python paketleri, .venv, sürümler, ayarlar ve Docker'ın olası rolü | Sistemi başka ortamda tekrarlamak için gerekenleri açıklamak |
+| 16 | Teslim: Git, commit/push, Black, Flake8, CI; kod/belge/veri/artifacts ayrımı | Bir değişikliğin inceleme, doğrulama ve gönderim yolunu anlatmak |
+| 17 | ML hazırlığı: girdi, etiket, geçmiş/gelecek, veri yeterliliği ve deney | Modelden önce çözülmesi gereken veri ve değerlendirme sorularını belirlemek |
+| 18 | Bütüncül çalışma: kayıtlı bir ürünün yolculuğu ve hata senaryoları | Akışı anlatıp bir sorunu ilgili bileşene kadar daraltmak |
+
+ML ve Docker kavramsal hazırlıktır; model seçimi, eğitim veya kurulum yapılmaz.
+Son oturumda fiyatın kaynaktan ekrana yolu, hata/stok/kapsam durumlarının
+beklenen davranışı ve sonuca güvenmek için gereken kanıtlar açıklanır.
+
+### Kalan iş sırası (27 Ekim kararı)
+
+1. **Ekranın canlı kontrolü:** Trendyol ana satıcı adresi düzeltildi (27 Ekim
+   kararı); tur 58 kayıt denetimi, tarayıcı örneklemesi ve iki pazaryerinin
+   satıcı düğmeleri 28 Ekim'de doğrulandı. Yalnız düzeltmenin gönderimi ve CI
+   kaydı kaldı.
+2. **[ML araştırma raporları](docs/arastirma/asama_08_ml/):** kaynaklar ve
+   mevcut sistemle birlikte incelenerek kararlar netleştirilecek.
+3. **Öğrenme turu:** Oturum 2'den 18'e kadar sürdürülür.
+4. **Son Cimri alımı:** netleşen ihtiyaçlarla, ayrı onay ve kullanıcının
+   terminalinden son bir defalık alım yapılacak.
+5. **ML hazırlığı:** onaylanan veri ve deney planı uygulanacak.
 
 ## 9. Sonraki aşamalar
 

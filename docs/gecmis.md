@@ -112,6 +112,7 @@ Bu dosyanın kendi güncellemesi bir sonraki adımın commit'ine girer.
 | 26.10 | `6dcef3b` | Sürekli işletim, Cimri/ML hazırlığı ve iş sırası belgelerini güncelle | [40282132834](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/40282132834) |
 | 26.10 | `8b933c2` | Haftalık keşif eklemelerini kaydet; kapasitesi doğrulanamayan S25 bağlantısını pasife al ve kapsam belgelerini güncelle | [40282854404](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/40282854404) |
 | 26.10 | `75d4732` | Adım 5.2: atıl aday üretimini kaldır; kabul, ret ve HB seçenek taramasını koru; sadeleştirmeyi tamamla | [40291234833](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/40291234833) |
+| 26.10 | `dd2e262` | Ekran 1–2 kodu ve yerel geçiş: sıfır fiyat farkı gri/oksuz, seçilen satıcının offer_url akışı ve 005 migration; gerçek düğme kontrolü ilk yeni tur sonrası | [40310082371](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/40310082371) |
 
 ## Eylül 2026 ayrıntıları
 

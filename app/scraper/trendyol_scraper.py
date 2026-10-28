@@ -1,6 +1,6 @@
 """Trendyol satıcı tekliflerini doğrular ve en ucuz geçerli teklifi döndürür."""
 
-from urllib.parse import parse_qs, urljoin, urlsplit
+from urllib.parse import parse_qs, urlencode, urljoin, urlsplit, urlunsplit
 
 from bs4 import BeautifulSoup
 
@@ -64,8 +64,25 @@ def _condition_text(merchant: dict, offer_url: str) -> str:
     return normalize(" ".join(values))
 
 
-def _merchant_offer_url(merchant: dict, listing) -> str | None:
+def _main_merchant_url(merchant: dict, listing) -> str | None:
+    # Ana satıcının kaydında adres yok, yalnız kimliği var. Diğer satıcıların
+    # adresindeki merchantId bu kimliktir ve sayfayı o satıcının teklifiyle açar;
+    # varsayılan satıcı sonradan değişse de bağlantı ölçülen satıcıda kalır.
+    merchant_id = merchant.get("id")
+    if isinstance(merchant_id, bool) or not isinstance(merchant_id, int):
+        return None
+    if merchant_id <= 0:
+        return None
+    parts = urlsplit(listing.url)
+    return urlunsplit(
+        parts._replace(query=urlencode({"merchantId": merchant_id}), fragment="")
+    )
+
+
+def _merchant_offer_url(merchant: dict, listing, *, main: bool = False) -> str | None:
     value = merchant.get("url")
+    if main and not value:
+        value = _main_merchant_url(merchant, listing)
     if not isinstance(value, str) or not value:
         return None
     try:
@@ -92,6 +109,7 @@ def _offer(
     listing,
     *,
     fallback_stock=None,
+    main=False,
 ) -> dict:
     relative_url = merchant.get("url") or listing.url
     offer_url = urljoin("https://www.trendyol.com", relative_url)
@@ -128,7 +146,7 @@ def _offer(
     score = (merchant.get("sellerScore") or {}).get("value")
     listing_id = variant.get("listingId")
     return {
-        "verified_offer_url": _merchant_offer_url(merchant, listing),
+        "verified_offer_url": _merchant_offer_url(merchant, listing, main=main),
         "listing_id": str(listing_id) if listing_id not in (None, "") else None,
         "seller_name": str(seller_name) if seller_name else None,
         "seller_rating": float(score) if score is not None else None,
@@ -183,6 +201,7 @@ class Scraper(BaseScraper):
                 winner_variant,
                 listing,
                 fallback_stock=product.get("inStock"),
+                main=True,
             )
         ]
         for other in merchant_listing.get("otherMerchants") or []:

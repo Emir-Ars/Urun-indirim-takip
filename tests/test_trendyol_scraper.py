@@ -174,6 +174,80 @@ def test_unverified_merchant_link_does_not_change_selected_price(
     assert observation.offer_url is None
 
 
+def test_main_merchant_without_url_links_by_its_merchant_id(scraper):
+    """Gerçek sayfa kaydı: ana satıcının url alanı hiç yok, yalnız kimliği var."""
+    url = (
+        "https://www.trendyol.com/apple/"
+        "iphone-15-pro-max-256-gb-siyah-titanyum-p-762254852"
+    )
+    listing = ProductListing(
+        listing_id="trendyol_762254852",
+        product_id=8,
+        platform="trendyol",
+        url=url,
+        color="Siyah",
+        active=True,
+        product_name="Apple iPhone 15 Pro Max 256 GB",
+        model="iPhone 15 Pro Max",
+        storage_gb=256,
+    )
+    html = product_html(
+        name="iPhone 15 Pro Max 256 GB Siyah Titanyum",
+        product_id=762254852,
+        slicing={"Internal Memory": "256 GB"},
+        running_out=True,
+        price={
+            "currency": "TRY",
+            "discountedPrice": {"value": 120000},
+            "sellingPrice": {"value": 120000},
+            "originalPrice": {"value": 120000},
+        },
+        merchant={
+            "id": 141868,
+            "name": "NÖTRON ELEKTRONİK",
+            "sellerScore": {"value": 9.2},
+        },
+    )
+    observation = scraper.parse(html, listing)
+    assert observation.seller_name == "NÖTRON ELEKTRONİK"
+    assert observation.current_price == 12_000_000
+    assert observation.offer_url == url + "?merchantId=141868"
+
+
+def test_main_merchant_link_is_kept_apart_from_other_merchant_links(scraper, listing):
+    others = []
+    for merchant_id, name, price in (
+        (424744, "SAS TEKNOLOJİ", 58_000),
+        (185559, "BAŞARAN İLETİŞİM", 59_000),
+        (449692, "PAR Home&Tech", 59_000),
+    ):
+        other = other_merchant(name, name, price=price, inStock=True)
+        other.update(
+            id=merchant_id,
+            url="/apple/iphone-15-128-gb-p-762254881"
+            f"?boutiqueId=61&merchantId={merchant_id}&sav=true",
+        )
+        others.append(other)
+    main = {"id": 746248, "name": "Ellektronik dünyası", "sellerScore": {"value": 8.6}}
+    observation = scraper.parse(product_html(merchant=main, others=others), listing)
+    assert observation.seller_name == "Ellektronik dünyası"
+    assert observation.offer_url == URL + "?merchantId=746248"
+    links = {
+        offer["seller_name"]: offer["verified_offer_url"]
+        for offer in scraper._last_offers
+    }
+    assert links["SAS TEKNOLOJİ"] == "https://www.trendyol.com" + others[0]["url"]
+
+
+@pytest.mark.parametrize("merchant_id", [None, "746248", True, 0, -5])
+def test_main_merchant_without_valid_id_has_no_link(scraper, listing, merchant_id):
+    merchant = _present(id=merchant_id, name="Ellektronik dünyası")
+    observation = scraper.parse(product_html(merchant=merchant), listing)
+    assert observation.seller_name == "Ellektronik dünyası"
+    assert observation.current_price == 5_724_900
+    assert observation.offer_url is None
+
+
 def test_fetch_downloads_listing_page_once(scraper, session, listing):
     session.responses.append(FakeResponse(product_html()))
 

@@ -746,10 +746,20 @@ teklif döner. Bütün teklifler canlı kontrol aracında (`all_offers`) görül
 
 `offer_url`, fiyatı seçilen satıcının ölçüm anındaki adresidir. Trendyol'da
 kazanan satıcının kendi `merchant.url` alanından okunur; `merchantId` seçimi
-bulunmalı ve kaynakta satıcı kimliği varsa onunla eşleşmelidir. Hepsiburada'da
-satıcı listesi ile fiyat yanıtının `listingId`, `merchantId` ve satıcı adı
-eşleşirse ürün adresindeki `magaza` parametresi kazananın URL kodlanmış
-adıyla değiştirilir. Başka satıcıya ait mevcut `magaza` seçimi taşınmaz.
+bulunmalı ve kaynakta satıcı kimliği varsa onunla eşleşmelidir. Sayfanın ana
+satıcısının (varsayılan gösterilen teklif) kaydında adres alanı yoktur; adres,
+katalog adresine kaydındaki pozitif tam sayı kimlikle `?merchantId=<id>`
+eklenerek kurulur. Diğer satıcıların adresindeki `merchantId` bu kimliktir ve
+sayfayı o satıcının teklifiyle açar (27 Ekim'de tarayıcıda doğrulandı);
+varsayılan satıcı sonradan değişse de bağlantı ölçülen satıcıda kalır. Kimlik
+eksik veya geçersizse adres kurulmaz. Diğer satıcılar için adres kurulmaz,
+çünkü o listede kardeş renk sayfalarının satıcıları da bulunur. Bu kuraldan
+önceki turlarda (56–57) Trendyol ana satıcı sonuçlarının adresi boştur.
+
+Hepsiburada'da satıcı listesi ile fiyat yanıtının `listingId`, `merchantId`
+ve satıcı adı eşleşirse ürün adresindeki `magaza` parametresi kazananın URL
+kodlanmış adıyla değiştirilir. Başka satıcıya ait mevcut `magaza` seçimi
+taşınmaz.
 
 Adres HTTPS, platformun izinli alan adı ve aynı ürün yol kimliğiyle
 doğrulanır. Eksik veya çelişkili bağlantı `null` kalır; geçerli fiyatı,
