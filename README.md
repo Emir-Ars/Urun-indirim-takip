@@ -69,6 +69,7 @@ hata sonucunu kaydeder. Cimri geçmişi bu akışın gözlemleriyle birleştiril
 | FastAPI · Uvicorn · Psycopg Pool | Yerel, salt okunur API ve bağlantı havuzu |
 | HTTPX | Yalnız yerel API'den veri alan doğrulayıcı istemci |
 | Streamlit · Altair | Telefon ekranı, ayrı fiyat grafikleri ve yenileme |
+| NumPy · scikit-learn · LightGBM | ML deneyleri (hazırlık sürüyor; ekranda tahmin yok) |
 | Windows Görev Zamanlayıcı | Günlük toplama ve haftalık keşif |
 | pytest · Black · Flake8 · GitHub Actions | Otomatik testler ve kod denetimleri |
 
@@ -78,7 +79,7 @@ Windows ve PowerShell, proje klasöründe:
 
 ```powershell
 python -m venv .venv
-.venv\Scripts\python.exe -m pip install -e ".[dev,web]"
+.venv\Scripts\python.exe -m pip install -e ".[dev,web,ml]"
 .venv\Scripts\python.exe -m pytest -q
 ```
 
@@ -96,7 +97,7 @@ başlatılması [teknik rehberde](docs/teknik.md#komutlar) anlatılır.
 | Katalog | 60 ürün, 369 bağlantı (366 etkin); Hepsiburada 234, Trendyol 135 |
 | Toplama düzeni | Her gün 10:00 ve 22:00; haftalık keşif Pazar 14:00 (otomatik güvenli kabul) |
 | Cimri geçmişi | 57 ürün, 20.805 tarihli kayıt (553 eksik fiyat); eşleştirme 58/60, iki ürün eşleştirilemedi (28 Ekim) |
-| Otomatik testler | 1991 test, 0 atlanan; Black ve Flake8 temiz (28 Ekim) |
+| Otomatik testler | 2032 test, 0 atlanan; Black ve Flake8 temiz (28 Ekim) |
 
 Katalogdaki **369 bağlantının markalara göre dağılımı** (üç pasif bağlantı dahil):
 
@@ -123,7 +124,7 @@ canlı ağa çıkmaz; veritabanı testleri yalnız test veritabanını kullanır
 | ML öncesi bakım ve otomatik güvenli keşif kabulü | ✅ Tamamlandı |
 | Proje yapısının sadeleştirilmesi | ✅ Tamamlandı (26 Ekim) |
 | Sürekli çalışma ortamı | 🔄 Dizüstü sürekli açık kararı uygulandı; işletim doğrulaması sürüyor ([plan](proje_plani.md)) |
-| ML ile indirim olasılığı tahmini | 🔜 Sürekli işletim ve yeterli veri sonrasında |
+| ML ile indirim olasılığı tahmini | 🔄 Hazırlık sürüyor (Cimri verisiyle); ekranda tahmin gölge mod ve gösterim kapısından sonra ([plan](proje_plani.md#ml)) |
 
 ## 📚 Belgeler
 

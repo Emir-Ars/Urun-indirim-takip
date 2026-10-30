@@ -5,14 +5,17 @@ import os
 import psycopg
 
 DATABASE_URL_ENV = "DATABASE_URL"
+API_DATABASE_URL_ENV = "API_DATABASE_URL"
 
 
-def database_url() -> str:
-    url = os.getenv(DATABASE_URL_ENV, "").strip()
+def database_url(env: str = DATABASE_URL_ENV) -> str:
+    """Yazan hesabın (varsayılan) ya da okuma hesabının (`API_DATABASE_URL`) adresi."""
+    url = os.getenv(env, "").strip()
     if not url:
+        user = "fiyat_takip_api" if env == API_DATABASE_URL_ENV else "fiyat_takip"
         raise RuntimeError(
-            f"{DATABASE_URL_ENV} tanımlı değil (ör. "
-            "postgresql://fiyat_takip@localhost:5432/fiyat_takip)"
+            f"{env} tanımlı değil (ör. "
+            f"postgresql://{user}@localhost:5432/fiyat_takip)"
         )
     return url
 

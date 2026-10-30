@@ -28,6 +28,7 @@ API ve ekran sözleşmeleri, hata kodları ve bilinen sınırlar. Yalnız sistem
 - [Streamlit ekranı](#streamlit-ekranı)
 - [SQL–API–Streamlit bağımsız denetimi](#sqlapistreamlit-bağımsız-denetimi)
 - [ML veri denetimi](#ml-veri-denetimi)
+- [ML hazırlığı](#ml-hazırlığı)
 - [Testler ne kanıtlar, ne kanıtlamaz](#testler-ne-kanıtlar-ne-kanıtlamaz)
 - [Bilinen sınırlar](#bilinen-sınırlar)
 
@@ -65,7 +66,7 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 | `contracts.py` | Verinin şekilleri ve doğrulaması (Pydantic V2 strict): `Product`, `Listing`, `Catalog`, `PriceObservation`, keşif hedefleri ve raporu. Hatalı veri içeri giremez (ör. fiyat alanına "Tükendi"). Yalnızca biten aşamanın kullandığı tanımları içerir. |
 | `settings.py` | Ayar dosyalarını okur. `CATALOG_PATH`, `DISCOVERY_PATH`, `RUNTIME_PATH`, `SCRAPE_LOCK_PATH`, `LOG_DIR`, `DISCOVERY_REPORT_DIR` ortam değişkenleriyle başka dosya veya klasör gösterilebilir. |
 | `scrape_lock.py` | Siteye giden bütün girişlerin paylaştığı kilit (`data/scrape.lock`). Fiyat turu, keşif, Cimri yerel alımı/ağsız aktarımı ve iki canlı kontrol aracı (`live_scraper_check`, `live_discovery_check`) alır; biri sürerken diğeri beklemeden "sürüyor" deyip çıkar. Süreç çökse bile işletim sistemi kilidi bırakır. |
-| `console.py` | Komut satırı araçlarının ortak çıktı yardımcıları: UTF-8 çıktı (`utf8_output`; fiyat turu, keşif, `app.database` ve canlı kontrol araçları kullanır), `<ön ek>_<tarih-saat>.log` dosyası açma, stdout/stderr'i log dosyasına da yazan `tee_output` ve ikisini birleştiren `run_logged` (yalnız zamanlanmış tur ve keşif: log açılamazsa iş başlamaz ve 1 döner; başlık satırı, beklenmeyen hatanın ayrıntısı ve "Çıkış kodu" satırı log'a yazılır). pythonw.exe altında ekran akışları yoktur (`None`); hepsi buna dayanır. |
+| `console.py` | Komut satırı araçlarının ortak çıktı yardımcıları: UTF-8 çıktı (`utf8_output`; fiyat turu, keşif, `app.database`, `app.ml` ve canlı kontrol araçları kullanır), `<ön ek>_<tarih-saat>.log` dosyası açma, stdout/stderr'i log dosyasına da yazan `tee_output` ve ikisini birleştiren `run_logged` (yalnız zamanlanmış tur ve keşif: log açılamazsa iş başlamaz ve 1 döner; başlık satırı, beklenmeyen hatanın ayrıntısı ve "Çıkış kodu" satırı log'a yazılır). pythonw.exe altında ekran akışları yoktur (`None`); hepsi buna dayanır. |
 | `price_statistics.py` | `ProductSnapshot.all_history` verisinden mevcut tam kapsam dönemini, 30 günlük gözlenen dibi, dönem zirvesini ve değişkenliği hesaplar; eksiklik gerekçeleri ve gözlem sayıları döndürür. Bağlantı/HTTP/dosya işlemi yapmaz; Cimri verisini kullanmaz. |
 
 ### Cimri geçmişi: `app/market_history/`
@@ -103,7 +104,7 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 
 | Dosya | Ne işe yarar |
 |---|---|
-| `connection.py` | PostgreSQL bağlantısı. Adres `DATABASE_URL` ortam değişkeninden okunur (şifresiz); şifre PostgreSQL'in `pgpass.conf` dosyasındadır. Oturum saati UTC; bağlanma 10 sn, tablo kilidi bekleme 30 sn ile sınırlı (yarım bırakılmış bir işlem turu sonsuza kadar bekletmez, hata verir). |
+| `connection.py` | PostgreSQL bağlantısı. Adres `DATABASE_URL` ortam değişkeninden okunur (şifresiz); `database_url(API_DATABASE_URL_ENV)` okuma hesabının adresini (`API_DATABASE_URL`) verir. Şifre PostgreSQL'in `pgpass.conf` dosyasındadır. Oturum saati UTC; bağlanma 10 sn, tablo kilidi bekleme 30 sn ile sınırlı (yarım bırakılmış bir işlem turu sonsuza kadar bekletmez, hata verir). |
 | `migrate.py` | Migration koşucusu: `migrations/` altındaki numaralı SQL dosyalarını sırayla, her birini tek transaction'da ve yalnızca bir kez uygular; `schema_migrations` tablosuna parmak iziyle yazar. |
 | `migrations/001_initial.sql` | Katalog kopyası, toplama turları ve sayfa sonuçları tabloları; bütün kurallar (`CHECK`, `UNIQUE`, yabancı anahtarlar). |
 | `migrations/002_guards_and_comparability.sql` | İki yeni `CHECK` (Tükendi satırı fiyat taşımaz, çizili fiyat güncel fiyattan büyüktür), beş tabloda 15 tetikleyici (silmeyi ve `TRUNCATE`'i reddeder, kimlik alanlarını korur, yazılmış sayfa sonucunu dondurur), `product_run_prices` görünümü. |
@@ -114,6 +115,7 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 | `catalog_sync.py` | `catalog.json`'u veritabanındaki kopyaya eşitler: `plan_sync` farkı veritabanına dokunmadan hesaplar, `sync_catalog` tek transaction'da yazar. |
 | `runs.py` | Tur SQL'leri: veritabanı tur kilidi, yarım kalan turu kapatma, turu ve planlanan sayfaları açma, sayfa sonucunu (bir kez, yalnızca süren tura) yazma, süren turdaki `network` hatası satırını ikinci okumanın sonucuyla değiştirme (`rewrite_network_result`, tek istisna), turu kapatma, özet. |
 | `read.py` | API'nin kullanacağı salt okunur veri katmanı: etkin ürünler, global tur durumu, ürüne özel son tamamlanmış tur, teklifler ve ayrı kendi/Cimri geçmişi. Hazır bağlantıda tek REPEATABLE READ, READ ONLY işlem; bağlantı/havuz açmaz, kilit almaz, veri yazmaz. |
+| `ml_data.py` | ML veri görüntüsünün okuması: ürün, platform, sayfa, tur, sayfa sonucu ve Cimri satırlarının yalnız ML'in kullandığı alanları, `read.py` ile aynı tek REPEATABLE READ, READ ONLY işlemde. Hesabın varsayılanı salt okunur değilse, bekleyen migration varsa veya bir tur sürüyorsa okumaz ([ML hazırlığı](#ml-hazırlığı)). |
 | `__main__.py` | Komut satırı: `python -m app.database migrate` / `status` / `sync-catalog [--dry-run]`. Çıkış kodları: `0` başarılı; `1` komut başarısız (şema, katalog çakışması, bağlantı, ayar; mesaj stderr'e `Veritabanı komutu başarısız: …` diye yazılır); `2` argüman hatası. |
 
 ### Fiyat toplama turu: `app/collection/`
@@ -140,6 +142,13 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 | `main.py` | Kartlı Streamlit ekranı: telefon/aralık seçimi, güncel sonuç, API istatistikleri, iki grafik ve 30 sn/elle yenileme. Hata halinde eski veri kaldırılır; yalnız seçim tercihleri korunur. |
 | `presentation.py` | Tamsayı kuruş ve İstanbul saati biçimleme, Türkçe gerekçeler, açık boşluk/kapsam sınırlarına sahip Altair çizgi/nokta verisi. İstatistik hesaplamaz veya veri kaynağına bağlanmaz. |
 
+### ML hazırlığı: `app/ml/`
+
+| Dosya | Ne işe yarar |
+|---|---|
+| `dataset.py` | Veri görüntüsünün sözleşmesi (Pydantic V2 strict) ve dosyası: satırları anahtar sırasına dizer, kayıtlar arası bağları denetler, `snapshot.json`'u SHA-256 parmak iziyle yeni klasöre yazar, okurken parmak izini ve içeriği yeniden denetler. Veritabanı, ağ ve pazaryeri katmanı yüklemez. |
+| `__main__.py` | Komut satırı: `python -m app.ml snapshot --output-dir YENI_KLASOR`. Paketin veritabanına bağlanan tek dosyası; yalnız `API_DATABASE_URL` okuma hesabıyla. Çıkış kodları [ML hazırlığı](#ml-hazırlığı) bölümündedir. |
+
 ### Kurulum ve zamanlayıcı: `scripts/`
 
 | Dosya | Ne işe yarar |
@@ -155,7 +164,7 @@ Test sayıları burada tutulmaz; güncel sayı `pytest -q` çıktısındadır.
 | Yer | Ne sınar |
 |---|---|
 | `tests/conftest.py` | Her testte gerçek curl_cffi ve HTTPX ağ transport'ları kesilir; ASGI/TestClient/MockTransport süreç içinde çalışır. Kalıcı `DATABASE_URL` ve `API_DATABASE_URL` silinir. `db` yalnız `TEST_DATABASE_URL`'deki `_test` DB'yi her testte boşaltır; ortak test kilidi en çok 30 sn bekler. `api_db` ayrıca `TEST_API_DATABASE_URL` ve `fiyat_takip_api_test` ister; iki bağlantının aynı `_test` DB olduğunu denetleyip test şemasında SELECT izinlerini yeniden kurar. `migrated`, `db`'ye bütün migration'ları uygular. `world`, `client` ve `stub` fixture'ları `tests/support/read_world.py` ile `tests/support/api.py`'dedir; burada `pytest_plugins` ile kaydedildikleri için testler onları içe aktarmadan kullanır. Eksik test adresleri yerelde atlama, CI'da hata üretir. |
-| `tests/support/` | Test değildir; birden fazla test dosyasının ortak yardımcılarıdır: sahte HTTP oturumu ve yanıtı (`fake_http.py`), `_test` DB'ye satır yazan `insert` (`database.py`), toplama turunun küçük sahte kataloğu ve sahte scraper'ları (`collection.py`), Cimri kayıtlı örnekleri ve sahte istemcisi (`market_history.py`), salt okunur sorgu ve API testlerinin küçük veritabanı dünyası ve satır ekleme yardımcıları (`read_world.py`), yerel API'nin sahte havuzu ve TestClient fixture'ları (`api.py`), istatistik testlerinin sentetik tur ve Cimri geçmişi (`price_statistics.py`), keşif testlerinin örnek dosyası okuyucusu, sabit katalog kopyası ve hedefleri (`discovery.py`), Streamlit ekranının yapay örnekleri, ekran yazılarını toplayan `messages` ve AppTest süre sınırı (`ui_samples.py`, 30 sn; varsayılan 3 sn yavaş makinede doğru ekranı da düşürebilir). Test dosyaları birbirinden içe aktarma yapmaz (`from test_…`, `import test_…`, `from tests.test_…`); bunu `tests/test_http.py` denetler. Yalnız tek dosyada kullanılan yardımcı o dosyada kalır. Buradaki `assert`'ler de pytest'in ayrıntılı hata mesajını verir (`conftest.py`'deki kayıt). |
+| `tests/support/` | Test değildir; birden fazla test dosyasının ortak yardımcılarıdır: sahte HTTP oturumu ve yanıtı (`fake_http.py`), `_test` DB'ye satır yazan `insert` (`database.py`), toplama turunun küçük sahte kataloğu ve sahte scraper'ları (`collection.py`), Cimri kayıtlı örnekleri ve sahte istemcisi (`market_history.py`), salt okunur sorgu ve API testlerinin küçük veritabanı dünyası ve satır ekleme yardımcıları (`read_world.py`), ML veri görüntüsünün küçük tablo örneği (`ml.py`), yerel API'nin sahte havuzu ve TestClient fixture'ları (`api.py`), istatistik testlerinin sentetik tur ve Cimri geçmişi (`price_statistics.py`), keşif testlerinin örnek dosyası okuyucusu, sabit katalog kopyası ve hedefleri (`discovery.py`), Streamlit ekranının yapay örnekleri, ekran yazılarını toplayan `messages` ve AppTest süre sınırı (`ui_samples.py`, 30 sn; varsayılan 3 sn yavaş makinede doğru ekranı da düşürebilir). Test dosyaları birbirinden içe aktarma yapmaz (`from test_…`, `import test_…`, `from tests.test_…`); bunu `tests/test_http.py` denetler. Yalnız tek dosyada kullanılan yardımcı o dosyada kalır. Buradaki `assert`'ler de pytest'in ayrıntılı hata mesajını verir (`conftest.py`'deki kayıt). |
 | `tests/test_http.py` | HTTP katmanı: hata kodları (`invalid_host` mesajı hedef alan adını yazar, sorgu metnini yazmaz), indirme sırasında 8 MB sınırı, büyük hata/yönlendirme yanıtları, yönlendirme kuralları, 5xx tekrarı ve bekleme süreleri, istekler arası bekleme, scraper factory. Mimari sınır da burada: pazaryeri HTTP'si yalnız `app/scraper/http.py` ve curl_cffi ile; HTTPX yalnız `app/ui/api_client.py` için; UI veritabanı/havuz/sunucu katmanını yüklemez; test ve araç dosyaları başka bir test dosyasından içe aktarma yapmaz. |
 | `tests/test_contracts.py` | Pydantic sözleşmeleri: satılabilir teklif fiyat ve satıcı taşır, puan ölçeği aşamaz, üstü çizili fiyat güncel fiyattan büyüktür, katalog kimlik/referans/alan adı kuralları, `money()` kuruş çevirimi. |
 | `tests/test_url_identity.py` | Ortak ürün adresi kimliği: ürün yolu, sorgu, son eğik çizgi, küçük harfli SKU, eksik/bozuk kimlik ve bütün tüketicilerin aynı kimliği okuması. |
@@ -171,6 +180,8 @@ Test sayıları burada tutulmaz; güncel sayı `pytest -q` çıktısındadır.
 | `tests/test_database.py` | Migration koşucusu, şemanın bütün `CHECK`/`UNIQUE`/yabancı anahtar kuralları, 002 ve 003 tetikleyicileri, kodun gerçek güncellemelerinin geçmesi, "bilerek silme" yolu ve testlerin emniyet kemerleri. |
 | `tests/test_comparability.py` | `product_run_prices` görünümü: aynı sayfa kümesi, hataya giriş/çıkış, yeni sayfa, Tükendi, `--prefix` turu, süren/yarıda kalan turlar, uzun boşluk. |
 | `tests/test_database_read.py` | Salt okunur sorgular ve istatistiklerle bütünleşme: ürüne özel tamamlanmış tur, kısmi kapsam, ayrı Cimri/NULL, iki bağlantıyla tutarlı görüntü, sorgu hatası/zaman aşımı sonrası yeniden okuma. |
+| `tests/test_ml_dataset.py` | ML veri görüntüsü (veritabanısız): yazma/okuma gidiş-dönüşü, satır sırasından bağımsız aynı baytlar, var olan klasöre yazmama, değiştirilmiş veya bozuk dosyanın ve parmak izi yenilenmiş tutarsız içeriğin reddi, kayıtlar arası bağ kuralları; `app/ml` modüllerinin (komut dosyası dışında) veritabanı, ağ ve pazaryeri katmanı yüklememesi. |
+| `tests/test_ml_data.py` | Görüntünün `_test` DB'den okuma hesabıyla okunması (alanlar, sıra, işlemin kapanması); süren tur, bekleyen migration ve yazan hesap reddi; `python -m app.ml snapshot` çıktısı ve çıkış kodları. |
 | `tests/test_price_statistics.py` | İstatistik hesabı: tam kapsam dönemi, 30 gün/14 geçiş/7 gün/18 saat eşikleri, İstanbul günü, NULL üzerinden geçmeme, değişkenlik, grafik aralığından bağımsızlık. Veritabanısız. |
 | `tests/test_api_foundation.py` | API okuma rolünün izinleri (yazamaması, kalıcı nesne kuramaması) ve test ortamının ağ/adres korumaları. |
 | `tests/test_api.py` | FastAPI: dört adres ve OpenAPI, kuruş/UTC/NULL, fiyat yaşı, rol/şema hataları, dört bağlantı sınırı, kesinti ve yeniden bağlantı, 5 sn sorgu zaman aşımı, tutarlı cevap. |
@@ -180,7 +191,7 @@ Test sayıları burada tutulmaz; güncel sayı `pytest -q` çıktısındadır.
 | `tests/test_api_ui_check.py`, `tests/test_ml_data_check.py`, `tests/test_live_discovery_check.py` | Aşağıdaki denetim/kontrol araçlarının kendileri. |
 | `tests/test_market_history.py`, `tests/test_market_history_import.py` | Cimri alımı ve aktarımı: kimlik, tarih/fiyat/eksik veri, ham kanıt ve parmak izi, istek bütçesi, kilit, ilk/tekrar aktarım, çelişki, READ ONLY önizleme, kesinti. |
 | `tests/fixtures/` | Gerçek kaynaklardan küçültülmüş örnekler (kaynak yolu ve SHA-256 ile), kataloğun sabit kopyası (`discovery/catalog.json`) ve Cimri örneklerindeki 57 ürünün sabit kopyası (`cimri_catalog_products.json`). Testler `data/` veya ağa bağlı değildir; sonuçları canlı `config/catalog.json` içeriğine bağlı değildir. İstisna, gerçek dosyaları bilerek denetleyen üç test: `test_real_config_files_match_contracts` (keşif ayarı ve katalog sözleşmeye uyar), `test_config_mapping_uses_existing_catalog_and_recorded_source_ids` (Cimri eşleştirmesi gerçek katalogdaki etkin ürünlere bağlı) ve `test_existing_catalog_keys_can_use_client_validation` (her gerçek ürün anahtarı ekran istemcisinin anahtar kuralından geçer). ML veri denetimi testleri dosyayı yalnız SHA-256 parmak izi için okur. |
-| `.github/workflows/ci.yml` | Her push/pull request'te geçici PostgreSQL 17 (`C.UTF-8`) açar, `dev,web` bağımlılıklarını kurar; yalnız `_test` DB'de API rolünü hazırlar ve Black/Flake8/tam testleri çalıştırır. `ci_only` şifresi yalnız o işte açılıp silinen sunucunundur. |
+| `.github/workflows/ci.yml` | Her push/pull request'te geçici PostgreSQL 17 (`C.UTF-8`) açar, `dev,web,ml` bağımlılıklarını kurar; yalnız `_test` DB'de API rolünü hazırlar ve Black/Flake8/tam testleri çalıştırır. `ci_only` şifresi yalnız o işte açılıp silinen sunucunundur. |
 | `.github/workflows/bulut-deneme.yml` | Elle tetiklenen bulut erişim denemesi (zamanlama, veritabanı ve gizli anahtar yok): `tools/live_scraper_check.py samsung_galaxy_a55_128gb` ile 4 sayfayı GitHub'ın makinesinden okur; ardından iki Trendyol sayfası için gelen sayfanın kısa özetini (boyut, dil, başlık, veri blokları, koruma izleri, çerez adları) yazar. Sonuç "Bilinen sınırlar"dadır. Tur saatlerinde (10:00–10:40, 22:00–22:40) tetiklenmez: `data/scrape.lock` bu makineye özgüdür. |
 
 ### Canlı kontrol ve denetim araçları: `tools/`
@@ -202,9 +213,9 @@ kullanıcı kendi terminalinden, tur ve keşif saatleri dışında çalıştır�
 Windows ve PowerShell, Python sanal ortamı `.venv`:
 
 ```powershell
-# Kurulum: mevcut kod + test araçları + API/arayüz hazırlığı
+# Kurulum: mevcut kod + test araçları + API/arayüz + ML kütüphaneleri
 python -m venv .venv
-.venv\Scripts\python.exe -m pip install -e ".[dev,web]"
+.venv\Scripts\python.exe -m pip install -e ".[dev,web,ml]"
 
 # Otomatik testler (internete çıkmaz; veritabanı testleri TEST_DATABASE_URL ister)
 .venv\Scripts\python.exe -m pytest -q
@@ -2247,6 +2258,75 @@ boş/tek sınıflı bölümler belirtilir; model eğitilmez, puan üretilmez.
 ürünler arası istatistiksel bağımsızlık kanıtı değildir. numerical_candidate
 yalnız bu sayımlarda engel bulunmadığıdır; yayın yeterliliği değildir.
 Mevcut Cimri serisinin eski kalması ve ML kullanım belirsizliği ayrıca gösterilir.
+
+## ML hazırlığı
+
+ML hazırlığının kodu `app/ml` paketindedir; adımlar ve kararlar
+[planın ML bölümündedir](../proje_plani.md#ml). Gerçek veritabanı okuma
+hesabıyla bir kez okunup bir **veri görüntüsü** dosyasına yazılır; etiket ve
+deney adımları bu dosyadan ağsız ve veritabanısız çalışır. Böylece aynı
+görüntü aynı sonucu verir ve testler veritabanı istemez. Kütüphaneler `ml`
+bağımlılık grubundadır (numpy, scikit-learn, LightGBM; kesin sürümler,
+`pyproject.toml`). Eski sıkı kuralla sayan [ML veri denetimi](#ml-veri-denetimi)
+aracı ayrıdır ve değişmeden kalır.
+
+### Veri görüntüsü (`python -m app.ml snapshot`)
+
+Toplama turu ve keşif çalışmıyorken proje kökünde kullanıcı terminalinden:
+
+```powershell
+$env:API_DATABASE_URL = "postgresql://fiyat_takip_api@localhost:5432/fiyat_takip"
+.venv\Scripts\python.exe -m app.ml snapshot --output-dir "artifacts\ml_veri_$(Get-Date -Format yyyyMMdd_HHmmss_fff)"
+$LASTEXITCODE
+```
+
+Şifre pgpass'ten okunur, komuta yazılmaz. Komut:
+
+- Klasör zaten varsa veritabanına bağlanmadan durur.
+- `API_DATABASE_URL`'deki hesapla bağlanır. Hesabın varsayılanı salt okunur
+  değilse (ör. yazan `fiyat_takip` hesabı) okumaz.
+- Bütün tabloları tek REPEATABLE READ, READ ONLY işlemde okur (5 sn sorgu
+  sınırı, UTC). Bekleyen veya kodla uyuşmayan migration varsa ya da bir tur
+  `running` durumundaysa okumaz; görüntü yarım tur içermez.
+- `snapshot.json`'u yazar, dosyayı yeniden okuyup doğrular ve özet basar:
+  dosya yolu, SHA-256, şema sürümü, okuma anı, ürün ve sayfa (etkin), tur
+  (tamamlanan, yarıda kalan), sayfa sonucu ve Cimri satır/ürün/eksik fiyat.
+
+Veritabanına yazmaz, siteye gitmez ve ortak tarama kilidini almaz; süren turu
+veritabanındaki `running` kaydından anlar.
+
+| Çıkış | Anlamı |
+|---|---|
+| 0 | Görüntü yazıldı, yeniden okunup doğrulandı. |
+| 1 | Klasör var, adres tanımlı değil, okuma hesabı değil, şema hazır değil, bağlantı/sorgu ya da dosya hatası. Mesaj stderr'e `Görüntü alınmadı: …` diye yazılır. |
+| 2 | Argüman hatası. |
+| 3 | Tur sürüyor; klasör oluşturulmaz. Tur bitince yeniden çalıştırın. |
+
+**İçerik:** yalnız ML'in kullandığı alanlar. Ürünler (kimlik, anahtar, marka,
+model, kapasite, etkinlik), platformlar ve sayfalar (kimlik, ürün, platform,
+etkinlik), turlar (tetikleyici, durum, başlangıç, bitiş, planlanan sayfa
+sayısı), sayfa sonuçları (kontrol anı, sonuç, güncel fiyat) ve Cimri satırları
+(Cimri kimliği, gün, kuruş veya NULL, alım anı). Satıcı adı, teklif adresi,
+hata metni, tur notu ve bağlantı adresi girmez. Pasif ürün ve sayfalar,
+yarıda kalan turlar ve kontrol edilmemiş sayfalar da girer; hangisinin
+kullanılacağına etiket kuralları karar verir.
+
+**Dosya biçimi:** `{"payload": …, "sha256": …}`. `payload` anahtarları sıralı,
+boşluksuz UTF-8 JSON'dur; `sha256` bu baytların parmak izidir. Zamanlar UTC
+(`…Z`), para kuruş tam sayıdır. Kayıtlar tablo anahtarına göre sıralı ve
+tekildir; aynı veri ve aynı okuma anı aynı baytları verir. `format_version` 1.
+
+**Okurken denetim:** bozuk JSON, fazladan zarf anahtarı veya parmak izi
+tutmayan dosya reddedilir. Parmak izi yeniden hesaplanmış olsa bile içerik
+sözleşmeye göre yeniden denetlenir: fazladan alan yok; sayfa→ürün/platform ve
+sonuç→tur/sayfa/ürün bağları tutar; her turda sonuç satırı sayısı planlanan
+sayfa sayısına eşit; fiyat yalnız `offer` sonucunda, kontrol anı yalnız sonuç
+varken bulunur ve tur aralığındadır; süren tur yoktur; Cimri satırı bir ürüne
+bağlıdır; ürün anahtarı tekrarlanmaz. Parmak izi yerel bütünlük kontrolüdür,
+imza değildir.
+
+`app/ml` modülleri (komut dosyası dışında) veritabanı, ağ ve pazaryeri
+katmanlarını yüklemez; bunu `tests/test_ml_dataset.py` denetler.
 
 ## Testler ne kanıtlar, ne kanıtlamaz
 

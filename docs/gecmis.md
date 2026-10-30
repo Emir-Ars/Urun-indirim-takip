@@ -117,6 +117,7 @@ Bu dosyanın kendi güncellemesi bir sonraki adımın commit'ine girer.
 | 28.10 | `ddca8ae` | Kalan sıra 2: GPT ve Claude ML araştırma raporları eklendi; kaynakları ve gerçek veriyle uyumu denetlendi; K1–K8 ML kararları plana yazıldı; son Cimri alımı için aktarım çakışması ve 57/60 eşleştirme açık karar oldu | [40653290005](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/40653290005) |
 | 28.10 | `a2e124f` | Kalan sıra 3.1: Cimri aktarımında alım günü yarım gün sayılır; yarım gün farkı çelişki değil, ilk satır korunur ve fark raporlanır; 9 regresyon testi; arşivdeki 13:51 alımının önizlemesi eski kodla çıkış 2, yeni kodla 1 yarım gün farkı ve çıkış 0 | [40659279633](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/40659279633) |
 | 28.10 | `d292db1` | Kalan sıra 3.2: Galaxy S24 FE 128 GB Cimri ana sayfasıyla eşleştirildi (58/60; kimliği son alımda doğrulanacak); S25 512 GB ve Redmi Note 14 Pro 5G 256 GB eşleştirmesiz kaldı | [40662966101](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/40662966101) |
+| 28.10 | `fbdd42a` | Kalan sıra 4.0: ML hazırlığının yapısı ve 4.0–4.6 adımları, ara dönem sırası ve E8DHJL kararı plana yazıldı; teknik rehberde eşleştirme satırı düzeltildi | [40665199435](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/40665199435) |
 
 ## Eylül 2026 ayrıntıları
 

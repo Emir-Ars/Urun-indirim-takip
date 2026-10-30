@@ -409,7 +409,7 @@ ML hazırlığının adımları (kalan sıra 4; yapı kararı Bölüm 5, 28 Ekim
 
 | Adım | İş | Durum |
 |---|---|---|
-| 4.0 | Bekleyen belge değişiklikleri | Sürüyor |
+| 4.0 | Bekleyen belge değişiklikleri | ✅ Tamamlandı (28 Ekim) |
 | 4.1 | `ml` bağımlılık grubu, CI, salt okunur veri görüntüsü (`python -m app.ml snapshot`) | Planlandı |
 | 4.2 | Günlük seriler ve etiketler; etiket raporu; sıkı varyantın eski araçla çapraz kontrolü | Planlandı |
 | 4.3 | Girdiler ve sızıntı testi | Planlandı |
