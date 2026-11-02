@@ -45,7 +45,7 @@ Kullanıcı arayüzde arama yaptığında canlı scraping veya model eğitimi
 | Proje yapısının sadeleştirilmesi (Bölüm 8, Adım 1–5) | ✅ Tamamlandı (26 Ekim) | `75d4732` |
 | ML öncesi ekran iyileştirmeleri 1–2 | ✅ Tamamlandı (28 Ekim) | `dd2e262`, `94045bd`, CI 40643349065 |
 | Proje mühendisliğini pekiştirme | ⏸️ Pasif (28 Ekim kararı): iş sırasında değil; kullanıcı istediğinde Oturum 2'den sürer | Program aşağıda; oturum ilerlemesi yerel devir notunda |
-| 8. ML (indirim tahmini) | 🔄 Hazırlık sürüyor (4.0–4.3 tamamlandı; 4.4 uygulandı ve gerçek bölme doğrulandı, gönderim/CI bekliyor; 4.5–4.6 planlandı) | Bölüm 9 |
+| 8. ML (indirim tahmini) | 🔄 Hazırlık sürüyor (4.0–4.4 tamamlandı; 4.5–4.6 planlandı) | Bölüm 9 |
 | 9. Sürekli işletim ve Docker | 🔄 Sürekli işletim kararı verildi (22 Ekim: dizüstü sürekli açık); Docker başlanmadı | Bölüm 9 |
 
 Bugünkü işletim: fiyat turu her gün 10:00 ve 22:00'de, haftalık keşif her
@@ -230,13 +230,15 @@ rehberde, o günkü tartışması arşivdedir.
 | 28 Ekim | Son Cimri alımı Kasım başında, aktarım çakışması ve eşleştirme ön koşulları çözülünce yapılır; kalan sıra değişmez. Cimri serisi 9 Ekim 2025'ten alım gününe kadar uzanır (grafik alım gününden geriye en çok 366 gün verir); alım günü yarım gündür. | Kullanıcı projeyi bir ay bekletmek istemiyor. Bilinen bedel: Kasım 2026 kampanyaları Cimri verisine girmez; kendi verimizle örtüşme ~5 hafta kalır. |
 | 28 Ekim | Cimri aktarımında yarım gün kuralı: günü, alım anının İstanbul tarihine eşit olan değer yarım gündür. Ortak günde yarım gün farkı çelişki sayılmaz; ilk satır korunur, fark raporlanır, ürünün yeni günleri eklenir. Tam gün farkı ve Cimri kimliği farkı çelişki kalır. Şema ve "kayıt değişmez" koruması değişmez. ML yarım günü gözlenmemiş gün sayar. | 8 Ekim satırları alım gününün 16:00 değeridir (57 satır, 5'i boş); gün sonu değeri farklı gelirse ürün tümden reddedilirdi. 8 Ekim alımları arasında 19.292 geçmiş gün değeri değişmedi. Arşivdeki 13:51 alımının önizlemesi eski kodla S24 256 GB'ı reddetti (çıkış 2), yeni kodla 1 yarım gün farkı raporladı (çıkış 0). Kullanıcı tabloyu değiştiren migration yerine bu yolu seçti. |
 | 28 Ekim | Cimri eşleştirmesi 58/60: Galaxy S24 FE 128 GB, ana sayfası (`a2372356868`) ile eklenir; kimliğini son alımın kendi kontrolleri doğrular, tutmazsa ürün aktarılmaz. Galaxy S25 512 GB ve Redmi Note 14 Pro 5G 256 GB eşleştirmesiz kalır; yerlerine başka kapasite veya model konmaz. Ayrı doğrulama alımı yapılmaz. | Web aramasında S24 FE 128 GB için S25 128 GB ile aynı kalıpta ana sayfa bulundu; diğer ikisi için yine yalnız başka ürünlerin sayfaları çıktı. S25 512 GB'ın katalogda sayfası yok. Üç ürünün ailesi Cimri'de olduğu için ML engellenmez. |
-| 28 Ekim | Kasım başındaki alımı beklerken önce E8DHJL kararı verilir, ardından ML hazırlığı (kalan sıra 4) mevcut Cimri verisiyle (9 Ekim 2025–8 Ekim 2026) planlanır. Alım gelince aynı adımlar uzatılmış veriyle yeniden çalıştırılır. | Kullanıcı projenin beklemesini istemiyor; model kararı gereği Cimri'de eğitilecek, mevcut bir yıllık veri hazırlığa başlamaya yeter. |
+| 28 Ekim | Kasım başındaki alımı beklerken önce E8DHJL kararı verilir, ardından ML hazırlığı (kalan sıra 4) mevcut Cimri verisiyle (9 Ekim 2025–8 Ekim 2026) planlanır. Alım gelince aynı adımlar uzatılmış veriyle yeniden çalıştırılır. | Kullanıcı projenin beklemesini istemiyor; model kararı gereği Cimri'de eğitilecek, mevcut bir yıllık veri hazırlığa başlamaya yeter. Sırası 2 Kasım kararıyla değişti. |
 | 28 Ekim | `hepsiburada_hbcv0000e8dhjl` (Redmi Note 13 Pro 5G 256 GB) olduğu gibi katalogda kalır ve izlenir. | Başlık ve varyant 256 GB/8 GB RAM (512 GB sürüm 12 GB RAM). Fiyatı 20.999–23.999 TL (ortası 21.999) ile diğer 256 GB sayfalarıyla aynı aralıkta; 512 GB ürünün en ucuzu 23.999–25.999 TL. 26 turda hiç en ucuz sayfa olmadı. Ana kayıttaki 512 GB alanı satıcı hatası sayıldı; kesin kanıt değildir. |
 | 28 Ekim | ML hazırlığının yapısı: hesaplama yeni `app/ml` paketinde (seriler, etiketler, girdiler, bölme, ölçütler, modeller, deney), SQL `app/database/ml_data.py`'de, komut `python -m app.ml`. Gerçek DB okuma hesabıyla bir kez parmak izli görüntü dosyasına okunur; etiket ve deney bu dosyadan ağsız çalışır. Kütüphaneler: numpy, scikit-learn, LightGBM (yeni `ml` grubu, kesin sürümler); pandas yok. Kendi verimizde gelecek gün, başlangıç sayfalarından o gün planlananların hepsi cevap verdiyse gözlenmiş sayılır. Adımlar 4.0–4.6 (Bölüm 9), her biri ayrı commit ve onay. | Mevcut klasör düzeni ve sorumluluk sınırları korunur. Görüntü dosyası aynı veriyle aynı sonucu verir ve testler DB istemez. Hata veren ucuz sayfa gerçek düşüşü saklayamaz. |
 
 | 2 Kasım | 4.2 uygulama planı onaylandı: eksik diğer dilim varken tek sağlam tur gelecek günü sağlayabilir; günü aşan tur kendi diliminde eksik sayılır ve başka güne taşınmaz; başlangıç akşamında ürünün bütün planlanan sayfaları cevap vermelidir. 30 gün başlangıç dahil sayılır, eski sıkı çapraz kontrolde Cimri yarım gün maskesi iki tarafa da uygulanır. | Gözlenen minimumun anlamı korunur; kısmi akşam cevabının yanlış yüksek başlangıç üretmesi önlenir. Ayrıntılı bugünkü davranış teknik rehberde. |
 
 | 2 Kasım | 4.3 uygulama planı onaylandı: fiyat değişimleri logaritmik oran, son ≥%5 düşüş ardışık takvim günleri arasındaki düşüş, aile nesil ve segment sürüm olacak. Girdiler etiketten bağımsız, eksikler NULL; ay ve ürün anahtarı çekirdek dışında tutulur. | Gelecek bilgisi karışmadan iki kaynakta ortak girdiler hazırlanır; formül ve sınırlar teknik rehberde sabittir. |
+
+| 2 Kasım | Kalan sıra: bekleyen kayıt (1 Kasım keşfinin 7 sayfası ve 4.4 belgeleri) → Hepsiburada arama API'si düzeltmesi (8 Kasım keşfinden önce) → son Cimri alımı → 4.1–4.4 komutlarının uzatılmış veriyle yeniden çalıştırılması → 4.5 → 4.6. 4.5 ve 4.6 uzatılmış Cimri verisiyle yapılır. | API 1 Kasım'dan beri cevap veriyor ve canlı yanıtta iki kusur görüldü; düzeltmenin ilk canlı sınavı 8 Kasım keşfi. Alım 4.5'ten önce yapılınca modeller doğrudan güncel veriyle kurulur, aynı iş iki kez yapılmaz. |
 
 | 2 Kasım | 4.4 planı onaylandı: dört tam doğrulama ayı, her katta ayrı 30 gün kalibrasyon, olumlu pencere kümeleri ve %95 tarih bloklu güven aralığı; saklı testin puanlaması kapalı kalır. | Kullanıcı seçimleri: ölçülen ay kalibrasyonda görülmesin, tekrar eden olumlu satırlar olay diye sayılmasın; kesin kurallar teknik rehberde. |
 
@@ -354,18 +356,20 @@ ML ve Docker kavramsal hazırlıktır; model seçimi, eğitim veya kurulum yapı
 Son oturumda fiyatın kaynaktan ekrana yolu, hata/stok/kapsam durumlarının
 beklenen davranışı ve sonuca güvenmek için gereken kanıtlar açıklanır.
 
-### Kalan iş sırası (28 Ekim kararı)
+### Kalan iş sırası (2 Kasım kararı)
 
 1. **Ekranın canlı kontrolü:** ✅ Tamamlandı (28 Ekim; [kayıt](docs/gecmis.md)).
 2. **[ML araştırma raporları](docs/arastirma/asama_08_ml/):** ✅ Tamamlandı
    (28 Ekim); kararlar Bölüm 5'te, özet Bölüm 9'da.
-3. **Son Cimri alımı (Kasım başı):** aktarımın yarım gün kuralı ve 58/60
-   eşleştirme hazır (Bölüm 5). 1 Kasım keşfi yeni ürün eklerse alımdan önce
-   eşleştirmesi bakılır. Alım ayrı onayla ve kullanıcının terminalinden son
-   bir defa yapılır.
-4. **ML hazırlığı:** onaylanan veri ve deney planı uygulanacak. Alımı
-   beklerken mevcut Cimri verisiyle planlanmaya başlar; önce E8DHJL kararı
-   (28 Ekim kararı).
+3. **Son Cimri alımı (bu hafta):** aktarımın yarım gün kuralı ve 58/60
+   eşleştirme hazır (Bölüm 5); 1 Kasım keşfi yeni ürün eklemedi. Alım ayrı
+   onayla ve kullanıcının terminalinden son bir defa yapılır. Önce iki ara
+   iş: 1 Kasım keşfinin 7 sayfasıyla 4.4 belgelerinin kaydı ve Hepsiburada
+   arama API'si düzeltmesi (8 Kasım keşfinden önce; uygulama planı ayrıca
+   onaylanır, ilk canlı sonucu 8 Kasım keşfinde kontrol edilir).
+4. **ML hazırlığı:** 4.0–4.4 tamamlandı. Alımdan sonra 4.1–4.4 komutları
+   uzatılmış veriyle yeniden çalıştırılır (kod değişmez); 4.5 ve 4.6 bu
+   veriyle yapılır.
 
 Öğrenme turu bu sıranın dışında, pasif (28 Ekim kararı).
 
@@ -422,13 +426,15 @@ ML hazırlığının adımları (kalan sıra 4; yapı kararı Bölüm 5, 28 Ekim
 | 4.1 | `ml` bağımlılık grubu, CI, salt okunur veri görüntüsü (`python -m app.ml snapshot`) | ✅ Tamamlandı (30 Ekim) |
 | 4.2 | Günlük seriler ve etiketler; etiket raporu; sıkı varyantın eski araçla çapraz kontrolü | ✅ Tamamlandı (2 Kasım); gerçek görüntü, gönderim ve CI doğrulandı |
 | 4.3 | Girdiler ve sızıntı testi | ✅ Tamamlandı (2 Kasım); gerçek görüntüde başlangıç eşleşmesi, gönderim ve CI doğrulandı |
-| 4.4 | Zaman bölmesi (purge, ileri yürüyen katlar) ve ölçütler | Uygulandı ve gerçek bölme/kat doğrulandı (2 Kasım); commit/push/CI bekliyor |
+| 4.4 | Zaman bölmesi (purge, ileri yürüyen katlar) ve ölçütler | ✅ Tamamlandı (2 Kasım); gerçek bölme/kat, gönderim ve CI doğrulandı |
 | 4.5 | R0–R2, LightGBM, kalibrasyon ve deney raporu | Planlandı |
-| 4.6 | Mevcut Cimri verisiyle ilk deney; son %15 test açılmaz | Planlandı |
+| 4.6 | Son alımla uzatılmış Cimri verisiyle ilk deney; son %15 test açılmaz | Planlandı |
 
 Bu aşamada tahmin gösterilmez, gölge mod kurulmaz ve DB'ye yazılmaz; bunlar
-ayrı planlardır. Kasım alımından sonra 4.1–4.6 komutları uzatılmış veriyle
-yeniden çalıştırılır; model seçimi ancak o zaman dondurulur.
+ayrı planlardır. Son Cimri alımından sonra 4.1–4.4 komutları uzatılmış
+veriyle yeniden çalıştırılır; 4.5 ve 4.6 bu veriyle yapılır (2 Kasım
+kararı). Model seçiminin dondurulması ve son testin tek kez açılması
+4.6'dan sonraki ayrı plandır.
 
 ## 10. Çalışma ve Git disiplini
 

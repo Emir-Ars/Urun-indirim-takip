@@ -3451,6 +3451,62 @@
       "url": "https://www.hepsiburada.com/redmi-note-13-pro-5g-12-gb-ram-256-gb-beyaz-cep-telefonu-turkiye-garantili-p-HBCV0000AF2YBS",
       "color": "Beyaz",
       "active": true
+    },
+    {
+      "listing_id": "trendyol_985256817",
+      "product_id": 25,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-17-pro-1tb-abis-p-985256817",
+      "color": "Deep Blue",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_985256826",
+      "product_id": 29,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-17-pro-max-2tb-abis-p-985256826",
+      "color": "Abis",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_767487804",
+      "product_id": 42,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s23-fe-256-gb-yesil-samsung-turkiye-garantili-p-767487804",
+      "color": "Yeşil",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00006y95yq",
+      "product_id": 60,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s24-fe-128-gb-8-gb-ram-samsung-turkiye-garantili-mavi-p-HBCV00006Y95YQ",
+      "color": "Mavi",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00005pzuwf",
+      "product_id": 57,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/redmi-note-13-pro-512-gb-12-gb-ram-xiaomi-turkiye-garantili-siyah-p-HBCV00005PZUWF",
+      "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv00007pnh72",
+      "product_id": 50,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/redmi-note-14-pro-5g-512-gb-12-gb-ram-xiaomi-turkiye-garantili-yesil-p-HBCV00007PNH72",
+      "color": "Yeşil",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_891692662",
+      "product_id": 50,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/xiaomi/redmi-note-14-pro-5g-12gb-512gb-yesil-xiaomi-turkiye-garantili-p-891692662",
+      "color": "Yeşil",
+      "active": true
     }
   ]
 }

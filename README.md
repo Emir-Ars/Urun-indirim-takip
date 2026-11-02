@@ -127,7 +127,7 @@ canlı ağa çıkmaz; veritabanı testleri yalnız test veritabanını kullanır
 | ML öncesi bakım ve otomatik güvenli keşif kabulü | ✅ Tamamlandı |
 | Proje yapısının sadeleştirilmesi | ✅ Tamamlandı (26 Ekim) |
 | Sürekli çalışma ortamı | 🔄 Dizüstü sürekli açık kararı uygulandı; işletim doğrulaması sürüyor ([plan](proje_plani.md)) |
-| ML ile indirim olasılığı tahmini | 🔄 Günlük seriler, etiketler ve girdiler tamamlandı. Zaman bölmesi ve ölçütler uygulandı, gerçek bölme doğrulandı; gönderim/CI bekliyor. Ekranda tahmin gölge mod ve gösterim kapısından sonra ([plan](proje_plani.md#ml)) |
+| ML ile indirim olasılığı tahmini | 🔄 Günlük seriler, etiketler, girdiler, zaman bölmesi ve ölçütler tamamlandı; gerçek çıktılar ve CI doğrulandı. Sırada referans modeller, LightGBM ve kalibrasyon var. Ekranda tahmin gölge mod ve gösterim kapısından sonra ([plan](proje_plani.md#ml)) |
 
 ## 📚 Belgeler
 

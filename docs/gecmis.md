@@ -121,6 +121,7 @@ Bu dosyanın kendi güncellemesi bir sonraki adımın commit'ine girer.
 | 30.10 | `bf0e80f` | Kalan sıra 4.1: `ml` bağımlılık grubu, CI ve salt okunur veri görüntüsü; gerçek görüntü (60 ürün, 370 sayfa/366 etkin; Cimri 20.805 satır/57 ürün, 553 eksik fiyat) doğrulandı; 2032 test, 0 atlanan, Black ve Flake8 temiz | [41046830071](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/41046830071) |
 | 02.11 | `179215a` | Kalan sıra 4.2: günlük seriler, simetrik 6/7 etiketi, sabit/izlenen kapsam, parmak izli rapor ve eski hesaplayıcıyla sıkı çapraz kontrol; gerçek görüntü ve yerel test/biçim denetimleri doğrulandı | [41413845126](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/41413845126) |
 | 02.11 | `c6ecea7` | Kalan sıra 4.3: geçmişe dayalı tipli model girdileri, aile/segment, girdi şeması ve raporu; gelecek veriye karşı değişmezlik testleri, gerçek görüntüde 4.2 başlangıç eşleşmesi ve dosya bütünlüğü doğrulandı | [41429382111](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/41429382111) |
+| 02.11 | `ad01bcb` | Kalan sıra 4.4: ortak tarih bölmesi, purge, ayrı kalibrasyonlu ileri yürüyen katlar, ölçütler ve tarih bloklu güven aralığı; gerçek bölme/kat, dosya bütünlüğü ve saklı test koruması doğrulandı | [41440395101](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/41440395101) |
 
 ## Eylül 2026 ayrıntıları
 
