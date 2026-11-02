@@ -149,8 +149,9 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 | `dataset.py` | Veri görüntüsünün sözleşmesi (Pydantic V2 strict) ve dosyası: satırları anahtar sırasına dizer, kayıtlar arası bağları denetler, `snapshot.json`'u SHA-256 parmak iziyle yeni klasöre yazar, okurken parmak izini ve içeriği yeniden denetler. Veritabanı, ağ ve pazaryeri katmanı yüklemez. |
 | `series.py` | İstanbul günleri, zamanlanmış tur dilimleri, sağlam akşam başlangıcı, günlük minimum ve Cimri yarım gün maskesi; eski sıkı karşılaştırmanın günlük serisi. |
 | `labels.py` | Ayrı kendi/Cimri serilerinden simetrik 6/7 etiketi, sabit/izlenen sayfa kapsamı, sıkı pencere ve etiket özeti. Model eğitmez ve zaman bölmesi yapmaz. |
-| `reporting.py` | Belirlenimci JSON/JSONL ve Türkçe Markdown raporu; çıktı parmak izleri ve en son yazılan başarı manifesti. |
-| `__main__.py` | `snapshot` yalnız `API_DATABASE_URL` okuma hesabıyla görüntü alır; `labels` yalnız kaydedilmiş görüntüyü okur, DB katmanını/sürücüsünü yüklemez. Çıkış kodları [ML hazırlığı](#ml-hazırlığı) bölümündedir. |
+| `features.py` | Yalnız geçmiş günlük başlangıç fiyatlarından sabit sözleşmeli girdiler, aile/segment kategorileri ve eksiklik raporu. Etiket okumaz; öğrenilen dönüşüm veya model eğitimi yapmaz. |
+| `reporting.py` | Ayrı etiket/girdi dosyaları için belirlenimci JSON/JSONL, Türkçe Markdown, çıktı şeması ve en son yazılan parmak izli başarı manifesti. |
+| `__main__.py` | `snapshot` yalnız `API_DATABASE_URL` okuma hesabıyla görüntü alır; `labels` ve `features` yalnız kaydedilmiş görüntüyü okur, DB katmanını/sürücüsünü yüklemez. Çıkış kodları [ML hazırlığı](#ml-hazırlığı) bölümündedir. |
 
 ### Kurulum ve zamanlayıcı: `scripts/`
 
@@ -187,6 +188,8 @@ Test sayıları burada tutulmaz; güncel sayı `pytest -q` çıktısındadır.
 | `tests/test_ml_data.py` | Görüntünün `_test` DB'den okuma hesabıyla okunması (alanlar, sıra, işlemin kapanması); süren tur, bekleyen migration ve yazan hesap reddi; `python -m app.ml snapshot` çıktısı ve çıkış kodları. |
 | `tests/test_ml_labels.py` | 30 günlük geçmiş, simetrik 6/7 gelecek, kuruşla %5 sınırı, sağlam akşam başlangıcı, tek tur, gün aşımı, değişen sayfa kapsamı, Cimri kimliği ve yarım gün kuralları. |
 | `tests/test_ml_label_cli.py` | Ağsız etiket komutu, aynı dosyaların tekrar üretimi, parmak izi ve kesinti koruması, eski hesaplayıcıyla bağımsız sıkı çapraz kontrol. |
+| `tests/test_ml_features.py` | Girdi formülleri ve eksikler, aile/segment, Cimri kimliği, ölçekten bağımsızlık; gelecek fiyat/stok/sayfa/ürün değişimlerine ve kayıtların kesilmesine karşı geçmiş girdilerin sabitliği; 4.2 başlangıç anahtarlarıyla eşleşme. |
+| `tests/test_ml_feature_cli.py` | Ağsız, etiket ve eğitim modüllerini yüklemeyen features komutu; aynı dosyaların tekrarı, tipli şema, parmak izi, mevcut klasör ve kesinti/yazma hatası koruması. |
 | `tests/test_price_statistics.py` | İstatistik hesabı: tam kapsam dönemi, 30 gün/14 geçiş/7 gün/18 saat eşikleri, İstanbul günü, NULL üzerinden geçmeme, değişkenlik, grafik aralığından bağımsızlık. Veritabanısız. |
 | `tests/test_api_foundation.py` | API okuma rolünün izinleri (yazamaması, kalıcı nesne kuramaması) ve test ortamının ağ/adres korumaları. |
 | `tests/test_api.py` | FastAPI: dört adres ve OpenAPI, kuruş/UTC/NULL, fiyat yaşı, rol/şema hataları, dört bağlantı sınırı, kesinti ve yeniden bağlantı, 5 sn sorgu zaman aşımı, tutarlı cevap. |
@@ -2446,6 +2449,114 @@ Son gerçek görüntü doğrulamasının kapsamı ve sayıları README Güncel k
 tablosundadır; kanıt klasörü `artifacts/ml_etiket_20261102_112102_355/`.
 Bu çıktı yalnız 30 Ekim görüntüsünü kapsar; daha sonraki turlar için yeni
 görüntü gerekir.
+
+### Model girdileri (`python -m app.ml features`)
+
+Komut, 4.1 görüntü klasörünü okur; girdi hesabı etiketlerden bağımsızdır.
+Güncel katalog/eşleştirme, DB, API, ağ veya 4.2 etiket klasörü gerekmez.
+Görüntünün parmak izi ve sözleşmesi önce doğrulanır. Günlük fiyatlar 4.2 ile
+aynı seri katmanından gelir: kendi serimizde sağlam 22:00 başlangıcı,
+Cimri'de yarım gün maskeli günlük fiyat. Görüntünün alındığı İstanbul günü
+dahil edilmez; hesapta bilgisayarın bugünkü tarihi kullanılmaz.
+
+Kullanıcı terminalinde, mevcut görüntüyle:
+
+```powershell
+$mlFeatureSnapshot = "artifacts\ml_veri_20261030_141107_133"
+$mlFeatureOut = "artifacts\ml_girdi_$(Get-Date -Format yyyyMMdd_HHmmss_fff)"
+.venv\Scripts\python.exe -m app.ml features --snapshot $mlFeatureSnapshot --output-dir $mlFeatureOut
+$LASTEXITCODE
+```
+
+Çıkış 0, rapor yolu, kaynak başına girdi satırı sayısı, tanınmayan model
+ailesi sayısı ve dosya/şema doğrulama mesajı beklenir. Fiyatlı başlangıç
+yoksa sıfır satır başarıdır; bu model eğitimi veya veri yeterliliği kararı
+değildir. Çıkış 1 girdi/dosya/mevcut klasör hatası, 2 argüman hatası,
+130 kullanıcı kesmesidir. Var olan çıktı klasörü değiştirilmez.
+
+**Girdi sözleşmesi:** Her satır iki nesne taşır. `metadata` içinde
+`product_id`, `product_key`, `source`, `anchor_day`, `anchor_at` ve `month`
+vardır. `anchor_at` kendi serimizde akşam turunun gerçek UTC bitişidir;
+Cimri'de saat bilinmediği için NULL'dır. Ay ve ürün anahtarı ileride yalnız
+ablasyon için seçilebilir; çekirdek girdiye otomatik katılmaz.
+
+`features`, Pydantic strict ve `extra=forbid` ile sabit alanlıdır. Kaynak,
+ürün kimlikleri, ham fiyat, tarihin kendisi ve gelecek alanları bu nesneye
+eklenemez. Eksikler NULL, sayısal değerler sonludur; NaN/sonsuz değer
+reddedilir. Kategori kodlama, ölçekleme veya eksik değer doldurma yoktur.
+
+`d` başlangıç günü ve `p(d)` geçerli başlangıç fiyatı olmak üzere:
+
+| Çekirdek alan | Hesap ve eksik davranışı |
+|---|---|
+| `log_return_1d/7d/14d/30d` | `ln(p(d)/p(d−k))`. Tam lag tarihinde fiyat yoksa NULL; yakın tarihe geçilmez. |
+| `ratio_min_7d` | `p(d)/min(p(d−6…d))`; mevcut fiyatlarla, başlangıç dahil. |
+| `ratio_min_30d` | `p(d)/min(p(d−29…d))`; mevcut fiyatlarla. |
+| `ratio_mean_30d` | `p(d)/ortalama(p(d−29…d))`; mevcut fiyatlarla. |
+| `volatility_30d` | İki ucu da `d−29…d` içinde fiyatlı ardışık takvim günlerinin log değişimlerinin örnek standart sapması; en az iki geçiş gerekir, yüzdeyle çarpılmaz. |
+| `change_count_30d` | Aynı geçerli geçişlerde fiyatın farklı olduğu durumların sayısı; hiç geçiş yoksa NULL. |
+| `days_since_drop_30d` | Aynı geçişlerde `100×sonraki ≤ 95×önceki` olan son düşüşün bitişinden bugüne gün. Geçiş var/düşüş yoksa 31, geçiş yoksa NULL. |
+| `drop_observed_30d` | Geçerli geçişlerde uygun düşüş görüldüyse true, görülmediyse false; hiç geçiş yoksa NULL. |
+| `history_days` | İlk kaynak gözleminden başlangıca kadar takvim günü sayısı, başlangıç dahil; 30'a kırpılmaz. İlk gözlem tanımı 4.2 serisiyle aynıdır. |
+| `missing_ratio_30d` | `d−29…d` içindeki eksik başlangıç fiyatı sayısı / 30. |
+| `weekday` | Kategori dizgisi: Pazartesi `"0"`, Pazar `"6"`. |
+| `brand`, `family`, `segment`, `capacity` | Marka, nesil, sürüm ve GB kapasitesi kategorileri; kapasite de dizgidir (örn. `"128"`). |
+
+Minimum ve ortalama için tek mevcut fiyat yeterlidir. Eksik günün üzerinden
+günlük geçiş kurulmaz; oynaklık ve değişim sayısı fiyatsız günler süzüldükten
+sonra hesaplanmaz. Lag 30 için `d−30` okunur, ancak bu ek fiyat 30 günlük
+minimum/ortalama/geçiş penceresine katılmaz. API istatistiklerinin 18 saat,
+14 geçiş gibi eşikleri burada kullanılmaz. Cimri geçmişinde başlangıçtaki
+kaynak ürün kimliğinden farklı kimliğe ait fiyatlar NULL kabul edilir;
+kimlikler bir girdi hesabında birleştirilmez. Kendi geçmişindeki sayfa
+kapsamı değişimleri günlük serideki geçmiş fiyatları geriye dönük silmez.
+
+**Aile/segment:** Apple iPhone nesli ortak ailedir; Pro/Pro Max/Plus/mini/Air
+ayrı segmenttir. Samsung Galaxy S/A numarası aile, Ultra/FE/Plus/Edge sürüm
+segmentidir. Xiaomi sayısal T ve Redmi Note numarası aile, Pro/Pro Plus
+segmenttir; Redmi'nin sondaki 4G/5G eki yalnız bu kategori hesabında
+çıkarılır. POCO X numarası aile, Pro segmenttir. Eksiz tanınan modelin
+segmenti `standard` olur. Desene uymayan modelde marka + tam model aile
+olarak korunur, segment `unknown` olur ve rapora girer. Bu işlem ürün
+kimliğini veya scraper/keşfin ağ kurallarını değiştirmez; ek bir model
+eşleştirme dosyası gerekmez.
+
+**Zaman sınırı:** Hesaplayıcı yalnız `d−30…d` fiyatlarını okuyabilir.
+Kendi fiyatlarında geçmiş akşam bitişinin başlangıç anından sonra olmaması
+da aranır. Hesaplayıcıya gelecek etiketi veya pencere uygunluğu verilmez.
+Etiketi 0/1/NULL olan bütün geçerli başlangıçlar girdi satırı üretir;
+geleceği tamamlanmış satırlara göre girdi hazırlama yapılmaz.
+
+**Çıktılar:** `features.jsonl` anahtara göre sıralı ve tekil tipli satırlar;
+`feature_schema.json` alan türleri, formüller, pencere/eksik kuralları,
+çekirdek ve kategorik alan listeleri; `report.json` ve `report.md` kaynak ve
+ürün bazında satır/eksiklik/tanınmayan model dökümüdür. Manifest en son
+yazılır; biçim sürümü 1, girdi kural sürümü 1, giriş SHA-256 ve dört çıktı
+dosyasının parmak izlerini taşır. Komut parmak izlerini, çıktı şemasını,
+her satırın tiplerini ve anahtar sırasını yeniden doğrular. Manifesti eksik
+ya da parmak izi tutmayan klasör tamamlanmış kanıt değildir; yeni klasörle
+tekrarlanır. Aynı görüntü ve aynı kod/ortam aynı dosyaları üretir.
+
+**Sızıntı denetimi:** Yapay testler gelecekteki fiyat/stok/sayfa/ürünleri
+değiştirir ve gelecek kayıtlarını keser; ortak geçmiş başlangıçların
+girdileri aynı kalmalıdır. Geçmiş fiyatı değiştiren pozitif kontrol ilgili
+girdiyi değiştirmelidir. Şema gelecek/kimlik alanlarını çekirdek içinde
+reddeder; features komutu etiket/DB/ağ/eğitim modüllerini yüklemeden
+çalışır. Aynı görüntüde girdi anahtarları 4.2'nin geçerli başlangıçlarıyla
+testlerde karşılaştırılır. Gerçek görüntüdeki anahtar eşleşmesi kullanıcı
+çıktısından sonra mevcut etiket ve girdi dosyalarının salt okunur
+incelemesiyle ayrıca doğrulanır; features komutu etiket dosyasını okumaz.
+
+Cimri'nin günlük ölçüm saati ve fiyatın geçmişte gerçekten ne zaman
+erişilebilir olduğu bilinmez. Bu hesap tarihsel günlük değerlerden bir
+deney girdisi üretir; geçmişteki gerçek erişilebilirliği kanıtlamaz.
+Eğitim/test bölmesi, model eğitimi ve tahmin gösterimi bu adımın dışındadır.
+
+Son gerçek girdi doğrulamasının sayıları README Güncel kapsam tablosundadır;
+kanıt klasörü `artifacts/ml_girdi_20261102_132655_983/`. Bu klasörün
+manifesti ve girdi başlangıçları, aynı görüntüye ait 4.2 etiket kanıtıyla
+karşılaştırılıp doğrulandı. Eksik girdi alanları NULL olarak korunur;
+girdi satırları etiketli eğitim satırı sayısı değildir.
 
 ## Testler ne kanıtlar, ne kanıtlamaz
 

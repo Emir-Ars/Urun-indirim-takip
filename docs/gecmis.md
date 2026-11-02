@@ -119,6 +119,7 @@ Bu dosyanın kendi güncellemesi bir sonraki adımın commit'ine girer.
 | 28.10 | `d292db1` | Kalan sıra 3.2: Galaxy S24 FE 128 GB Cimri ana sayfasıyla eşleştirildi (58/60; kimliği son alımda doğrulanacak); S25 512 GB ve Redmi Note 14 Pro 5G 256 GB eşleştirmesiz kaldı | [40662966101](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/40662966101) |
 | 28.10 | `fbdd42a` | Kalan sıra 4.0: ML hazırlığının yapısı ve 4.0–4.6 adımları, ara dönem sırası ve E8DHJL kararı plana yazıldı; teknik rehberde eşleştirme satırı düzeltildi | [40665199435](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/40665199435) |
 | 30.10 | `bf0e80f` | Kalan sıra 4.1: `ml` bağımlılık grubu, CI ve salt okunur veri görüntüsü; gerçek görüntü (60 ürün, 370 sayfa/366 etkin; Cimri 20.805 satır/57 ürün, 553 eksik fiyat) doğrulandı; 2032 test, 0 atlanan, Black ve Flake8 temiz | [41046830071](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/41046830071) |
+| 02.11 | `179215a` | Kalan sıra 4.2: günlük seriler, simetrik 6/7 etiketi, sabit/izlenen kapsam, parmak izli rapor ve eski hesaplayıcıyla sıkı çapraz kontrol; gerçek görüntü ve yerel test/biçim denetimleri doğrulandı | [41413845126](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/41413845126) |
 
 ## Eylül 2026 ayrıntıları
 

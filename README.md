@@ -97,8 +97,9 @@ başlatılması [teknik rehberde](docs/teknik.md#komutlar) anlatılır.
 | Katalog | 60 ürün, 376 bağlantı (373 etkin); Hepsiburada 237, Trendyol 139 |
 | Toplama düzeni | Her gün 10:00 ve 22:00; haftalık keşif Pazar 14:00 (otomatik güvenli kabul) |
 | Cimri geçmişi | 57 ürün, 20.805 tarihli kayıt (553 eksik fiyat); eşleştirme 58/60, iki ürün eşleştirilemedi (28 Ekim) |
-| Otomatik testler | 2088 test, 0 atlanan; Black ve Flake8 temiz (2 Kasım) |
+| Otomatik testler | 2151 test, 0 atlanan; Black ve Flake8 temiz (2 Kasım) |
 | ML etiket denetimi | 30 Ekim görüntüsüyle 2 Kasım'da doğrulandı: kendi serimizde 0 kullanılabilir / 1.174 belirsiz; Cimri'de 18.091 kullanılabilir (1.858 olumlu, 16.233 olumsuz) / 2.109 belirsiz. Sıkı çapraz kontrolde 22.704 pencere kaydı eşleşti. |
+| ML girdi denetimi | 30 Ekim görüntüsüyle 2 Kasım'da doğrulandı: kendi serimizde 1.174, Cimri'de 20.200 girdi satırı; toplam 21.374 başlangıç 4.2 ile birebir eşleşti, eksik/fazla/tekrarlı başlangıç ve tanınmayan model ailesi yok. |
 
 Katalogdaki **376 bağlantının markalara göre dağılımı** (üç pasif bağlantı dahil):
 
@@ -125,7 +126,7 @@ canlı ağa çıkmaz; veritabanı testleri yalnız test veritabanını kullanır
 | ML öncesi bakım ve otomatik güvenli keşif kabulü | ✅ Tamamlandı |
 | Proje yapısının sadeleştirilmesi | ✅ Tamamlandı (26 Ekim) |
 | Sürekli çalışma ortamı | 🔄 Dizüstü sürekli açık kararı uygulandı; işletim doğrulaması sürüyor ([plan](proje_plani.md)) |
-| ML ile indirim olasılığı tahmini | 🔄 Günlük seri ve etiket raporu gerçek görüntüyle doğrulandı; gönderim/CI bekliyor. Ekranda tahmin gölge mod ve gösterim kapısından sonra ([plan](proje_plani.md#ml)) |
+| ML ile indirim olasılığı tahmini | 🔄 Günlük seri ve etiket raporu tamamlandı. Model girdileri ve sızıntı testleri uygulandı, gerçek görüntüyle doğrulandı; gönderim/CI bekliyor. Ekranda tahmin gölge mod ve gösterim kapısından sonra ([plan](proje_plani.md#ml)) |
 
 ## 📚 Belgeler
 

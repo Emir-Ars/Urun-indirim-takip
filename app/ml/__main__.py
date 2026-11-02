@@ -33,10 +33,21 @@ def main(argv=None) -> int:
         "--snapshot", type=Path, required=True, metavar="GORUNTU_KLASORU"
     )
     labels.add_argument("--output-dir", type=Path, required=True, metavar="YENI_KLASOR")
+    features = commands.add_parser(
+        "features", help="Görüntüden geçmişe dayalı model girdileri yaz"
+    )
+    features.add_argument(
+        "--snapshot", type=Path, required=True, metavar="GORUNTU_KLASORU"
+    )
+    features.add_argument(
+        "--output-dir", type=Path, required=True, metavar="YENI_KLASOR"
+    )
     args = parser.parse_args(argv)
     utf8_output()
     if args.command == "labels":
         return run_labels(args.snapshot, args.output_dir)
+    if args.command == "features":
+        return run_features(args.snapshot, args.output_dir)
     return run_snapshot(args.output_dir)
 
 
@@ -115,6 +126,37 @@ def run_labels(source: Path, directory: Path) -> int:
             f"· belirsiz {count['unknown']}"
         )
     print("Dosyalar doğrulandı. Model eğitilmedi; veritabanına bağlanılmadı.")
+    return 0
+
+
+def run_features(source: Path, directory: Path) -> int:
+    from app.ml.features import analyze_features
+    from app.ml.reporting import verify_feature_outputs, write_feature_outputs
+
+    if directory.exists():
+        print(
+            "Girdiler hazırlanmadı: klasör zaten var; yeni bir klasör seç.",
+            file=sys.stderr,
+        )
+        return 1
+    try:
+        snapshot, digest = read_snapshot(source)
+        result = analyze_features(snapshot)
+        write_feature_outputs(directory, digest, result)
+        verify_feature_outputs(directory, digest)
+    except KeyboardInterrupt:
+        print("Girdi hazırlığı kullanıcı tarafından durduruldu.", file=sys.stderr)
+        return 130
+    except (SnapshotError, ValueError, OSError, TypeError) as exc:
+        print(f"Girdiler hazırlanmadı: {exc}", file=sys.stderr)
+        return 1
+    print(f"Girdi raporu: {directory / 'report.md'}")
+    print(f"Görüntü SHA-256: {digest}")
+    for name, title in (("own", "Kendi ölçümlerimiz"), ("cimri", "Cimri")):
+        count = result[0]["sources"][name]["rows"]
+        print(f"{title}: girdi satırı {count}")
+    print(f"Tanınmayan model ailesi: {len(result[0]['unknown_models'])}")
+    print("Dosyalar ve girdi şeması doğrulandı. Etiket okunmadı; DB/ağ kullanılmadı.")
     return 0
 
 

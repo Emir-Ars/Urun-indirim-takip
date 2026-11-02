@@ -4,8 +4,6 @@ import hashlib
 import json
 from datetime import date, datetime
 
-from app.ml.labels import RULES
-
 OUTPUT_FILES = (
     "daily.jsonl",
     "windows.jsonl",
@@ -107,6 +105,8 @@ def markdown_report(report):
 
 
 def write_outputs(directory, digest, result):
+    from app.ml.labels import RULES
+
     report, daily, windows, strict = result
     directory.mkdir(parents=True, exist_ok=False)
     for name, rows in (
@@ -135,6 +135,8 @@ def write_outputs(directory, digest, result):
 
 
 def verify_outputs(directory, digest):
+    from app.ml.labels import RULES
+
     manifest = json.loads((directory / "manifest.json").read_bytes())
     if (
         not isinstance(manifest, dict)
@@ -152,4 +154,137 @@ def verify_outputs(directory, digest):
             != manifest["files"][name]
         ):
             raise ValueError(f"Etiket dosyasının parmak izi tutmuyor: {name}")
+    return manifest
+
+
+FEATURE_OUTPUT_FILES = (
+    "features.jsonl",
+    "feature_schema.json",
+    "report.json",
+    "report.md",
+)
+
+
+def feature_markdown_report(report):
+    from app.ml.features import FeatureValues
+
+    lines = [
+        "# Adım 4.3 — Model girdileri",
+        "",
+        f"Son kapanmış İstanbul günü: {report['last_closed_day']}",
+        "",
+        "Girdiler yalnız başlangıç gününe ve öncesine bakar; etiket dosyası okunmaz.",
+        "Geçerli başlangıcın etiketi bilinmese de girdi satırı üretilir.",
+        "Eksikler NULL'dır; fiyat taşıma, kategori kodlama veya ölçekleme yapılmadı.",
+        "Ay ve ürün anahtarı çekirdek dışında, metadata içinde saklanır.",
+        "Cimri'nin gün içi saati ve tarihsel erişilebilirliği bilinmez; "
+        "günlük tarih esas alınır.",
+        "Model eğitimi, zaman bölmesi ve ekranda tahmin yok.",
+        "",
+        "| Kaynak | Girdi satırı |",
+        "|---|---:|",
+    ]
+    for source, title in (("own", "Kendi ölçümlerimiz"), ("cimri", "Cimri")):
+        lines.append(f"| {title} | {report['sources'][source]['rows']} |")
+    lines += ["", "## Girdi formülleri", "", "| Alan | Anlamı |", "|---|---|"]
+    lines.extend(
+        f"| {name} | {field.description} |"
+        for name, field in FeatureValues.model_fields.items()
+    )
+    lines += [
+        "",
+        "## Ürün/kaynak kırılımı",
+        "",
+        "| Ürün | Kaynak | Satır | Bilinmeyen segment |",
+        "|---|---|---:|---:|",
+    ]
+    for item in report["products"]:
+        lines.append(
+            f"| {item['product_id']} — {item['product_name']} | {item['source']} "
+            f"| {item['rows']} | {item['unknown_segment_rows']} |"
+        )
+    lines += [
+        "",
+        "## Girdi eksiklikleri",
+        "",
+        "Sayılar NULL alanları gösterir; satırlar bu yüzden elenmez.",
+        "",
+    ]
+    for item in report["products"]:
+        detail = (
+            "; ".join(
+                f"{name}: {count}" for name, count in item["missing"].items() if count
+            )
+            or "Yok"
+        )
+        lines.append(f"Ürün {item['product_id']} / {item['source']}: {detail}\n")
+    lines += ["", "## Tanınmayan model aileleri", ""]
+    if not report["unknown_models"]:
+        lines.append("Yok.")
+    for item in report["unknown_models"]:
+        lines.append(
+            f"- Ürün {item['product_id']}: {item['brand']} {item['model']}; "
+            "tam model aile olarak korundu, segment unknown."
+        )
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def write_feature_outputs(directory, digest, result):
+    from app.ml.features import FEATURE_RULES, feature_schema
+
+    report, rows = result
+    directory.mkdir(parents=True, exist_ok=False)
+    with (directory / "features.jsonl").open("wb") as stream:
+        for row in rows:
+            stream.write(json_bytes(row.model_dump(mode="json")) + b"\n")
+    (directory / "feature_schema.json").write_bytes(
+        json_bytes(feature_schema()) + b"\n"
+    )
+    (directory / "report.json").write_bytes(json_bytes(report) + b"\n")
+    (directory / "report.md").write_text(
+        feature_markdown_report(report), encoding="utf-8", newline="\n"
+    )
+    manifest = dict(
+        format_version=1,
+        status="complete",
+        snapshot_sha256=digest,
+        feature_rules=FEATURE_RULES,
+        files={
+            name: hashlib.sha256((directory / name).read_bytes()).hexdigest()
+            for name in FEATURE_OUTPUT_FILES
+        },
+    )
+    (directory / "manifest.json").write_bytes(json_bytes(manifest) + b"\n")
+
+
+def verify_feature_outputs(directory, digest):
+    from app.ml.features import FEATURE_RULES, FeatureRow, feature_schema
+
+    manifest = json.loads((directory / "manifest.json").read_bytes())
+    if (
+        not isinstance(manifest, dict)
+        or manifest.get("format_version") != 1
+        or manifest.get("status") != "complete"
+        or manifest.get("snapshot_sha256") != digest
+        or manifest.get("feature_rules") != FEATURE_RULES
+        or not isinstance(manifest.get("files"), dict)
+        or set(manifest["files"]) != set(FEATURE_OUTPUT_FILES)
+    ):
+        raise ValueError("Girdi manifesti görüntüyle veya kurallarla uyuşmuyor")
+    for name in FEATURE_OUTPUT_FILES:
+        if (
+            hashlib.sha256((directory / name).read_bytes()).hexdigest()
+            != manifest["files"][name]
+        ):
+            raise ValueError(f"Girdi dosyasının parmak izi tutmuyor: {name}")
+    if json.loads((directory / "feature_schema.json").read_bytes()) != feature_schema():
+        raise ValueError("Girdi şeması kodla uyuşmuyor")
+    previous = None
+    with (directory / "features.jsonl").open("rb") as stream:
+        for line in stream:
+            metadata = FeatureRow.model_validate_json(line).metadata
+            key = (metadata.product_id, metadata.source, metadata.anchor_day)
+            if previous is not None and key <= previous:
+                raise ValueError("Girdi kayıtları anahtara göre sıralı ve tekil olmalı")
+            previous = key
     return manifest
