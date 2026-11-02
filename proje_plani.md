@@ -1,6 +1,6 @@
 # Akıllı Telefon İndirim Takip ve Tahmin Sistemi — Proje Planı
 
-Son güncelleme: 28 Ekim 2026.
+Son güncelleme: 2 Kasım 2026.
 
 Bu belge **kararların, aşama durumunun ve sıradaki işin** tek kaynağıdır ve
 kısa tutulur. Diğer bilgiler şuralardadır:
@@ -45,7 +45,7 @@ Kullanıcı arayüzde arama yaptığında canlı scraping veya model eğitimi
 | Proje yapısının sadeleştirilmesi (Bölüm 8, Adım 1–5) | ✅ Tamamlandı (26 Ekim) | `75d4732` |
 | ML öncesi ekran iyileştirmeleri 1–2 | ✅ Tamamlandı (28 Ekim) | `dd2e262`, `94045bd`, CI 40643349065 |
 | Proje mühendisliğini pekiştirme | ⏸️ Pasif (28 Ekim kararı): iş sırasında değil; kullanıcı istediğinde Oturum 2'den sürer | Program aşağıda; oturum ilerlemesi yerel devir notunda |
-| 8. ML (indirim tahmini) | 🔄 Hazırlık planlandı (28 Ekim), adımlar 4.0–4.6 | Bölüm 9 |
+| 8. ML (indirim tahmini) | 🔄 Hazırlık sürüyor (4.0–4.1 tamamlandı; 4.2 uygulandı ve gerçek görüntüyle doğrulandı, gönderim/CI bekliyor; 4.3–4.6 planlandı) | Bölüm 9 |
 | 9. Sürekli işletim ve Docker | 🔄 Sürekli işletim kararı verildi (22 Ekim: dizüstü sürekli açık); Docker başlanmadı | Bölüm 9 |
 
 Bugünkü işletim: fiyat turu her gün 10:00 ve 22:00'de, haftalık keşif her
@@ -234,6 +234,8 @@ rehberde, o günkü tartışması arşivdedir.
 | 28 Ekim | `hepsiburada_hbcv0000e8dhjl` (Redmi Note 13 Pro 5G 256 GB) olduğu gibi katalogda kalır ve izlenir. | Başlık ve varyant 256 GB/8 GB RAM (512 GB sürüm 12 GB RAM). Fiyatı 20.999–23.999 TL (ortası 21.999) ile diğer 256 GB sayfalarıyla aynı aralıkta; 512 GB ürünün en ucuzu 23.999–25.999 TL. 26 turda hiç en ucuz sayfa olmadı. Ana kayıttaki 512 GB alanı satıcı hatası sayıldı; kesin kanıt değildir. |
 | 28 Ekim | ML hazırlığının yapısı: hesaplama yeni `app/ml` paketinde (seriler, etiketler, girdiler, bölme, ölçütler, modeller, deney), SQL `app/database/ml_data.py`'de, komut `python -m app.ml`. Gerçek DB okuma hesabıyla bir kez parmak izli görüntü dosyasına okunur; etiket ve deney bu dosyadan ağsız çalışır. Kütüphaneler: numpy, scikit-learn, LightGBM (yeni `ml` grubu, kesin sürümler); pandas yok. Kendi verimizde gelecek gün, başlangıç sayfalarından o gün planlananların hepsi cevap verdiyse gözlenmiş sayılır. Adımlar 4.0–4.6 (Bölüm 9), her biri ayrı commit ve onay. | Mevcut klasör düzeni ve sorumluluk sınırları korunur. Görüntü dosyası aynı veriyle aynı sonucu verir ve testler DB istemez. Hata veren ucuz sayfa gerçek düşüşü saklayamaz. |
 
+| 2 Kasım | 4.2 uygulama planı onaylandı: eksik diğer dilim varken tek sağlam tur gelecek günü sağlayabilir; günü aşan tur kendi diliminde eksik sayılır ve başka güne taşınmaz; başlangıç akşamında ürünün bütün planlanan sayfaları cevap vermelidir. 30 gün başlangıç dahil sayılır, eski sıkı çapraz kontrolde Cimri yarım gün maskesi iki tarafa da uygulanır. | Gözlenen minimumun anlamı korunur; kısmi akşam cevabının yanlış yüksek başlangıç üretmesi önlenir. Ayrıntılı bugünkü davranış teknik rehberde. |
+
 ### Bilerek değiştirilmeyen davranışlar
 
 Denetimlerde incelenip gerekçesiyle olduğu gibi bırakılan davranışlar:
@@ -398,8 +400,11 @@ süreç, veri ve model kalıcılığı ayrıca değerlendirilir.
   Bütün ürünleri etkileyen kusurlu günler (17 Ekim: tur gece yarısını 5 dk
   geçti; 22 Ekim: tur 48 ertesi sabah bitti; 23 Ekim: 22:00 dilimi 24 Ekim
   02:50'de başladı) ve keşfin eklediği sayfalar sıkı sayacı sıfırlıyor; sıkı
-  kuralla en erken 30 Kasım, o da yeni kusur olmazsa. 28 Ekim kuralıyla ilk
-  etiketli satırlar Kasım başında beklenir (hesap; denetimle doğrulanmadı).
+  kuralla en erken 30 Kasım, o da yeni kusur olmazsa. 2 Kasım 4.2 denetimi,
+  30 Ekim görüntüsünde kendi serimizde henüz etiketli pencere bulunmadığını
+  doğruladı; veri 29 Ekim'de biter, en erken başlangıcın gelecek penceresi
+  3 Kasım'da kapanır. Daha yeni görüntüde ayrıca ölçülmeli; güncel denetim
+  sayıları README Güncel kapsam tablosundadır.
   6 eski iPhone 16 günün hiçbirinde, 4'ü yarısından fazlasında fiyatsız (stok
   yok). Cimri'de 57 ürün için 17.668 pencere (%10 olumlu); 23 Ekim kararıyla
   eğitimde kullanılacak. Cimri'nin 8 Ekim satırları ve son alımın kendi günü
@@ -410,8 +415,8 @@ ML hazırlığının adımları (kalan sıra 4; yapı kararı Bölüm 5, 28 Ekim
 | Adım | İş | Durum |
 |---|---|---|
 | 4.0 | Bekleyen belge değişiklikleri | ✅ Tamamlandı (28 Ekim) |
-| 4.1 | `ml` bağımlılık grubu, CI, salt okunur veri görüntüsü (`python -m app.ml snapshot`) | Planlandı |
-| 4.2 | Günlük seriler ve etiketler; etiket raporu; sıkı varyantın eski araçla çapraz kontrolü | Planlandı |
+| 4.1 | `ml` bağımlılık grubu, CI, salt okunur veri görüntüsü (`python -m app.ml snapshot`) | ✅ Tamamlandı (30 Ekim) |
+| 4.2 | Günlük seriler ve etiketler; etiket raporu; sıkı varyantın eski araçla çapraz kontrolü | Uygulandı ve gerçek görüntüyle doğrulandı (2 Kasım); commit/push/CI bekliyor |
 | 4.3 | Girdiler ve sızıntı testi | Planlandı |
 | 4.4 | Zaman bölmesi (purge, ileri yürüyen katlar) ve ölçütler | Planlandı |
 | 4.5 | R0–R2, LightGBM, kalibrasyon ve deney raporu | Planlandı |

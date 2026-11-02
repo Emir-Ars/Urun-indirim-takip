@@ -147,7 +147,10 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 | Dosya | Ne işe yarar |
 |---|---|
 | `dataset.py` | Veri görüntüsünün sözleşmesi (Pydantic V2 strict) ve dosyası: satırları anahtar sırasına dizer, kayıtlar arası bağları denetler, `snapshot.json`'u SHA-256 parmak iziyle yeni klasöre yazar, okurken parmak izini ve içeriği yeniden denetler. Veritabanı, ağ ve pazaryeri katmanı yüklemez. |
-| `__main__.py` | Komut satırı: `python -m app.ml snapshot --output-dir YENI_KLASOR`. Paketin veritabanına bağlanan tek dosyası; yalnız `API_DATABASE_URL` okuma hesabıyla. Çıkış kodları [ML hazırlığı](#ml-hazırlığı) bölümündedir. |
+| `series.py` | İstanbul günleri, zamanlanmış tur dilimleri, sağlam akşam başlangıcı, günlük minimum ve Cimri yarım gün maskesi; eski sıkı karşılaştırmanın günlük serisi. |
+| `labels.py` | Ayrı kendi/Cimri serilerinden simetrik 6/7 etiketi, sabit/izlenen sayfa kapsamı, sıkı pencere ve etiket özeti. Model eğitmez ve zaman bölmesi yapmaz. |
+| `reporting.py` | Belirlenimci JSON/JSONL ve Türkçe Markdown raporu; çıktı parmak izleri ve en son yazılan başarı manifesti. |
+| `__main__.py` | `snapshot` yalnız `API_DATABASE_URL` okuma hesabıyla görüntü alır; `labels` yalnız kaydedilmiş görüntüyü okur, DB katmanını/sürücüsünü yüklemez. Çıkış kodları [ML hazırlığı](#ml-hazırlığı) bölümündedir. |
 
 ### Kurulum ve zamanlayıcı: `scripts/`
 
@@ -182,6 +185,8 @@ Test sayıları burada tutulmaz; güncel sayı `pytest -q` çıktısındadır.
 | `tests/test_database_read.py` | Salt okunur sorgular ve istatistiklerle bütünleşme: ürüne özel tamamlanmış tur, kısmi kapsam, ayrı Cimri/NULL, iki bağlantıyla tutarlı görüntü, sorgu hatası/zaman aşımı sonrası yeniden okuma. |
 | `tests/test_ml_dataset.py` | ML veri görüntüsü (veritabanısız): yazma/okuma gidiş-dönüşü, satır sırasından bağımsız aynı baytlar, var olan klasöre yazmama, değiştirilmiş veya bozuk dosyanın ve parmak izi yenilenmiş tutarsız içeriğin reddi, kayıtlar arası bağ kuralları; `app/ml` modüllerinin (komut dosyası dışında) veritabanı, ağ ve pazaryeri katmanı yüklememesi. |
 | `tests/test_ml_data.py` | Görüntünün `_test` DB'den okuma hesabıyla okunması (alanlar, sıra, işlemin kapanması); süren tur, bekleyen migration ve yazan hesap reddi; `python -m app.ml snapshot` çıktısı ve çıkış kodları. |
+| `tests/test_ml_labels.py` | 30 günlük geçmiş, simetrik 6/7 gelecek, kuruşla %5 sınırı, sağlam akşam başlangıcı, tek tur, gün aşımı, değişen sayfa kapsamı, Cimri kimliği ve yarım gün kuralları. |
+| `tests/test_ml_label_cli.py` | Ağsız etiket komutu, aynı dosyaların tekrar üretimi, parmak izi ve kesinti koruması, eski hesaplayıcıyla bağımsız sıkı çapraz kontrol. |
 | `tests/test_price_statistics.py` | İstatistik hesabı: tam kapsam dönemi, 30 gün/14 geçiş/7 gün/18 saat eşikleri, İstanbul günü, NULL üzerinden geçmeme, değişkenlik, grafik aralığından bağımsızlık. Veritabanısız. |
 | `tests/test_api_foundation.py` | API okuma rolünün izinleri (yazamaması, kalıcı nesne kuramaması) ve test ortamının ağ/adres korumaları. |
 | `tests/test_api.py` | FastAPI: dört adres ve OpenAPI, kuruş/UTC/NULL, fiyat yaşı, rol/şema hataları, dört bağlantı sınırı, kesinti ve yeniden bağlantı, 5 sn sorgu zaman aşımı, tutarlı cevap. |
@@ -206,6 +211,7 @@ kullanıcı kendi terminalinden, tur ve keşif saatleri dışında çalıştır�
 | `tools/live_discovery_check.py` | Keşfi kataloğa yazmadan canlı çalıştırır; `--trace` ile her kararın nedenini gösterir. Normalde raporu `data/discovery_report.json` dosyasının üzerine yazar. `--save-responses KLASOR`, tek hedefin ham HTML/JSON yanıtlarını ve raporunu yeni klasöre kaydeder; karar izini de basar. |
 | `tools/ui_preview.py` | Aynı Streamlit ekranını ağsız test istemcisiyle gösterir; kalıcı test verisi uyarısı vardır. API/DB veya canlı site gerekmez; kullanıcı görünüm/yenileme kontrolünü burada yapar. |
 | `tools/ml_data_check.py` | Yalnız okuma hesabıyla günlük 30+7 ML pencereleri, %5 hedefi, eksik/kapsam nedenleri ve zaman bölümlerini hesaplar. Kendi/Cimri ayrı; `--snapshot` ile ağsız tekrar. Model eğitmez, API/site çağırmaz. |
+| `tools/ml_label_check.py` | 4.1 görüntüsü ve 4.2 etiket klasörünü yalnız dosyadan okur; manifesti doğrular ve bütün sıkı pencereleri eski hesaplayıcıyla karşılaştırır. DB/site çağırmaz; dosya yazmaz. |
 | `tools/api_ui_check.py` | Yerel API'nin gerçek veritabanını doğru sunduğunu, üretim kodunu kullanmadan bağımsız SQL hesabıyla karşılaştırır ([bağımsız denetim](#sqlapistreamlit-bağımsız-denetimi)). |
 
 ## Komutlar
@@ -2328,6 +2334,119 @@ imza değildir.
 `app/ml` modülleri (komut dosyası dışında) veritabanı, ağ ve pazaryeri
 katmanlarını yüklemez; bunu `tests/test_ml_dataset.py` denetler.
 
+### Günlük seri ve etiketler (`python -m app.ml labels`)
+
+Girdi, yukarıdaki `snapshot` komutunun oluşturduğu **klasördür**. Etiket
+komutu gerçek DB adresi istemez; dosyanın parmak izini ve sözleşmesini
+doğrular. Hesaplama görüntünün İstanbul tarihinden önceki son kapanmış güne
+kadar yapılır; bilgisayarın çalıştırma anındaki tarihi sonucu değiştirmez.
+Güncel katalog, eşleştirme dosyası veya etkinlik bayrakları tarihsel
+gözlemleri değiştirmez. Kendi ölçümlerimiz ve Cimri birleştirilmez.
+
+Kullanıcı terminalinde, mevcut görüntüyle:
+
+```powershell
+$mlLabelSnapshot = "artifacts\ml_veri_20261030_141107_133"
+$mlLabelOut = "artifacts\ml_etiket_$(Get-Date -Format yyyyMMdd_HHmmss_fff)"
+.venv\Scripts\python.exe -m app.ml labels --snapshot $mlLabelSnapshot --output-dir $mlLabelOut
+$LASTEXITCODE
+.venv\Scripts\python.exe tools/ml_label_check.py --snapshot $mlLabelSnapshot --labels-dir $mlLabelOut
+$LASTEXITCODE
+```
+
+İlk komut başarısızsa çapraz kontrole geçilmez. İki komutta da çıkış 0
+beklenir; kullanılabilir örnek sayısının sıfır olması hesaplama hatası
+değildir. Bu komutlar tur/keşif başlatmaz ve DB'ye bağlanmaz. Yeni görüntü
+almak ise ayrı `snapshot` işlemidir ve tur/keşif sırasında yapılmaz.
+
+**Günlük kendi serimiz:** yalnız `scheduled` turlar, başlangıcından önceki
+en yakın İstanbul 10:00/22:00 dilimine atanır; manuel turlar kullanılmaz.
+Tekrarlı dilimden bir tur seçilmez. Kesilen veya kendi nominal gününde
+bitmeyen tur o dilim için eksiktir; fiyatı başka güne taşınmaz. Diğer sağlam
+dilim günlük gelecek minimumunu sağlayabilir.
+
+Başlangıç için tekil, aynı gün bitmiş 22:00 turunda ürünün planlanan bütün
+sayfaları `offer` veya `sold_out` cevabı vermeli ve en az bir fiyat olmalı.
+Başka ürünün hatası engel değildir; sabah fiyatı başlangıca taşınmaz. İlk
+gözlem tarihi, zamanlanmış turda ürün için ilk gerçek fiyat/stoksuzluk
+cevabının nominal günüdür; yalnız hatalı/cevapsız kayıt tarihi sayılmaz.
+
+Gelecek günün tek sağlam turu yeterlidir. Değerlendirilen tamamlanmış,
+kendi gününde bitmiş, tekil turlardaki ilgili sayfaların tamamı cevap
+vermelidir; birindeki `error`/cevapsızlık o günün minimumunu geçersiz kılar.
+İlgili tekliflerin hepsi stoksuzsa veya kullanılabilir turda ilgili sayfa
+planlanmamışsa günlük fiyat NULL'dır; bu durumlar ayrı gerekçeler taşır.
+
+**Cimri:** ilk kayıtlı tarih geçmişi başlatır. Eksik tarih ve NULL fiyat
+doldurulmaz. `day == captured_at` İstanbul tarihi olan kayıt yarım gündür;
+görüntü daha sonra alınmış olsa bile fiyatı kullanılmaz. Ham kayıt fiyatı
+günlük kanıtta kalır. Geçmiş ve gelecek boyunca birden fazla Cimri ürün
+kimliği varsa pencere elenir.
+
+**Örnek ve etiket:** fiyatı olan her geçerli başlangıç için geçmiş
+`d−29…d`, gelecek `d+1…d+7`'dir. İlk gözlem günü birinci gündür; ilk uygun
+başlangıç en erken `ilk gün + 29` olur. Geçmiş fiyat boşlukları satırı
+otomatik elemez; 30 gün içindeki eksik başlangıç sayısı/oranı ve geçmiş
+kapsam değişimleri kaydedilir. Başlangıcı olmayan gün `windows.jsonl`'a
+girmez; gerekçesi `daily.jsonl` ve raporda kalır. Geçmişi henüz 30 gün
+olmayan fiyatlı başlangıçlar tanılama için NULL etiketle saklanır.
+
+Yedinci gelecek gün kapanmış ve en az altı günde güvenilir fiyat varsa
+`100 × gelecek_minimum ≤ 95 × başlangıç` için etiket 1, aksi halde 0'dır.
+Daha az gözlemde düşüş görülmüş olsa bile NULL'dır. Eşik tam sayı kuruşla
+hesaplanır; eksik fiyat taşınmaz veya sıfır yapılmaz.
+
+Kendi verimizde `primary`, `y_sabit`'tir: başlangıç akşam turunda planlanan
+sayfa kümesi sabitlenir. Gelecekte yalnız bu kümeden o gün planlanan
+sayfalar kullanılır; onların bütün cevapları aranır. Sonradan eklenen
+sayfa bu minimuma girmez. Planlanmayan/eski pasif sayfanın fiyatı taşınmaz;
+hiç ilgili sayfa planlanmadıysa o gün eksiktir. `tracked`, `y_izlenen`'dir:
+o gün izlenen bütün sayfalar kullanılır. Gözlenen gün sayıları ve uygunluk
+gerekçeleri iki hedef için ayrı tutulur. Cimri'de `primary` günlük
+minimumdur, `tracked` NULL'dır. Kapsam fark oranının paydası yalnız iki
+etiketi de hesaplanabilen pencerelerdir; olumlu satır sayısı bağımsız olay
+sayısı değildir.
+
+**Dosyalar:** `daily.jsonl` kaynak kayıtlarını, tur kimliklerini, günlük
+fiyat ve kalite gerekçelerini; `windows.jsonl` başlangıç kümesini, geçmiş
+durumunu ve iki hedefin etiket/gün/minimum/gerekçelerini taşır.
+`strict_windows.jsonl` eski kusursuz 37 gün ve sabit kapsam kuralının
+pencereleridir. `report.json` makineye, `report.md` kullanıcıya yönelik
+ürün/kaynak kırılımı ve kapsam farklarını içerir. `manifest.json` biçim
+sürümü 1, kural sürümü 2, giriş SHA-256 ve beş çıktı dosyasının SHA-256
+değerlerini taşır; en son yazılır. Manifesti olmayan veya dosya parmak izi
+uyuşmayan klasör tamamlanmış kanıt değildir. Var olan klasöre yazılmaz;
+yarım kalmış deneme de yeni klasörle tekrarlanır. Aynı görüntü aynı
+hesaplama çıktıları ve manifesti üretir.
+
+`primary`, `tracked`, `target_end` ve `future_scope_change_days` geleceğe
+ait etiket/uygunluk alanlarıdır; model girdisi olamaz. Bu adım girdileri,
+eğitim/test bölmesini, model eğitimini veya tahmin gösterimini yapmaz.
+
+**Bağımsız sıkı çapraz kontrol:** eski `tools/ml_data_check.py` değişmez.
+Yeni araç aynı görüntüden eski `own_series`/`market_series` ve
+`windows_for` hesaplarını çağırır; bütün sıkı pencere anahtarlarını,
+fiyatlarını, etiket ve gerekçelerini karşılaştırır. Cimri yarım gün
+fiyatları iki tarafta da önce NULL yapılır. Görüntüde bulunmayan URL alanı
+eski aracın kullanılmayan envanteri için `None` kalır; adres uydurulmaz.
+Yeni 6/7 sayılarının sıkı sayılarla aynı olması beklenmez.
+
+| Çıkış | `labels` | `ml_label_check.py` |
+|---|---|---|
+| 0 | Dosyalar yazıldı, parmak izleri doğrulandı; sıfır etiket olabilir. | Bütün sıkı pencere kayıtları eşleşti. |
+| 1 | Görüntü, mevcut klasör, veri veya dosya hatası. | Görüntü/manifest/dosya hatası ya da sıkı sonuç uyuşmazlığı. |
+| 2 | Argüman hatası. | Argüman hatası. |
+| 130 | Kullanıcı durdurdu. | Kullanıcı durdurdu. |
+
+`labels` komutunun DB/ağ katmanını yüklemeden çalıştığı ve çapraz kontrolün
+bağlantı açmadığı yapay görüntülü testlerle denetlenir. Gerçek görüntüdeki
+sonuç ve çapraz kontrol, kullanıcı terminalinde ayrıca doğrulanır.
+
+Son gerçek görüntü doğrulamasının kapsamı ve sayıları README Güncel kapsam
+tablosundadır; kanıt klasörü `artifacts/ml_etiket_20261102_112102_355/`.
+Bu çıktı yalnız 30 Ekim görüntüsünü kapsar; daha sonraki turlar için yeni
+görüntü gerekir.
+
 ## Testler ne kanıtlar, ne kanıtlamaz
 
 - **Otomatik testler:** Kuralların doğru çalıştığını kayıtlı ve sahte
@@ -2394,7 +2513,11 @@ katmanlarını yüklemez; bunu `tests/test_ml_dataset.py` denetler.
   turların zamanında başlaması henüz doğrulanmadı. 26 Ekim kontrolünde geciken
   tur ve ayrı bir turda DNS/zaman aşımı hataları görüldü. Görev Zamanlayıcı
   geçmişi kapalı olduğundan gecikmenin nedeni doğrulanamadı; yalnız geç
-  başlangıçtan uyku veya güç ayarı arızası sonucu çıkarılmaz. Güç ayarları ve
+  başlangıçtan uyku veya güç ayarı arızası sonucu çıkarılmaz. 31 Ekim sabah
+  turu 13:23'te, 1 Kasım sabah turu 12:44'te başladı
+  (`data/logs/tur_2026-10-31_13-23-30.log`,
+  `data/logs/tur_2026-11-01_12-44-17.log`); gecikmenin nedeni hâlâ açık.
+  Güç ayarları ve
   pilde çalışma riski için [zamanlanmış tur](#zamanlanmış-tur-görev-zamanlayıcı).
 - **Bulutta çalıştırma:** GitHub'ın bulut makinelerinden Hepsiburada bilgisayardakiyle
   aynı okundu, ama Trendyol üç denemede de okunamadı: 6 Ekim'de HTTP 403, 22

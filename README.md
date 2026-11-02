@@ -88,25 +88,26 @@ başlatılması [teknik rehberde](docs/teknik.md#komutlar) anlatılır.
 
 ## 📊 Güncel kapsam
 
-26 Ekim 2026 itibarıyla (katalog; test sonucu kendi tarihini taşır):
+2 Kasım 2026 itibarıyla (katalog; diğer sonuçlar kendi tarihini taşır):
 
 | Alan | Durum |
 |---|---|
 | Fiyat kaynakları | Trendyol ve Hepsiburada |
 | Keşif hedefleri | 25 (24 etkin): Apple 9, Samsung 8, Xiaomi 6, POCO 2 |
-| Katalog | 60 ürün, 369 bağlantı (366 etkin); Hepsiburada 234, Trendyol 135 |
+| Katalog | 60 ürün, 376 bağlantı (373 etkin); Hepsiburada 237, Trendyol 139 |
 | Toplama düzeni | Her gün 10:00 ve 22:00; haftalık keşif Pazar 14:00 (otomatik güvenli kabul) |
 | Cimri geçmişi | 57 ürün, 20.805 tarihli kayıt (553 eksik fiyat); eşleştirme 58/60, iki ürün eşleştirilemedi (28 Ekim) |
-| Otomatik testler | 2032 test, 0 atlanan; Black ve Flake8 temiz (28 Ekim) |
+| Otomatik testler | 2088 test, 0 atlanan; Black ve Flake8 temiz (2 Kasım) |
+| ML etiket denetimi | 30 Ekim görüntüsüyle 2 Kasım'da doğrulandı: kendi serimizde 0 kullanılabilir / 1.174 belirsiz; Cimri'de 18.091 kullanılabilir (1.858 olumlu, 16.233 olumsuz) / 2.109 belirsiz. Sıkı çapraz kontrolde 22.704 pencere kaydı eşleşti. |
 
-Katalogdaki **369 bağlantının markalara göre dağılımı** (üç pasif bağlantı dahil):
+Katalogdaki **376 bağlantının markalara göre dağılımı** (üç pasif bağlantı dahil):
 
 ```mermaid
 pie showData
-    title Katalogdaki bağlantılar — 26 Ekim 2026
-    "Apple" : 177
-    "Samsung" : 115
-    "Xiaomi" : 72
+    title Katalogdaki bağlantılar — 2 Kasım 2026
+    "Apple" : 179
+    "Samsung" : 117
+    "Xiaomi" : 75
     "POCO" : 5
 ```
 
@@ -124,7 +125,7 @@ canlı ağa çıkmaz; veritabanı testleri yalnız test veritabanını kullanır
 | ML öncesi bakım ve otomatik güvenli keşif kabulü | ✅ Tamamlandı |
 | Proje yapısının sadeleştirilmesi | ✅ Tamamlandı (26 Ekim) |
 | Sürekli çalışma ortamı | 🔄 Dizüstü sürekli açık kararı uygulandı; işletim doğrulaması sürüyor ([plan](proje_plani.md)) |
-| ML ile indirim olasılığı tahmini | 🔄 Hazırlık sürüyor (Cimri verisiyle); ekranda tahmin gölge mod ve gösterim kapısından sonra ([plan](proje_plani.md#ml)) |
+| ML ile indirim olasılığı tahmini | 🔄 Günlük seri ve etiket raporu gerçek görüntüyle doğrulandı; gönderim/CI bekliyor. Ekranda tahmin gölge mod ve gösterim kapısından sonra ([plan](proje_plani.md#ml)) |
 
 ## 📚 Belgeler
 

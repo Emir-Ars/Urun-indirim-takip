@@ -5,12 +5,8 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-import psycopg
-
 from app.console import utf8_output
 from app.contracts import utc_now
-from app.database.connection import API_DATABASE_URL_ENV, connect, database_url
-from app.database.ml_data import MlDataBusy, MlDataError, read_ml_data
 from app.ml.dataset import (
     FILE_NAME,
     MlSnapshot,
@@ -30,12 +26,26 @@ def main(argv=None) -> int:
     snapshot.add_argument(
         "--output-dir", type=Path, required=True, metavar="YENI_KLASOR"
     )
+    labels = commands.add_parser(
+        "labels", help="Görüntüden günlük seri ve etiket raporu yaz"
+    )
+    labels.add_argument(
+        "--snapshot", type=Path, required=True, metavar="GORUNTU_KLASORU"
+    )
+    labels.add_argument("--output-dir", type=Path, required=True, metavar="YENI_KLASOR")
     args = parser.parse_args(argv)
     utf8_output()
+    if args.command == "labels":
+        return run_labels(args.snapshot, args.output_dir)
     return run_snapshot(args.output_dir)
 
 
 def run_snapshot(directory: Path) -> int:
+    # Etiket komutu SQL veya bağlantı sürücüsünü bile yüklemesin.
+    import psycopg
+    from app.database.connection import API_DATABASE_URL_ENV, connect, database_url
+    from app.database.ml_data import MlDataBusy, MlDataError, read_ml_data
+
     # Veritabanı okunmadan önce: yanlış klasör adı boşuna okuma yaptırmasın.
     if directory.exists():
         print(
@@ -71,6 +81,40 @@ def run_snapshot(directory: Path) -> int:
     print(f"SHA-256: {digest}")
     _print_summary(snapshot)
     print("Dosya yeniden okunup doğrulandı. Veritabanına yazılmadı.")
+    return 0
+
+
+def run_labels(source: Path, directory: Path) -> int:
+    from app.ml.labels import analyze_labels
+    from app.ml.reporting import verify_outputs, write_outputs
+
+    if directory.exists():
+        print(
+            "Etiketler hazırlanmadı: klasör zaten var; yeni bir klasör seç.",
+            file=sys.stderr,
+        )
+        return 1
+    try:
+        snapshot, digest = read_snapshot(source)
+        result = analyze_labels(snapshot)
+        write_outputs(directory, digest, result)
+        verify_outputs(directory, digest)
+    except KeyboardInterrupt:
+        print("Etiket hazırlığı kullanıcı tarafından durduruldu.", file=sys.stderr)
+        return 130
+    except (SnapshotError, ValueError, OSError, TypeError) as exc:
+        print(f"Etiketler hazırlanmadı: {exc}", file=sys.stderr)
+        return 1
+    print(f"Etiket raporu: {directory / 'report.md'}")
+    print(f"Görüntü SHA-256: {digest}")
+    for source, title in (("own", "Kendi ölçümlerimiz"), ("cimri", "Cimri")):
+        count = result[0]["sources"][source]["primary"]
+        print(
+            f"{title}: kullanılabilir {count['usable']} "
+            f"· olumlu {count['positive']} · olumsuz {count['negative']} "
+            f"· belirsiz {count['unknown']}"
+        )
+    print("Dosyalar doğrulandı. Model eğitilmedi; veritabanına bağlanılmadı.")
     return 0
 
 
