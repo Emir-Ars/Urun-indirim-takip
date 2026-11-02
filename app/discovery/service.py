@@ -642,9 +642,9 @@ def apply_report(report: DiscoveryReport, catalog_path: Path):
 def summarize_report(report: DiscoveryReport) -> str:
     """Raporun tek satırlık özeti.
 
-    Keşfin çıkış kodu Hepsiburada arama API'si engelli olduğu için bugün her zaman
-    2'dir ve tek başına bir şey söylemez; uyarılar nedene göre sayılarak beklenen
-    `search_api` ile gerçek sorunlar ayrılır.
+    Keşfin çıkış kodu Hepsiburada'daki beklenen uyarılar (ör. model filtresi yok,
+    API engeli) yüzünden bugün pratikte her zaman 2'dir ve tek başına bir şey
+    söylemez; uyarılar nedene göre sayılarak beklenenlerle gerçek sorunlar ayrılır.
     """
     conflicts = sum(issue.reason == "catalog_conflict" for issue in report.rejected)
     platforms = ", ".join(

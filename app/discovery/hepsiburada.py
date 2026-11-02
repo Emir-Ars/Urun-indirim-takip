@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 from app.contracts import DiscoveryResult
 from app.discovery.acceptance import hepsiburada_evidence
 from app.discovery.base import RECOVERABLE, BaseDiscovery, error_code
-from app.discovery.matching import phone_category
+from app.discovery.matching import NOT_NEW_PHONE, phone_category
 from app.scraper.hepsiburada_scraper import product_names, variant_identity
 from app.scraper.http import FetchError
 from app.scraper.parsing import (
@@ -34,6 +34,23 @@ def _card_id(href: str) -> str | None:
         return sku
     match = GROUP_PATTERN.search(href)
     return match.group(1).upper() if match else None
+
+
+def _api_phone(product) -> bool:
+    """Arama API'sindeki ürün yeni telefon mu: ana kategori veya tanım adı.
+
+    API iPhone'ları "iPhone iOS Telefonlar" kategorisi ve "Cep Telefonu"
+    tanımıyla döndürür; yalnız kategori adına bakmak bütün iPhone'ları elerdi.
+    Alanlardan biri aksesuar veya yenilenmiş diyorsa diğeri telefon dese de
+    ürün elenir.
+    """
+    names = [
+        (product.get(key) or {}).get("name", "")
+        for key in ("mainCategory", "definition")
+    ]
+    if any(word in normalize(name) for name in names for word in NOT_NEW_PHONE):
+        return False
+    return any(phone_category(name) for name in names)
 
 
 def _variants(soup) -> list:
@@ -118,7 +135,7 @@ class Discovery(BaseDiscovery):
         return cards
 
     def _api(self, query, cards):
-        seen_ids = set()
+        seen_ids, listed_before = set(), set()
         for page_no in range(1, self.config.max_search_pages + 1):
             params = {"page": page_no, "pageType": "Search", "q": query, "size": 36}
             data = self.get_json(
@@ -131,14 +148,20 @@ class Discovery(BaseDiscovery):
             ):
                 raise FetchError("parse", "Hepsiburada arama sayfası geçersiz")
             self.search_pages += 1
-            fresh = 0
+            fresh, listed = 0, set()
             for product in data["products"]:
                 if not isinstance(product, dict):
                     continue
+                # Tekrar denetimi bütün ürünleri sayar; başka markanın bozuk
+                # kaydı eskiden olduğu gibi API sonucunu düşürmez.
+                listed.update(
+                    str(variant.get("sku", "")).upper()
+                    for variant in product.get("variantList") or []
+                    if isinstance(variant, dict)
+                )
                 if normalize(product.get("brand", "")) != normalize(self.target.brand):
                     continue
-                category = (product.get("mainCategory") or {}).get("name", "")
-                if not phone_category(category):
+                if not _api_phone(product):
                     continue
                 for variant in product.get("variantList") or []:
                     name = variant.get("name", "")
@@ -162,8 +185,15 @@ class Discovery(BaseDiscovery):
             self.note(
                 "api_page", page=page_no, products=len(data["products"]), fresh=fresh
             )
-            if data["products"] and not fresh and page_no > 1:
+            listed.discard("")
+            if listed and listed <= listed_before:
                 self.issue("repeated_page", str(page_no))
+                return
+            listed_before |= listed
+            if data["products"] and not fresh and page_no > 1:
+                # Sonuçların alaka sırasıyla geldiği varsayılır: hedefe uyan yeni
+                # telefon kalmayınca sonraki sayfalar aksesuar ve başka modeldir.
+                self.note("api_stop", page=page_no, reason="no_new_match")
                 return
             last_page = data.get("lastPage")
             if isinstance(last_page, int) and page_no >= last_page:
@@ -296,10 +326,10 @@ class Discovery(BaseDiscovery):
             candidates=list(found.values()),
             decisions=self.decisions,
             issues=self.issues,
-            # Arama API'si canlıda kalıcı olarak engelli (HTTP 403, search_api
-            # uyarısı); bu yüzden Hepsiburada taraması bugün her zaman kısmi sayılır
-            # ve keşif komutu 2 ile çıkar. Kapsam, arama/model sayfasının ilk sayfası
-            # ile ürün sayfalarındaki seçenek listesinden gelir.
+            # Model filtresinin bulunamaması (model_filter_missing) veya arama
+            # API'sinin engellenmesi (search_api) da taramayı kısmi yapar; kapsam
+            # yine de arama sayfası kartları ve ürün sayfalarındaki seçenek
+            # listesinden gelir.
             complete=not self.issues,
             search_pages=self.search_pages,
             product_pages=self.product_pages,

@@ -552,8 +552,11 @@ def test_hepsiburada_reports_html_partial_when_cards_fall_short_of_total(
         discovery.close()
 
 
-def api_product(brand, category, *variants):
-    return {"brand": brand, "mainCategory": {"name": category}, "variantList": variants}
+def api_product(brand, category, *variants, definition=None):
+    product = {"brand": brand, "mainCategory": {"name": category}}
+    if definition is not None:
+        product["definition"] = {"name": definition}
+    return {**product, "variantList": variants}
 
 
 def api_variant(name, sku, url):
@@ -572,8 +575,8 @@ def api_pages(pages, calls):
 
 
 def test_hepsiburada_search_api_collects_variants_until_last_page(monkeypatch):
-    # Arama API'si canlıda engelli (HTTP 403); bir gün açılırsa bu yol ilk kez
-    # çalışacağı için kayıtlı biçimde bir yanıtla sınanır.
+    # Kategori adı "Cep Telefonu" olan biçim; canlı iPhone biçimi aşağıdaki
+    # gerçek yanıt testindedir.
     pages = {
         1: {
             "currentPage": 1,
@@ -706,6 +709,132 @@ def test_hepsiburada_search_api_stops_on_repeated_page_or_limit(monkeypatch):
     discovery._api("Apple iPhone 15", cards)
     assert calls == [1]
     assert [i.reason for i in discovery.issues][-1] == "search_limit"
+    discovery.close()
+
+
+def test_hepsiburada_search_api_reads_live_iphone_category_and_stops(monkeypatch):
+    # Canlı "Apple iPhone 15" yanıtından kısaltılmış örnek: iPhone'ların ana
+    # kategorisi "iPhone iOS Telefonlar", tanımı "Cep Telefonu"dur. Yanıt 50
+    # sayfa bildirir; ikinci sayfa yalnız aksesuardır.
+    first = {
+        "currentPage": 1,
+        "lastPage": 50,
+        "products": [
+            api_product(
+                "Apple",
+                "iPhone iOS Telefonlar",
+                api_variant(
+                    "Apple iPhone 15 128 GB Mavi",
+                    "HBCV00004X9ZCK",
+                    "/apple-iphone-15-128-gb-mavi-p-HBCV00004X9ZCK",
+                ),
+                api_variant(
+                    "Apple iPhone 15 128 GB Sarı",
+                    "HBCV00004X9ZCJ",
+                    "/apple-iphone-15-128-gb-sari-p-HBCV00004X9ZCJ",
+                ),
+                definition="Cep Telefonu",
+            ),
+            api_product(
+                "Apple",
+                "iPhone iOS Telefonlar",
+                api_variant(
+                    "Apple iPhone 15 256 GB Mavi",
+                    "HBCV00004X9ZCQ",
+                    "/apple-iphone-15-256-gb-mavi-p-HBCV00004X9ZCQ",
+                ),
+                definition="Cep Telefonu",
+            ),
+            # Apple markalı ve adı modele uyan kablo, aksesuar kategorisiyle elenir.
+            api_product(
+                "Apple",
+                "Şarj Kabloları",
+                api_variant(
+                    "Iphone 15/ 16/ 17/ Pro ve Pro Max İçin Orijinal Örgülü USB C "
+                    "Şarj Kablosu (Apple Türkiye Garantili)",
+                    "HBCV0000BTMJG0",
+                    "/iphone-15-16-17-pro-ve-pro-max-icin-orijinal-orgulu-usb-c-"
+                    "sarj-kablosu-apple-turkiye-garantili-pm-HBC0000BTMJFZ",
+                ),
+                definition="Data Kabloları",
+            ),
+            # Yapay: bir alan aksesuar diyorsa diğeri telefon dese de elenir.
+            api_product(
+                "Apple",
+                "Cep Telefonu Aksesuarları",
+                api_variant(
+                    "Apple iPhone 15 128 GB Siyah",
+                    "HBCV0000AKSES1",
+                    "/apple-iphone-15-128-gb-siyah-p-HBCV0000AKSES1",
+                ),
+                definition="Cep Telefonu",
+            ),
+            api_product(
+                "Fibaks",
+                "Kılıflar",
+                api_variant(
+                    "Fibaks Apple Kırılmaz Cam Ekran Koruyucu iPhone 15/14 Pro/16",
+                    "HBCV00006L1IGU",
+                    "/apple-iphone-15-uyumlu-kolay-uygulama-aparatli-siyah-cerceveli-"
+                    "tam-kapatan-cam-ekran-koruyucu-pm-HBC00008ZE30D",
+                ),
+                definition="Telefon Kılıflar",
+            ),
+            # Başka markanın bozuk kaydı API sonucunu düşürmez.
+            api_product("Fibaks", "Kılıflar", "bozuk kayıt"),
+        ],
+    }
+    second = {
+        "currentPage": 2,
+        "lastPage": 50,
+        "products": [
+            api_product(
+                "Fibaks",
+                "Kılıflar",
+                api_variant(
+                    "Fibaks iPhone 13/14/15 Kılıf Magsafe Sert Silikon Kapak Lacivert",
+                    "HBCV00003Z1TJT",
+                    "/fibaks-apple-iphone-13-kilif-magsafe-wireless-sarj-ozellikli-"
+                    "tam-koruma-renkli-sert-silikon-ege-kapak-pm-HBC00008ZDS0U",
+                ),
+                definition="Telefon Kılıflar",
+            ),
+            api_product(
+                "More Gsm",
+                "Kılıflar",
+                api_variant(
+                    "More Gsm iPhone 15 Pro Uyumlu Magsafe Sararmaz Sert Pc Kılıf",
+                    "HBCV0000C4QST7",
+                    "/more-gsm-iphone-15-pro-uyumlu-magsafe-sararmaz-sert-pc-kilif-"
+                    "ultra-ince-hafif-kristal-seffaf-mika-arka-kapak-p-HBCV0000C4QST7",
+                ),
+                definition="Telefon Kılıflar",
+            ),
+        ],
+    }
+    discovery = hepsiburada_discovery()
+    calls, cards = [], {}
+    monkeypatch.setattr(
+        discovery, "get_json", api_pages({1: first, 2: second, 3: second}, calls)
+    )
+    discovery._api("Apple iPhone 15", cards)
+
+    assert cards == {
+        sku: f"https://www.hepsiburada.com/{path}-p-{sku}"
+        for sku, path in (
+            ("HBCV00004X9ZCK", "apple-iphone-15-128-gb-mavi"),
+            ("HBCV00004X9ZCJ", "apple-iphone-15-128-gb-sari"),
+            ("HBCV00004X9ZCQ", "apple-iphone-15-256-gb-mavi"),
+        )
+    }
+    # Yeni uygun sonucun bitmesi sayfa tekrarı değildir: uyarısız durulur.
+    assert discovery.issues == []
+    assert calls == [1, 2]
+    assert [n for n in discovery.trace if n["kind"] in ("api_page", "api_stop")] == [
+        {"kind": "api_page", "page": 1, "products": 6, "fresh": 3},
+        {"kind": "api_page", "page": 2, "products": 2, "fresh": 0},
+        {"kind": "api_stop", "page": 2, "reason": "no_new_match"},
+    ]
     discovery.close()
 
 

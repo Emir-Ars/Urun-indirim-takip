@@ -240,6 +240,8 @@ rehberde, o günkü tartışması arşivdedir.
 
 | 2 Kasım | Kalan sıra: bekleyen kayıt (1 Kasım keşfinin 7 sayfası ve 4.4 belgeleri) → Hepsiburada arama API'si düzeltmesi (8 Kasım keşfinden önce) → son Cimri alımı → 4.1–4.4 komutlarının uzatılmış veriyle yeniden çalıştırılması → 4.5 → 4.6. 4.5 ve 4.6 uzatılmış Cimri verisiyle yapılır. | API 1 Kasım'dan beri cevap veriyor ve canlı yanıtta iki kusur görüldü; düzeltmenin ilk canlı sınavı 8 Kasım keşfi. Alım 4.5'ten önce yapılınca modeller doğrudan güncel veriyle kurulur, aynı iş iki kez yapılmaz. |
 
+| 2 Kasım | Hepsiburada arama API'si: ürünün ana kategori veya tanım adı yeni telefon diyorsa ürün geçer, biri aksesuar/yenilenmiş diyorsa elenir; ikinci sayfadan itibaren hedefe uyan yeni varyant yoksa sayfalama uyarısız durur, `repeated_page` yalnız sayfadaki bütün ürün kodları tekrarlanınca verilir. Ortak `phone_category` ve ürün sayfasındaki kimlik doğrulaması değişmez. | Canlı yanıtta iPhone'ların kategorisi "iPhone iOS Telefonlar" (tanımı "Cep Telefonu") olduğu için API'deki bütün iPhone'lar eleniyor, aksesuarla dolu ikinci sayfa "tekrar" sayılıyordu. Bilinen bedel: "tam" sonuç alaka sırası varsayımına dayanır. |
+
 | 2 Kasım | 4.4 planı onaylandı: dört tam doğrulama ayı, her katta ayrı 30 gün kalibrasyon, olumlu pencere kümeleri ve %95 tarih bloklu güven aralığı; saklı testin puanlaması kapalı kalır. | Kullanıcı seçimleri: ölçülen ay kalibrasyonda görülmesin, tekrar eden olumlu satırlar olay diye sayılmasın; kesin kurallar teknik rehberde. |
 
 ### Bilerek değiştirilmeyen davranışlar
@@ -272,8 +274,9 @@ Denetimlerde incelenip gerekçesiyle olduğu gibi bırakılan davranışlar:
 
 Ayrıntı ve kanıtları: [teknik rehber, Bilinen sınırlar](docs/teknik.md#bilinen-sınırlar).
 
-- Hepsiburada arama API'si HTTP 403 veriyor; Hepsiburada taraması her zaman
-  "kısmi". Kalabalık aramalarda ilk 36 kart görünür.
+- Hepsiburada arama API'si uzun süre HTTP 403 verdi, 1–2 Kasım'da cevap verdi
+  (kalıcılığı belli değil); Hepsiburada taraması çoğunlukla "kısmi".
+  Kalabalık aramalarda HTML'de ilk 36 kart görünür.
 - Trendyol araması yalnız satıştaki sayfaları gösterir; stoktan çıkan sayfa
   yeniden keşfedilemez (önceden eklenmişse korunur). Reklam kartları 2–3 ürünü
   sayfalamadan düşürür.

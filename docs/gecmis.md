@@ -122,6 +122,7 @@ Bu dosyanın kendi güncellemesi bir sonraki adımın commit'ine girer.
 | 02.11 | `179215a` | Kalan sıra 4.2: günlük seriler, simetrik 6/7 etiketi, sabit/izlenen kapsam, parmak izli rapor ve eski hesaplayıcıyla sıkı çapraz kontrol; gerçek görüntü ve yerel test/biçim denetimleri doğrulandı | [41413845126](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/41413845126) |
 | 02.11 | `c6ecea7` | Kalan sıra 4.3: geçmişe dayalı tipli model girdileri, aile/segment, girdi şeması ve raporu; gelecek veriye karşı değişmezlik testleri, gerçek görüntüde 4.2 başlangıç eşleşmesi ve dosya bütünlüğü doğrulandı | [41429382111](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/41429382111) |
 | 02.11 | `ad01bcb` | Kalan sıra 4.4: ortak tarih bölmesi, purge, ayrı kalibrasyonlu ileri yürüyen katlar, ölçütler ve tarih bloklu güven aralığı; gerçek bölme/kat, dosya bütünlüğü ve saklı test koruması doğrulandı | [41440395101](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/41440395101) |
+| 02.11 | `63b2c30` | 1 Kasım keşfinin 7 bağlantısını (Trendyol 4, Hepsiburada 3) kaydet; 4.4 kapanış belgeleri ve 2 Kasım sıra kararı; 2206 test, 0 atlanan, Black ve Flake8 temiz | [41446593601](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/41446593601) |
 
 ## Eylül 2026 ayrıntıları
 

@@ -459,8 +459,14 @@ yazılmaz. Scraper factory de Ctrl+C'yi `plugin` olarak sarmaz.
 2. Ürün kartları toplanır. Kart iki biçimde olabilir:
    `-p-HBCV…` (ürün sayfası) veya `-pm-HBC…` (grup sayfası). Grup sayfası
    **aday olmaz**; yalnızca gerçek ürün SKU'larına çözülür.
-3. Arama API'si denenir; bugün engellenir (`search_api: blocked`). Engel olsa da
-   HTML'den bulunanlar korunur.
+3. Arama API'si sayfa sayfa okunur. Ürünün markası hedefe, ana kategori ya da
+   tanım adı yeni telefona uyuyorsa varyantları model adıyla süzülür; iki
+   alandan biri aksesuar/yenilenmiş diyorsa ürün elenir (iPhone'ların ana
+   kategorisi "iPhone iOS Telefonlar", tanımı "Cep Telefonu"dur). İkinci
+   sayfadan itibaren hedefe uyan yeni varyant kalmazsa sayfalama uyarısız
+   durur: sonuçların alaka sırasıyla geldiği varsayılır. Sayfadaki bütün
+   ürün kodları önceki sayfalarda görülmüşse `repeated_page` raporlanır. API
+   engellenirse (`search_api`) HTML'den bulunanlar korunur.
 4. Her ürün sayfası açılır ve kimlik kanıtı kaydedilir. Doğrulanmış sayfa aday
    üretir ve `allVariantCombinations` (bütün renk/kapasite seçenekleri) kuyruğa
    eklenir. Kabul edilmeyen sayfada marka/kategori, kendi SKU'sunun seçenekleri,
@@ -648,9 +654,9 @@ kendi adaylarını** kataloğa birleştirir:
 | `category_partial` | Birden çok telefon kategorisi var, yalnızca ilki tarandı. |
 | `count_mismatch` | Trendyol'un bildirdiği toplamla gelen ürün sayısı farklı. Bugünkü nedeni reklam kartları: sonuçların arasına giren reklamlar 2–3 ürünü hiçbir sayfaya düşürmez (bkz. bilinen sınırlar). |
 | `search_limit`, `product_limit` | Sayfa veya ürün sınırı doldu. |
-| `repeated_page` | Site aynı sonuç sayfasını tekrar döndürdü; sayfalama durduruldu. |
+| `repeated_page` | Site aynı sonuç sayfasını tekrar döndürdü; sayfalama durduruldu. Hepsiburada API'sinde sayfadaki bütün ürün kodları önceki sayfalarda görülmüş demektir; yalnız hedefe uyan yeni sonuç kalmaması bu uyarıyı vermez. |
 | `variant_fetch`, `missing_variants` | Varyant listesi alınamadı veya boş geldi. |
-| `group_url_pending` | Hepsiburada arama API'sinin varyant kaydındaki adres ne ürün (`-p-`) ne grup (`-pm-`) biçiminde; aday çözülemedi. API bugün engelli olduğundan (`search_api`) fiilen görülmez. HTML arama sayfasında bu iki kalıba uymayan bağlantılar (menü, kategori…) kart sayılmaz ve uyarısız atlanır. |
+| `group_url_pending` | Hepsiburada arama API'sinin varyant kaydındaki adres ne ürün (`-p-`) ne grup (`-pm-`) biçiminde; aday çözülemedi. 1–2 Kasım 2026 API yanıtlarında görülmedi. HTML arama sayfasında bu iki kalıba uymayan bağlantılar (menü, kategori…) kart sayılmaz ve uyarısız atlanır. |
 | `evidence_missing` | Kendi ürün koduna bağlı kritik kimlik/yeni ürün kanıtı eksik. Aday eklenmez. |
 
 `rejected` içindeki kayıtlar (tek bir aday atlanır, tarama sürer):
@@ -662,7 +668,8 @@ kendi adaylarını** kataloğa birleştirir:
 | `identity_mismatch` | Kendi ürün koduna bağlı alanlarda açık model/kapasite/ağ/renk/RAM/kapsam çelişkisi. |
 
 Komutun çıkış kodu: `0` tam tarama, `2` kısmi tarama (doğrulanmış kayıtlar yine
-eklenir; Hepsiburada arama API'si engelli olduğu için bugün her zaman 2; katalogla
+eklenir; Hepsiburada'da iPhone dışı hedeflerin model filtresi bulunamadığı için
+(`model_filter_missing`) bugün pratikte her zaman 2; katalogla
 çelişen aday, `catalog_conflict`, de taramayı kısmi sayar; hiç etkin hedef
 yoksa sonuç listesi boştur ve çıkış yine 2'dir), `1` keşif başlatılamadı
 (`--target` ile verilen anahtar `discovery.json`'da yok, ayar dosyası bozuk,
@@ -680,10 +687,10 @@ verir ve hiçbir şey yazmaz.
 Her taramanın sonunda stderr'e tek satırlık özet yazılır, ör. `Özet: yeni ürün 1 ·
 yeni sayfa 5 (hepsiburada 2, trendyol 3) · zaten kayıtlı 310 · görülmeyen 4 ·
 çakışma 0 · reddedilen 7 · tam sonuç 24/48 · uyarı search_api 24`. Çıkış kodu
-Hepsiburada arama API'si engelli olduğu için bugün hep `2` olduğundan tek başına
-bir şey söylemez; uyarılar `pending` nedenlerine göre sayıldığı için beklenen
-`search_api` ile gerçek sorunlar (ör. `search_fetch`, `variant_fetch`) bu satırdan
-ayırt edilir. "Zaten kayıtlı", bu taramada yeniden görülen katalog sayfalarıdır;
+bugün pratikte hep `2` olduğundan tek başına bir şey söylemez; uyarılar
+`pending` nedenlerine göre sayıldığı için beklenen `model_filter_missing` ve
+`search_api` ile gerçek sorunlar (ör. `search_fetch`, `variant_fetch`) bu
+satırdan ayırt edilir. "Zaten kayıtlı", bu taramada yeniden görülen katalog sayfalarıdır;
 raporda katalogun toplam sayfa sayısı yoktur.
 
 Çıktı UTF-8'dir; dosyaya yönlendirildiğinde de Türkçe karakterler
@@ -1271,7 +1278,8 @@ Otomatik kabul modunda haftalık akış:
 
 Önizleme modunda (seçeneksiz kurulum) 2. adımda katalog yazılmaz: log'un
 sonundaki özet satırına ve rapora bakılır (yeni ürün/sayfalar, `rejected`
-nedenleri, `pending` içinde beklenen `search_api` dışında bir uyarı), uygunsa
+nedenleri, `pending` içinde beklenen `model_filter_missing`/`search_api` dışında
+bir uyarı), uygunsa
 `python -m app.discovery --apply-report data\discovery\kesif_<tarih-saat>.json`
 ile uygulanır.
 
@@ -1281,8 +1289,8 @@ günlük karşılaştırılabilir dönem başlangıcını etkileyebilir; eski fi
 
 Görev Zamanlayıcı "Son çalıştırma sonucu"
 (`Get-ScheduledTaskInfo -TaskPath '\FiyatTakip\' -TaskName 'HaftalikKesif'`):
-`0x0` tarama tam, `0x2` tarama kısmi (Hepsiburada arama API'si engelli olduğu için
-beklenen sonuç), `0x3` kilit meşgul (keşif atlandı, telafi edilmez), `0x1` başlayamadı
+`0x0` tarama tam, `0x2` tarama kısmi (bugün beklenen sonuç; bkz. keşif çıkış
+kodları), `0x3` kilit meşgul (keşif atlandı, telafi edilmez), `0x1` başlayamadı
 ya da program hatası. Ayrıntı log dosyasındadır.
 
 Sınırlar:
@@ -2713,12 +2721,18 @@ sınır/anahtar/sayı incelendi; sınıf dağılımı veya tahmin puanı üretil
 
 ## Bilinen sınırlar
 
-- **Hepsiburada arama API'si** bizi engelliyor (HTTP 403, kalıcı); Hepsiburada
-  taraması her zaman "kısmi" raporlanır. Kapsamı arama/model sayfasının ilk
-  sayfası ve ürün sayfalarındaki seçenek listesi taşır; ayrı bir ürün ailesi
-  yalnızca kartı görünürse bulunur.
+- **Hepsiburada arama API'si** uzun süre HTTP 403 ile engelledi; 1 ve 2 Kasım
+  2026'da cevap verdi. Kalıcı olup olmadığı bilinmiyor; engellenirse
+  `search_api` raporlanır. Sonuçlar aksesuarla doludur ("Apple iPhone 15"
+  araması 10.000 ürün ve 50 sayfa bildirdi, ikinci sayfa yalnız aksesuardı);
+  ikinci sayfadan itibaren hedefe uyan yeni telefon yoksa sayfalama durur ve
+  bu, alaka sırası varsayımına dayanır. Hepsiburada taraması çoğunlukla yine
+  "kısmi" raporlanır (`model_filter_missing`, `html_partial`, reddedilen
+  adaylar). Kapsamı arama/model sayfası kartları, API sayfaları ve ürün
+  sayfalarındaki seçenek listesi taşır; ayrı bir ürün ailesi yalnızca kartı
+  veya API kaydı görünürse bulunur.
 - **iPhone dışındaki markalarda** Hepsiburada model filtresi sayfası bulunamadı;
-  genel arama sayfası kullanılır ve yalnız ilk 36 kart görünür. Kalabalık
+  genel arama sayfası kullanılır ve HTML'de yalnız ilk 36 kart görünür. Kalabalık
   aramalarda kapsam eksik kalabilir: Galaxy S25'te 140 sonucun 36'sı
   (`html_partial`), Redmi aramalarında ilk sayfa kılıf ilanlarıyla doluydu.
 - **Trendyol reklam kartları** arama sonuçlarının arasına giriyor ve sayfa

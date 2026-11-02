@@ -5,8 +5,8 @@ python -m app.discovery --scheduled --dry-run         zamanlanmış önizleme
 python -m app.discovery --scheduled --auto-accept     zamanlanmış otomatik kabul
 python -m app.discovery --apply-report RAPOR          siteye gitmeden raporu uygular
 
-Tarama çıkış kodları: 0 tarama tam; 2 tarama kısmi (Hepsiburada arama API'si
-engelli olduğu için bugün her zaman); 1 keşif başlatılamadı (ayar veya katalog
+Tarama çıkış kodları: 0 tarama tam; 2 tarama kısmi (Hepsiburada'daki beklenen
+uyarılar yüzünden bugün pratikte her zaman); 1 keşif başlatılamadı (ayar veya katalog
 okunamadı, hedef bulunamadı, adaptör sözleşmeye uymuyor) ya da tarama bitti ama
 sonuç kataloğa/rapora yazılamadı (mesaj hangisi olduğunu söyler); 3 başka bir
 fiyat turu, keşif veya canlı kontrol sürüyor (ortak kilit), keşif başlatılmadı.
