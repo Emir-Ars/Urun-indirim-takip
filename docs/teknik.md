@@ -150,8 +150,10 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 | `series.py` | İstanbul günleri, zamanlanmış tur dilimleri, sağlam akşam başlangıcı, günlük minimum ve Cimri yarım gün maskesi; eski sıkı karşılaştırmanın günlük serisi. |
 | `labels.py` | Ayrı kendi/Cimri serilerinden simetrik 6/7 etiketi, sabit/izlenen sayfa kapsamı, sıkı pencere ve etiket özeti. Model eğitmez ve zaman bölmesi yapmaz. |
 | `features.py` | Yalnız geçmiş günlük başlangıç fiyatlarından sabit sözleşmeli girdiler, aile/segment kategorileri ve eksiklik raporu. Etiket okumaz; öğrenilen dönüşüm veya model eğitimi yapmaz. |
+| `splitting.py` | Parmak izli etiket/girdi eşleşmesi, ortak %70/%15/%15 tarih bölmesi, purge, ayrı kalibrasyonlu dört ileri yürüyen kat; saklı test dışındaki değerlendirme hedeflerini seçer. |
+| `metrics.py` | Anahtarlı tahminlerde AP/Brier/log loss/Brier skill, güvenilirlik kovaları, olumlu pencere kümeleri, kırılımlar/makro ve eşleştirilmiş tarih bloklu güven aralığı. İstatistik kütüphaneleri yalnız puanlama çağrısında yüklenir. |
 | `reporting.py` | Ayrı etiket/girdi dosyaları için belirlenimci JSON/JSONL, Türkçe Markdown, çıktı şeması ve en son yazılan parmak izli başarı manifesti. |
-| `__main__.py` | `snapshot` yalnız `API_DATABASE_URL` okuma hesabıyla görüntü alır; `labels` ve `features` yalnız kaydedilmiş görüntüyü okur, DB katmanını/sürücüsünü yüklemez. Çıkış kodları [ML hazırlığı](#ml-hazırlığı) bölümündedir. |
+| `__main__.py` | `snapshot` yalnız `API_DATABASE_URL` okuma hesabıyla görüntü alır; `labels`/`features` görüntüden, `split` parmak izli etiket/girdi dosyalarından ağsız çalışır. DB katmanı/sürücüsü bu üç yolda yüklenmez. Çıkış kodları [ML hazırlığı](#ml-hazırlığı) bölümündedir. |
 
 ### Kurulum ve zamanlayıcı: `scripts/`
 
@@ -190,6 +192,9 @@ Test sayıları burada tutulmaz; güncel sayı `pytest -q` çıktısındadır.
 | `tests/test_ml_label_cli.py` | Ağsız etiket komutu, aynı dosyaların tekrar üretimi, parmak izi ve kesinti koruması, eski hesaplayıcıyla bağımsız sıkı çapraz kontrol. |
 | `tests/test_ml_features.py` | Girdi formülleri ve eksikler, aile/segment, Cimri kimliği, ölçekten bağımsızlık; gelecek fiyat/stok/sayfa/ürün değişimlerine ve kayıtların kesilmesine karşı geçmiş girdilerin sabitliği; 4.2 başlangıç anahtarlarıyla eşleşme. |
 | `tests/test_ml_feature_cli.py` | Ağsız, etiket ve eğitim modüllerini yüklemeyen features komutu; aynı dosyaların tekrarı, tipli şema, parmak izi, mevcut klasör ve kesinti/yazma hatası koruması. |
+| `tests/test_ml_splitting.py` | Ortak tarih kesimleri, purge eşitliği, ayrı kalibrasyon, dört aylık katlar, boş/tek sınıflı bölüm, kendi kaynağının ayrılığı ve saklı test değişimlerine karşı geliştirme çıktısının sabitliği. |
+| `tests/test_ml_metrics.py` | Elle hesaplanan ölçütler, geçersiz anahtar/etiket/olasılık, uç değerler ve kovalar, küme/makro desteği, bütün ürün günlerini koruyan tekrar üretilebilir eşleştirilmiş bootstrap. |
+| `tests/test_ml_split_cli.py` | Etiket/girdi bütünlüğü ve başlangıç eşleşmesi, yanlış kurallar/hedef sonu, belirlenimci bölme kanıtı, saklı test bilgi/üyelik koruması ve DB/ağ/eğitim katmanı yüklememe. |
 | `tests/test_price_statistics.py` | İstatistik hesabı: tam kapsam dönemi, 30 gün/14 geçiş/7 gün/18 saat eşikleri, İstanbul günü, NULL üzerinden geçmeme, değişkenlik, grafik aralığından bağımsızlık. Veritabanısız. |
 | `tests/test_api_foundation.py` | API okuma rolünün izinleri (yazamaması, kalıcı nesne kuramaması) ve test ortamının ağ/adres korumaları. |
 | `tests/test_api.py` | FastAPI: dört adres ve OpenAPI, kuruş/UTC/NULL, fiyat yaşı, rol/şema hataları, dört bağlantı sınırı, kesinti ve yeniden bağlantı, 5 sn sorgu zaman aşımı, tutarlı cevap. |
@@ -2557,6 +2562,130 @@ kanıt klasörü `artifacts/ml_girdi_20261102_132655_983/`. Bu klasörün
 manifesti ve girdi başlangıçları, aynı görüntüye ait 4.2 etiket kanıtıyla
 karşılaştırılıp doğrulandı. Eksik girdi alanları NULL olarak korunur;
 girdi satırları etiketli eğitim satırı sayısı değildir.
+
+### Zaman bölmesi ve ölçütler (`python -m app.ml split`)
+
+Bu adım 4.2 etiket ve 4.3 girdi klasörlerini okur; model veya kalibratör
+eğitmez, gerçek tahmin puanı hesaplamaz. Komut DB/ağ veya yeni görüntü
+gerektirmez. İki manifestin kural/şema sürümleri ve dosya parmak izleri,
+ortak görüntü SHA-256 değeri ve bütün başlangıç anahtarlarının sıralı,
+tekil ve birebir aynı olduğu doğrulanır. Hedef sonu daima başlangıç + 7
+gündür. Çelişkili girdide çıktı klasörü oluşturulmaz.
+
+Kullanıcı terminalinde mevcut kanıtlarla:
+
+```powershell
+$mlSplitLabels = "artifacts\ml_etiket_20261102_112102_355"
+$mlSplitFeatures = "artifacts\ml_girdi_20261102_132655_983"
+$mlSplitOut = "artifacts\ml_bolme_$(Get-Date -Format yyyyMMdd_HHmmss_fff)"
+.venv\Scripts\python.exe -m app.ml split --labels-dir $mlSplitLabels --features-dir $mlSplitFeatures --output-dir $mlSplitOut
+$LASTEXITCODE
+```
+
+Çıkış 0; rapor yolu, ortak SHA-256, durum, kat ve başlangıç/saklı test
+kayıt sayıları beklenir. `limited` (sınırlı), hesaplama hatası değil,
+veride uygunluk engeli olduğunu belirtir. Çıkış 1 dosya/veri/mevcut klasör
+hatası, 2 argüman hatası, 130 kullanıcı kesmesidir. Test açma seçeneği yoktur.
+
+**Ana tarih bölmesi:** yalnız Cimri'nin etiketi 0 veya 1 olan başlangıçları
+eğitim havuzuna girer. Girdide NULL var diye satır elenmez. Tekil uygun
+tarihler sıralanır; ilk `N×70//100` eğitim, `N×85//100` sınırına kadarı
+doğrulama, kalanı `test_reserved` olur. Aynı tarihteki ürünler aynı bölümde
+kalır; ürün yoğunluğu veya sınıf oranı kesimi değiştirmez. Kendi verimiz
+eğitim ve sınır hesabına katılmaz; yalnız değerlendirme/etiketsiz olarak
+ayrılır. Etiketsiz Cimri başlangıçları `unlabelled` kalır.
+
+**Purge:** önceki bölümde yalnız `target_end < sonraki bölüm başlangıcı`
+olan satırlar kullanılabilir. Eşitlik de elenir; olumlu etikette erken
+düşüş görülmesi hedef sonunu kısaltmaz. Ana bölmede temizlenenler
+`purged_train`/`purged_validation` olarak izlenir. Geçmiş 30 günlük
+girdilerin önceki dönemle örtüşmesi elenme nedeni değildir.
+
+Ana rapordaki `first_anchor`/`last_anchor`, purge öncesi nominal bölüm
+sınırlarıdır; kayıt sayıları purge sonrasında kalanları gösterir. Kullanılan
+son başlangıç tarihi, sınırdaki temizleme nedeniyle nominal sondan erken
+olabilir; kesin üyeler `assignments.jsonl` içindedir.
+
+**Katlar:** ilk %85, saklı test sınırına göre önce temizlenir. Bu havuzun
+ilk/son uygun tarihi arasındaki son dört tam takvim ayı seçilir. Aradaki
+boş ay daha iyi bir ayla değiştirilmez. Her katın eğitim geçmişi genişler;
+doğrulama ayından hemen önceki 30 takvim günü kalibrasyondur. Eğitim
+etiketleri kalibrasyon başlangıcına, kalibrasyon etiketleri doğrulama
+başlangıcına, doğrulama etiketleri sonraki ayın başlangıcına ulaşamaz.
+Ay sonundaki yedi başlangıç günü böylece temizlenebilir.
+
+Katlar ana %70 kesiminden bağımsız, temizlenmiş ilk %85 havuzunda kurulur;
+ana kesimde `purged_train` olan bir başlangıç, kendi katındaki sınırlara
+uyuyorsa kullanılabilir. Saklı test ve test sınırını aşan hedefler hiçbir
+kata giremez. Dört tam ay yoksa veya eğitim/kalibrasyon/doğrulama bölümü
+boş ya da tek sınıflıysa durum sınırlıdır; tarih veya eşik kaydırılmaz.
+
+**Saklı test:** raporda yalnız ilk/son tarih ve kayıt sayısı; atamalarda
+yalnız başlangıç anahtarı/rolü vardır. Testin sınıf dağılımı, X/y kopyası
+veya puanı üretilmez. `evaluation_targets` yalnız normal doğrulama, bir
+katın doğrulaması veya kendi değerlendirme hedeflerini seçer. Saklı test,
+test sınırında temizlenen etiket ve bozuk kat üyeliği reddedilir. Alt
+ölçüt yardımcıları da `test_reserved` rolünü puanlamadan reddeder.
+
+**Ölçüt arayüzü:** `Target` ürün/kaynak/tarih anahtarı, 0/1 etiket, rol,
+marka ve aile; `Probability` aynı anahtar ve 1 sınıfı olasılığıdır.
+`score_predictions(targets, probabilities, references, role=...)` hedef,
+model ve R0 dizilerini aynı sırada eşleştirir; tekrarlı/uyuşmayan anahtar,
+geçersiz etiket/olasılık ve NaN/sonsuz değer reddedilir. R0 her katta yalnız
+eğitim sınıf oranından gelir; birleşik katlarda her satır kendi katının
+referans olasılığını taşımalıdır. Yardımcı yeni bir model öğrenmez.
+
+| Alan | Anlamı ve sınırı |
+|---|---|
+| `average_precision` | scikit-learn average precision; trapez PR alanı değil. Taban olumlu oranla birlikte; boş/tek sınıfta NULL. |
+| `brier` | `mean((p−y)^2)`, ikili [0,1] ölçeği. |
+| `log_loss` | Float64, labels=[0,1]; yalnız bu hesapta olasılıklar makine epsilon sınırlarına kırpılır. |
+| `reference_brier`, `brier_skill` | R0 vektörünün Brier kaybı ve `1−model_Brier/R0_Brier`; sıfır referansta skill NULL ve gerekçe. |
+| `calibration` | On eşit genişlikli kova; son kova 1'i içerir. Sayı/ortalama tahmin/gerçekleşen oran; boşta ortalamalar NULL, 20'den az kayıtta düşük destek. |
+| `breakdowns`, `macro` | Marka/aile/ürün kırılımı; yeterli ürünlerin eşit ağırlıklı ortalaması ve ölçüt başına kapsama. Ana sonuç bütün satırları ağırlıklandırır. |
+
+Boş ölçümde puanlar NULL'dır. Tek sınıfta Brier/log loss hesaplanabilir;
+AP hesaplanmaz ve model seçimi için yeterli sayılmaz. Grafiğin çizimi ve
+gerçek tahminlerin ölçülmesi sonraki deney adımındadır.
+
+**Olumlu pencere kümeleri:** ürün+kaynak bazında yalnız olumlu
+`[d+1,d+7]` aralıkları çakışıyorsa birleştirilir; ortak uç ve zincirleme
+çakışma dahildir, farklı ürünler birleştirilmez. Bu sayı bağımsız gerçek
+düşüş sayısı değildir. Beşten az kümesi olan kırılımda skor yerine
+`insufficient_clusters` ve kayıt/küme sayıları verilir. Makro yalnız yeterli
+ürünleri kullanır; her ölçütte hesaplanabilen ürün sayısı ayrıca gösterilir.
+
+**Güven aralığı:** `paired_bootstrap` aynı tekil doğrulama hedeflerinde
+model ve R2 olasılıklarını eşleştirir. 14 takvim günlük hareketli bloklar,
+2000 tekrar, tohum 42, %95 güven düzeyi sabittir. Boş takvim günleri
+korunur; blok başlangıçları eşit olasılıkla seçilir. Örneklenen gün dizisi
+özgün takvim uzunluğuna kırpılır, sonra o günlerin bütün ürünleri alınır;
+satır düzeyinde kırpılmaz. İki model aynı diziyi kullanır. Tek sınıflı
+tekrarlar atlanır; 28 günlük aralık veya 1800 geçerli tekrar yoksa aralık
+NULL ve gerekçelidir. Aralık AP farklarının %2,5/%97,5 yüzdelikleridir
+(linear quantile). Bu yardımcı yalnız doğrulama rolünde model seçimi
+karşılaştırması içindir; 4.4 komutu gerçek tahmin veya bootstrap çalıştırmaz.
+
+**Kanıt dosyaları:** `assignments.jsonl` her başlangıcın anahtar/rolünü,
+`folds.json` dönemleri, üye anahtarlarını ve geliştirme özetlerini taşır.
+`metrics_schema.json` tipleri ve kuralları, `report.json`/`report.md` bölme
+uygunluğunu açıklar. Manifest biçim, bölme ve ölçüt sürümleri 1; ortak
+görüntü SHA-256, iki giriş manifestinin SHA-256 değeri ve beş çıktı dosyası
+parmak izi kayıtlıdır. Manifest en son yazılır; dosya/şema, anahtar
+tekilliği, kat sınırları ve saklı test sözleşmesi yeniden doğrulanır.
+Var olan klasöre yazılmaz; yarım deneme yeni klasörle tekrarlanır. Aynı
+girdi/kod/ortam aynı çıktıları verir. Hiçbir X/y kopyası üretilmez.
+
+Sızıntı ve ölçüt testleri yalnız yapay veridir. Gerçek bölme ve kat
+uygunluğu, kullanıcı komutu çalıştırdıktan sonra ayrıca doğrulanır. Son
+Cimri alımından sonra bölme aynı kurallarla yeniden üretilecek; bu aşama
+model seçimini dondurmaz veya son testin kullanılmasına izin vermez.
+
+Son gerçek bölme doğrulamasının sayıları README Güncel kapsam tablosunda,
+kanıtı `artifacts/ml_bolme_20261102_144615_672/` klasöründedir. Giriş/çıkış
+parmak izleri, başlangıç tekilliği, ana/kat purge sınırları ve ayrı
+kalibrasyon üyelikleri dosyalar okunarak doğrulandı. Saklı test için yalnız
+sınır/anahtar/sayı incelendi; sınıf dağılımı veya tahmin puanı üretilmedi.
 
 ## Testler ne kanıtlar, ne kanıtlamaz
 

@@ -42,12 +42,24 @@ def main(argv=None) -> int:
     features.add_argument(
         "--output-dir", type=Path, required=True, metavar="YENI_KLASOR"
     )
+    split = commands.add_parser(
+        "split", help="Etiket ve girdilerden tarih bölmesi ve kat raporu yaz"
+    )
+    split.add_argument(
+        "--labels-dir", type=Path, required=True, metavar="ETIKET_KLASORU"
+    )
+    split.add_argument(
+        "--features-dir", type=Path, required=True, metavar="GIRDI_KLASORU"
+    )
+    split.add_argument("--output-dir", type=Path, required=True, metavar="YENI_KLASOR")
     args = parser.parse_args(argv)
     utf8_output()
     if args.command == "labels":
         return run_labels(args.snapshot, args.output_dir)
     if args.command == "features":
         return run_features(args.snapshot, args.output_dir)
+    if args.command == "split":
+        return run_split(args.labels_dir, args.features_dir, args.output_dir)
     return run_snapshot(args.output_dir)
 
 
@@ -157,6 +169,52 @@ def run_features(source: Path, directory: Path) -> int:
         print(f"{title}: girdi satırı {count}")
     print(f"Tanınmayan model ailesi: {len(result[0]['unknown_models'])}")
     print("Dosyalar ve girdi şeması doğrulandı. Etiket okunmadı; DB/ağ kullanılmadı.")
+    return 0
+
+
+def run_split(labels: Path, features: Path, directory: Path) -> int:
+    from app.ml.splitting import build_split, load_split_inputs
+    from app.ml.reporting import verify_split_outputs, write_split_outputs
+
+    if directory.exists():
+        print(
+            "Bölme hazırlanmadı: klasör zaten var; yeni bir klasör seç.",
+            file=sys.stderr,
+        )
+        return 1
+    try:
+        inputs = load_split_inputs(labels, features)
+        plan = build_split(inputs.samples)
+        write_split_outputs(directory, inputs, plan)
+        verify_split_outputs(directory, inputs.snapshot_sha256, inputs.input_manifests)
+    except KeyboardInterrupt:
+        print("Bölme hazırlığı kullanıcı tarafından durduruldu.", file=sys.stderr)
+        return 130
+    except (ValueError, OSError, TypeError, KeyError) as exc:
+        print(f"Bölme hazırlanmadı: {exc}", file=sys.stderr)
+        return 1
+    print(f"Bölme raporu: {directory / 'report.md'}")
+    print(f"Görüntü SHA-256: {inputs.snapshot_sha256}")
+    print(
+        f"Durum: {'sınırlı' if plan.report['status'] == 'limited' else 'yeterli'} "
+        f"· kat sayısı {len(plan.folds)}"
+    )
+    print(
+        f"Başlangıç ataması: {len(plan.assignments)} "
+        f"· saklı test satırı {plan.report['partitions']['test_reserved']['rows']}"
+    )
+    if plan.report["limitations"]:
+        print(
+            "Sınırlamalar: "
+            + "; ".join(
+                plan.report["limitation_labels"][reason]
+                for reason in plan.report["limitations"]
+            )
+        )
+    print(
+        "Dosyalar doğrulandı. Saklı test açılmadı; model eğitilmedi, "
+        "gerçek tahmin puanı hesaplanmadı."
+    )
     return 0
 
 

@@ -288,3 +288,222 @@ def verify_feature_outputs(directory, digest):
                 raise ValueError("Girdi kayıtları anahtara göre sıralı ve tekil olmalı")
             previous = key
     return manifest
+
+
+SPLIT_OUTPUT_FILES = (
+    "assignments.jsonl",
+    "folds.json",
+    "metrics_schema.json",
+    "report.json",
+    "report.md",
+)
+
+
+def split_markdown_report(report):
+    titles = dict(
+        train="Eğitim",
+        validation="Doğrulama",
+        test_reserved="Saklı test",
+        purged_train="Eğitimden temizlenen",
+        purged_validation="Doğrulamadan temizlenen",
+        unlabelled="Etiketsiz Cimri başlangıcı",
+        own_evaluation="Kendi değerlendirmesi",
+        own_unlabelled="Etiketsiz kendi başlangıcı",
+    )
+    lines = [
+        "# Adım 4.4 — Zaman bölmesi ve uygunluk",
+        "",
+        "Bütün ürünlerde ortak tarih sınırları; %70/%15/%15, sonra purge.",
+        "Her katta eğitim → ayrı 30 gün kalibrasyon → doğrulama ayı vardır.",
+        "Sonraki sınıra eşit veya sonrasına uzanan etiketler kullanılmaz.",
+        "Model/kalibratör eğitilmedi; gerçek tahmin puanı hesaplanmadı.",
+        "Saklı testte yalnız sınır, başlangıç anahtarı ve sayı açıklanır.",
+        "Olumlu pencere kümeleri bağımsız gerçek olay sayısı değildir.",
+        "",
+        f"Bölme durumu: {'sınırlı' if report['status'] == 'limited' else 'yeterli'}.",
+        "",
+        "| Bölüm | İlk başlangıç | Son başlangıç | Kalan satır | Olumlu | Olumsuz |",
+        "|---|---|---|---:|---:|---:|",
+    ]
+    for role, summary in report["partitions"].items():
+        positive = summary.get("positive", "Saklı")
+        negative = summary.get("negative", "Saklı")
+        lines.append(
+            f"| {titles[role]} | {summary['first_anchor']} "
+            f"| {summary['last_anchor']} | {summary['rows']} "
+            f"| {positive} | {negative} |"
+        )
+    lines += ["", "## Başlangıç atamaları", ""]
+    lines.extend(
+        f"- {titles[role]}: {count}"
+        for role, count in report["assignment_counts"].items()
+    )
+    lines += [
+        "",
+        "## İleri yürüyen katlar",
+        "",
+        "| Ay | Kalibrasyon başlangıcı | Eğitim | Kalibrasyon | Doğrulama "
+        "| Temizlenen eğitim / kalibrasyon / doğrulama |",
+        "|---|---|---:|---:|---:|---:|",
+    ]
+    for fold in report["folds"]:
+        stats, purged = fold["statistics"], fold["purged"]
+        lines.append(
+            f"| {fold['month']} | {fold['calibration_start']} "
+            f"| {stats['train']['rows']} | {stats['calibration']['rows']} "
+            f"| {stats['validation']['rows']} | {purged['train']} "
+            f"/ {purged['calibration']} / {purged['validation']} |"
+        )
+    lines += ["", "## Sınırlamalar", ""]
+    labels = report["limitation_labels"]
+    lines.extend(f"- {labels[reason]}" for reason in report["limitations"])
+    for fold in report["folds"]:
+        lines.extend(
+            f"- {fold['month']}: {labels[reason]}" for reason in fold["limitations"]
+        )
+    if not report["limitations"]:
+        lines.append(
+            "Bölme kontrollerinde engel yok; "
+            "bu model başarısı veya yayın yeterliliği değildir."
+        )
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def write_split_outputs(directory, inputs, plan):
+    from app.ml.metrics import METRIC_RULES, metrics_schema
+    from app.ml.splitting import SPLIT_RULES
+
+    directory.mkdir(parents=True, exist_ok=False)
+    with (directory / "assignments.jsonl").open("wb") as stream:
+        for row in plan.assignments:
+            stream.write(json_bytes(row) + b"\n")
+    for name, value in (
+        ("folds.json", dict(split_rules=SPLIT_RULES, folds=plan.folds)),
+        ("metrics_schema.json", metrics_schema()),
+        ("report.json", plan.report),
+    ):
+        (directory / name).write_bytes(json_bytes(value) + b"\n")
+    (directory / "report.md").write_text(
+        split_markdown_report(plan.report), encoding="utf-8", newline="\n"
+    )
+    manifest = dict(
+        format_version=1,
+        status="complete",
+        snapshot_sha256=inputs.snapshot_sha256,
+        input_manifests=inputs.input_manifests,
+        split_rules=SPLIT_RULES,
+        metric_rules=METRIC_RULES,
+        files={
+            name: hashlib.sha256((directory / name).read_bytes()).hexdigest()
+            for name in SPLIT_OUTPUT_FILES
+        },
+    )
+    (directory / "manifest.json").write_bytes(json_bytes(manifest) + b"\n")
+
+
+def verify_split_outputs(directory, digest, input_manifests):
+    from collections import Counter
+    from datetime import timedelta
+    from app.ml.metrics import METRIC_RULES, StartKey, metrics_schema
+    from app.ml.splitting import SPLIT_RULES
+
+    manifest = json.loads((directory / "manifest.json").read_bytes())
+    if (
+        not isinstance(manifest, dict)
+        or manifest.get("format_version") != 1
+        or manifest.get("status") != "complete"
+        or manifest.get("snapshot_sha256") != digest
+        or manifest.get("input_manifests") != input_manifests
+        or manifest.get("split_rules") != SPLIT_RULES
+        or manifest.get("metric_rules") != METRIC_RULES
+        or not isinstance(manifest.get("files"), dict)
+        or set(manifest["files"]) != set(SPLIT_OUTPUT_FILES)
+    ):
+        raise ValueError("Bölme manifesti girişlerle veya kurallarla uyuşmuyor")
+    for name in SPLIT_OUTPUT_FILES:
+        if (
+            hashlib.sha256((directory / name).read_bytes()).hexdigest()
+            != manifest["files"][name]
+        ):
+            raise ValueError(f"Bölme dosyasının parmak izi tutmuyor: {name}")
+    if json.loads((directory / "metrics_schema.json").read_bytes()) != metrics_schema():
+        raise ValueError("Ölçüt şeması kodla uyuşmuyor")
+    assignments = [
+        json.loads(line)
+        for line in (directory / "assignments.jsonl").read_bytes().splitlines()
+    ]
+    roles, previous = {}, None
+    allowed = {
+        "train",
+        "validation",
+        "test_reserved",
+        "purged_train",
+        "purged_validation",
+        "unlabelled",
+        "own_evaluation",
+        "own_unlabelled",
+    }
+    for row in assignments:
+        if (
+            set(row) != {"product_id", "source", "anchor_day", "role"}
+            or row["role"] not in allowed
+        ):
+            raise ValueError("Bölme ataması yalnız anahtar ve izinli rol içermeli")
+        key = StartKey.model_validate_json(
+            json_bytes(
+                {name: row[name] for name in ("product_id", "source", "anchor_day")}
+            )
+        ).key
+        if previous is not None and key <= previous:
+            raise ValueError("Bölme anahtarları sıralı ve tekil olmalı")
+        previous = key
+        roles[key] = row["role"]
+    report = json.loads((directory / "report.json").read_bytes())
+    reserved = report["partitions"]["test_reserved"]
+    if (
+        set(reserved) != {"first_anchor", "last_anchor", "rows"}
+        or reserved["rows"] != sum(role == "test_reserved" for role in roles.values())
+        or any(
+            report.get(name) is not False
+            for name in (
+                "model_trained",
+                "test_opened",
+                "real_prediction_scores_computed",
+            )
+        )
+        or report["assignment_counts"] != dict(Counter(roles.values()))
+    ):
+        raise ValueError("Saklı test veya bölme raporu sözleşmeye uymuyor")
+    folds = json.loads((directory / "folds.json").read_bytes())
+    if folds["split_rules"] != SPLIT_RULES or len(folds["folds"]) > 4:
+        raise ValueError("Kat kuralları uyuşmuyor")
+    for fold in folds["folds"]:
+        boundaries = dict(
+            train=date.fromisoformat(fold["calibration_start"]),
+            calibration=date.fromisoformat(fold["validation_start"]),
+            validation=date.fromisoformat(fold["validation_end"]) + timedelta(days=1),
+        )
+        seen = set()
+        for role, rows in fold["members"].items():
+            if role not in boundaries:
+                raise ValueError("Tanınmayan kat rolü")
+            for row in rows:
+                key = StartKey.model_validate_json(json_bytes(row)).key
+                if (
+                    key in seen
+                    or key not in roles
+                    or key[1] != "cimri"
+                    or roles[key]
+                    in {"test_reserved", "purged_validation", "unlabelled"}
+                    or key[2] + timedelta(days=7) >= boundaries[role]
+                ):
+                    raise ValueError("Kat üyeliği, purge veya saklı test sınırı bozuk")
+                lower = (
+                    boundaries["train"]
+                    if role == "calibration"
+                    else boundaries["calibration"] if role == "validation" else None
+                )
+                if lower is not None and key[2] < lower:
+                    raise ValueError("Kat üyeliği kendi döneminden önce başlıyor")
+                seen.add(key)
+    return manifest

@@ -45,7 +45,7 @@ Kullanıcı arayüzde arama yaptığında canlı scraping veya model eğitimi
 | Proje yapısının sadeleştirilmesi (Bölüm 8, Adım 1–5) | ✅ Tamamlandı (26 Ekim) | `75d4732` |
 | ML öncesi ekran iyileştirmeleri 1–2 | ✅ Tamamlandı (28 Ekim) | `dd2e262`, `94045bd`, CI 40643349065 |
 | Proje mühendisliğini pekiştirme | ⏸️ Pasif (28 Ekim kararı): iş sırasında değil; kullanıcı istediğinde Oturum 2'den sürer | Program aşağıda; oturum ilerlemesi yerel devir notunda |
-| 8. ML (indirim tahmini) | 🔄 Hazırlık sürüyor (4.0–4.2 tamamlandı; 4.3 uygulandı ve gerçek görüntüyle doğrulandı, gönderim/CI bekliyor; 4.4–4.6 planlandı) | Bölüm 9 |
+| 8. ML (indirim tahmini) | 🔄 Hazırlık sürüyor (4.0–4.3 tamamlandı; 4.4 uygulandı ve gerçek bölme doğrulandı, gönderim/CI bekliyor; 4.5–4.6 planlandı) | Bölüm 9 |
 | 9. Sürekli işletim ve Docker | 🔄 Sürekli işletim kararı verildi (22 Ekim: dizüstü sürekli açık); Docker başlanmadı | Bölüm 9 |
 
 Bugünkü işletim: fiyat turu her gün 10:00 ve 22:00'de, haftalık keşif her
@@ -238,6 +238,8 @@ rehberde, o günkü tartışması arşivdedir.
 
 | 2 Kasım | 4.3 uygulama planı onaylandı: fiyat değişimleri logaritmik oran, son ≥%5 düşüş ardışık takvim günleri arasındaki düşüş, aile nesil ve segment sürüm olacak. Girdiler etiketten bağımsız, eksikler NULL; ay ve ürün anahtarı çekirdek dışında tutulur. | Gelecek bilgisi karışmadan iki kaynakta ortak girdiler hazırlanır; formül ve sınırlar teknik rehberde sabittir. |
 
+| 2 Kasım | 4.4 planı onaylandı: dört tam doğrulama ayı, her katta ayrı 30 gün kalibrasyon, olumlu pencere kümeleri ve %95 tarih bloklu güven aralığı; saklı testin puanlaması kapalı kalır. | Kullanıcı seçimleri: ölçülen ay kalibrasyonda görülmesin, tekrar eden olumlu satırlar olay diye sayılmasın; kesin kurallar teknik rehberde. |
+
 ### Bilerek değiştirilmeyen davranışlar
 
 Denetimlerde incelenip gerekçesiyle olduğu gibi bırakılan davranışlar:
@@ -419,8 +421,8 @@ ML hazırlığının adımları (kalan sıra 4; yapı kararı Bölüm 5, 28 Ekim
 | 4.0 | Bekleyen belge değişiklikleri | ✅ Tamamlandı (28 Ekim) |
 | 4.1 | `ml` bağımlılık grubu, CI, salt okunur veri görüntüsü (`python -m app.ml snapshot`) | ✅ Tamamlandı (30 Ekim) |
 | 4.2 | Günlük seriler ve etiketler; etiket raporu; sıkı varyantın eski araçla çapraz kontrolü | ✅ Tamamlandı (2 Kasım); gerçek görüntü, gönderim ve CI doğrulandı |
-| 4.3 | Girdiler ve sızıntı testi | Uygulandı ve gerçek görüntüde başlangıç eşleşmesi doğrulandı (2 Kasım); commit/push/CI bekliyor |
-| 4.4 | Zaman bölmesi (purge, ileri yürüyen katlar) ve ölçütler | Planlandı |
+| 4.3 | Girdiler ve sızıntı testi | ✅ Tamamlandı (2 Kasım); gerçek görüntüde başlangıç eşleşmesi, gönderim ve CI doğrulandı |
+| 4.4 | Zaman bölmesi (purge, ileri yürüyen katlar) ve ölçütler | Uygulandı ve gerçek bölme/kat doğrulandı (2 Kasım); commit/push/CI bekliyor |
 | 4.5 | R0–R2, LightGBM, kalibrasyon ve deney raporu | Planlandı |
 | 4.6 | Mevcut Cimri verisiyle ilk deney; son %15 test açılmaz | Planlandı |
 
