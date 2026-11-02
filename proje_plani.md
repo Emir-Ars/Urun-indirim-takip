@@ -364,12 +364,13 @@ beklenen davranışı ve sonuca güvenmek için gereken kanıtlar açıklanır.
 1. **Ekranın canlı kontrolü:** ✅ Tamamlandı (28 Ekim; [kayıt](docs/gecmis.md)).
 2. **[ML araştırma raporları](docs/arastirma/asama_08_ml/):** ✅ Tamamlandı
    (28 Ekim); kararlar Bölüm 5'te, özet Bölüm 9'da.
-3. **Son Cimri alımı (bu hafta):** aktarımın yarım gün kuralı ve 58/60
-   eşleştirme hazır (Bölüm 5); 1 Kasım keşfi yeni ürün eklemedi. Alım ayrı
-   onayla ve kullanıcının terminalinden son bir defa yapılır. Önce iki ara
-   iş: 1 Kasım keşfinin 7 sayfasıyla 4.4 belgelerinin kaydı ve Hepsiburada
-   arama API'si düzeltmesi (8 Kasım keşfinden önce; uygulama planı ayrıca
-   onaylanır, ilk canlı sonucu 8 Kasım keşfinde kontrol edilir).
+3. **Son Cimri alımı:** ✅ Tamamlandı (2 Kasım). Kullanıcının terminalinden
+   alım, önizleme ve aktarım yapıldı: 1.790 yeni gün eklendi, çelişki yok.
+   Sayılar README'de, ayrıntı
+   [teknik rehberde](docs/teknik.md#cimri-geçmişi-bir-defalık-alım-ve-aktarım).
+   Önceki iki ara iş de aynı gün tamamlandı ([kayıt](docs/gecmis.md)):
+   1 Kasım keşfinin kaydı ve Hepsiburada arama API'si düzeltmesi.
+   Düzeltmenin ilk tam canlı sonucu 8 Kasım keşfinde kontrol edilir.
 4. **ML hazırlığı:** 4.0–4.4 tamamlandı. Alımdan sonra 4.1–4.4 komutları
    uzatılmış veriyle yeniden çalıştırılır (kod değişmez); 4.5 ve 4.6 bu
    veriyle yapılır.
@@ -417,9 +418,12 @@ süreç, veri ve model kalıcılığı ayrıca değerlendirilir.
   3 Kasım'da kapanır. Daha yeni görüntüde ayrıca ölçülmeli; güncel denetim
   sayıları README Güncel kapsam tablosundadır.
   6 eski iPhone 16 günün hiçbirinde, 4'ü yarısından fazlasında fiyatsız (stok
-  yok). Cimri'de 57 ürün için 17.668 pencere (%10 olumlu); 23 Ekim kararıyla
-  eğitimde kullanılacak. Cimri'nin 8 Ekim satırları ve son alımın kendi günü
-  yarım gündür; ML'de gözlenmemiş sayılır (Bölüm 5, 28 Ekim).
+  yok). Cimri, 23 Ekim kararıyla eğitimde kullanılacak. 2 Kasım son
+  alımından sonra 58 ürünü ve 9 Ekim 2025–2 Kasım 2026 aralığını kapsar
+  (sayılar README'de). Pencere sayıları yeni görüntüyle 4.2 komutunda
+  yeniden ölçülecek; 30 Ekim görüntüsünde 18.091 kullanılabilir pencere
+  vardı, %10'u olumluydu. 8 Ekim ve 2 Kasım satırları yarım gündür; ML'de
+  gözlenmemiş sayılır (Bölüm 5, 28 Ekim).
 
 ML hazırlığının adımları (kalan sıra 4; yapı kararı Bölüm 5, 28 Ekim):
 

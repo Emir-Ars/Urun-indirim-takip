@@ -123,6 +123,7 @@ Bu dosyanın kendi güncellemesi bir sonraki adımın commit'ine girer.
 | 02.11 | `c6ecea7` | Kalan sıra 4.3: geçmişe dayalı tipli model girdileri, aile/segment, girdi şeması ve raporu; gelecek veriye karşı değişmezlik testleri, gerçek görüntüde 4.2 başlangıç eşleşmesi ve dosya bütünlüğü doğrulandı | [41429382111](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/41429382111) |
 | 02.11 | `ad01bcb` | Kalan sıra 4.4: ortak tarih bölmesi, purge, ayrı kalibrasyonlu ileri yürüyen katlar, ölçütler ve tarih bloklu güven aralığı; gerçek bölme/kat, dosya bütünlüğü ve saklı test koruması doğrulandı | [41440395101](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/41440395101) |
 | 02.11 | `63b2c30` | 1 Kasım keşfinin 7 bağlantısını (Trendyol 4, Hepsiburada 3) kaydet; 4.4 kapanış belgeleri ve 2 Kasım sıra kararı; 2206 test, 0 atlanan, Black ve Flake8 temiz | [41446593601](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/41446593601) |
+| 02.11 | `253c831` | Hepsiburada arama API'si: iPhone kategorisi tanım alanıyla tanınır, hedefe uyan yeni sonuç bitince uyarısız durulur; canlı yanıttan regresyon testi; canlı iPhone 15 kontrolünde 7 API varyantı, `repeated_page` yok, adaylar ve istek sayısı aynı; 2207 test, 0 atlanan, Black ve Flake8 temiz | [41451043542](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/41451043542) |
 
 ## Eylül 2026 ayrıntıları
 

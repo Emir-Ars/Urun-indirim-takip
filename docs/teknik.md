@@ -57,7 +57,7 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 | `discovery.json` | Takip edilecek telefonlar ve tarama sınırları | Kullanıcı |
 | `catalog.json` | Keşfin doğruladığı ürünler ve sayfalar | Keşif (elle yazılmaz) |
 | `runtime.json` | Zaman aşımı, tekrar deneme, istekler arası bekleme (3 sn) | Kullanıcı, nadiren |
-| `market_history.json` | Bir defalık Cimri alımı: `product_key`, URL ve beklenen Cimri kimliği. 58 eşleştirme: 57'si 8 Ekim alımında doğrulandı, Galaxy S24 FE 128 GB (28 Ekim) son alımda doğrulanacak; Galaxy S25 512 GB ve Redmi Note 14 Pro 5G 256 GB eşleştirmesiz ([ayrıntı](#eşleştirme-dosyası)). | Araştırma ve gerçek çıktı kontrolüyle |
+| `market_history.json` | Bir defalık Cimri alımı: `product_key`, URL ve beklenen Cimri kimliği. 58 eşleştirme: 57'si 8 Ekim alımında, Galaxy S24 FE 128 GB 2 Kasım son alımında doğrulandı; Galaxy S25 512 GB ve Redmi Note 14 Pro 5G 256 GB eşleştirmesiz ([ayrıntı](#eşleştirme-dosyası)). | Araştırma ve gerçek çıktı kontrolüyle |
 
 ### Ortak parçalar: `app/`
 
@@ -1362,13 +1362,19 @@ eşitlemeyi çalıştırır; komut, keşiften sonra farkı gözle görmek içind
 
 ## Cimri geçmişi (bir defalık alım ve aktarım)
 
-Katalogdaki telefonların Cimri'de görünen bir yıllık fiyat geçmişi, 8 Ekim
-2026'da bir defa alınıp ayrı `market_history` tablosuna aktarıldı (57 ürün,
-20.805 tarihli kayıt, 553'ü eksik fiyat; her ürünün 8 Ekim satırı
-[yarım gündür](#ağsız-aktarım-import)). Düzenli Cimri toplaması yapılmaz;
-Cimri serisi kendi toplama serimizle birleştirilmez ve aynı ölçüm sayılmaz.
-Kod (`app/market_history/`) olası tek bir son alım için korunur; yeni alım
-ayrı karar ister ([kullanım değerlendirmesi](#kullanım-değerlendirmesi)).
+Katalogdaki telefonların Cimri'de görünen bir yıllık fiyat geçmişi ayrı
+`market_history` tablosundadır. İlk alım 8 Ekim 2026'da yapıldı (57 ürün,
+20.805 kayıt). Son alım 2 Kasım 2026'da yapıldı
+(`data/market_history/katalog_20261102_162033_694/`): 58 ürün kaydedildi,
+iki eşleştirmesiz ürün atlandı. Önizleme ve aktarım 1.790 yeni gün ekledi,
+19.360 gün aynı çıktı; çelişki yoktu. 8 Ekim satırlarındaki 20 yarım gün
+farkında eski kayıt korundu. Tabloda bugün 58 ürün, 22.595 tarihli kayıt
+(699'u eksik fiyat) var. Kayıtlar 9 Ekim 2025–2 Kasım 2026 aralığındadır;
+Galaxy S24 FE 128 GB 3 Kasım 2025'ten başlar. Her ürünün 8 Ekim ve 2 Kasım
+satırları [yarım gündür](#ağsız-aktarım-import). Düzenli Cimri toplaması
+yapılmaz; Cimri serisi kendi toplama serimizle birleştirilmez ve aynı ölçüm
+sayılmaz. Kod (`app/market_history/`) korunur; yeni bir alım ayrı karar ister
+([kullanım değerlendirmesi](#kullanım-değerlendirmesi)).
 
 ### Eşleştirme dosyası
 
@@ -1396,7 +1402,8 @@ eklendi; dosyada 58 eşleştirme var. Bu sayfanın adında kapasite yazmıyor.
 Modelin ilk çıktığı kapasitenin ana sayfası böyle adlandırılıyor; Galaxy
 S25 128 GB eşleştirmesi de aynı kalıptadır. Renk sayfasında 128 GB yazıyor;
 S24 FE 256 GB ise ayrı bir ana sayfadır. Cimri sayfası web aracına 403
-verdiği için kimlik henüz doğrulanmadı. Kimliği alımın kendi kontrolleri
+verdiği için kimlik aramada doğrulanamadı; 2 Kasım son alımında doğrulandı
+(Cimri 2372356868, "Samsung Galaxy S24 FE 128 GB 8 GB Ram"). Kimliği alımın kendi kontrolleri
 (sayfa ve API kimliği, marka, kategori, başlık ve H1'lerin model/kapasitesi)
 doğrular; bunlardan biri tutmazsa ürün `error` olur ve aktarılmaz. Aynı
 aramada diğer iki ürün için yine yalnız başka ürünlere ait sayfalar çıktı.
