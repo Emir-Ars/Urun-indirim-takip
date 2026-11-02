@@ -124,6 +124,7 @@ Bu dosyanın kendi güncellemesi bir sonraki adımın commit'ine girer.
 | 02.11 | `ad01bcb` | Kalan sıra 4.4: ortak tarih bölmesi, purge, ayrı kalibrasyonlu ileri yürüyen katlar, ölçütler ve tarih bloklu güven aralığı; gerçek bölme/kat, dosya bütünlüğü ve saklı test koruması doğrulandı | [41440395101](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/41440395101) |
 | 02.11 | `63b2c30` | 1 Kasım keşfinin 7 bağlantısını (Trendyol 4, Hepsiburada 3) kaydet; 4.4 kapanış belgeleri ve 2 Kasım sıra kararı; 2206 test, 0 atlanan, Black ve Flake8 temiz | [41446593601](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/41446593601) |
 | 02.11 | `253c831` | Hepsiburada arama API'si: iPhone kategorisi tanım alanıyla tanınır, hedefe uyan yeni sonuç bitince uyarısız durulur; canlı yanıttan regresyon testi; canlı iPhone 15 kontrolünde 7 API varyantı, `repeated_page` yok, adaylar ve istek sayısı aynı; 2207 test, 0 atlanan, Black ve Flake8 temiz | [41451043542](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/41451043542) |
+| 02.11 | `e144bf9` | Kalan sıra 3: son Cimri alımı ve aktarımı (kullanıcı terminali); 58 ürün, 1.790 yeni gün, çelişki yok; salt okunur doğrulama 22.595 kayıt/58 ürün/699 eksik fiyat, 9 Ekim 2025–2 Kasım 2026 | [41462109583](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/41462109583) |
 
 ## Eylül 2026 ayrıntıları
 

@@ -2369,7 +2369,7 @@ gözlemleri değiştirmez. Kendi ölçümlerimiz ve Cimri birleştirilmez.
 Kullanıcı terminalinde, mevcut görüntüyle:
 
 ```powershell
-$mlLabelSnapshot = "artifacts\ml_veri_20261030_141107_133"
+$mlLabelSnapshot = "artifacts\ml_veri_20261102_201315_398"
 $mlLabelOut = "artifacts\ml_etiket_$(Get-Date -Format yyyyMMdd_HHmmss_fff)"
 .venv\Scripts\python.exe -m app.ml labels --snapshot $mlLabelSnapshot --output-dir $mlLabelOut
 $LASTEXITCODE
@@ -2466,9 +2466,9 @@ bağlantı açmadığı yapay görüntülü testlerle denetlenir. Gerçek görü
 sonuç ve çapraz kontrol, kullanıcı terminalinde ayrıca doğrulanır.
 
 Son gerçek görüntü doğrulamasının kapsamı ve sayıları README Güncel kapsam
-tablosundadır; kanıt klasörü `artifacts/ml_etiket_20261102_112102_355/`.
-Bu çıktı yalnız 30 Ekim görüntüsünü kapsar; daha sonraki turlar için yeni
-görüntü gerekir.
+tablosundadır; kanıt klasörü `artifacts/ml_etiket_20261102_201553_161/`.
+Bu çıktı son Cimri alımını içeren 2 Kasım görüntüsünü (son kapanmış gün
+1 Kasım) kapsar; daha sonraki turlar için yeni görüntü gerekir.
 
 ### Model girdileri (`python -m app.ml features`)
 
@@ -2482,7 +2482,7 @@ dahil edilmez; hesapta bilgisayarın bugünkü tarihi kullanılmaz.
 Kullanıcı terminalinde, mevcut görüntüyle:
 
 ```powershell
-$mlFeatureSnapshot = "artifacts\ml_veri_20261030_141107_133"
+$mlFeatureSnapshot = "artifacts\ml_veri_20261102_201315_398"
 $mlFeatureOut = "artifacts\ml_girdi_$(Get-Date -Format yyyyMMdd_HHmmss_fff)"
 .venv\Scripts\python.exe -m app.ml features --snapshot $mlFeatureSnapshot --output-dir $mlFeatureOut
 $LASTEXITCODE
@@ -2497,7 +2497,10 @@ değildir. Çıkış 1 girdi/dosya/mevcut klasör hatası, 2 argüman hatası,
 **Girdi sözleşmesi:** Her satır iki nesne taşır. `metadata` içinde
 `product_id`, `product_key`, `source`, `anchor_day`, `anchor_at` ve `month`
 vardır. `anchor_at` kendi serimizde akşam turunun gerçek UTC bitişidir;
-Cimri'de saat bilinmediği için NULL'dır. Ay ve ürün anahtarı ileride yalnız
+Cimri'de saat bilinmediği için NULL'dır. Aynı an 4.2 `windows.jsonl`
+dosyasında `+00:00`, burada `Z` ile yazılır; 4.4 iki dosyayı yalnız
+ürün/kaynak/gün anahtarıyla eşleştirir, zaman alanını metin olarak
+karşılaştırmaz. Ay ve ürün anahtarı ileride yalnız
 ablasyon için seçilebilir; çekirdek girdiye otomatik katılmaz.
 
 `features`, Pydantic strict ve `extra=forbid` ile sabit alanlıdır. Kaynak,
@@ -2573,7 +2576,7 @@ deney girdisi üretir; geçmişteki gerçek erişilebilirliği kanıtlamaz.
 Eğitim/test bölmesi, model eğitimi ve tahmin gösterimi bu adımın dışındadır.
 
 Son gerçek girdi doğrulamasının sayıları README Güncel kapsam tablosundadır;
-kanıt klasörü `artifacts/ml_girdi_20261102_132655_983/`. Bu klasörün
+kanıt klasörü `artifacts/ml_girdi_20261102_201744_673/`. Bu klasörün
 manifesti ve girdi başlangıçları, aynı görüntüye ait 4.2 etiket kanıtıyla
 karşılaştırılıp doğrulandı. Eksik girdi alanları NULL olarak korunur;
 girdi satırları etiketli eğitim satırı sayısı değildir.
@@ -2590,8 +2593,8 @@ gündür. Çelişkili girdide çıktı klasörü oluşturulmaz.
 Kullanıcı terminalinde mevcut kanıtlarla:
 
 ```powershell
-$mlSplitLabels = "artifacts\ml_etiket_20261102_112102_355"
-$mlSplitFeatures = "artifacts\ml_girdi_20261102_132655_983"
+$mlSplitLabels = "artifacts\ml_etiket_20261102_201553_161"
+$mlSplitFeatures = "artifacts\ml_girdi_20261102_201744_673"
 $mlSplitOut = "artifacts\ml_bolme_$(Get-Date -Format yyyyMMdd_HHmmss_fff)"
 .venv\Scripts\python.exe -m app.ml split --labels-dir $mlSplitLabels --features-dir $mlSplitFeatures --output-dir $mlSplitOut
 $LASTEXITCODE
@@ -2693,11 +2696,13 @@ girdi/kod/ortam aynı çıktıları verir. Hiçbir X/y kopyası üretilmez.
 
 Sızıntı ve ölçüt testleri yalnız yapay veridir. Gerçek bölme ve kat
 uygunluğu, kullanıcı komutu çalıştırdıktan sonra ayrıca doğrulanır. Son
-Cimri alımından sonra bölme aynı kurallarla yeniden üretilecek; bu aşama
-model seçimini dondurmaz veya son testin kullanılmasına izin vermez.
+Cimri alımından sonra bölme aynı kurallarla yeniden üretildi; veri uzadığı
+için saklı test sınırı ileri kaydı. Önceki saklı testin puanı ve sınıf
+dağılımı hiç üretilmediğinden bu kayma bilgi sızdırmaz. Bölme model seçimini
+dondurmaz veya son testin kullanılmasına izin vermez.
 
 Son gerçek bölme doğrulamasının sayıları README Güncel kapsam tablosunda,
-kanıtı `artifacts/ml_bolme_20261102_144615_672/` klasöründedir. Giriş/çıkış
+kanıtı `artifacts/ml_bolme_20261102_202101_484/` klasöründedir. Giriş/çıkış
 parmak izleri, başlangıç tekilliği, ana/kat purge sınırları ve ayrı
 kalibrasyon üyelikleri dosyalar okunarak doğrulandı. Saklı test için yalnız
 sınır/anahtar/sayı incelendi; sınıf dağılımı veya tahmin puanı üretilmedi.

@@ -97,10 +97,10 @@ başlatılması [teknik rehberde](docs/teknik.md#komutlar) anlatılır.
 | Katalog | 60 ürün, 376 bağlantı (373 etkin); Hepsiburada 237, Trendyol 139 |
 | Toplama düzeni | Her gün 10:00 ve 22:00; haftalık keşif Pazar 14:00 (otomatik güvenli kabul) |
 | Cimri geçmişi | 58 ürün, 22.595 tarihli kayıt (699 eksik fiyat), 9 Ekim 2025–2 Kasım 2026; eşleştirme 58/60, iki ürün eşleştirilemedi; son alım yapıldı, düzenli alım yok (2 Kasım) |
-| Otomatik testler | 2206 test, 0 atlanan; Black ve Flake8 temiz (2 Kasım) |
-| ML etiket denetimi | 30 Ekim görüntüsüyle 2 Kasım'da doğrulandı: kendi serimizde 0 kullanılabilir / 1.174 belirsiz; Cimri'de 18.091 kullanılabilir (1.858 olumlu, 16.233 olumsuz) / 2.109 belirsiz. Sıkı çapraz kontrolde 22.704 pencere kaydı eşleşti. |
-| ML girdi denetimi | 30 Ekim görüntüsüyle 2 Kasım'da doğrulandı: kendi serimizde 1.174, Cimri'de 20.200 girdi satırı; toplam 21.374 başlangıç 4.2 ile birebir eşleşti, eksik/fazla/tekrarlı başlangıç ve tanınmayan model ailesi yok. |
-| ML bölme denetimi | Aynı görüntüyle 2 Kasım'da doğrulandı: eğitim 12.506, doğrulama 2.288, saklı test 2.528 kayıt; purge 769 kayıt. Dört kat Nisan–Temmuz 2026; bütün eğitim/kalibrasyon/doğrulama dilimleri iki sınıflı. Test sınıf dağılımı veya puanı açılmadı. |
+| Otomatik testler | 2207 test, 0 atlanan; Black ve Flake8 temiz (2 Kasım) |
+| ML etiket denetimi | Son alımı içeren 2 Kasım görüntüsüyle (son kapanmış gün 1 Kasım) doğrulandı: kendi serimizde 0 kullanılabilir / 1.323 belirsiz (30 gün geçmişi dolan 27 Ekim–1 Kasım başlangıçlarının gelecek penceresi henüz kapanmadı); Cimri'de 19.561 kullanılabilir (2.086 olumlu, 17.475 olumsuz) / 2.231 belirsiz. Sıkı çapraz kontrolde 24.616 pencere kaydı eşleşti. |
+| ML girdi denetimi | Aynı görüntüyle 2 Kasım'da doğrulandı: kendi serimizde 1.323, Cimri'de 21.792 girdi satırı; toplam 23.115 başlangıç 4.2 ile birebir eşleşti, eksik/fazla/tekrarlı başlangıç ve tanınmayan model ailesi yok. |
+| ML bölme denetimi | Aynı görüntüyle 2 Kasım'da doğrulandı: eğitim 13.647, doğrulama 2.531, saklı test 2.632 kayıt (3 Eylül–25 Ekim 2026); purge 751 kayıt. Dört kat Nisan–Temmuz 2026; bütün eğitim/kalibrasyon/doğrulama dilimleri iki sınıflı. Test sınıf dağılımı veya puanı açılmadı. |
 
 Katalogdaki **376 bağlantının markalara göre dağılımı** (üç pasif bağlantı dahil):
 
