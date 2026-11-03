@@ -268,6 +268,12 @@ def _checked(matrix, labels, title):
     return y.astype(np.int64)
 
 
+def _platt(model, x, y):
+    return CalibratedClassifierCV(
+        FrozenEstimator(LogOdds(model)), method="sigmoid"
+    ).fit(x, y)
+
+
 def fit_models(train_x, train_labels, calibration_x, calibration_labels):
     train_y = _checked(train_x, train_labels, "Eğitim")
     calibration_y = _checked(calibration_x, calibration_labels, "Kalibrasyon")
@@ -280,10 +286,7 @@ def fit_models(train_x, train_labels, calibration_x, calibration_labels):
     for model in raw.values():
         model.fit(train_x, train_y)
     platt = {
-        name: CalibratedClassifierCV(
-            FrozenEstimator(LogOdds(raw[name])), method="sigmoid"
-        ).fit(calibration_x, calibration_y)
-        for name in PLATT_NAMES
+        name: _platt(raw[name], calibration_x, calibration_y) for name in PLATT_NAMES
     }
     return FoldModels(raw, platt)
 
@@ -296,23 +299,89 @@ def predict_models(models, x):
     return {name: result[name] for name in PREDICTION_NAMES}
 
 
-def describe_models(models):
-    """Katın öğrendiklerini JSON'a yazılabilir sayılara döker."""
-    r1, r2, boosted = (models.raw[name] for name in ("r1", "r2", "lightgbm"))
-    names = list(COLUMNS)
+# Dondurulabilen seçim: deney raporundaki aday adı → altındaki ham model.
+FROZEN_CHOICES = dict(r2_platt="r2", lightgbm_platt="lightgbm")
+_FROZEN_BUILDERS = dict(r2=build_logistic, lightgbm=build_lightgbm)
+
+
+@dataclass(frozen=True)
+class FrozenModel:
+    """Seçilen model ve R0; pickle ile saklanıp yeniden yüklenen tek nesne."""
+
+    choice: str
+    reference: PriorRate
+    base: Pipeline
+    platt: CalibratedClassifierCV
+
+
+def fit_frozen(choice, train_x, train_labels, calibration_x, calibration_labels):
+    """Yalnız seçilen modeli ve R0'ı kurar; yöntem `fit_models` ile birebir aynıdır."""
+    if choice not in FROZEN_CHOICES:
+        raise ValueError("Dondurulabilen model r2_platt veya lightgbm_platt olmalı")
+    train_y = _checked(train_x, train_labels, "Eğitim")
+    calibration_y = _checked(calibration_x, calibration_labels, "Kalibrasyon")
+    reference = PriorRate().fit(train_x, train_y)
+    base = _FROZEN_BUILDERS[FROZEN_CHOICES[choice]]()
+    base.fit(train_x, train_y)
+    return FrozenModel(
+        choice, reference, base, _platt(base, calibration_x, calibration_y)
+    )
+
+
+def predict_frozen(frozen, x):
+    """R0 ve dondurulan modelin Platt sonrası olasılığı."""
+    return {
+        "r0": frozen.reference.predict_proba(x)[:, 1],
+        frozen.choice: frozen.platt.predict_proba(x)[:, 1],
+    }
+
+
+def _describe_platt(model):
+    calibrator = model.calibrated_classifiers_[0].calibrators[0]
+    # p = 1 / (1 + exp(a·skor + b)); a < 0 ise sıralama korunur.
+    return dict(
+        slope=float(calibrator.a_),
+        intercept=float(calibrator.b_),
+        order_preserved=bool(calibrator.a_ < 0),
+    )
+
+
+def _describe_r2(r2):
     logistic = r2.named_steps["model"]
+    return dict(
+        intercept=float(logistic.intercept_[0]),
+        coefficients={
+            name: float(value)
+            for name, value in zip(
+                r2[:-1].get_feature_names_out(list(COLUMNS)), logistic.coef_[0]
+            )
+        },
+        iterations=int(logistic.n_iter_[0]),
+        converged=bool(logistic.n_iter_[0] < LOGISTIC_PARAMS["max_iter"]),
+    )
+
+
+def _describe_lightgbm(boosted):
     classifier = boosted.named_steps["model"]
     gains = classifier.booster_.feature_importance(importance_type="gain")
+    return dict(
+        trees=int(classifier.booster_.num_trees()),
+        gain_importance={
+            name: float(value)
+            for name, value in zip(
+                boosted[:-1].get_feature_names_out(list(COLUMNS)), gains
+            )
+        },
+    )
+
+
+_DESCRIBERS = dict(r2=_describe_r2, lightgbm=_describe_lightgbm)
+
+
+def describe_models(models):
+    """Katın öğrendiklerini JSON'a yazılabilir sayılara döker."""
+    r1 = models.raw["r1"]
     uppers = [*R1_UPPER_EDGES, None]
-    platt = {}
-    for name, model in models.platt.items():
-        calibrator = model.calibrated_classifiers_[0].calibrators[0]
-        # p = 1 / (1 + exp(a·skor + b)); a < 0 ise sıralama korunur.
-        platt[name] = dict(
-            slope=float(calibrator.a_),
-            intercept=float(calibrator.b_),
-            order_preserved=bool(calibrator.a_ < 0),
-        )
     return dict(
         r0=dict(rate=models.raw["r0"].rate_),
         r1=dict(
@@ -327,26 +396,21 @@ def describe_models(models):
                 for index in range(len(uppers))
             ],
         ),
-        r2=dict(
-            intercept=float(logistic.intercept_[0]),
-            coefficients={
-                name: float(value)
-                for name, value in zip(
-                    r2[:-1].get_feature_names_out(names), logistic.coef_[0]
-                )
-            },
-            iterations=int(logistic.n_iter_[0]),
-            converged=bool(logistic.n_iter_[0] < LOGISTIC_PARAMS["max_iter"]),
-        ),
-        lightgbm=dict(
-            trees=int(classifier.booster_.num_trees()),
-            gain_importance={
-                name: float(value)
-                for name, value in zip(boosted[:-1].get_feature_names_out(names), gains)
-            },
-        ),
-        platt=platt,
+        r2=_describe_r2(models.raw["r2"]),
+        lightgbm=_describe_lightgbm(models.raw["lightgbm"]),
+        platt={name: _describe_platt(model) for name, model in models.platt.items()},
     )
+
+
+def describe_frozen(frozen):
+    """Dondurulan modelin öğrendiklerini JSON'a yazılabilir sayılara döker."""
+    base = FROZEN_CHOICES[frozen.choice]
+    return {
+        "choice": frozen.choice,
+        "r0": dict(rate=frozen.reference.rate_),
+        base: _DESCRIBERS[base](frozen.base),
+        "platt": _describe_platt(frozen.platt),
+    }
 
 
 def library_versions():

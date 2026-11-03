@@ -244,6 +244,29 @@ def write_ml_evidence(root, count=365):
     return paths
 
 
+def write_experiment_evidence(root, count=365):
+    """`write_ml_evidence` kanıtlarına deney klasörünü ekler; yolları döndürür."""
+    from app.ml.__main__ import main
+
+    paths = write_ml_evidence(root, count)
+    paths["experiment"] = root / "experiment"
+    code = main(
+        [
+            "experiment",
+            "--labels-dir",
+            str(paths["labels"]),
+            "--features-dir",
+            str(paths["features"]),
+            "--split-dir",
+            str(paths["split"]),
+            "--output-dir",
+            str(paths["experiment"]),
+        ]
+    )
+    assert code == 0
+    return paths
+
+
 def remove_label_run(tables, run_id):
     tables["collection_runs"] = [
         row for row in tables["collection_runs"] if row["run_id"] != run_id

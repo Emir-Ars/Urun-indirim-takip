@@ -13,7 +13,10 @@ from app.ml.splitting import (
     SplitInputs,
     build_split,
     evaluation_targets,
+    final_samples,
     fold_samples,
+    reserved_test_samples,
+    reserved_test_targets,
 )
 from tests.support.ml import feature_values
 
@@ -310,6 +313,166 @@ def test_fold_samples_reject_unknown_role_and_fold_number():
         fold_samples(inputs, plan, 0, "test_reserved")
     with pytest.raises(ValueError, match="Kat numarası"):
         fold_samples(inputs, plan, 99, "train")
+
+
+def final_keys(inputs, plan):
+    return {
+        role: [s.anchor.key for s, _ in final_samples(inputs, plan, role)]
+        for role in ("train", "calibration")
+    }
+
+
+def test_final_samples_use_the_fold_slice_rule_with_the_test_as_scored_period():
+    rows = samples()
+    plan = build_split(rows)
+    inputs = inputs_for(rows)
+    test_start = FIRST + timedelta(days=306)
+    calibration_start = test_start - timedelta(days=30)
+    position = {row.anchor.key: index for index, row in enumerate(rows)}
+    train = final_samples(inputs, plan, "train")
+    calibration = final_samples(inputs, plan, "calibration")
+    # Eğitim 0..268 (hedefi kalibrasyon sınırını aşan 269..275 temizlenir);
+    # kalibrasyon 276..298 (hedefi saklı teste uzanan 299..305 temizlenir).
+    assert len(train) == 269 * 2 and len(calibration) == 23 * 2
+    for sample, features in train:
+        assert sample.anchor.target_end < calibration_start
+        assert features.history_days == position[sample.anchor.key] + 1
+    for sample, features in calibration:
+        assert calibration_start <= sample.anchor.anchor_day
+        assert sample.anchor.target_end < test_start
+        assert features.history_days == position[sample.anchor.key] + 1
+    keys = final_keys(inputs, plan)
+    assert keys["train"] == sorted(keys["train"])
+    assert keys["calibration"] == sorted(keys["calibration"])
+    assert not set(keys["train"]) & set(keys["calibration"])
+    # Ana bölmenin eğitim, temizlenmiş eğitim ve doğrulama satırları kullanılır.
+    used = {roles(plan)[key] for role in keys.values() for key in role}
+    assert used == {"train", "purged_train", "validation"}
+    reserved = {key for key, role in roles(plan).items() if role == "test_reserved"}
+    assert reserved and reserved.isdisjoint(keys["train"] + keys["calibration"])
+
+
+def test_final_samples_ignore_own_unlabelled_and_reserved_rows():
+    rows = samples()
+    plan = build_split(rows)
+    base = final_keys(inputs_for(rows), plan)
+    unlabelled = {(1, "cimri", FIRST + timedelta(days=day)) for day in (10, 280)}
+    changed = ordered(
+        [
+            (
+                Sample(
+                    row.anchor.model_copy(update={"label": None}),
+                    row.brand,
+                    row.family,
+                )
+                if row.anchor.key in unlabelled
+                else row
+            )
+            for row in rows
+        ]
+        + samples(products=(1,), source="own")[:60]
+    )
+    changed_plan = build_split(changed)
+    result = final_keys(inputs_for(changed), changed_plan)
+    assert result["train"] == [key for key in base["train"] if key not in unlabelled]
+    assert result["calibration"] == [
+        key for key in base["calibration"] if key not in unlabelled
+    ]
+
+
+def test_final_samples_do_not_depend_on_reserved_test_labels_or_features():
+    rows = samples()
+    plan = build_split(rows)
+    reserved = {key for key, role in roles(plan).items() if role == "test_reserved"}
+    flipped = [
+        (
+            Sample(
+                row.anchor.model_copy(update={"label": 1 - row.anchor.label}),
+                row.brand,
+                row.family,
+            )
+            if row.anchor.key in reserved
+            else row
+        )
+        for row in rows
+    ]
+    base_inputs = inputs_for(rows)
+    features = tuple(
+        feature_values(history_days=999) if row.anchor.key in reserved else value
+        for row, value in zip(rows, base_inputs.features)
+    )
+    changed = SplitInputs(tuple(flipped), features, "0" * 64, {})
+    changed_plan = build_split(flipped)
+    assert changed_plan.assignments == plan.assignments
+    for role in ("train", "calibration"):
+        assert final_samples(changed, changed_plan, role) == final_samples(
+            base_inputs, plan, role
+        )
+
+
+@pytest.mark.parametrize(
+    "new_role", ["test_reserved", "purged_validation", "unlabelled"]
+)
+def test_final_samples_reject_a_development_row_with_a_foreign_role(new_role):
+    rows = samples()
+    plan = deepcopy(build_split(rows))
+    victim = (1, "cimri", FIRST + timedelta(days=10))
+    for row in plan.assignments:
+        if (row["product_id"], row["source"], row["anchor_day"]) == victim:
+            row["role"] = new_role
+    with pytest.raises(ValueError, match="Son model satırı"):
+        final_samples(inputs_for(rows), plan, "train")
+
+
+def test_final_samples_reject_unknown_role_and_missing_reserved_test():
+    rows = samples()
+    plan = deepcopy(build_split(rows))
+    inputs = inputs_for(rows)
+    with pytest.raises(ValueError, match="Son model rolü"):
+        final_samples(inputs, plan, "validation")
+    with pytest.raises(ValueError, match="Son model rolü"):
+        final_samples(inputs, plan, "test_reserved")
+    plan.report["partitions"]["test_reserved"]["first_anchor"] = None
+    with pytest.raises(ValueError, match="Saklı test bölümü boş"):
+        final_samples(inputs, plan, "train")
+
+
+def test_reserved_test_samples_are_the_reserved_rows_only():
+    rows = ordered(samples() + samples(products=(1,), source="own")[:60])
+    plan = build_split(rows)
+    members = reserved_test_samples(inputs_for(rows), plan)
+    assert len(members) == 54 * 2
+    assert len(members) == plan.report["partitions"]["test_reserved"]["rows"]
+    assert all(
+        roles(plan)[sample.anchor.key] == "test_reserved" for sample, _ in members
+    )
+    targets = reserved_test_targets(members)
+    assert {target.role for target in targets} == {"test_reserved"}
+    assert [target.key for target in targets] == [
+        sample.anchor.key for sample, _ in members
+    ]
+    # Eski puanlama yolu saklı testi yine reddeder; yalnız ayrı giriş noktası açar.
+    with pytest.raises(ValueError, match="Saklı test"):
+        evaluation_targets(rows, plan, partition="test_reserved")
+
+
+@pytest.mark.parametrize("kind", ["count", "own", "empty"])
+def test_reserved_test_samples_reject_a_plan_that_disagrees_with_the_rows(kind):
+    rows = ordered(samples() + samples(products=(1,), source="own")[:60])
+    plan = deepcopy(build_split(rows))
+    if kind == "count":
+        plan.report["partitions"]["test_reserved"]["rows"] += 1
+    elif kind == "own":
+        own = next(row for row in plan.assignments if row["role"] == "own_evaluation")
+        own["role"] = "test_reserved"
+        plan.report["partitions"]["test_reserved"]["rows"] += 1
+    else:
+        for row in plan.assignments:
+            if row["role"] == "test_reserved":
+                row["role"] = "unlabelled"
+        plan.report["partitions"]["test_reserved"]["rows"] = 0
+    with pytest.raises(ValueError, match="Saklı test"):
+        reserved_test_samples(inputs_for(rows), plan)
 
 
 def test_every_start_needs_exactly_one_feature_row():

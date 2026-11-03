@@ -1,4 +1,9 @@
-"""Anahtarlı doğrulama tahminlerinin ölçütleri; saklı testi puanlamaz."""
+"""Anahtarlı tahminlerin ölçütleri.
+
+Doğrulama ve kendi değerlendirme işlevleri saklı testi reddeder. Saklı testi
+yalnız `score_reserved_test` ve `reserved_test_bootstrap` puanlar; onlar da
+doğrulama hedeflerini reddeder.
+"""
 
 from collections import defaultdict
 from datetime import date, timedelta
@@ -62,9 +67,17 @@ def _guard(targets, role=None):
         raise ValueError("Tekrarlı değerlendirme anahtarı")
 
 
-def _aligned(targets, *predictions, role):
-    targets = list(targets)
-    _guard(targets, role)
+def _reserved_guard(targets):
+    if not targets or any(row.role != "test_reserved" for row in targets):
+        raise ValueError(
+            "Saklı test puanlaması yalnız boş olmayan saklı test hedeflerini alır"
+        )
+    keys = [row.key for row in targets]
+    if len(keys) != len(set(keys)):
+        raise ValueError("Tekrarlı değerlendirme anahtarı")
+
+
+def _align(targets, predictions):
     keys = [row.key for row in targets]
     values = []
     for rows in predictions:
@@ -72,12 +85,28 @@ def _aligned(targets, *predictions, role):
         if [row.key for row in rows] != keys:
             raise ValueError("Tahmin anahtarları veya sırası hedeflerle uyuşmuyor")
         values.append([row.probability for row in rows])
-    return targets, values
+    return values
+
+
+def _aligned(targets, *predictions, role):
+    targets = list(targets)
+    _guard(targets, role)
+    return targets, _align(targets, predictions)
+
+
+def _reserved_aligned(targets, *predictions):
+    targets = list(targets)
+    _reserved_guard(targets)
+    return targets, _align(targets, predictions)
 
 
 def positive_clusters(targets):
     targets = list(targets)
     _guard(targets)
+    return _clusters(targets)
+
+
+def _clusters(targets):
     intervals = defaultdict(list)
     for row in targets:
         if row.label == 1:
@@ -159,9 +188,19 @@ def _scores(labels, probabilities, references):
 
 def score_predictions(targets, probabilities, references, *, role="validation"):
     targets, (p, r0) = _aligned(targets, probabilities, references, role=role)
+    return _score_all(targets, p, r0)
+
+
+def score_reserved_test(targets, probabilities, references):
+    """Saklı testin tek puanlama girişi; doğrulama hedeflerini kabul etmez."""
+    targets, (p, r0) = _reserved_aligned(targets, probabilities, references)
+    return _score_all(targets, p, r0)
+
+
+def _score_all(targets, p, r0):
     labels = [row.label for row in targets]
     result = _scores(labels, p, r0)
-    result["positive_window_clusters"] = positive_clusters(targets)
+    result["positive_window_clusters"] = _clusters(targets)
     breakdowns, product_scores = {}, []
     for attribute in ("brand", "family", "product_id"):
         groups = defaultdict(list)
@@ -170,7 +209,7 @@ def score_predictions(targets, probabilities, references, *, role="validation"):
         cells = {}
         for name, indices in sorted(groups.items()):
             subset = [targets[index] for index in indices]
-            clusters = positive_clusters(subset)
+            clusters = _clusters(subset)
             supported = clusters >= METRIC_RULES["minimum_breakdown_clusters"]
             scores = (
                 _scores(
@@ -225,9 +264,6 @@ def calendar_block_indices(targets, rng):
 
 
 def paired_bootstrap(targets, model, reference_model, *, role="validation"):
-    import numpy as np
-    from sklearn.metrics import average_precision_score
-
     targets, (model, reference_model) = _aligned(
         targets, model, reference_model, role=role
     )
@@ -235,6 +271,21 @@ def paired_bootstrap(targets, model, reference_model, *, role="validation"):
         raise ValueError(
             "Model seçimi güven aralığı yalnız doğrulama katlarından hesaplanır"
         )
+    return _bootstrap(targets, model, reference_model)
+
+
+def reserved_test_bootstrap(targets, model, reference_model):
+    """Saklı test için aynı tarih bloklu AP farkı aralığı; tek giriş noktası."""
+    targets, (model, reference_model) = _reserved_aligned(
+        targets, model, reference_model
+    )
+    return _bootstrap(targets, model, reference_model)
+
+
+def _bootstrap(targets, model, reference_model):
+    import numpy as np
+    from sklearn.metrics import average_precision_score
+
     span = (
         (
             max(row.anchor_day for row in targets)

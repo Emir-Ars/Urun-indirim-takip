@@ -153,7 +153,7 @@ def fit_folds(split, plan):
     return results
 
 
-def _probabilities(targets, values):
+def keyed_probabilities(targets, values):
     return [
         Probability(
             product_id=target.product_id,
@@ -171,17 +171,17 @@ def _core(score):
     }
 
 
-def _without_bins(scores):
+def without_bins(scores):
     if scores is None:
         return None
     return {key: value for key, value in scores.items() if key != "calibration"}
 
 
-def _slim(score):
+def slim_score(score):
     slim = dict(score)
     slim["breakdowns"] = {
         attribute: {
-            name: dict(cell, scores=_without_bins(cell["scores"]))
+            name: dict(cell, scores=without_bins(cell["scores"]))
             for name, cell in cells.items()
         }
         for attribute, cells in score["breakdowns"].items()
@@ -242,7 +242,7 @@ def build_result(plan, results):
     combined_targets, fold_scores, rows = [], {}, []
     for result in results:
         by_model = {
-            name: _probabilities(result.targets, result.predictions[name])
+            name: keyed_probabilities(result.targets, result.predictions[name])
             for name in PREDICTION_NAMES
         }
         fold_scores[result.index] = {
@@ -312,7 +312,7 @@ def build_result(plan, results):
             positive_rate=(
                 positives / len(combined_targets) if combined_targets else None
             ),
-            scores={name: _slim(score) for name, score in combined.items()},
+            scores={name: slim_score(score) for name, score in combined.items()},
         ),
         bootstrap=intervals,
         selection=selection,

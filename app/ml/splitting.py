@@ -191,6 +191,33 @@ def _next_month(day):
     return date(day.year + day.month // 12, day.month % 12 + 1, 1)
 
 
+def _calibration_start(start):
+    return start - timedelta(days=SPLIT_RULES["calibration_days"])
+
+
+def _slice_rows(development, calibration_start, start, end):
+    """Eğitim, kalibrasyon ve puanlanan dönemin satırları; sınırı aşan etiket atılır.
+
+    Katlar ve son model aynı kuralı kullanır; böylece son model, doğrulanan
+    yöntemin aynı dilim düzeniyle kurulur.
+    """
+    raw = dict(
+        train=[row for row in development if row.anchor.anchor_day < calibration_start],
+        calibration=[
+            row
+            for row in development
+            if calibration_start <= row.anchor.anchor_day < start
+        ],
+        validation=[row for row in development if start <= row.anchor.anchor_day < end],
+    )
+    boundaries = dict(train=calibration_start, calibration=start, validation=end)
+    members = {
+        role: [row for row in rows if row.anchor.target_end < boundaries[role]]
+        for role, rows in raw.items()
+    }
+    return raw, members
+
+
 def _folds(development):
     if not development:
         return []
@@ -204,25 +231,8 @@ def _folds(development):
         month = following
     folds = []
     for start in months[-4:]:
-        end, calibration_start = _next_month(start), start - timedelta(days=30)
-        raw = dict(
-            train=[
-                row for row in development if row.anchor.anchor_day < calibration_start
-            ],
-            calibration=[
-                row
-                for row in development
-                if calibration_start <= row.anchor.anchor_day < start
-            ],
-            validation=[
-                row for row in development if start <= row.anchor.anchor_day < end
-            ],
-        )
-        boundaries = dict(train=calibration_start, calibration=start, validation=end)
-        members = {
-            role: [row for row in rows if row.anchor.target_end < boundaries[role]]
-            for role, rows in raw.items()
-        }
+        end, calibration_start = _next_month(start), _calibration_start(start)
+        raw, members = _slice_rows(development, calibration_start, start, end)
         statistics = {role: _stats(rows) for role, rows in members.items()}
         limits = [
             f"{kind}_{role}"
@@ -415,10 +425,7 @@ def fold_samples(inputs, plan, fold_index, role):
         validation=fold["validation_end"] + timedelta(days=1),
     )[role]
     position = {row.anchor.key: index for index, row in enumerate(inputs.samples)}
-    assigned = {
-        (row["product_id"], row["source"], row["anchor_day"]): row["role"]
-        for row in plan.assignments
-    }
+    assigned = _assigned_roles(plan)
     members = []
     for record in fold["members"][role]:
         key = (record["product_id"], record["source"], record["anchor_day"])
@@ -439,3 +446,79 @@ def fold_samples(inputs, plan, fold_index, role):
             )
         members.append((inputs.samples[index], inputs.features[index]))
     return members
+
+
+FINAL_ROLES = ("train", "calibration")
+
+
+def _assigned_roles(plan):
+    return {
+        (row["product_id"], row["source"], row["anchor_day"]): row["role"]
+        for row in plan.assignments
+    }
+
+
+def final_boundaries(plan):
+    """Son modelin kalibrasyon başlangıcı ve saklı testin ilk günü."""
+    test_start = plan.report["partitions"]["test_reserved"]["first_anchor"]
+    if test_start is None:
+        raise ValueError("Saklı test bölümü boş; son model kurulamaz")
+    return dict(calibration_start=_calibration_start(test_start), test_start=test_start)
+
+
+def final_samples(inputs, plan, role):
+    """Son modelin eğitim veya kalibrasyon satırları ve girdileri, anahtar sırasıyla.
+
+    Dilimler katlardakiyle aynı kuraldan çıkar; puanlanan dönem saklı testtir ve
+    burada hiç seçilmez. Geliştirme satırı, ana bölmede eğitim, doğrulama veya
+    bunlardan purge ile temizlenmiş eğitim rolünde olan etiketli Cimri satırıdır.
+    """
+    if role not in FINAL_ROLES:
+        raise ValueError("Son model rolü train veya calibration olmalı")
+    boundaries = final_boundaries(plan)
+    test_start = boundaries["test_start"]
+    development = [
+        sample
+        for sample in inputs.samples
+        if sample.anchor.source == "cimri"
+        and sample.anchor.label is not None
+        and sample.anchor.target_end < test_start
+    ]
+    # Puanlanan dönem (üçüncü dilim) başlangıcı ve bitişi eşit: boş kalır.
+    _, members = _slice_rows(
+        development, boundaries["calibration_start"], test_start, test_start
+    )
+    assigned = _assigned_roles(plan)
+    position = {row.anchor.key: index for index, row in enumerate(inputs.samples)}
+    selected = []
+    for sample in members[role]:
+        if assigned.get(sample.anchor.key) not in FOLD_ASSIGNMENTS:
+            raise ValueError(
+                "Son model satırı saklı test, etiketsiz veya kendi kaynağı olamaz"
+            )
+        selected.append((sample, inputs.features[position[sample.anchor.key]]))
+    return selected
+
+
+def reserved_test_samples(inputs, plan):
+    """Saklı testin etiketli Cimri satırları ve girdileri. Yalnız `final-test` çağırır.
+
+    Model dondurulup parmak izi doğrulanmadan bu işleve gelinmez; dondurma
+    komutu saklı test satırlarına hiç dokunmaz.
+    """
+    assigned = _assigned_roles(plan)
+    members = []
+    for sample, features in zip(inputs.samples, inputs.features):
+        if assigned.get(sample.anchor.key) != "test_reserved":
+            continue
+        if sample.anchor.source != "cimri" or sample.anchor.label is None:
+            raise ValueError("Saklı test satırı etiketli Cimri başlangıcı olmalı")
+        members.append((sample, features))
+    expected = plan.report["partitions"]["test_reserved"]["rows"]
+    if not members or len(members) != expected:
+        raise ValueError("Saklı test satır sayısı bölme raporuyla uyuşmuyor")
+    return members
+
+
+def reserved_test_targets(members):
+    return [_target(sample, "test_reserved") for sample, _ in members]

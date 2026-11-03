@@ -45,7 +45,7 @@ Kullanıcı arayüzde arama yaptığında canlı scraping veya model eğitimi
 | Proje yapısının sadeleştirilmesi (Bölüm 8, Adım 1–5) | ✅ Tamamlandı (26 Ekim) | `75d4732` |
 | ML öncesi ekran iyileştirmeleri 1–2 | ✅ Tamamlandı (28 Ekim) | `dd2e262`, `94045bd`, CI 40643349065 |
 | Proje mühendisliğini pekiştirme | ⏸️ Pasif (28 Ekim kararı): iş sırasında değil; kullanıcı istediğinde Oturum 2'den sürer | Program aşağıda; oturum ilerlemesi yerel devir notunda |
-| 8. ML (indirim tahmini) | 🔄 Hazırlık sürüyor (4.0–4.5 tamamlandı; 4.6 deney, yorum ve belgeler hazır, gönderim/CI bekliyor) | Bölüm 9 |
+| 8. ML (indirim tahmini) | 🔄 ML hazırlığı 4.0–4.6 tamamlandı; model dondurma ve saklı test komutları kodlandı (5.1), dondurma ve saklı test henüz çalıştırılmadı; gölge mod sonraki ayrı plan | Bölüm 9 |
 | 9. Sürekli işletim ve Docker | 🔄 Sürekli işletim kararı verildi (22 Ekim: dizüstü sürekli açık); Docker başlanmadı | Bölüm 9 |
 
 Bugünkü işletim: fiyat turu her gün 10:00 ve 22:00'de, haftalık keşif her
@@ -241,6 +241,7 @@ rehberde, o günkü tartışması arşivdedir.
 | 2 Kasım | Sabah turunun katkısı ölçüldü; 10:00 ve 22:00 turları korunur (19 Ekim kararı sürer). | 2 Kasım görüntüsü, kendi serimiz (28 Eylül–25 Ekim başlangıçları, 4.2 kuralı, 30 gün şartı aranmadan): yalnız akşam turuyla kullanılabilir pencere 903'ten 508'e düşer (akşam turunun kullanılamadığı 7 gün); iki yolla da etiketlenen 508 pencerenin 8'inde (4 ürün) ≥%5 düşüşü yalnız sabah turu gördü. Veri ~5 hafta; ardışık pencereler bağımsız değil. |
 | 3 Kasım | 4.5 seçim sonucunda dört kat hazır değilse “değerlendirilemedi”; dört kat hazırken hesaplanan bir koşul sağlanmıyorsa, başka koşul hesaplanamasa bile “karşılanmadı”; sağlanmayan koşul yokken eksik hesap varsa “değerlendirilemedi”; hepsi sağlanırsa “karşılandı”. | Kullanıcı sonuç görülmeden bu ayrımı onayladı: bilgi eksikliği ile sağlanmayan seçim koşulu ayrılır; NULL başarısız ölçüm sayılmaz. Kesin seçim yapılmaz; bugünkü davranış [teknik rehberde](docs/teknik.md#modeller-ve-deney-python--m-appml-experiment). |
 | 3 Kasım | 4.6 uygulama planı onaylandı: mevcut 2 Kasım kanıtlarıyla sabit ayarlı ilk Cimri deneyi kullanıcı terminalinde çalıştırılır; süre/çıkış kodu kaydedilir, çıktılar yeniden eğitim olmadan doğrulanıp yorumlanır. | Başarı koşulları sonuçtan önce sabit kalır; saklı test, kendi kaynak değerlendirmesi ve kesin model seçimi sonraki ayrı adımlardadır. |
+| 3 Kasım | Adım 5 uygulama planı onaylandı. Dondurulan model deney seçiminden kurala göre türetilir (`met` → LightGBM + Platt, `not_met` → R2 + Platt; bugünkü sonuç `not_met` olduğundan R2 + Platt). Saklı testte yalnız dondurulan model ve R0 puanlanır. Model pickle ile saklanır ve yalnız ön kayıtlı manifest SHA-256'sı, dosya parmak izleri ve birebir kütüphane sürümleri denetlendikten sonra açılır; yüklenen model kayıtlı kalibrasyon tahminlerini üretmelidir. Dondurma kaydı test açılmadan Git'e işlenir. Test sonucu zayıf olsa da model değişmez, gölge moda geçilir. Saklı test bir kez açılır ve seçim veya ayar için bir daha kullanılmaz. | Kullanıcı seçimleri. Kural sonuçtan önce sabittir; sonuç görüldükten sonra model değiştirmek testi bilgi vermez hâle getirir ve Cimri'de dokunulmamış başka test kalmadı. "Tek açılış" kodla zorlanmaz, ön kayıt ve bu kuralla sağlanır. Ayrıntılı davranış [teknik rehberde](docs/teknik.md#model-dondurma-ve-saklı-test-python--m-appml-freeze-final-test). |
 
 ### Bilerek değiştirilmeyen davranışlar
 
@@ -370,15 +371,13 @@ beklenen davranışı ve sonuca güvenmek için gereken kanıtlar açıklanır.
    Önceki iki ara iş de aynı gün tamamlandı ([kayıt](docs/gecmis.md)):
    1 Kasım keşfinin kaydı ve Hepsiburada arama API'si düzeltmesi.
    Düzeltmenin ilk tam canlı sonucu 8 Kasım keşfinde kontrol edilir.
-4. **ML hazırlığı:** 4.0–4.5 tamamlandı. 4.1–4.4 komutları son alımı içeren
-   2 Kasım görüntüsüyle yeniden çalıştırıldı, kod değişmedi (sayılar
-   README'de). 4.5 deney komutu gönderildi ve CI doğrulandı
-   ([kayıt](docs/gecmis.md)). 4.6 gerçek deneyi çalıştırıldı, kanıtları
-   doğrulandı ve sonuçları yorumlandı; belgeler hazır, gönderim/CI bekliyor.
-   LightGBM seçim koşulu karşılanmadı; kesin model seçilmedi.
-   Hedef: 15 Kasım.
+4. **ML hazırlığı:** ✅ 4.0–4.6 tamamlandı (3 Kasım); son Cimri alımını içeren
+   2 Kasım kanıtlarıyla ilk gerçek deney çalıştırıldı, doğrulandı ve yorumlandı;
+   belgeler gönderildi, CI yeşil ([kayıt](docs/gecmis.md)). LightGBM seçim
+   koşulu karşılanmadı; kesin model seçilmedi. Güncel puan ve kapsam README'de.
 5. **Model seçiminin dondurulması ve son testin tek kez açılması:** hedef
-   22 Kasım; ayrı plan.
+   22 Kasım; 3 Kasım planı onaylandı (Bölüm 5), adımlar Bölüm 9'daki 5.1–5.3
+   tablosundadır.
 6. **Gölge mod:** canlı günlük tahmin kaydı ve 27 Ekim'den itibaren geriye
    dönük tahminler (2 Kasım kararı); hedef 6 Aralık; ayrı plan.
 7. **Gösterim:** ekran kodu Aralık'ta kapı kapalıyken hazırlanır; kapı Ocak
@@ -447,13 +446,21 @@ ML hazırlığının adımları (kalan sıra 4; yapı kararı Bölüm 5, 28 Ekim
 | 4.3 | Girdiler ve sızıntı testi | ✅ Tamamlandı (2 Kasım); gerçek görüntüde başlangıç eşleşmesi, gönderim ve CI doğrulandı |
 | 4.4 | Zaman bölmesi (purge, ileri yürüyen katlar) ve ölçütler | ✅ Tamamlandı (2 Kasım); gerçek bölme/kat, gönderim ve CI doğrulandı |
 | 4.5 | R0–R2, LightGBM, kalibrasyon ve deney raporu | ✅ Tamamlandı (3 Kasım); kod, belgeler, gönderim ve CI doğrulandı; gerçek deney 4.6'da |
-| 4.6 | Son alımla uzatılmış Cimri verisiyle ilk deney; son %15 test açılmaz | 🔄 Deney, doğrulama, yorum ve belgeler hazır (3 Kasım); LightGBM seçim koşulu karşılanmadı, kesin seçim yapılmadı; gönderim/CI bekliyor |
+| 4.6 | Son alımla uzatılmış Cimri verisiyle ilk deney; son %15 test açılmaz | ✅ Tamamlandı (3 Kasım); gerçek deney, doğrulama, yorum, belgeler, gönderim ve CI doğrulandı; kesin seçim yapılmadı |
 
 Bu aşamada tahmin gösterilmez, gölge mod kurulmaz ve DB'ye yazılmaz; bunlar
 ayrı planlardır. Son Cimri alımından sonra 4.1–4.4 komutları uzatılmış
 veriyle yeniden çalıştırıldı (2 Kasım); 4.5 ve 4.6 bu veriyle yapılır
-(2 Kasım kararı). Model seçiminin dondurulması ve son testin tek kez açılması
-4.6'dan sonraki ayrı plandır.
+(2 Kasım kararı).
+
+Model seçiminin dondurulması ve son testin tek kez açılması (kalan sıra 5,
+3 Kasım planı); her adım ayrı commit ve onaydır:
+
+| Adım | İş | Durum |
+|---|---|---|
+| 5.1 | `freeze` ve `final-test` komutları, saklı test için ayrı puanlama girişleri, güvenli model yükleme, testler ve belgeler | 🔄 Kod, testler ve belgeler hazır; gönderim onayı bekliyor |
+| 5.2 | Dondurma (ön kayıt): kullanıcı `freeze` komutunu çalıştırır, model SHA-256'sı ve özeti belgeye işlenir, commit/push, CI | ⏳ Bekliyor; saklı test bu adımda da kapalı |
+| 5.3 | Saklı testin tek kez açılması: kullanıcı `final-test` komutunu ön kayıtlı SHA ile çalıştırır; sonuç doğrulanır, belgelenir, commit/push, CI | ⏳ Bekliyor |
 
 ## 10. Çalışma ve Git disiplini
 

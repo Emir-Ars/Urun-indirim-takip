@@ -827,3 +827,487 @@ def verify_experiment_outputs(directory, inputs):
         raise ValueError("Deney raporu saklı test veya kendi kaynağı kuralına uymuyor")
     json.loads((directory / "models.json").read_bytes())
     return manifest
+
+
+MODEL_OUTPUT_FILES = (
+    "model.pkl",
+    "model.json",
+    "calibration_predictions.jsonl",
+    "report.md",
+)
+
+
+def model_markdown_report(document):
+    choice, selection, slices = (
+        document["choice"],
+        document["selection"],
+        document["slices"],
+    )
+    values, model = selection["values"], document["model"]
+    reason = (
+        "LightGBM + Platt, R2 + Platt'ı kanıtlı biçimde geçti."
+        if selection["status"] == "met"
+        else "LightGBM + Platt, R2 + Platt'ı kanıtlı biçimde geçemedi; "
+        "önceden yazılmış kurala göre en güçlü referans seçilir."
+    )
+    lines = [
+        "# Adım 5 — Dondurulan model",
+        "",
+        "Model, deney raporundaki seçim sonucundan kurala göre türetildi; elle",
+        "seçilmedi. Bu adım saklı test satırlarını hiç okumaz: saklı test açılmadı.",
+        "Model bu dosyalarla sabittir; test sonucu modeli değiştirmez.",
+        "",
+        f"Dondurulan model: **{MODEL_TITLES[choice]}**",
+        "",
+        "## Seçimin gerekçesi (ilk Cimri deneyi)",
+        "",
+        f"Seçim ölçütü sonucu: **{SELECTION_TITLES[selection['status']]}**. {reason}",
+        "",
+        "| Ölçü | LightGBM + Platt | R2 + Platt |",
+        "|---|---:|---:|",
+        f"| Birleşik Brier | {_number(values['brier']['candidate'])} "
+        f"| {_number(values['brier']['baseline'])} |",
+        f"| Birleşik log loss | {_number(values['log_loss']['candidate'])} "
+        f"| {_number(values['log_loss']['baseline'])} |",
+        "",
+        "AP farkı (LightGBM + Platt − R2 + Platt): "
+        f"{_number(values['ap_difference'])}, "
+        f"%95 aralık [{_number(values['ap_interval_lower'])}, "
+        f"{_number(values['ap_interval_upper'])}].",
+        "",
+        "## Eğitim ve kalibrasyon dilimleri",
+        "",
+        f"Kalibrasyon başlangıcı: {slices['calibration_start']} · "
+        f"saklı testin ilk günü: {slices['test_start']}",
+        "",
+        "| Dilim | Satır | Olumlu | İlk başlangıç | Son başlangıç "
+        "| En geç hedef sonu |",
+        "|---|---:|---:|---|---|---|",
+    ]
+    for role, title in (("train", "Eğitim"), ("calibration", "Kalibrasyon")):
+        item = slices[role]
+        lines.append(
+            f"| {title} | {item['rows']} | {item['positive']} "
+            f"| {item['first_anchor']} | {item['last_anchor']} "
+            f"| {item['latest_target_end']} |"
+        )
+    platt = model["platt"]
+    lines += [
+        "",
+        "## Öğrenilenler",
+        "",
+        f"- R0 olumlu oranı: {_number(model['r0']['rate'])}",
+        f"- Platt eğimi: {_number(platt['slope'])} · kesişimi: "
+        f"{_number(platt['intercept'])} · sıralama korundu: "
+        f"{_verdict(platt['order_preserved'])}",
+    ]
+    if "r2" in model:
+        lines.append(
+            f"- R2 yineleme: {model['r2']['iterations']} · yakınsadı: "
+            f"{_verdict(model['r2']['converged'])}"
+        )
+    else:
+        lines.append(f"- LightGBM ağaç sayısı: {model['lightgbm']['trees']}")
+    lines += [
+        "",
+        "## Deneydeki doğrulama puanları (dört ay, bu modelin değil kat modellerinin)",
+        "",
+        "| Model | Satır | AP | Brier | Log loss | Brier skill |",
+        "|---|---:|---:|---:|---:|---:|",
+    ]
+    for name in ("r0", choice):
+        score = document["experiment_validation"][name]
+        lines.append(
+            f"| {MODEL_TITLES[name]} | {score['rows']} "
+            f"| {_number(score['average_precision'])} | {_number(score['brier'])} "
+            f"| {_number(score['log_loss'])} | {_number(score['brier_skill'])} |"
+        )
+    lines += [
+        "",
+        "## Sınırlar",
+        "",
+        "- Dondurulan model, aynı yöntem ve ayarlarla ama kat modellerinden daha",
+        "  geniş bir eğitim dilimiyle kuruldu; bu özel model henüz puanlanmadı.",
+        "- Sonuçlar Cimri'nin günlük en düşük fiyatı üzerindedir; kendi",
+        "  ölçümümüzle aynı kapsam değildir ve kendi verimizde doğrulanmadı.",
+        "- Model dosyası pickle'dır; yalnız manifestin beklenen SHA-256 değeri,",
+        "  dosya parmak izleri ve kütüphane sürümleri tuttuğunda açılır.",
+    ]
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def write_model_outputs(directory, inputs, result):
+    import pickle
+
+    from app.ml.final import FINAL_RULES
+    from app.ml.metrics import METRIC_RULES
+    from app.ml.models import MODEL_RULES, library_versions
+    from app.ml.splitting import SPLIT_RULES
+
+    directory.mkdir(parents=True, exist_ok=False)
+    files = {
+        "model.pkl": pickle.dumps(
+            result.frozen, protocol=FINAL_RULES["serialization"]["protocol"]
+        ),
+        "model.json": json_bytes(result.document) + b"\n",
+        "calibration_predictions.jsonl": b"".join(
+            json_bytes(row) + b"\n" for row in result.calibration_rows
+        ),
+        "report.md": model_markdown_report(result.document).encode("utf-8"),
+    }
+    for name, content in files.items():
+        (directory / name).write_bytes(content)
+    manifest = dict(
+        format_version=1,
+        status="complete",
+        choice=result.choice,
+        snapshot_sha256=inputs.snapshot_sha256,
+        input_manifests=inputs.input_manifests,
+        experiment_manifest_sha256=result.experiment_manifest_sha256,
+        split_rules=SPLIT_RULES,
+        metric_rules=METRIC_RULES,
+        model_rules=MODEL_RULES,
+        final_rules=FINAL_RULES,
+        libraries=library_versions(),
+        test_opened=False,
+        files={
+            name: hashlib.sha256((directory / name).read_bytes()).hexdigest()
+            for name in MODEL_OUTPUT_FILES
+        },
+    )
+    (directory / "manifest.json").write_bytes(json_bytes(manifest) + b"\n")
+
+
+def verify_model_outputs(directory, inputs):
+    """Model klasörünü pickle'ı açmadan doğrular: manifest, parmak izi, sürümler."""
+    import re
+
+    from app.ml.final import FINAL_RULES
+    from app.ml.metrics import METRIC_RULES
+    from app.ml.models import FROZEN_CHOICES, MODEL_RULES, library_versions
+    from app.ml.splitting import SPLIT_RULES
+
+    manifest = json.loads((directory / "manifest.json").read_bytes())
+    expected = dict(
+        format_version=1,
+        status="complete",
+        snapshot_sha256=inputs.snapshot_sha256,
+        input_manifests=inputs.input_manifests,
+        split_rules=SPLIT_RULES,
+        metric_rules=METRIC_RULES,
+        model_rules=MODEL_RULES,
+        final_rules=FINAL_RULES,
+        libraries=library_versions(),
+        test_opened=False,
+    )
+    if (
+        not isinstance(manifest, dict)
+        or any(manifest.get(name) != value for name, value in expected.items())
+        or manifest.get("choice") not in FROZEN_CHOICES
+        or not re.fullmatch(
+            r"[0-9a-f]{64}", str(manifest.get("experiment_manifest_sha256"))
+        )
+        or not isinstance(manifest.get("files"), dict)
+        or set(manifest["files"]) != set(MODEL_OUTPUT_FILES)
+    ):
+        raise ValueError(
+            "Model manifesti girişlerle, kurallarla veya kütüphane sürümleriyle "
+            "uyuşmuyor"
+        )
+    for name in MODEL_OUTPUT_FILES:
+        if (
+            hashlib.sha256((directory / name).read_bytes()).hexdigest()
+            != manifest["files"][name]
+        ):
+            raise ValueError(f"Model dosyasının parmak izi tutmuyor: {name}")
+    document = json.loads((directory / "model.json").read_bytes())
+    status = document["selection"]["status"]
+    if (
+        document["choice"] != manifest["choice"]
+        or FINAL_RULES["selection_to_model"].get(status) != manifest["choice"]
+    ):
+        raise ValueError("Model, kayıtlı seçim sonucundan türetilen modelle uyuşmuyor")
+    reserved = {
+        (row["product_id"], row["source"], row["anchor_day"])
+        for row in inputs.plan.assignments
+        if row["role"] == "test_reserved"
+    }
+    fields = {
+        "product_id",
+        "source",
+        "anchor_day",
+        "label",
+        "r0",
+        manifest["choice"],
+    }
+    previous = None
+    for line in (directory / "calibration_predictions.jsonl").read_bytes().splitlines():
+        row = json.loads(line)
+        if set(row) != fields or row["source"] != "cimri" or row["label"] not in (0, 1):
+            raise ValueError("Kalibrasyon tahmin satırının alanları sözleşmeye uymuyor")
+        key = (row["product_id"], row["source"], date.fromisoformat(row["anchor_day"]))
+        if (
+            key in reserved
+            or (previous is not None and key <= previous)
+            or not 0 <= row["r0"] <= 1
+            or not 0 <= row[manifest["choice"]] <= 1
+        ):
+            raise ValueError(
+                "Kalibrasyon tahminleri sıralı, tekil ve saklı testsiz olmalı"
+            )
+        previous = key
+    return manifest
+
+
+FINAL_TEST_OUTPUT_FILES = ("predictions.jsonl", "report.json", "report.md")
+
+READING_TITLES = {
+    "brier_skill_above_zero": "Brier skill 0'ın üstünde",
+    "ap_interval_lower_above_zero": (
+        "Model − R0 AP farkının %95 aralığında alt sınır 0'ın üstünde"
+    ),
+}
+
+
+def final_test_markdown_report(report):
+    choice, test = report["choice"], report["reserved_test"]
+    reading, interval = report["reading"], report["bootstrap"]
+    scores = report["scores"]
+    lines = [
+        "# Adım 5 — Saklı test (tek açılış)",
+        "",
+        "Saklı test bu raporla açıldı; yalnız dondurulan model ve R0 puanlandı.",
+        "Okuma koşulları yalnız bilgidir: sonuç ne olursa olsun model değişmez ve",
+        "bu test seçim veya ayar için yeniden kullanılmaz. Kendi serimiz puanlanmadı.",
+        "Olumlu satırlar bağımsız düşüş olayı sayısı değildir.",
+        "",
+        f"Model: **{MODEL_TITLES[choice]}** · model manifest SHA-256: "
+        f"`{report['model_manifest_sha256']}`",
+        "",
+        f"Saklı test: {test['rows']} satır · olumlu {test['positives']} "
+        f"· olumlu oranı (taban AP): %{100 * test['positive_rate']:.2f} "
+        f"· {test['first_anchor']} – {test['last_anchor']}",
+        "",
+        "## Puanlar",
+        "",
+        "| Model | AP | Brier | Log loss | Brier skill |",
+        "|---|---:|---:|---:|---:|",
+    ]
+    for name in ("r0", choice):
+        score = scores[name]
+        lines.append(
+            f"| {MODEL_TITLES[name]} | {_number(score['average_precision'])} "
+            f"| {_number(score['brier'])} | {_number(score['log_loss'])} "
+            f"| {_number(score['brier_skill'])} |"
+        )
+    lines += [
+        "",
+        "## Eşleştirilmiş fark (14 günlük tarih blokları, %95)",
+        "",
+        "| Karşılaştırma | AP farkı | Alt | Üst | Geçerli tekrar | Not |",
+        "|---|---:|---:|---:|---:|---|",
+        f"| {MODEL_TITLES[choice]} − {MODEL_TITLES['r0']} "
+        f"| {_number(interval['point_difference'])} | {_number(interval['lower'])} "
+        f"| {_number(interval['upper'])} "
+        f"| {interval['valid_repeats']} / {interval['repeats']} "
+        f"| {', '.join(interval['reasons'])} |",
+        "",
+        "## Okuma koşulları",
+        "",
+        f"Sonuç: **{SELECTION_TITLES[reading['status']]}**. Bu yalnız bir okumadır; "
+        "model değişmez.",
+        "",
+        "| Koşul | Sağlandı mı |",
+        "|---|---|",
+    ]
+    lines.extend(
+        f"| {READING_TITLES[item['name']]} | {_verdict(item['passed'])} |"
+        for item in reading["conditions"]
+    )
+    validation = report["experiment_validation"]
+    lines += [
+        "",
+        "## Doğrulama aylarıyla yan yana",
+        "",
+        "Doğrulama satırları kat modellerinin dört aylık puanlarıdır; dönem, olumlu",
+        "oranı ve model farklı olduğu için birebir karşılaştırma sayılmaz.",
+        "",
+        "| Model | Kaynak | Satır | AP | Brier | Log loss | Brier skill |",
+        "|---|---|---:|---:|---:|---:|---:|",
+    ]
+    for source, group in (
+        ("doğrulama", {name: validation[name] for name in ("r0", choice)}),
+        ("saklı test", {name: scores[name] for name in ("r0", choice)}),
+    ):
+        for name, score in group.items():
+            lines.append(
+                f"| {MODEL_TITLES[name]} | {source} | {score['rows']} "
+                f"| {_number(score['average_precision'])} | {_number(score['brier'])} "
+                f"| {_number(score['log_loss'])} | {_number(score['brier_skill'])} |"
+            )
+    lines += [
+        "",
+        "## Güvenilirlik (saklı test)",
+        "",
+        "Her kovada tahmin ortalaması ile gerçekleşen oran yakınsa model kalibredir.",
+        "`*`: 20'den az kayıt.",
+        "",
+        "| Aralık | Satır | Ortalama tahmin | Gerçekleşen oran |",
+        "|---|---:|---:|---:|",
+    ]
+    for bin_ in scores[choice]["calibration"]:
+        mark = "*" if bin_["low_support"] else ""
+        lines.append(
+            f"| {bin_['lower']:.1f}–{bin_['upper']:.1f} | {bin_['count']}{mark} "
+            f"| {_number(bin_['mean_probability'])} "
+            f"| {_number(bin_['observed_rate'])} |"
+        )
+    macro = scores[choice]["macro"]
+    lines += [
+        "",
+        "## Ürün makro ortalaması ve marka kırılımı",
+        "",
+        "Beşten az olumlu pencere kümesi olan hücre `yetersiz` yazılır.",
+        "",
+        f"Yeterli ürün / toplam: {macro['supported_products']} / "
+        f"{macro['total_products']} · makro AP "
+        f"{_number(macro['scores']['average_precision']['value'])} "
+        f"· makro Brier {_number(macro['scores']['brier']['value'])}",
+        "",
+        "| Marka | Satır | Olumlu pencere kümesi | "
+        f"AP {MODEL_TITLES[choice]} | AP {MODEL_TITLES['r0']} |",
+        "|---|---:|---:|---:|---:|",
+    ]
+
+    def average_precision(item):
+        if item["scores"] is None:
+            return "yetersiz"
+        return _number(item["scores"]["average_precision"])
+
+    reference_brands = scores["r0"]["breakdowns"]["brand"]
+    for brand, cell in scores[choice]["breakdowns"]["brand"].items():
+        lines.append(
+            f"| {brand} | {cell['rows']} | {cell['positive_window_clusters']} "
+            f"| {average_precision(cell)} | "
+            f"{average_precision(reference_brands[brand])} |"
+        )
+    lines += [
+        "",
+        "## Sınırlar",
+        "",
+        "- Saklı test yaklaşık sekiz haftalık tek bir dönemdir; 14 günlük tarih",
+        "  blokları yalnız birkaç tane çıkar ve aralık kaba ve geniştir.",
+        "- Sonuçlar Cimri'nin günlük en düşük fiyatı üzerindedir; kendi",
+        "  ölçümümüzle aynı kapsam değildir ve kendi verimizde doğrulanmadı.",
+        "- Ardışık günlerin gelecek pencereleri örtüşür; satırlar bağımsız değildir.",
+        "- Bu sonuç ekranda tahmin gösterme yeterliliği değildir; o kapı kendi",
+        "  verimizdeki gölge moda bağlıdır.",
+    ]
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def write_final_test_outputs(directory, inputs, result):
+    from app.ml.final import FINAL_RULES
+    from app.ml.metrics import METRIC_RULES
+    from app.ml.models import library_versions
+    from app.ml.splitting import SPLIT_RULES
+
+    directory.mkdir(parents=True, exist_ok=False)
+    files = {
+        "predictions.jsonl": b"".join(
+            json_bytes(row) + b"\n" for row in result.predictions
+        ),
+        "report.json": json_bytes(result.report) + b"\n",
+        "report.md": final_test_markdown_report(result.report).encode("utf-8"),
+    }
+    for name, content in files.items():
+        (directory / name).write_bytes(content)
+    manifest = dict(
+        format_version=1,
+        status="complete",
+        snapshot_sha256=inputs.snapshot_sha256,
+        input_manifests=inputs.input_manifests,
+        model_manifest_sha256=result.report["model_manifest_sha256"],
+        split_rules=SPLIT_RULES,
+        metric_rules=METRIC_RULES,
+        final_rules=FINAL_RULES,
+        libraries=library_versions(),
+        test_opened=True,
+        files={
+            name: hashlib.sha256((directory / name).read_bytes()).hexdigest()
+            for name in FINAL_TEST_OUTPUT_FILES
+        },
+    )
+    (directory / "manifest.json").write_bytes(json_bytes(manifest) + b"\n")
+
+
+def verify_final_test_outputs(directory, inputs, model_manifest_sha256):
+    from app.ml.final import FINAL_RULES
+    from app.ml.metrics import METRIC_RULES
+    from app.ml.models import FROZEN_CHOICES, library_versions
+    from app.ml.splitting import SPLIT_RULES
+
+    manifest = json.loads((directory / "manifest.json").read_bytes())
+    expected = dict(
+        format_version=1,
+        status="complete",
+        snapshot_sha256=inputs.snapshot_sha256,
+        input_manifests=inputs.input_manifests,
+        model_manifest_sha256=model_manifest_sha256,
+        split_rules=SPLIT_RULES,
+        metric_rules=METRIC_RULES,
+        final_rules=FINAL_RULES,
+        libraries=library_versions(),
+        test_opened=True,
+    )
+    if (
+        not isinstance(manifest, dict)
+        or any(manifest.get(name) != value for name, value in expected.items())
+        or not isinstance(manifest.get("files"), dict)
+        or set(manifest["files"]) != set(FINAL_TEST_OUTPUT_FILES)
+    ):
+        raise ValueError("Saklı test manifesti girişlerle veya kurallarla uyuşmuyor")
+    for name in FINAL_TEST_OUTPUT_FILES:
+        if (
+            hashlib.sha256((directory / name).read_bytes()).hexdigest()
+            != manifest["files"][name]
+        ):
+            raise ValueError(f"Saklı test dosyasının parmak izi tutmuyor: {name}")
+    report = json.loads((directory / "report.json").read_bytes())
+    choice = report.get("choice")
+    reserved = {
+        (row["product_id"], row["source"], row["anchor_day"])
+        for row in inputs.plan.assignments
+        if row["role"] == "test_reserved"
+    }
+    labels = {row.anchor.key: row.anchor.label for row in inputs.split.samples}
+    if (
+        choice not in FROZEN_CHOICES
+        or report.get("test_opened") is not True
+        or report.get("own_source_scored") is not False
+        or report.get("model_changed") is not False
+        or report.get("final_rules") != FINAL_RULES
+        or report.get("model_manifest_sha256") != model_manifest_sha256
+        or report["reading"].get("decides_model") is not False
+        or report["reserved_test"]["rows"] != len(reserved)
+    ):
+        raise ValueError("Saklı test raporu sözleşmeye uymuyor")
+    fields = {"product_id", "source", "anchor_day", "label", "r0", choice}
+    seen = set()
+    for line in (directory / "predictions.jsonl").read_bytes().splitlines():
+        row = json.loads(line)
+        if set(row) != fields:
+            raise ValueError("Saklı test tahmin satırının alanları uymuyor")
+        key = (row["product_id"], row["source"], date.fromisoformat(row["anchor_day"]))
+        if (
+            key not in reserved
+            or key in seen
+            or labels.get(key) != row["label"]
+            or not 0 <= row["r0"] <= 1
+            or not 0 <= row[choice] <= 1
+        ):
+            raise ValueError("Saklı test tahmini saklı test üyeliğiyle uyuşmuyor")
+        seen.add(key)
+    if seen != reserved:
+        raise ValueError("Saklı test başlangıçlarının tahmini eksik veya fazla")
+    return manifest

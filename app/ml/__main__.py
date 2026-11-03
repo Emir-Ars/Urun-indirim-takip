@@ -1,6 +1,7 @@
 """ML veri hazırlığı komutları; veritabanına yazmaz."""
 
 import argparse
+import hashlib
 import sys
 from collections import Counter
 from pathlib import Path
@@ -68,6 +69,45 @@ def main(argv=None) -> int:
     experiment.add_argument(
         "--output-dir", type=Path, required=True, metavar="YENI_KLASOR"
     )
+    freeze = commands.add_parser(
+        "freeze",
+        help="Deney sonucundan seçilen modeli saklı teste dokunmadan dondur",
+    )
+    freeze.add_argument(
+        "--labels-dir", type=Path, required=True, metavar="ETIKET_KLASORU"
+    )
+    freeze.add_argument(
+        "--features-dir", type=Path, required=True, metavar="GIRDI_KLASORU"
+    )
+    freeze.add_argument(
+        "--split-dir", type=Path, required=True, metavar="BOLME_KLASORU"
+    )
+    freeze.add_argument(
+        "--experiment-dir", type=Path, required=True, metavar="DENEY_KLASORU"
+    )
+    freeze.add_argument("--output-dir", type=Path, required=True, metavar="YENI_KLASOR")
+    final_test = commands.add_parser(
+        "final-test",
+        help="Dondurulan modelle saklı testi yalnız bir kez aç ve puanla",
+    )
+    final_test.add_argument(
+        "--labels-dir", type=Path, required=True, metavar="ETIKET_KLASORU"
+    )
+    final_test.add_argument(
+        "--features-dir", type=Path, required=True, metavar="GIRDI_KLASORU"
+    )
+    final_test.add_argument(
+        "--split-dir", type=Path, required=True, metavar="BOLME_KLASORU"
+    )
+    final_test.add_argument(
+        "--model-dir", type=Path, required=True, metavar="MODEL_KLASORU"
+    )
+    final_test.add_argument(
+        "--expected-model-sha256", required=True, metavar="ON_KAYITLI_SHA256"
+    )
+    final_test.add_argument(
+        "--output-dir", type=Path, required=True, metavar="YENI_KLASOR"
+    )
     args = parser.parse_args(argv)
     utf8_output()
     if args.command == "labels":
@@ -79,6 +119,23 @@ def main(argv=None) -> int:
     if args.command == "experiment":
         return run_experiment(
             args.labels_dir, args.features_dir, args.split_dir, args.output_dir
+        )
+    if args.command == "freeze":
+        return run_freeze(
+            args.labels_dir,
+            args.features_dir,
+            args.split_dir,
+            args.experiment_dir,
+            args.output_dir,
+        )
+    if args.command == "final-test":
+        return run_reserved_test(
+            args.labels_dir,
+            args.features_dir,
+            args.split_dir,
+            args.model_dir,
+            args.expected_model_sha256,
+            args.output_dir,
         )
     return run_snapshot(args.output_dir)
 
@@ -291,6 +348,153 @@ def run_experiment(labels: Path, features: Path, split: Path, directory: Path) -
     print(
         "Dosyalar doğrulandı. Saklı test açılmadı; kendi serimiz puanlanmadı; "
         "DB/ağ kullanılmadı."
+    )
+    return 0
+
+
+def run_freeze(
+    labels: Path, features: Path, split: Path, experiment: Path, directory: Path
+) -> int:
+    if directory.exists():
+        print(
+            "Model dondurulmadı: klasör zaten var; yeni bir klasör seç.",
+            file=sys.stderr,
+        )
+        return 1
+    try:
+        # numpy, scikit-learn ve LightGBM yalnız bu komutta yüklenir.
+        from app.ml import final
+        from app.ml.experiment import load_experiment_inputs
+        from app.ml.reporting import (
+            MODEL_TITLES,
+            SELECTION_TITLES,
+            write_model_outputs,
+        )
+
+        inputs = load_experiment_inputs(labels, features, split)
+        result = final.freeze_model(inputs, experiment)
+        write_model_outputs(directory, inputs, result)
+        digest = hashlib.sha256((directory / "manifest.json").read_bytes()).hexdigest()
+        # Yazılan model, sonraki adımların açacağı yolla yeniden yüklenip denetlenir.
+        final.load_frozen_model(directory, inputs, digest)
+    except KeyboardInterrupt:
+        print("Model dondurma kullanıcı tarafından durduruldu.", file=sys.stderr)
+        return 130
+    except ImportError as exc:
+        print(
+            "Model dondurulmadı: ML kütüphaneleri eksik "
+            f"('.[ml]' kurulu mu?): {exc}",
+            file=sys.stderr,
+        )
+        return 1
+    except (ValueError, OSError, TypeError, KeyError) as exc:
+        print(f"Model dondurulmadı: {exc}", file=sys.stderr)
+        return 1
+    slices = result.document["slices"]
+    status = result.document["selection"]["status"]
+    print(f"Model raporu: {directory / 'report.md'}")
+    print(f"Görüntü SHA-256: {inputs.snapshot_sha256}")
+    print(
+        f"Dondurulan model: {MODEL_TITLES[result.choice]} "
+        f"(deney seçim ölçütü: {SELECTION_TITLES[status].lower()})"
+    )
+    for role, title in (("train", "Eğitim"), ("calibration", "Kalibrasyon")):
+        item = slices[role]
+        print(
+            f"{title}: {item['rows']} satır · olumlu {item['positive']} "
+            f"· {item['first_anchor']} – {item['last_anchor']}"
+        )
+    preserved = result.document["model"]["platt"]["order_preserved"]
+    print(f"Platt sıralamayı koruyor: {'evet' if preserved else 'hayır'}")
+    print(f"Model manifest SHA-256 (ön kayıt için): {digest}")
+    print(
+        "Dosyalar ve yeniden yükleme denetimi doğrulandı. Saklı test açılmadı; "
+        "kendi serimiz puanlanmadı; DB/ağ kullanılmadı."
+    )
+    return 0
+
+
+def run_reserved_test(
+    labels: Path,
+    features: Path,
+    split: Path,
+    model: Path,
+    expected_sha256: str,
+    directory: Path,
+) -> int:
+    if directory.exists():
+        print(
+            "Saklı test açılmadı: klasör zaten var; yeni bir klasör seç.",
+            file=sys.stderr,
+        )
+        return 1
+    try:
+        # numpy, scikit-learn ve LightGBM yalnız bu komutta yüklenir.
+        from app.ml import final
+        from app.ml.experiment import load_experiment_inputs
+        from app.ml.reporting import (
+            MODEL_TITLES,
+            SELECTION_TITLES,
+            verify_final_test_outputs,
+            write_final_test_outputs,
+        )
+
+        inputs = load_experiment_inputs(labels, features, split)
+        # Model beklenen SHA-256'yı taşımıyorsa saklı test satırlarına hiç gelinmez.
+        loaded = final.load_frozen_model(model, inputs, expected_sha256)
+        result = final.run_final_test(inputs, loaded)
+        write_final_test_outputs(directory, inputs, result)
+        verify_final_test_outputs(directory, inputs, loaded.manifest_sha256)
+    except KeyboardInterrupt:
+        print("Saklı test kullanıcı tarafından durduruldu.", file=sys.stderr)
+        return 130
+    except ImportError as exc:
+        print(
+            "Saklı test açılmadı: ML kütüphaneleri eksik "
+            f"('.[ml]' kurulu mu?): {exc}",
+            file=sys.stderr,
+        )
+        return 1
+    except (ValueError, OSError, TypeError, KeyError) as exc:
+        print(f"Saklı test açılmadı: {exc}", file=sys.stderr)
+        return 1
+    report = result.report
+    test, reading = report["reserved_test"], report["reading"]
+    interval = report["bootstrap"]
+    print(f"Saklı test raporu: {directory / 'report.md'}")
+    print(f"Model manifest SHA-256: {report['model_manifest_sha256']}")
+    print(f"Model: {MODEL_TITLES[report['choice']]}")
+    print(
+        f"Saklı test: {test['rows']} satır · olumlu {test['positives']} "
+        f"· %{100 * test['positive_rate']:.2f} · {test['first_anchor']} "
+        f"– {test['last_anchor']}"
+    )
+    for name in ("r0", report["choice"]):
+        score = report["scores"][name]
+        average = score["average_precision"]
+        skill = score["brier_skill"]
+        print(
+            f"  {name}: AP {'—' if average is None else f'{average:.4f}'} "
+            f"· Brier {score['brier']:.4f} · log loss {score['log_loss']:.4f} "
+            f"· Brier skill {'—' if skill is None else f'{skill:.4f}'}"
+        )
+    difference = interval["point_difference"]
+    if difference is None:
+        print(
+            f"AP farkı (model − R0): hesaplanamadı ({', '.join(interval['reasons'])})"
+        )
+    elif interval["lower"] is None:
+        print(f"AP farkı (model − R0): {difference:.4f} · aralık hesaplanamadı")
+    else:
+        print(
+            f"AP farkı (model − R0): {difference:.4f} "
+            f"· %95 aralık [{interval['lower']:.4f}, {interval['upper']:.4f}]"
+        )
+    titles = {key: value.lower() for key, value in SELECTION_TITLES.items()}
+    print(f"Okuma koşulları: {titles[reading['status']]} (yalnız bilgi)")
+    print(
+        "Dosyalar doğrulandı. Saklı test bu komutla açıldı; model değişmedi. "
+        "Kendi serimiz puanlanmadı; DB/ağ kullanılmadı."
     )
     return 0
 

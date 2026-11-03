@@ -150,12 +150,13 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 | `series.py` | İstanbul günleri, zamanlanmış tur dilimleri, sağlam akşam başlangıcı, günlük minimum ve Cimri yarım gün maskesi; eski sıkı karşılaştırmanın günlük serisi. |
 | `labels.py` | Ayrı kendi/Cimri serilerinden simetrik 6/7 etiketi, sabit/izlenen sayfa kapsamı, sıkı pencere ve etiket özeti. Model eğitmez ve zaman bölmesi yapmaz. |
 | `features.py` | Yalnız geçmiş günlük başlangıç fiyatlarından sabit sözleşmeli girdiler, aile/segment kategorileri ve eksiklik raporu. Etiket okumaz; öğrenilen dönüşüm veya model eğitimi yapmaz. |
-| `splitting.py` | Parmak izli etiket/girdi eşleşmesi, ortak %70/%15/%15 tarih bölmesi, purge, ayrı kalibrasyonlu dört ileri yürüyen kat; katların etiket/girdi satırlarını ve saklı test dışındaki değerlendirme hedeflerini sınır denetimiyle seçer. |
-| `metrics.py` | Anahtarlı tahminlerde AP/Brier/log loss/Brier skill, güvenilirlik kovaları, olumlu pencere kümeleri, kırılımlar/makro ve eşleştirilmiş tarih bloklu güven aralığı. İstatistik kütüphaneleri yalnız puanlama çağrısında yüklenir. |
-| `models.py` | R0 sabit oran, R1 dip kuralı, R2 lojistik regresyon ve LightGBM; yalnız eğitimden öğrenilen ön işlemler, ayrı dilimde Platt kalibrasyonu, ham/kalibre tahminler ve öğrenilen değerlerin özeti. |
+| `splitting.py` | Parmak izli etiket/girdi eşleşmesi, ortak %70/%15/%15 tarih bölmesi, purge, ayrı kalibrasyonlu dört ileri yürüyen kat; katların etiket/girdi satırlarını ve saklı test dışındaki değerlendirme hedeflerini sınır denetimiyle seçer. Aynı dilim kuralıyla son modelin eğitim/kalibrasyon satırlarını (`final_samples`) verir; saklı test satırları yalnız ayrı `reserved_test_samples` girişindedir. |
+| `metrics.py` | Anahtarlı tahminlerde AP/Brier/log loss/Brier skill, güvenilirlik kovaları, olumlu pencere kümeleri, kırılımlar/makro ve eşleştirilmiş tarih bloklu güven aralığı. İstatistik kütüphaneleri yalnız puanlama çağrısında yüklenir. Doğrulama işlevleri saklı testi reddeder; saklı testi yalnız `score_reserved_test` ve `reserved_test_bootstrap` puanlar. |
+| `models.py` | R0 sabit oran, R1 dip kuralı, R2 lojistik regresyon ve LightGBM; yalnız eğitimden öğrenilen ön işlemler, ayrı dilimde Platt kalibrasyonu, ham/kalibre tahminler ve öğrenilen değerlerin özeti. Dondurulan model (`FrozenModel`: R0 + seçilen model) ve özeti. |
 | `experiment.py` | Etiket/girdiden bölmeyi yeniden üretip kanıt dosyalarıyla karşılaştırır; hazır katlarda eğitim/kalibrasyon/doğrulama akışını, birleşik ölçütleri, güven aralıklarını ve seçim önerisini yürütür. Saklı test ve kendi serimiz puanlanmaz. |
-| `reporting.py` | Etiket, girdi, bölme ve deney için belirlenimci JSON/JSONL, Türkçe Markdown ve en son yazılan parmak izli başarı manifesti; çıktıların yeniden doğrulanması. `split_plan_files` bölme yazımıyla deneyin bayt karşılaştırmasına ortak dosya içeriği üretir. |
-| `__main__.py` | `snapshot` yalnız `API_DATABASE_URL` okuma hesabıyla görüntü alır; `labels`/`features` görüntüden, `split` etiket/girdiden, `experiment` etiket/girdi/bölme klasörlerinden ağsız çalışır. Son dört komut DB katmanı/sürücüsünü yüklemez; model kütüphaneleri yalnız deney yolunda yüklenir. Çıkış kodları [ML hazırlığı](#ml-hazırlığı) bölümündedir. |
+| `final.py` | Deneyin seçim sonucundan modeli türetir, son dilimlerle dondurur, dondurulan modeli yalnız denetimlerden sonra yükler ve saklı testi bir kez puanlar. |
+| `reporting.py` | Etiket, girdi, bölme, deney, dondurulan model ve saklı test için belirlenimci JSON/JSONL, Türkçe Markdown ve en son yazılan parmak izli başarı manifesti; çıktıların yeniden doğrulanması. `split_plan_files` bölme yazımıyla deneyin bayt karşılaştırmasına ortak dosya içeriği üretir. |
+| `__main__.py` | `snapshot` yalnız `API_DATABASE_URL` okuma hesabıyla görüntü alır; `labels`/`features` görüntüden, `split` etiket/girdiden, `experiment` etiket/girdi/bölme klasörlerinden, `freeze` ve `final-test` ayrıca deney/model klasöründen ağsız çalışır. Son altı komut DB katmanı/sürücüsünü yüklemez; model kütüphaneleri yalnız deney, dondurma ve saklı test yollarında yüklenir. Çıkış kodları [ML hazırlığı](#ml-hazırlığı) bölümündedir. |
 
 ### Kurulum ve zamanlayıcı: `scripts/`
 
@@ -194,12 +195,14 @@ Test sayıları burada tutulmaz; güncel sayı `pytest -q` çıktısındadır.
 | `tests/test_ml_label_cli.py` | Ağsız etiket komutu, aynı dosyaların tekrar üretimi, parmak izi ve kesinti koruması, eski hesaplayıcıyla bağımsız sıkı çapraz kontrol. |
 | `tests/test_ml_features.py` | Girdi formülleri ve eksikler, aile/segment, Cimri kimliği, ölçekten bağımsızlık; gelecek fiyat/stok/sayfa/ürün değişimlerine ve kayıtların kesilmesine karşı geçmiş girdilerin sabitliği; 4.2 başlangıç anahtarlarıyla eşleşme. |
 | `tests/test_ml_feature_cli.py` | Ağsız, etiket ve eğitim modüllerini yüklemeyen features komutu; aynı dosyaların tekrarı, tipli şema, parmak izi, mevcut klasör ve kesinti/yazma hatası koruması. |
-| `tests/test_ml_splitting.py` | Ortak tarih kesimleri, purge eşitliği, ayrı kalibrasyon, dört aylık katlar, boş/tek sınıflı bölüm, kendi kaynağının ayrılığı ve saklı test değişimlerine karşı geliştirme çıktısının sabitliği; kat girdilerinin eşleşmesi ve bozuk üyeliklerin reddi. |
-| `tests/test_ml_metrics.py` | Elle hesaplanan ölçütler, geçersiz anahtar/etiket/olasılık, uç değerler ve kovalar, küme/makro desteği, bütün ürün günlerini koruyan tekrar üretilebilir eşleştirilmiş bootstrap. |
+| `tests/test_ml_splitting.py` | Ortak tarih kesimleri, purge eşitliği, ayrı kalibrasyon, dört aylık katlar, boş/tek sınıflı bölüm, kendi kaynağının ayrılığı ve saklı test değişimlerine karşı geliştirme çıktısının sabitliği; kat girdilerinin eşleşmesi ve bozuk üyeliklerin reddi; son modelin dilimleri, yabancı rollü satırın reddi ve saklı testin ayrı giriş noktası. |
+| `tests/test_ml_metrics.py` | Elle hesaplanan ölçütler, geçersiz anahtar/etiket/olasılık, uç değerler ve kovalar, küme/makro desteği, bütün ürün günlerini koruyan tekrar üretilebilir eşleştirilmiş bootstrap; saklı test girişlerinin doğrulama puanlamasıyla aynı sayıları vermesi ve karışık/boş hedefi tahminler okunmadan reddetmesi. |
 | `tests/test_ml_split_cli.py` | Etiket/girdi bütünlüğü ve başlangıç eşleşmesi, yanlış kurallar/hedef sonu, belirlenimci bölme kanıtı, saklı test bilgi/üyelik koruması ve DB/ağ/eğitim katmanı yüklememe. |
 | `tests/test_ml_models.py` | R0/R1 elle hesap kontrolü, çekirdek girdi sözleşmesi, eksikler ve yeni kategoriler, tekrar üretilebilirlik, eğitim/kalibrasyon ayrılığı, Platt dönüşümü, sabit ayarlar ve öğrenilen değerlerin özeti. Yapay veriyle, ağsız. |
 | `tests/test_ml_experiment.py` | Kat ve birleşik ölçütler, seçim sonucunun üç durumu; saklı test/kendi kaynak/etiketsiz satırların X/y değişimlerine karşı çıktı baytlarının sabitliği ve eğitim değişiminin çıktıyı değiştirdiği olumlu kontrol. |
 | `tests/test_ml_experiment_cli.py` | Deney kanıt zinciri, parmak izi yenilense de değiştirilmiş bölmenin reddi, aynı dosyaların tekrarı, doğrulama dışı/saklı test tahmininin reddi, yarım yazım ve mevcut klasör koruması, çıkış kodları, DB/ağ katmanı yüklememe. |
+| `tests/test_ml_final.py` | Seçimden modelin türetilmesi, son dilimlerin ve katlarla aynı yöntemin kanıtı; saklı test etiket/girdisinin dondurmayı değiştirmemesi ve kalibrasyon etiketinin değiştirdiği olumlu kontrol; model yüklemede SHA, parmak izi, sürüm, çelişkili manifest ve yeniden üretim denetimleri (pickle açılmadan reddedilir); saklı test puanlarının bağımsız yeniden hesabı, okuma koşullarının üç durumu ve çıktı doğrulayıcısı. |
+| `tests/test_ml_final_cli.py` | `freeze` ve `final-test` komutları: tam çalışma, aynı baytlar, var olan klasör, kesinti, yanlış SHA/değişmiş model/başka girdi (saklı test satırlarına gelinmeden çıkış 1), zorunlu SHA, DB/ağ katmanı yüklememe ve dondurmanın saklı test girişlerini çağırmaması. |
 | `tests/test_price_statistics.py` | İstatistik hesabı: tam kapsam dönemi, 30 gün/14 geçiş/7 gün/18 saat eşikleri, İstanbul günü, NULL üzerinden geçmeme, değişkenlik, grafik aralığından bağımsızlık. Veritabanısız. |
 | `tests/test_api_foundation.py` | API okuma rolünün izinleri (yazamaması, kalıcı nesne kuramaması) ve test ortamının ağ/adres korumaları. |
 | `tests/test_api.py` | FastAPI: dört adres ve OpenAPI, kuruş/UTC/NULL, fiyat yaşı, rol/şema hataları, dört bağlantı sınırı, kesinti ve yeniden bağlantı, 5 sn sorgu zaman aşımı, tutarlı cevap. |
@@ -2815,8 +2818,9 @@ büyük olmaması birlikte aranır. Sonuç şu sırayla belirlenir:
 NULL sıfır veya başarısız ölçüm sayılmaz; hesaplanamama gerekçesi korunur.
 “Karşılanmadı” seçim koşullarını anlatır; modelin her durumda kötü olduğunun
 istatistiksel kanıtı değildir. Sonuç yalnız öneridir: `decides_model=False`,
-`model_frozen=False`. Modeli kesinleştirme ve son testi tek kez açma ayrı
-plandır; bu komut ekranda tahmin göstermez.
+`model_frozen=False`. Modeli dondurma ve son testi tek kez açma ayrı
+komutlardır (aşağıdaki "Model dondurma ve saklı test" bölümü); bu komut
+ekranda tahmin göstermez.
 
 **Çıktılar:** yeni klasöre yazılır; var olan klasöre dokunulmaz.
 
@@ -2879,6 +2883,140 @@ için bootstrap 100 tekrar/90 geçerli tekrar eşiğiyle çalışır; gerçek ko
 2000/1800 ayarları değişmez ve `tests/test_ml_metrics.py` içinde ayrıca
 sınanır. Ay/ürün kimliği ablasyonu, TL kaybı raporu, kendi verimizde sınama,
 yeniden yüklenebilir model kaydı ve gölge mod bu komutta uygulanmış değildir.
+
+### Model dondurma ve saklı test (`python -m app.ml freeze`, `final-test`)
+
+İki komut da etiket, girdi ve bölme klasörlerini okur; DB'ye veya ağa
+bağlanmaz. Çıkış kodları: 0 başarı, 1 girdi/dosya/veri hatası veya klasör
+zaten var, 2 argüman hatası, 130 kullanıcı kesmesi. Önce `freeze` modeli
+saklı teste dokunmadan dondurur; `final-test` ancak o modelin ön kayıtlı
+SHA-256 değeriyle saklı testi puanlar.
+
+**Modelin seçimi.** Model elle verilmez; deney raporundaki seçim sonucundan
+kurala göre türetilir:
+
+| Deney seçim sonucu | Dondurulan model |
+|---|---|
+| `met` | LightGBM + Platt |
+| `not_met` | R2 + Platt (en güçlü referans) |
+| `not_evaluable` | Dondurulmaz; çıkış 1. |
+
+**Son modelin dilimleri.** Katlardaki dilim kuralı aynen uygulanır; puanlanan
+dönem saklı testtir. T saklı testin ilk günüdür. Geliştirme satırı, ana
+bölmede eğitim, doğrulama veya purge ile temizlenmiş eğitim rolündeki etiketli
+Cimri satırıdır (hedef sonu < T). Saklı test, temizlenmiş doğrulama, etiketsiz
+ve kendi kaynaklı satırlar sessizce atlanmaz, reddedilir.
+
+| Dilim | Kural |
+|---|---|
+| Eğitim | Geliştirme satırı, başlangıç < T − 30 gün ve hedef sonu < T − 30 gün. Doğrulama dönemi de buna girer, bu yüzden dondurulan model kat modellerinden daha geniş veriyle kurulur. |
+| Kalibrasyon | T − 30 gün ≤ başlangıç < T ve hedef sonu < T. |
+
+Yalnız R0 ve seçilen model kurulur; ayarlar `MODEL_RULES`'tadır ve kat
+modelleriyle aynıdır. Aynı veride kat yöntemi (`fit_models`) ile aynı
+olasılıkları verir.
+
+#### `freeze`
+
+```powershell
+$mlFreezeOut = "artifacts\ml_model_$(Get-Date -Format yyyyMMdd_HHmmss_fff)"
+.venv\Scripts\python.exe -m app.ml freeze --labels-dir <ETIKET> --features-dir <GIRDI> --split-dir <BOLME> --experiment-dir <DENEY> --output-dir $mlFreezeOut
+```
+
+Kanıt zinciri `experiment` komutundaki gibi doğrulanır (bölme etiket ve
+girdiden yeniden üretilip bayt bayt karşılaştırılır); ardından deney klasörü
+doğrulanır ve seçim sonucundan model türetilir. Saklı test satırlarına hiç
+gelinmez. Yazılan model, komutun sonunda aşağıdaki yükleme yoluyla yeniden
+açılıp denetlenir. Çıktılar yeni klasöre yazılır, manifest en son:
+
+| Dosya | İçerik |
+|---|---|
+| `model.pkl` | Dondurulan model ve R0 (pickle, protokol 5). |
+| `model.json` | Seçimin gerekçesi (deney sonucu ve değerleri), dilim sınırları ve sayıları, R0 oranı, R2 katsayıları/yakınsama veya LightGBM önemleri, Platt eğimi/kesişimi ve sıralamanın korunup korunmadığı, deneydeki birleşik doğrulama puanları. |
+| `calibration_predictions.jsonl` | Kalibrasyon dilimindeki anahtar, etiket, R0 ve model olasılıkları; yükleme denetiminde kullanılır. |
+| `report.md` | Türkçe özet. |
+| `manifest.json` | Görüntü SHA-256, etiket/girdi/bölme manifestlerinin SHA-256 değerleri, deney manifestinin SHA-256'sı, bölme/ölçüt/model/son kuralları, kütüphane sürümleri, dosya parmak izleri ve `test_opened=false`. |
+
+Komut çıktısı, dondurulan modeli, dilim sayılarını, "Platt sıralamayı
+koruyor" bilgisini ve **model manifest SHA-256** değerini yazar; bu değer ön
+kayıt olarak belgeye işlenir. Platt sıralamayı korumazsa komut yine çıkış 0
+verir ve bunu açıkça yazar; yeni bir ret kuralı yoktur. Aynı girdi, kod ve
+ortam `model.pkl` dahil aynı baytları üretir.
+
+#### Model yükleme (pickle güvenliği)
+
+`load_frozen_model` bir pickle dosyasını yalnız şu sırayla açar; her adım
+hata verirse model kullanılmaz:
+
+1. Çağıran beklenen manifest SHA-256 değerini vermelidir (64 onaltılık hane);
+   `manifest.json`'un SHA-256 değeri onunla aynı olmalıdır. Değer verilmeden
+   model yüklenemez.
+2. Manifest, bugünkü kodla uyuşmalı: format, tamamlanmış durum, görüntü ve
+   etiket/girdi/bölme manifest SHA-256 değerleri, bölme/ölçüt/model/son
+   kuralları, **kütüphane sürümleri (python, numpy, scikit-learn, LightGBM
+   birebir)**, `test_opened=false`, model adı ve dosya kümesi.
+3. Dört dosyanın parmak izleri tutmalı. `model.json`'daki seçim sonucu,
+   manifestteki modeli türetmeli. Kalibrasyon dosyası sıralı, tekil olmalı ve
+   saklı test anahtarı içermemeli.
+4. Ancak bundan sonra pickle açılır; beklenen sınıfı içermelidir.
+5. Kalibrasyon dilimi kanıttan yeniden kurulur; yüklenen model, kayıtlı
+   anahtar, etiket ve olasılıkları birebir üretmelidir.
+
+Kütüphane sürümü değişirse model kullanılamaz; aynı kanıt klasörleriyle yeniden
+dondurmak gerekir ve yeni bir manifest SHA-256 üretir.
+
+#### `final-test`
+
+```powershell
+$mlFinalSha = "<ön kayıtta yazılan model manifest SHA-256>"
+$mlFinalOut = "artifacts\ml_son_test_$(Get-Date -Format yyyyMMdd_HHmmss_fff)"
+.venv\Scripts\python.exe -m app.ml final-test --labels-dir <ETIKET> --features-dir <GIRDI> --split-dir <BOLME> --model-dir <MODEL> --expected-model-sha256 $mlFinalSha --output-dir $mlFinalOut
+```
+
+Sıra: çıktı klasörü yoksa kanıt zinciri doğrulanır; model yukarıdaki yükleme
+yoluyla açılır. SHA değeri tutmazsa, dosya bozuksa veya başka girdilerden
+üretilmişse komut çıkış 1 verir ve saklı test satırlarına hiç gelinmez. Yalnız
+bundan sonra saklı testin etiketli Cimri satırları (sayısı bölme raporundaki
+sayıyla aynı olmalı) alınır; dondurulan model ve R0 puanlanır. Puanlama,
+doğrulamadakiyle aynı ölçütleri kullanan ayrı iki işlevle yapılır
+(`score_reserved_test`, `reserved_test_bootstrap`); bunlar doğrulama hedeflerini
+kabul etmez. Hesaplananlar: AP ve taban oran, Brier, log loss, R0'a göre Brier
+skill, güvenilirlik kovaları, marka/aile/ürün kırılımı ve makro ortalama,
+dondurulan model − R0 için 14 günlük tarih bloklu %95 AP farkı aralığı.
+
+**Okuma koşulları** (sonuçtan önce sabit, yalnız bilgi): Brier skill 0'ın
+üstünde ve AP farkı aralığının alt sınırı 0'ın üstünde. Sonuç, deney seçimiyle
+aynı üç durumdadır: sağlanmayan koşul varsa `not_met` (başka koşul
+hesaplanamasa da), sağlanmayan yok ama hesaplanamayan varsa `not_evaluable`,
+hepsi sağlanırsa `met`. Okuma sonucu modeli, ayarları veya seçimi değiştirmez
+(`decides_model=false`, `model_changed=false`). Komut okuma koşulları
+sağlanmasa da çıkış 0 verir.
+
+| Dosya | İçerik |
+|---|---|
+| `predictions.jsonl` | Yalnız saklı test anahtarları, etiket, R0 ve model olasılığı. |
+| `report.json` | Kurallar, model manifest SHA-256, puanlar, aralık, okuma sonucu, deneydeki doğrulama puanları; `test_opened=true`, `own_source_scored=false`, `model_changed=false`. |
+| `report.md` | Türkçe özet: puanlar, fark aralığı, okuma koşulları, doğrulama aylarıyla yan yana tablo, güvenilirlik, makro/marka, sınırlar. |
+| `manifest.json` | En son yazılan tamamlanma kaydı; `test_opened=true`, model manifest SHA-256 ve dosya parmak izleri. |
+
+Yazımdan sonra çıktılar yeniden doğrulanır: tahmin anahtarları saklı test
+anahtarlarıyla birebir aynı, etiketler girdiyle aynı, olasılıklar [0,1]
+içinde ve raporun bayrakları gerçek durumu söylemelidir.
+
+**Sınırlar:**
+
+- **Tek açılış** kodla zorlanmaz. Güvence, model SHA-256 değerinin test
+  açılmadan Git'e işlenmesi, komutun yalnız o değerle çalışması, çıktıların
+  belirlenimci olması ve bu testin seçim veya ayar için bir daha
+  kullanılmamasıdır. Aynı komutu tekrar çalıştırmak aynı sayıları verir ama
+  tek açılış kuralını bozar.
+- Saklı test yaklaşık sekiz haftadır; 14 günlük tarih blokları az sayıdadır ve
+  aralık kaba ve geniştir. Ardışık günlerin pencereleri örtüşür; olumlu satırlar
+  bağımsız düşüş olayı sayısı değildir.
+- Sonuç Cimri üzerindedir; kendi verimizde başarıyı veya ekranda tahmin
+  gösterme yeterliliğini kanıtlamaz. Kendi kaynağımız bu komutlarda puanlanmaz.
+- Dondurulan model, doğrulama aylarında puanlanan kat modellerinden farklı bir
+  eğitim dilimiyle kurulur; kat puanları bu modelin puanı değildir.
 
 ## Testler ne kanıtlar, ne kanıtlamaz
 

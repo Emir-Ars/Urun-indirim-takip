@@ -1,6 +1,7 @@
 """Referans modeller, LightGBM ve Platt kalibrasyonu (yapay veriyle, ağsız)."""
 
 import inspect
+import pickle
 import random
 
 import numpy as np
@@ -11,6 +12,7 @@ from app.ml.features import FeatureValues, feature_schema
 from app.ml.models import (
     CATEGORICAL_FIELDS,
     COLUMNS,
+    FROZEN_CHOICES,
     LIGHTGBM_PARAMS,
     LOGISTIC_PARAMS,
     MODEL_RULES,
@@ -21,9 +23,12 @@ from app.ml.models import (
     LogOdds,
     build_lightgbm,
     build_logistic,
+    describe_frozen,
     describe_models,
     design_matrix,
+    fit_frozen,
     fit_models,
+    predict_frozen,
     predict_models,
 )
 from app.ml.reporting import json_bytes
@@ -284,6 +289,98 @@ def test_recorded_rules_match_the_estimators_that_run():
     assert set(LIGHTGBM_PARAMS) <= set(recorded)
     assert recorded["class_weight"] is None
     assert all(boosted[name] == value for name, value in recorded.items())
+
+
+@pytest.mark.parametrize("choice", sorted(FROZEN_CHOICES))
+def test_frozen_model_gives_the_same_probabilities_as_the_validated_method(
+    choice, fitted, data
+):
+    validation_x, _ = data["validation"]
+    frozen = fit_frozen(choice, *data["train"], *data["calibration"])
+    result = predict_frozen(frozen, validation_x)
+    reference = predict_models(fitted, validation_x)
+    assert list(result) == ["r0", choice]
+    assert np.array_equal(result["r0"], reference["r0"])
+    assert np.array_equal(result[choice], reference[choice])
+    assert np.all((0 < result[choice]) & (result[choice] < 1))
+
+
+def test_only_the_two_selectable_models_can_be_frozen(data):
+    assert set(FROZEN_CHOICES) == {"r2_platt", "lightgbm_platt"}
+    for choice in ("r1_platt", "r2", "r0", "lightgbm", ""):
+        with pytest.raises(ValueError, match="Dondurulabilen"):
+            fit_frozen(choice, *data["train"], *data["calibration"])
+
+
+def test_frozen_model_survives_pickle_with_identical_probabilities(data):
+    validation_x, _ = data["validation"]
+    frozen = fit_frozen("r2_platt", *data["train"], *data["calibration"])
+    loaded = pickle.loads(pickle.dumps(frozen))
+    first, second = (predict_frozen(item, validation_x) for item in (frozen, loaded))
+    for name in first:
+        assert np.array_equal(first[name], second[name])
+    assert json_bytes(describe_frozen(frozen)) == json_bytes(describe_frozen(loaded))
+
+
+def test_frozen_calibration_slice_changes_only_the_platt_probability(data):
+    validation_x, _ = data["validation"]
+    train_x, train_y = data["train"]
+    calibration_x, calibration_y = data["calibration"]
+    base = predict_frozen(
+        fit_frozen("r2_platt", train_x, train_y, calibration_x, calibration_y),
+        validation_x,
+    )
+    changed = predict_frozen(
+        fit_frozen("r2_platt", train_x, train_y, calibration_x, 1 - calibration_y),
+        validation_x,
+    )
+    assert np.array_equal(changed["r0"], base["r0"])
+    assert not np.allclose(changed["r2_platt"], base["r2_platt"])
+    other = predict_frozen(
+        fit_frozen("r2_platt", train_x, 1 - train_y, calibration_x, calibration_y),
+        validation_x,
+    )
+    assert not np.allclose(other["r0"], base["r0"])
+
+
+def test_frozen_fit_accepts_only_the_choice_and_the_two_slices():
+    assert list(inspect.signature(fit_frozen).parameters) == [
+        "choice",
+        "train_x",
+        "train_labels",
+        "calibration_x",
+        "calibration_labels",
+    ]
+
+
+@pytest.mark.parametrize("problem", ["single_train", "single_calibration", "length"])
+def test_frozen_fit_rejects_invalid_slices(data, problem):
+    train_x, train_y = data["train"]
+    calibration_x, calibration_y = data["calibration"]
+    if problem == "single_train":
+        train_y = np.zeros_like(train_y)
+    elif problem == "single_calibration":
+        calibration_y = np.ones_like(calibration_y)
+    else:
+        calibration_y = calibration_y[:-1]
+    with pytest.raises(ValueError):
+        fit_frozen("r2_platt", train_x, train_y, calibration_x, calibration_y)
+
+
+@pytest.mark.parametrize("choice", sorted(FROZEN_CHOICES))
+def test_frozen_description_matches_the_fold_description_and_is_json_safe(
+    choice, fitted, data
+):
+    frozen = fit_frozen(choice, *data["train"], *data["calibration"])
+    description = describe_frozen(frozen)
+    json_bytes(description)
+    base = FROZEN_CHOICES[choice]
+    reference = describe_models(fitted)
+    assert description["choice"] == choice
+    assert description["r0"] == reference["r0"]
+    assert description[base] == reference[base]
+    assert description["platt"] == reference["platt"][base]
+    assert description["platt"]["order_preserved"] is True
 
 
 def test_log_odds_stays_finite_at_the_probability_limits():

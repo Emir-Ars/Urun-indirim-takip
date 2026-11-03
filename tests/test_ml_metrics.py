@@ -14,7 +14,9 @@ from app.ml.metrics import (
     calendar_block_indices,
     paired_bootstrap,
     positive_clusters,
+    reserved_test_bootstrap,
     score_predictions,
+    score_reserved_test,
 )
 
 DAY = date(2026, 1, 1)
@@ -147,6 +149,69 @@ def test_reserved_test_rejected_before_predictions_are_read():
         paired_bootstrap(rows, forbidden(), forbidden())
     with pytest.raises(ValueError, match="Saklı test"):
         score_predictions([], [], [], role="test_reserved")
+
+
+def reserved_pair():
+    """Aynı anahtarlar ve olasılıklar, biri doğrulama biri saklı test rolünde."""
+    values = [(day, day % 2, pid) for day in range(60) for pid in (1, 2)]
+    validation = [target(*item) for item in values]
+    reserved = [target(*item, role="test_reserved") for item in values]
+    good = probabilities(validation, [0.9 if row.label else 0.1 for row in validation])
+    bad = probabilities(validation, [0.1 if row.label else 0.9 for row in validation])
+    return validation, reserved, good, bad
+
+
+def test_reserved_scoring_gives_the_same_numbers_as_validation_scoring():
+    validation, reserved, good, bad = reserved_pair()
+    assert score_reserved_test(reserved, good, bad) == score_predictions(
+        validation, good, bad
+    )
+    assert reserved_test_bootstrap(reserved, good, bad) == paired_bootstrap(
+        validation, good, bad
+    )
+    interval = reserved_test_bootstrap(reserved, good, bad)
+    assert interval["valid_repeats"] == interval["repeats"] == 2000
+    assert 0 < interval["lower"] <= interval["upper"]
+
+
+def test_reserved_entry_points_accept_only_non_empty_reserved_targets():
+    validation, reserved, good, bad = reserved_pair()
+
+    def forbidden():
+        pytest.fail("Tahminler okundu")
+        yield
+
+    own = [target(0, 1, role="own_evaluation")]
+    mixed = [reserved[0], validation[1]]
+    for rows in (validation, own, mixed, []):
+        with pytest.raises(ValueError, match="Saklı test puanlaması"):
+            score_reserved_test(rows, forbidden(), forbidden())
+        with pytest.raises(ValueError, match="Saklı test puanlaması"):
+            reserved_test_bootstrap(rows, forbidden(), forbidden())
+    with pytest.raises(ValueError, match="Tekrarlı"):
+        score_reserved_test([reserved[0], reserved[0]], [good[0]] * 2, [bad[0]] * 2)
+    with pytest.raises(ValueError, match="anahtarları"):
+        score_reserved_test(reserved, good[::-1], bad)
+    with pytest.raises(ValueError, match="anahtarları"):
+        reserved_test_bootstrap(reserved, good, bad[:-1])
+
+
+def test_old_entry_points_still_reject_reserved_targets_including_clusters():
+    _, reserved, good, bad = reserved_pair()
+    with pytest.raises(ValueError, match="Saklı test"):
+        positive_clusters(reserved)
+    with pytest.raises(ValueError, match="Saklı test"):
+        score_predictions(reserved, good, bad)
+    with pytest.raises(ValueError, match="Saklı test"):
+        paired_bootstrap(reserved, good, bad)
+
+
+def test_reserved_bootstrap_reports_a_short_span_like_the_validation_one():
+    rows = [target(day, day % 2, role="test_reserved") for day in range(27)]
+    p = probabilities(rows, [0.5] * len(rows))
+    result = reserved_test_bootstrap(rows, p, p)
+    assert result["reasons"] == ["insufficient_calendar_span"]
+    assert result["lower"] is result["upper"] is None
 
 
 def test_overlapping_chained_clusters_and_product_separation():
