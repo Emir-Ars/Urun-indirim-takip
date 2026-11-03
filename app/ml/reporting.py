@@ -369,23 +369,30 @@ def split_markdown_report(report):
     return "\n".join(lines).rstrip() + "\n"
 
 
+def split_plan_files(plan):
+    """Bölme planından türeyen dosyaların baytları; yazma ve karşılaştırma ortak."""
+    from app.ml.splitting import SPLIT_RULES
+
+    return {
+        "assignments.jsonl": b"".join(
+            json_bytes(row) + b"\n" for row in plan.assignments
+        ),
+        "folds.json": json_bytes(dict(split_rules=SPLIT_RULES, folds=plan.folds))
+        + b"\n",
+        "report.json": json_bytes(plan.report) + b"\n",
+        "report.md": split_markdown_report(plan.report).encode("utf-8"),
+    }
+
+
 def write_split_outputs(directory, inputs, plan):
     from app.ml.metrics import METRIC_RULES, metrics_schema
     from app.ml.splitting import SPLIT_RULES
 
     directory.mkdir(parents=True, exist_ok=False)
-    with (directory / "assignments.jsonl").open("wb") as stream:
-        for row in plan.assignments:
-            stream.write(json_bytes(row) + b"\n")
-    for name, value in (
-        ("folds.json", dict(split_rules=SPLIT_RULES, folds=plan.folds)),
-        ("metrics_schema.json", metrics_schema()),
-        ("report.json", plan.report),
-    ):
-        (directory / name).write_bytes(json_bytes(value) + b"\n")
-    (directory / "report.md").write_text(
-        split_markdown_report(plan.report), encoding="utf-8", newline="\n"
-    )
+    files = split_plan_files(plan)
+    files["metrics_schema.json"] = json_bytes(metrics_schema()) + b"\n"
+    for name, content in files.items():
+        (directory / name).write_bytes(content)
     manifest = dict(
         format_version=1,
         status="complete",
@@ -506,4 +513,317 @@ def verify_split_outputs(directory, digest, input_manifests):
                 if lower is not None and key[2] < lower:
                     raise ValueError("Kat üyeliği kendi döneminden önce başlıyor")
                 seen.add(key)
+    return manifest
+
+
+EXPERIMENT_OUTPUT_FILES = (
+    "predictions.jsonl",
+    "models.json",
+    "report.json",
+    "report.md",
+)
+
+MODEL_TITLES = dict(
+    r0="R0 sabit oran",
+    r1="R1 dip kuralı",
+    r2="R2 lojistik regresyon",
+    lightgbm="LightGBM",
+    r1_platt="R1 + Platt",
+    r2_platt="R2 + Platt",
+    lightgbm_platt="LightGBM + Platt",
+)
+SELECTION_TITLES = dict(
+    met="Karşılandı", not_met="Karşılanmadı", not_evaluable="Değerlendirilemedi"
+)
+CONDITION_TITLES = {
+    "four_ready_folds": "Dört kat hazır",
+    "ap_interval_lower_above_zero": "AP farkının %95 aralığında alt sınır 0'ın üstünde",
+    "brier_not_worse_than_baseline": "Birleşik Brier, R2 + Platt'tan kötü değil",
+    "log_loss_not_worse_than_baseline": "Birleşik log loss, R2 + Platt'tan kötü değil",
+}
+
+
+def _number(value, digits=4):
+    return "—" if value is None else f"{value:.{digits}f}"
+
+
+def _verdict(passed):
+    return "hesaplanamadı" if passed is None else "evet" if passed else "hayır"
+
+
+def experiment_markdown_report(report):
+    combined, selection = report["combined"], report["selection"]
+    ready = sum(fold["scores"] is not None for fold in report["folds"])
+    lines = [
+        "# Adım 4.5 — Referans modeller, LightGBM ve kalibrasyon",
+        "",
+        "Puanlar yalnız doğrulama aylarındadır; saklı test açılmadı, kendi serimiz",
+        "puanlanmadı. Modeller yalnız eğitim diliminden, Platt kalibrasyonu modelin",
+        "görmediği ayrı 30 günlük dilimden öğrenir. R1, R2 ve LightGBM aynı Platt",
+        "kalibrasyonundan geçti; ham hâlleri de tabloda. Seçim sonucu bir öneridir,",
+        "model dondurulmadı. Olumlu satırlar bağımsız düşüş olayı sayısı değildir.",
+        "",
+        f"Değerlendirilen kat: {ready} / {len(report['folds'])}.",
+        "",
+    ]
+    if combined["rows"]:
+        lines += [
+            "## Birleşik doğrulama (her satır kendi katının modeliyle)",
+            "",
+            f"Satır: {combined['rows']} · olumlu: {combined['positives']} "
+            f"· olumlu oranı (taban AP): %{100 * combined['positive_rate']:.2f}",
+            "",
+            "| Model | AP | Brier | Log loss | Brier skill |",
+            "|---|---:|---:|---:|---:|",
+        ]
+        for name in MODEL_TITLES:
+            score = combined["scores"][name]
+            lines.append(
+                f"| {MODEL_TITLES[name]} | {_number(score['average_precision'])} "
+                f"| {_number(score['brier'])} | {_number(score['log_loss'])} "
+                f"| {_number(score['brier_skill'])} |"
+            )
+        lines += [
+            "",
+            "## Kat bazında AP",
+            "",
+            "| Ay | Durum | Satır | Olumlu oranı | "
+            + " | ".join(MODEL_TITLES.values())
+            + " |",
+            "|---|---|---:|---:|" + "---:|" * len(MODEL_TITLES),
+        ]
+        for fold in report["folds"]:
+            scores = fold["scores"]
+            if scores is None:
+                lines.append(
+                    f"| {fold['month']} | atlandı | — | — |"
+                    + " — |" * len(MODEL_TITLES)
+                )
+                continue
+            lines.append(
+                f"| {fold['month']} | değerlendirildi | {scores['r0']['rows']} "
+                f"| %{100 * scores['r0']['positive_rate']:.2f} | "
+                + " | ".join(
+                    _number(scores[name]["average_precision"]) for name in MODEL_TITLES
+                )
+                + " |"
+            )
+    else:
+        lines += ["Puanlanacak doğrulama satırı yok.", ""]
+    lines += [
+        "",
+        "## Eşleştirilmiş farklar (14 günlük tarih blokları, %95)",
+        "",
+        "| Karşılaştırma | Amaç | AP farkı | Alt | Üst | Geçerli tekrar | Not |",
+        "|---|---|---:|---:|---:|---:|---|",
+    ]
+    for item in report["bootstrap"]:
+        purpose = "seçim" if item["purpose"] == "selection" else "bilgi"
+        lines.append(
+            f"| {MODEL_TITLES[item['model']]} − {MODEL_TITLES[item['reference']]} "
+            f"| {purpose} | {_number(item['point_difference'])} "
+            f"| {_number(item['lower'])} | {_number(item['upper'])} "
+            f"| {item['valid_repeats']} / {item['repeats']} "
+            f"| {', '.join(item['reasons'])} |"
+        )
+    lines += [
+        "",
+        "## LightGBM seçim ölçütü",
+        "",
+        f"Sonuç: **{SELECTION_TITLES[selection['status']]}**. Bu bir öneridir; "
+        "model ayrı bir planda dondurulur.",
+        "",
+        "| Koşul | Sağlandı mı |",
+        "|---|---|",
+    ]
+    lines.extend(
+        f"| {CONDITION_TITLES[item['name']]} | {_verdict(item['passed'])} |"
+        for item in selection["conditions"]
+    )
+    if combined["rows"]:
+        lines += [
+            "",
+            "## Güvenilirlik (birleşik doğrulama)",
+            "",
+            "Her kovada tahmin ortalaması ile gerçekleşen oran yakınsa model "
+            "kalibredir. `*`: 20'den az kayıt.",
+        ]
+        for name in ("lightgbm", "lightgbm_platt", "r2_platt"):
+            lines += [
+                "",
+                f"### {MODEL_TITLES[name]}",
+                "",
+                "| Aralık | Satır | Ortalama tahmin | Gerçekleşen oran |",
+                "|---|---:|---:|---:|",
+            ]
+            for bin_ in combined["scores"][name]["calibration"]:
+                mark = "*" if bin_["low_support"] else ""
+                lines.append(
+                    f"| {bin_['lower']:.1f}–{bin_['upper']:.1f} "
+                    f"| {bin_['count']}{mark} "
+                    f"| {_number(bin_['mean_probability'])} "
+                    f"| {_number(bin_['observed_rate'])} |"
+                )
+        lines += [
+            "",
+            "## Ürün makro ortalaması ve marka kırılımı",
+            "",
+            "Beşten az olumlu pencere kümesi olan hücre `yetersiz` yazılır.",
+            "",
+            "| Model | Yeterli ürün / toplam | Makro AP | Makro Brier |",
+            "|---|---:|---:|---:|",
+        ]
+        for name in MODEL_TITLES:
+            macro = combined["scores"][name]["macro"]
+            lines.append(
+                f"| {MODEL_TITLES[name]} "
+                f"| {macro['supported_products']} / {macro['total_products']} "
+                f"| {_number(macro['scores']['average_precision']['value'])} "
+                f"| {_number(macro['scores']['brier']['value'])} |"
+            )
+        lines += [
+            "",
+            "| Marka | Satır | Olumlu pencere kümesi | "
+            f"AP {MODEL_TITLES['lightgbm_platt']} | AP {MODEL_TITLES['r2_platt']} |",
+            "|---|---:|---:|---:|---:|",
+        ]
+        brands = {
+            name: combined["scores"][name]["breakdowns"]["brand"]
+            for name in ("lightgbm_platt", "r2_platt")
+        }
+        for brand, cell in brands["lightgbm_platt"].items():
+            other = brands["r2_platt"][brand]
+
+            def average_precision(item):
+                if item["scores"] is None:
+                    return "yetersiz"
+                return _number(item["scores"]["average_precision"])
+
+            lines.append(
+                f"| {brand} | {cell['rows']} | {cell['positive_window_clusters']} "
+                f"| {average_precision(cell)} | {average_precision(other)} |"
+            )
+    lines += [
+        "",
+        "## Sınırlar",
+        "",
+        "- Sonuçlar Cimri'nin günlük en düşük fiyatı üzerindedir; kendi ölçümümüzle",
+        "  aynı kapsam değildir ve kendi verimizde doğrulanmadı.",
+        "- Dört ay, kampanya ve sakin dönemleri sınırlı örnekler; sonuç şansa",
+        "  bağlı olabilir. Aralıklar bu belirsizliğin yalnız bir kısmını gösterir.",
+        "- Ayarlar sabittir, aranmadı; ablasyon ve TL kaybı sonraki adımdadır.",
+    ]
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def write_experiment_outputs(directory, inputs, result):
+    from app.ml.experiment import EXPERIMENT_RULES
+    from app.ml.metrics import METRIC_RULES
+    from app.ml.models import library_versions
+    from app.ml.splitting import SPLIT_RULES
+
+    directory.mkdir(parents=True, exist_ok=False)
+    files = {
+        "predictions.jsonl": b"".join(
+            json_bytes(row) + b"\n" for row in result.predictions
+        ),
+        "models.json": json_bytes(result.models) + b"\n",
+        "report.json": json_bytes(result.report) + b"\n",
+        "report.md": experiment_markdown_report(result.report).encode("utf-8"),
+    }
+    for name, content in files.items():
+        (directory / name).write_bytes(content)
+    manifest = dict(
+        format_version=1,
+        status="complete",
+        snapshot_sha256=inputs.snapshot_sha256,
+        input_manifests=inputs.input_manifests,
+        split_rules=SPLIT_RULES,
+        metric_rules=METRIC_RULES,
+        experiment_rules=EXPERIMENT_RULES,
+        libraries=library_versions(),
+        files={
+            name: hashlib.sha256((directory / name).read_bytes()).hexdigest()
+            for name in EXPERIMENT_OUTPUT_FILES
+        },
+    )
+    (directory / "manifest.json").write_bytes(json_bytes(manifest) + b"\n")
+
+
+def verify_experiment_outputs(directory, inputs):
+    from app.ml.experiment import EXPERIMENT_RULES
+    from app.ml.metrics import METRIC_RULES
+    from app.ml.models import PREDICTION_NAMES
+    from app.ml.splitting import SPLIT_RULES
+
+    manifest = json.loads((directory / "manifest.json").read_bytes())
+    expected = dict(
+        format_version=1,
+        status="complete",
+        snapshot_sha256=inputs.snapshot_sha256,
+        input_manifests=inputs.input_manifests,
+        split_rules=SPLIT_RULES,
+        metric_rules=METRIC_RULES,
+        experiment_rules=EXPERIMENT_RULES,
+    )
+    if (
+        not isinstance(manifest, dict)
+        or any(manifest.get(name) != value for name, value in expected.items())
+        or set(manifest.get("libraries", ()))
+        != {"python", "numpy", "scikit_learn", "lightgbm"}
+        or not isinstance(manifest.get("files"), dict)
+        or set(manifest["files"]) != set(EXPERIMENT_OUTPUT_FILES)
+    ):
+        raise ValueError("Deney manifesti girişlerle veya kurallarla uyuşmuyor")
+    for name in EXPERIMENT_OUTPUT_FILES:
+        if (
+            hashlib.sha256((directory / name).read_bytes()).hexdigest()
+            != manifest["files"][name]
+        ):
+            raise ValueError(f"Deney dosyasının parmak izi tutmuyor: {name}")
+    labels = {row.anchor.key: row.anchor.label for row in inputs.split.samples}
+    reserved = {
+        (row["product_id"], row["source"], row["anchor_day"])
+        for row in inputs.plan.assignments
+        if row["role"] == "test_reserved"
+    }
+    allowed = {
+        (record["product_id"], record["source"], record["anchor_day"]): fold["month"]
+        for fold in inputs.plan.folds
+        if fold["status"] == "ready"
+        for record in fold["members"]["validation"]
+    }
+    seen = set()
+    for line in (directory / "predictions.jsonl").read_bytes().splitlines():
+        row = json.loads(line)
+        if set(row) != {
+            "fold",
+            "product_id",
+            "source",
+            "anchor_day",
+            "label",
+            *PREDICTION_NAMES,
+        }:
+            raise ValueError("Tahmin satırının alanları sözleşmeye uymuyor")
+        key = (row["product_id"], row["source"], date.fromisoformat(row["anchor_day"]))
+        if key in reserved or key in seen:
+            raise ValueError("Tahmin dosyasında saklı test veya tekrarlı anahtar var")
+        if (
+            allowed.get(key) != row["fold"]
+            or labels.get(key) != row["label"]
+            or not all(0 <= row[name] <= 1 for name in PREDICTION_NAMES)
+        ):
+            raise ValueError("Tahmin satırı kat doğrulama üyeliğiyle uyuşmuyor")
+        seen.add(key)
+    if seen != set(allowed):
+        raise ValueError("Doğrulama başlangıçlarının tahmini eksik veya fazla")
+    report = json.loads((directory / "report.json").read_bytes())
+    if (
+        report.get("test_opened") is not False
+        or report.get("own_source_scored") is not False
+        or report.get("model_frozen") is not False
+        or report.get("experiment_rules") != EXPERIMENT_RULES
+    ):
+        raise ValueError("Deney raporu saklı test veya kendi kaynağı kuralına uymuyor")
+    json.loads((directory / "models.json").read_bytes())
     return manifest

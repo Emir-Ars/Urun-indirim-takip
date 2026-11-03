@@ -9,7 +9,7 @@ from datetime import date, timedelta
 
 from pydantic import Field, model_validator
 
-from app.ml.features import FeatureRow
+from app.ml.features import FeatureRow, FeatureValues
 from app.ml.metrics import StartKey, Target, positive_clusters
 from app.ml.reporting import json_bytes, verify_feature_outputs, verify_outputs
 
@@ -71,8 +71,14 @@ class Sample:
 @dataclass(frozen=True)
 class SplitInputs:
     samples: tuple[Sample, ...]
+    # `samples` ile aynı sırada; bölme kararı bu alanlara bakmaz.
+    features: tuple[FeatureValues, ...]
     snapshot_sha256: str
     input_manifests: dict[str, str]
+
+    def __post_init__(self):
+        if len(self.samples) != len(self.features):
+            raise ValueError("Her başlangıcın tam bir girdi satırı olmalı")
 
 
 @dataclass(frozen=True)
@@ -140,12 +146,13 @@ def load_split_inputs(labels_dir, features_dir):
     if anchor_keys != feature_keys:
         raise ValueError("Etiket ve girdi başlangıç anahtarları birebir eşleşmiyor")
     return SplitInputs(
-        tuple(
+        samples=tuple(
             Sample(anchor, row.features.brand, row.features.family)
             for anchor, row in zip(anchors, rows)
         ),
-        digest,
-        dict(
+        features=tuple(row.features for row in rows),
+        snapshot_sha256=digest,
+        input_manifests=dict(
             labels=hashlib.sha256(raw_labels).hexdigest(),
             features=hashlib.sha256(raw_features).hexdigest(),
         ),
@@ -378,3 +385,57 @@ def evaluation_targets(samples, plan, *, partition="validation", fold_index=None
         ):
             raise ValueError("Doğrulama başlangıcı kat sınırlarına uymuyor")
     return [_target(by_key[key], partition) for key in keys]
+
+
+FOLD_ROLES = ("train", "calibration", "validation")
+# Bir katta kullanılabilen başlangıcın ana bölmedeki rolü. `purged_train` dahildir:
+# ana kesimde temizlenen satır, kendi katının sınırına uyuyorsa kullanılabilir.
+FOLD_ASSIGNMENTS = {"train", "validation", "purged_train"}
+
+
+def fold_samples(inputs, plan, fold_index, role):
+    """Katın bir diliminin etiketli Cimri satırları ve girdileri, anahtar sırasıyla.
+
+    Saklı test, etiketsiz ve kendi kaynağımızın satırları ile kat sınırını aşan
+    etiketler ancak bozuk bir planda gelir; sessizce atlanmaz, reddedilir.
+    """
+    if role not in FOLD_ROLES:
+        raise ValueError("Kat rolü train, calibration veya validation olmalı")
+    if not 0 <= fold_index < len(plan.folds):
+        raise ValueError("Kat numarası aralık dışında")
+    fold = plan.folds[fold_index]
+    start = dict(
+        train=None,
+        calibration=fold["calibration_start"],
+        validation=fold["validation_start"],
+    )[role]
+    end = dict(
+        train=fold["calibration_start"],
+        calibration=fold["validation_start"],
+        validation=fold["validation_end"] + timedelta(days=1),
+    )[role]
+    position = {row.anchor.key: index for index, row in enumerate(inputs.samples)}
+    assigned = {
+        (row["product_id"], row["source"], row["anchor_day"]): row["role"]
+        for row in plan.assignments
+    }
+    members = []
+    for record in fold["members"][role]:
+        key = (record["product_id"], record["source"], record["anchor_day"])
+        if key not in position:
+            raise ValueError("Kat üyesi girdi dosyasında yok")
+        index = position[key]
+        anchor = inputs.samples[index].anchor
+        if (
+            key[1] != "cimri"
+            or anchor.label is None
+            or assigned.get(key) not in FOLD_ASSIGNMENTS
+            or anchor.target_end >= end
+            or (start is not None and anchor.anchor_day < start)
+        ):
+            raise ValueError(
+                "Kat üyesi saklı test, etiketsiz veya kendi kaynağı olamaz "
+                "ve kat sınırını aşamaz"
+            )
+        members.append((inputs.samples[index], inputs.features[index]))
+    return members

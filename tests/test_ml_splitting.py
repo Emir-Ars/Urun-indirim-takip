@@ -6,7 +6,16 @@ from datetime import date, timedelta
 import pytest
 from pydantic import ValidationError
 
-from app.ml.splitting import Anchor, Sample, build_split, evaluation_targets
+from app.ml.splitting import (
+    FOLD_ROLES,
+    Anchor,
+    Sample,
+    SplitInputs,
+    build_split,
+    evaluation_targets,
+    fold_samples,
+)
+from tests.support.ml import feature_values
 
 FIRST = date(2025, 11, 1)
 
@@ -221,3 +230,90 @@ def test_fold_selector_rejects_horizon_overlap_and_old_keys(kind):
     ]
     with pytest.raises(ValueError):
         evaluation_targets(rows, plan, fold_index=0)
+
+
+def inputs_for(rows):
+    # Her satırın girdisi `history_days` ile kendi sırasını taşır; eşleşme görünür.
+    return SplitInputs(
+        samples=tuple(rows),
+        features=tuple(
+            feature_values(history_days=index + 1) for index in range(len(rows))
+        ),
+        snapshot_sha256="0" * 64,
+        input_manifests={},
+    )
+
+
+def test_fold_samples_return_each_slice_with_its_own_feature_rows():
+    rows = samples()
+    plan = build_split(rows)
+    inputs = inputs_for(rows)
+    position = {row.anchor.key: index for index, row in enumerate(rows)}
+    assert len(plan.folds) == 4
+    for index, fold in enumerate(plan.folds):
+        seen = set()
+        for role in FOLD_ROLES:
+            members = fold_samples(inputs, plan, index, role)
+            keys = [sample.anchor.key for sample, _ in members]
+            assert keys == [
+                (item["product_id"], item["source"], item["anchor_day"])
+                for item in fold["members"][role]
+            ]
+            assert keys and seen.isdisjoint(keys)
+            seen.update(keys)
+            for sample, features in members:
+                assert sample.anchor.source == "cimri"
+                assert sample.anchor.label is not None
+                assert features.history_days == position[sample.anchor.key] + 1
+        validation = fold_samples(inputs, plan, index, "validation")
+        assert [sample.anchor.key for sample, _ in validation] == [
+            target.key for target in evaluation_targets(rows, plan, fold_index=index)
+        ]
+
+
+@pytest.mark.parametrize("kind", ["reserved", "own", "unlabelled", "other_slice"])
+def test_fold_samples_reject_reserved_own_unlabelled_and_out_of_slice_members(kind):
+    rows = ordered(samples() + samples(products=(1,), source="own")[:60])
+    plan = deepcopy(build_split(rows))
+    changed = list(rows)
+    members = plan.folds[0]["members"]
+    names = ("product_id", "source", "anchor_day")
+    if kind == "reserved":
+        row = next(item for item in plan.assignments if item["role"] == "test_reserved")
+        members["train"].append({name: row[name] for name in names})
+    elif kind == "own":
+        row = next(
+            item for item in plan.assignments if item["role"] == "own_evaluation"
+        )
+        members["train"].append({name: row[name] for name in names})
+    elif kind == "unlabelled":
+        first = members["train"][0]
+        index = next(
+            position
+            for position, row in enumerate(rows)
+            if row.anchor.key == tuple(first[name] for name in names)
+        )
+        anchor = rows[index].anchor.model_copy(update={"label": None})
+        changed[index] = Sample(anchor, rows[index].brand, rows[index].family)
+    else:
+        # Doğrulama ayının bir başlangıcının hedefi kalibrasyon sınırını aşar.
+        members["train"].append(members["validation"][0])
+    with pytest.raises(ValueError, match="Kat üyesi"):
+        fold_samples(inputs_for(changed), plan, 0, "train")
+
+
+def test_fold_samples_reject_unknown_role_and_fold_number():
+    rows = samples()
+    plan = build_split(rows)
+    inputs = inputs_for(rows)
+    with pytest.raises(ValueError, match="Kat rolü"):
+        fold_samples(inputs, plan, 0, "test_reserved")
+    with pytest.raises(ValueError, match="Kat numarası"):
+        fold_samples(inputs, plan, 99, "train")
+
+
+def test_every_start_needs_exactly_one_feature_row():
+    rows = samples(30, products=(1,))
+    inputs = inputs_for(rows)
+    with pytest.raises(ValueError, match="girdi satırı"):
+        SplitInputs(inputs.samples, inputs.features[:-1], "0" * 64, {})

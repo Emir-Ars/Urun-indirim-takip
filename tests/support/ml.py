@@ -1,7 +1,28 @@
 """ML veri görüntüsü testlerinin küçük, tutarlı tablo örneği (veritabanısız)."""
 
+import random
 from datetime import date, datetime, timedelta, timezone
 
+FEATURE_DEFAULTS = dict(
+    log_return_1d=0.0,
+    log_return_7d=0.0,
+    log_return_14d=0.0,
+    log_return_30d=0.0,
+    ratio_min_7d=1.0,
+    ratio_min_30d=1.0,
+    ratio_mean_30d=1.0,
+    volatility_30d=0.01,
+    change_count_30d=2,
+    days_since_drop_30d=10,
+    drop_observed_30d=True,
+    history_days=100,
+    missing_ratio_30d=0.0,
+    weekday="2",
+    brand="Apple",
+    family="Apple iPhone 15",
+    segment="standard",
+    capacity="128",
+)
 CAPTURED_AT = datetime(2026, 10, 28, 9, 30, tzinfo=timezone.utc)
 START = datetime(2026, 10, 27, 19, tzinfo=timezone.utc)
 
@@ -171,6 +192,56 @@ def label_snapshot(tables=None, count=37, prices=None):
         datetime.combine(last + timedelta(days=1), datetime.min.time(), timezone.utc),
         5,
     )
+
+
+def feature_values(**overrides):
+    """Geçerli bir model girdi satırı; yalnız verilen alanlar değişir."""
+    from app.ml.features import FeatureValues
+
+    return FeatureValues(**{**FEATURE_DEFAULTS, **overrides})
+
+
+def walk_prices(count, seed=7):
+    """Tohumlu, günlük %3 oynaklıkta yapay fiyat yürüyüşü (kuruş)."""
+    rng = random.Random(seed)
+    price, prices = 10000, []
+    for _ in range(count):
+        price = max(5000, int(price * (1 + rng.gauss(0, 0.03))))
+        prices.append(price)
+    return prices
+
+
+def write_ml_evidence(root, count=365):
+    """Görüntü, etiket, girdi ve bölme klasörlerini yazar; yolları döndürür."""
+    from app.ml.__main__ import main
+    from app.ml.dataset import write_snapshot
+    from app.ml.features import analyze_features
+    from app.ml.labels import analyze_labels
+    from app.ml.reporting import write_feature_outputs, write_outputs
+
+    snapshot = label_snapshot(prices=walk_prices(count))
+    digest = write_snapshot(snapshot, root / "source")
+    write_outputs(root / "labels", digest, analyze_labels(snapshot))
+    write_feature_outputs(root / "features", digest, analyze_features(snapshot))
+    paths = dict(
+        labels=root / "labels",
+        features=root / "features",
+        split=root / "split",
+        digest=digest,
+    )
+    code = main(
+        [
+            "split",
+            "--labels-dir",
+            str(paths["labels"]),
+            "--features-dir",
+            str(paths["features"]),
+            "--output-dir",
+            str(paths["split"]),
+        ]
+    )
+    assert code == 0
+    return paths
 
 
 def remove_label_run(tables, run_id):

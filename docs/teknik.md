@@ -150,10 +150,12 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 | `series.py` | İstanbul günleri, zamanlanmış tur dilimleri, sağlam akşam başlangıcı, günlük minimum ve Cimri yarım gün maskesi; eski sıkı karşılaştırmanın günlük serisi. |
 | `labels.py` | Ayrı kendi/Cimri serilerinden simetrik 6/7 etiketi, sabit/izlenen sayfa kapsamı, sıkı pencere ve etiket özeti. Model eğitmez ve zaman bölmesi yapmaz. |
 | `features.py` | Yalnız geçmiş günlük başlangıç fiyatlarından sabit sözleşmeli girdiler, aile/segment kategorileri ve eksiklik raporu. Etiket okumaz; öğrenilen dönüşüm veya model eğitimi yapmaz. |
-| `splitting.py` | Parmak izli etiket/girdi eşleşmesi, ortak %70/%15/%15 tarih bölmesi, purge, ayrı kalibrasyonlu dört ileri yürüyen kat; saklı test dışındaki değerlendirme hedeflerini seçer. |
+| `splitting.py` | Parmak izli etiket/girdi eşleşmesi, ortak %70/%15/%15 tarih bölmesi, purge, ayrı kalibrasyonlu dört ileri yürüyen kat; katların etiket/girdi satırlarını ve saklı test dışındaki değerlendirme hedeflerini sınır denetimiyle seçer. |
 | `metrics.py` | Anahtarlı tahminlerde AP/Brier/log loss/Brier skill, güvenilirlik kovaları, olumlu pencere kümeleri, kırılımlar/makro ve eşleştirilmiş tarih bloklu güven aralığı. İstatistik kütüphaneleri yalnız puanlama çağrısında yüklenir. |
-| `reporting.py` | Ayrı etiket/girdi dosyaları için belirlenimci JSON/JSONL, Türkçe Markdown, çıktı şeması ve en son yazılan parmak izli başarı manifesti. |
-| `__main__.py` | `snapshot` yalnız `API_DATABASE_URL` okuma hesabıyla görüntü alır; `labels`/`features` görüntüden, `split` parmak izli etiket/girdi dosyalarından ağsız çalışır. DB katmanı/sürücüsü bu üç yolda yüklenmez. Çıkış kodları [ML hazırlığı](#ml-hazırlığı) bölümündedir. |
+| `models.py` | R0 sabit oran, R1 dip kuralı, R2 lojistik regresyon ve LightGBM; yalnız eğitimden öğrenilen ön işlemler, ayrı dilimde Platt kalibrasyonu, ham/kalibre tahminler ve öğrenilen değerlerin özeti. |
+| `experiment.py` | Etiket/girdiden bölmeyi yeniden üretip kanıt dosyalarıyla karşılaştırır; hazır katlarda eğitim/kalibrasyon/doğrulama akışını, birleşik ölçütleri, güven aralıklarını ve seçim önerisini yürütür. Saklı test ve kendi serimiz puanlanmaz. |
+| `reporting.py` | Etiket, girdi, bölme ve deney için belirlenimci JSON/JSONL, Türkçe Markdown ve en son yazılan parmak izli başarı manifesti; çıktıların yeniden doğrulanması. `split_plan_files` bölme yazımıyla deneyin bayt karşılaştırmasına ortak dosya içeriği üretir. |
+| `__main__.py` | `snapshot` yalnız `API_DATABASE_URL` okuma hesabıyla görüntü alır; `labels`/`features` görüntüden, `split` etiket/girdiden, `experiment` etiket/girdi/bölme klasörlerinden ağsız çalışır. Son dört komut DB katmanı/sürücüsünü yüklemez; model kütüphaneleri yalnız deney yolunda yüklenir. Çıkış kodları [ML hazırlığı](#ml-hazırlığı) bölümündedir. |
 
 ### Kurulum ve zamanlayıcı: `scripts/`
 
@@ -192,9 +194,12 @@ Test sayıları burada tutulmaz; güncel sayı `pytest -q` çıktısındadır.
 | `tests/test_ml_label_cli.py` | Ağsız etiket komutu, aynı dosyaların tekrar üretimi, parmak izi ve kesinti koruması, eski hesaplayıcıyla bağımsız sıkı çapraz kontrol. |
 | `tests/test_ml_features.py` | Girdi formülleri ve eksikler, aile/segment, Cimri kimliği, ölçekten bağımsızlık; gelecek fiyat/stok/sayfa/ürün değişimlerine ve kayıtların kesilmesine karşı geçmiş girdilerin sabitliği; 4.2 başlangıç anahtarlarıyla eşleşme. |
 | `tests/test_ml_feature_cli.py` | Ağsız, etiket ve eğitim modüllerini yüklemeyen features komutu; aynı dosyaların tekrarı, tipli şema, parmak izi, mevcut klasör ve kesinti/yazma hatası koruması. |
-| `tests/test_ml_splitting.py` | Ortak tarih kesimleri, purge eşitliği, ayrı kalibrasyon, dört aylık katlar, boş/tek sınıflı bölüm, kendi kaynağının ayrılığı ve saklı test değişimlerine karşı geliştirme çıktısının sabitliği. |
+| `tests/test_ml_splitting.py` | Ortak tarih kesimleri, purge eşitliği, ayrı kalibrasyon, dört aylık katlar, boş/tek sınıflı bölüm, kendi kaynağının ayrılığı ve saklı test değişimlerine karşı geliştirme çıktısının sabitliği; kat girdilerinin eşleşmesi ve bozuk üyeliklerin reddi. |
 | `tests/test_ml_metrics.py` | Elle hesaplanan ölçütler, geçersiz anahtar/etiket/olasılık, uç değerler ve kovalar, küme/makro desteği, bütün ürün günlerini koruyan tekrar üretilebilir eşleştirilmiş bootstrap. |
 | `tests/test_ml_split_cli.py` | Etiket/girdi bütünlüğü ve başlangıç eşleşmesi, yanlış kurallar/hedef sonu, belirlenimci bölme kanıtı, saklı test bilgi/üyelik koruması ve DB/ağ/eğitim katmanı yüklememe. |
+| `tests/test_ml_models.py` | R0/R1 elle hesap kontrolü, çekirdek girdi sözleşmesi, eksikler ve yeni kategoriler, tekrar üretilebilirlik, eğitim/kalibrasyon ayrılığı, Platt dönüşümü, sabit ayarlar ve öğrenilen değerlerin özeti. Yapay veriyle, ağsız. |
+| `tests/test_ml_experiment.py` | Kat ve birleşik ölçütler, seçim sonucunun üç durumu; saklı test/kendi kaynak/etiketsiz satırların X/y değişimlerine karşı çıktı baytlarının sabitliği ve eğitim değişiminin çıktıyı değiştirdiği olumlu kontrol. |
+| `tests/test_ml_experiment_cli.py` | Deney kanıt zinciri, parmak izi yenilense de değiştirilmiş bölmenin reddi, aynı dosyaların tekrarı, doğrulama dışı/saklı test tahmininin reddi, yarım yazım ve mevcut klasör koruması, çıkış kodları, DB/ağ katmanı yüklememe. |
 | `tests/test_price_statistics.py` | İstatistik hesabı: tam kapsam dönemi, 30 gün/14 geçiş/7 gün/18 saat eşikleri, İstanbul günü, NULL üzerinden geçmeme, değişkenlik, grafik aralığından bağımsızlık. Veritabanısız. |
 | `tests/test_api_foundation.py` | API okuma rolünün izinleri (yazamaması, kalıcı nesne kuramaması) ve test ortamının ağ/adres korumaları. |
 | `tests/test_api.py` | FastAPI: dört adres ve OpenAPI, kuruş/UTC/NULL, fiyat yaşı, rol/şema hataları, dört bağlantı sınırı, kesinti ve yeniden bağlantı, 5 sn sorgu zaman aşımı, tutarlı cevap. |
@@ -2294,7 +2299,8 @@ ML hazırlığının kodu `app/ml` paketindedir; adımlar ve kararlar
 [planın ML bölümündedir](../proje_plani.md#ml). Gerçek veritabanı okuma
 hesabıyla bir kez okunup bir **veri görüntüsü** dosyasına yazılır; etiket ve
 deney adımları bu dosyadan ağsız ve veritabanısız çalışır. Böylece aynı
-görüntü aynı sonucu verir ve testler veritabanı istemez. Kütüphaneler `ml`
+görüntü/kod/ortam aynı sonucu verir; etiket, girdi, bölme ve deney testleri
+veritabanı istemez. Kütüphaneler `ml`
 bağımlılık grubundadır (numpy, scikit-learn, LightGBM; kesin sürümler,
 `pyproject.toml`). Eski sıkı kuralla sayan [ML veri denetimi](#ml-veri-denetimi)
 aracı ayrıdır ve değişmeden kalır.
@@ -2663,8 +2669,8 @@ referans olasılığını taşımalıdır. Yardımcı yeni bir model öğrenmez.
 | `breakdowns`, `macro` | Marka/aile/ürün kırılımı; yeterli ürünlerin eşit ağırlıklı ortalaması ve ölçüt başına kapsama. Ana sonuç bütün satırları ağırlıklandırır. |
 
 Boş ölçümde puanlar NULL'dır. Tek sınıfta Brier/log loss hesaplanabilir;
-AP hesaplanmaz ve model seçimi için yeterli sayılmaz. Grafiğin çizimi ve
-gerçek tahminlerin ölçülmesi sonraki deney adımındadır.
+AP hesaplanmaz ve model seçimi için yeterli sayılmaz. Deney komutu gerçek
+tahminleri ölçer; güvenilirlik kovalarını tablo olarak yazar, grafik çizmez.
 
 **Olumlu pencere kümeleri:** ürün+kaynak bazında yalnız olumlu
 `[d+1,d+7]` aralıkları çakışıyorsa birleştirilir; ortak uç ve zincirleme
@@ -2706,6 +2712,115 @@ kanıtı `artifacts/ml_bolme_20261102_202101_484/` klasöründedir. Giriş/çık
 parmak izleri, başlangıç tekilliği, ana/kat purge sınırları ve ayrı
 kalibrasyon üyelikleri dosyalar okunarak doğrulandı. Saklı test için yalnız
 sınır/anahtar/sayı incelendi; sınıf dağılımı veya tahmin puanı üretilmedi.
+
+### Modeller ve deney (`python -m app.ml experiment`)
+
+Komut 4.2 etiket, 4.3 girdi ve 4.4 bölme klasörlerini okur; DB'ye veya ağa
+bağlanmaz. Modeller her hazır katta yeniden eğitilir; yalnız o katın
+doğrulama ayına tahmin üretilir. Saklı test ve kendi serimiz puanlanmaz.
+Ana %15 doğrulama bölümü ayrıca puanlanmaz; birleşik sonuç, dört ileri
+yürüyen katın doğrulama satırlarından oluşur.
+
+**Kanıt zinciri:** etiket/girdi manifestleri, parmak izleri, ortak görüntü
+ve başlangıç eşleşmesi denetlenir. Bölme manifesti ve dosyaları doğrulanır;
+bölme planı etiketlerden yeniden kurulur. `assignments.jsonl`, `folds.json`,
+`report.json` ve `report.md`, `split_plan_files` ile yeniden üretilen
+baytlarla aynı olmalıdır; `metrics_schema.json` da kodun şemasıyla
+karşılaştırılır. Değiştirilmiş bölme, dosyanın parmak izi yenilense bile
+reddedilir. Bu kontroller eğitim ve çıktı klasörü oluşturulmadan yapılır.
+Kat dilimi seçilirken saklı test, etiketsiz, kendi kaynaklı, girdide
+bulunmayan veya kat/purge sınırını aşan üyeler sessizce atlanmaz; reddedilir.
+
+Kullanıcı terminalinde mevcut kanıtlarla (gerçek çalıştırma Adım 4.6'dır):
+
+```powershell
+$mlExperimentLabels = "artifacts\ml_etiket_20261102_201553_161"
+$mlExperimentFeatures = "artifacts\ml_girdi_20261102_201744_673"
+$mlExperimentSplit = "artifacts\ml_bolme_20261102_202101_484"
+$mlExperimentOut = "artifacts\ml_deney_$(Get-Date -Format yyyyMMdd_HHmmss_fff)"
+.venv\Scripts\python.exe -m app.ml experiment --labels-dir $mlExperimentLabels --features-dir $mlExperimentFeatures --split-dir $mlExperimentSplit --output-dir $mlExperimentOut
+$LASTEXITCODE
+```
+
+Çıkış 0; rapor yolu, görüntü SHA-256, değerlendirilen kat ve doğrulama satırı
+sayısı, ham/kalibre modellerin AP/Brier/log loss puanları ve seçim önerisi
+beklenir. Çıkış 0 model başarısı anlamına gelmez; seçim sonucu
+“karşılanmadı” veya “değerlendirilemedi” olduğunda da komut başarılıdır.
+Çıkış 1 veri/dosya/eksik ML bağımlılığı/mevcut klasör hatası, 2 argüman
+hatası, 130 kullanıcı kesmesidir. Test açma veya ayar arama seçeneği yoktur.
+
+**Eğitim ve ön işlemler:** bütün modeller aynı çekirdek girdileri kullanır;
+ay, ürün anahtarı/kimliği ve kaynak bilgisi modele verilmez. Her katta
+modeller ve öğrenilen dönüşümler yalnız eğitim diliminden, kalibratörler
+ayrı 30 günlük kalibrasyon diliminden öğrenir. Doğrulama etiketleri eğitim
+ve kalibrasyona girmez.
+
+| Model | Bugünkü kural |
+|---|---|
+| R0 | Eğitim diliminin olumlu oranını her satıra verir; kalibre edilmez. |
+| R1 | `ratio_min_30d` için üst sınırları dahil 1,00 / 1,02 / 1,05 / 1,10 ve üzeri kovalar. Her kovada `(olumlu + 20 × R0) / (satır + 20)`; boş kova R0'a döner. |
+| R2 | Sayısal eksikler eğitim medyanıyla doldurulur, eksiklik göstergeleri eklenir ve ölçeklenir; tamamen boş sütun korunur. Kategoriler one-hot, bilinmeyen kategori yok sayılır. L2 lojistik regresyon: C=1, lbfgs, en çok 1000 yineleme. |
+| LightGBM | Sayısal eksikler NaN kalır; kategoriler eğitimden öğrenilen kodlara, bilinmeyenler NaN'a dönüşür. İkili amaç, 200 ağaç, öğrenme oranı 0,05, 15 yaprak, yaprakta en az 100 satır, L2=1; sınıf ağırlığı yok. Tek iş parçacığı, tohum 42, `deterministic=True`, `force_row_wise=True`. |
+
+R1, R2 ve LightGBM'nin ham olasılıkları ayrıca Platt sigmoid kalibrasyonundan
+geçer. Eğitilmiş model dondurulur (`FrozenEstimator`); kalibrasyon temel
+modeli yeniden eğitmez. Üçünde de olasılık `[1e-9, 1−1e-9]` sınırına
+kırpılıp log-odds skoruna çevrilir. Kalibratör bu skor üzerinden ayrı
+dilimde öğrenir. Öğrenilen eğim/kesişim ve sıralamanın korunup korunmadığı
+raporlanır; korunacağı varsayılmaz. Ham ve kalibre toplam yedi tahmin
+vektörü puanlanır. Kesin ayarlar `models.py` içindeki `MODEL_RULES`'ta ve
+deney manifestindedir; hiperparametre araması yapılmaz.
+
+**Ölçüm ve seçim önerisi:** kat puanları ve birleşik doğrulama puanları,
+taban olumlu oranı, R0'a göre Brier skill, güvenilirlik kovaları,
+marka/aile/ürün kırılımları ve yeterli ürünlerin makro ortalamaları
+hesaplanır. Her satır kendi katının R0 olasılığını taşır. AP farkının
+yukarıda tanımlanan tarih bloklu güven aralığı üç çiftte hesaplanır:
+LightGBM + Platt − R2 + Platt (seçim), R1 + Platt − R0 ve
+R2 + Platt − R1 + Platt (bilgi).
+
+LightGBM + Platt için dört hazır kat, AP farkı güven aralığının alt sınırının
+0'dan büyük olması, birleşik Brier ve log loss değerlerinin R2 + Platt'tan
+büyük olmaması birlikte aranır. Sonuç şu sırayla belirlenir:
+
+| Durum | Sonuç |
+|---|---|
+| Dört kat hazır değil | `not_evaluable` — Değerlendirilemedi. |
+| Dört kat hazır, hesaplanan koşullardan en az biri sağlanmıyor | `not_met` — Karşılanmadı; başka koşulun aralığı/puanı NULL olsa bile. |
+| Dört kat hazır, sağlanmayan koşul yok, en az bir koşul hesaplanamıyor | `not_evaluable` — Değerlendirilemedi. |
+| Bütün koşullar sağlanıyor | `met` — Karşılandı. |
+
+NULL sıfır veya başarısız ölçüm sayılmaz; hesaplanamama gerekçesi korunur.
+“Karşılanmadı” seçim koşullarını anlatır; modelin her durumda kötü olduğunun
+istatistiksel kanıtı değildir. Sonuç yalnız öneridir: `decides_model=False`,
+`model_frozen=False`. Modeli kesinleştirme ve son testi tek kez açma ayrı
+plandır; bu komut ekranda tahmin göstermez.
+
+**Çıktılar:** yeni klasöre yazılır; var olan klasöre dokunulmaz.
+
+| Dosya | İçerik |
+|---|---|
+| `predictions.jsonl` | Yalnız hazır katların doğrulama anahtarı, ayı, etiketi ve yedi model olasılığı. Eğitim, kalibrasyon, saklı test ve kendi serimiz tahminleri yazılmaz. |
+| `models.json` | Kat başına R0 oranı, R1 kovaları, R2 katsayıları/yakınsama bilgisi, LightGBM ağaç sayısı/kazanç önemleri ve Platt katsayıları. Yeniden yüklenebilir eğitilmiş model dosyası değildir. |
+| `report.json` | Kat ve birleşik puanlar, bütün kırılımlar, güvenilirlik kovaları, güven aralıkları, seçim koşulları/gerekçeleri, kural ve kütüphane sürümleri. |
+| `report.md` | Puanlar, kat AP'leri, fark aralıkları, seçim sonucu, güvenilirlik tabloları, ürün makro/marka özeti ve sınırların Türkçe görünümü. |
+| `manifest.json` | En son yazılan tamamlanma kaydı; görüntü SHA-256, etiket/girdi/bölme manifestlerinin SHA-256 değerleri, bölme/ölçüt/deney kuralları, kütüphane sürümleri ve dört çıktı parmak izi. |
+
+Yazımdan sonra manifest ve dosya parmak izleri yeniden doğrulanır; tahmin
+anahtarları hazır katların doğrulama üyeleriyle birebir olmalıdır. Eksik,
+fazla, tekrarlı, yanlış etiketli veya saklı test anahtarlı tahmin ve [0,1]
+dışındaki olasılık reddedilir. Raporda testin açılmadığı, kendi serimizin
+puanlanmadığı ve modelin dondurulmadığı denetlenir. Manifesti olmayan yarım
+yazım tamamlanmış deney değildir; yeni klasörle tekrarlanır. Aynı
+girdi/kod/ortam aynı dosya baytlarını üretir.
+
+**Sınırlar:** gerçek veride deneyin başarısı ve süresi henüz ölçülmedi;
+ölçüm Adım 4.6'dadır. Yapay küçük kalibrasyon dilimlerinde scikit-learn az
+olumlu örnek uyarısı verebilir. Bazı deney testlerinde yalnız süreyi azaltmak
+için bootstrap 100 tekrar/90 geçerli tekrar eşiğiyle çalışır; gerçek komutun
+2000/1800 ayarları değişmez ve `tests/test_ml_metrics.py` içinde ayrıca
+sınanır. Ay/ürün kimliği ablasyonu, TL kaybı raporu, kendi verimizde sınama,
+yeniden yüklenebilir model kaydı ve gölge mod bu komutta uygulanmış değildir.
 
 ## Testler ne kanıtlar, ne kanıtlamaz
 

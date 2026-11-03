@@ -1,6 +1,6 @@
 # Akıllı Telefon İndirim Takip ve Tahmin Sistemi — Proje Planı
 
-Son güncelleme: 2 Kasım 2026.
+Son güncelleme: 3 Kasım 2026.
 
 Bu belge **kararların, aşama durumunun ve sıradaki işin** tek kaynağıdır ve
 kısa tutulur. Diğer bilgiler şuralardadır:
@@ -45,7 +45,7 @@ Kullanıcı arayüzde arama yaptığında canlı scraping veya model eğitimi
 | Proje yapısının sadeleştirilmesi (Bölüm 8, Adım 1–5) | ✅ Tamamlandı (26 Ekim) | `75d4732` |
 | ML öncesi ekran iyileştirmeleri 1–2 | ✅ Tamamlandı (28 Ekim) | `dd2e262`, `94045bd`, CI 40643349065 |
 | Proje mühendisliğini pekiştirme | ⏸️ Pasif (28 Ekim kararı): iş sırasında değil; kullanıcı istediğinde Oturum 2'den sürer | Program aşağıda; oturum ilerlemesi yerel devir notunda |
-| 8. ML (indirim tahmini) | 🔄 Hazırlık sürüyor (4.0–4.4 tamamlandı; 4.5–4.6 planlandı) | Bölüm 9 |
+| 8. ML (indirim tahmini) | 🔄 Hazırlık sürüyor (4.0–4.4 tamamlandı; 4.5 uygulandı, gönderim bekliyor; 4.6 planlandı) | Bölüm 9 |
 | 9. Sürekli işletim ve Docker | 🔄 Sürekli işletim kararı verildi (22 Ekim: dizüstü sürekli açık); Docker başlanmadı | Bölüm 9 |
 
 Bugünkü işletim: fiyat turu her gün 10:00 ve 22:00'de, haftalık keşif her
@@ -239,6 +239,7 @@ rehberde, o günkü tartışması arşivdedir.
 | 2 Kasım | Staj sonunda sunum yapılacak; içeriği ve biçimi sonra konuşulur. Hazırlığı takvimin son haftasındadır. | Kullanıcının staj gereksinimi. |
 | 2 Kasım | 4.4 planı onaylandı: dört tam doğrulama ayı, her katta ayrı 30 gün kalibrasyon, olumlu pencere kümeleri ve %95 tarih bloklu güven aralığı; saklı testin puanlaması kapalı kalır. | Kullanıcı seçimleri: ölçülen ay kalibrasyonda görülmesin, tekrar eden olumlu satırlar olay diye sayılmasın; kesin kurallar teknik rehberde. |
 | 2 Kasım | Sabah turunun katkısı ölçüldü; 10:00 ve 22:00 turları korunur (19 Ekim kararı sürer). | 2 Kasım görüntüsü, kendi serimiz (28 Eylül–25 Ekim başlangıçları, 4.2 kuralı, 30 gün şartı aranmadan): yalnız akşam turuyla kullanılabilir pencere 903'ten 508'e düşer (akşam turunun kullanılamadığı 7 gün); iki yolla da etiketlenen 508 pencerenin 8'inde (4 ürün) ≥%5 düşüşü yalnız sabah turu gördü. Veri ~5 hafta; ardışık pencereler bağımsız değil. |
+| 3 Kasım | 4.5 seçim sonucunda dört kat hazır değilse “değerlendirilemedi”; dört kat hazırken hesaplanan bir koşul sağlanmıyorsa, başka koşul hesaplanamasa bile “karşılanmadı”; sağlanmayan koşul yokken eksik hesap varsa “değerlendirilemedi”; hepsi sağlanırsa “karşılandı”. | Kullanıcı sonuç görülmeden bu ayrımı onayladı: bilgi eksikliği ile sağlanmayan seçim koşulu ayrılır; NULL başarısız ölçüm sayılmaz. Kesin seçim yapılmaz; bugünkü davranış [teknik rehberde](docs/teknik.md#modeller-ve-deney-python--m-appml-experiment). |
 
 ### Bilerek değiştirilmeyen davranışlar
 
@@ -370,7 +371,8 @@ beklenen davranışı ve sonuca güvenmek için gereken kanıtlar açıklanır.
    Düzeltmenin ilk tam canlı sonucu 8 Kasım keşfinde kontrol edilir.
 4. **ML hazırlığı:** 4.0–4.4 tamamlandı. 4.1–4.4 komutları son alımı içeren
    2 Kasım görüntüsüyle yeniden çalıştırıldı, kod değişmedi (sayılar
-   README'de). Sırada bu veriyle 4.5 ve 4.6. Hedef: 15 Kasım.
+   README'de). 4.5 kodu ve belgeleri uygulandı; gönderim/CI bekliyor.
+   Sonrasında bu veriyle 4.6 gerçek deneyi yapılır. Hedef: 15 Kasım.
 5. **Model seçiminin dondurulması ve son testin tek kez açılması:** hedef
    22 Kasım; ayrı plan.
 6. **Gölge mod:** canlı günlük tahmin kaydı ve 27 Ekim'den itibaren geriye
@@ -440,7 +442,7 @@ ML hazırlığının adımları (kalan sıra 4; yapı kararı Bölüm 5, 28 Ekim
 | 4.2 | Günlük seriler ve etiketler; etiket raporu; sıkı varyantın eski araçla çapraz kontrolü | ✅ Tamamlandı (2 Kasım); gerçek görüntü, gönderim ve CI doğrulandı |
 | 4.3 | Girdiler ve sızıntı testi | ✅ Tamamlandı (2 Kasım); gerçek görüntüde başlangıç eşleşmesi, gönderim ve CI doğrulandı |
 | 4.4 | Zaman bölmesi (purge, ileri yürüyen katlar) ve ölçütler | ✅ Tamamlandı (2 Kasım); gerçek bölme/kat, gönderim ve CI doğrulandı |
-| 4.5 | R0–R2, LightGBM, kalibrasyon ve deney raporu | Planlandı |
+| 4.5 | R0–R2, LightGBM, kalibrasyon ve deney raporu | 🔄 Kod ve belgeler uygulandı (3 Kasım); gönderim/CI bekliyor, gerçek deney 4.6'da |
 | 4.6 | Son alımla uzatılmış Cimri verisiyle ilk deney; son %15 test açılmaz | Planlandı |
 
 Bu aşamada tahmin gösterilmez, gölge mod kurulmaz ve DB'ye yazılmaz; bunlar
