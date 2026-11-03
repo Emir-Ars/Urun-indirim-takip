@@ -2738,9 +2738,31 @@ $mlExperimentLabels = "artifacts\ml_etiket_20261102_201553_161"
 $mlExperimentFeatures = "artifacts\ml_girdi_20261102_201744_673"
 $mlExperimentSplit = "artifacts\ml_bolme_20261102_202101_484"
 $mlExperimentOut = "artifacts\ml_deney_$(Get-Date -Format yyyyMMdd_HHmmss_fff)"
+$mlExperimentTimer = [System.Diagnostics.Stopwatch]::StartNew()
 .venv\Scripts\python.exe -m app.ml experiment --labels-dir $mlExperimentLabels --features-dir $mlExperimentFeatures --split-dir $mlExperimentSplit --output-dir $mlExperimentOut
-$LASTEXITCODE
+$mlExperimentExit = $LASTEXITCODE
+$mlExperimentTimer.Stop()
+$mlExperimentRun = [ordered]@{
+    output_dir = $mlExperimentOut
+    exit_code = $mlExperimentExit
+    elapsed_seconds = $mlExperimentTimer.Elapsed.TotalSeconds
+}
+$mlExperimentRun | ConvertTo-Json | Set-Content -Encoding UTF8 ($mlExperimentOut + '_run.json')
+Write-Output "Cikis kodu: $mlExperimentExit"
+Write-Output "Sure (saniye): $($mlExperimentTimer.Elapsed.TotalSeconds)"
+Write-Output "Klasor: $mlExperimentOut"
 ```
+
+Süre ve çıkış kodu kabuk tarafından deney klasörünün yanındaki
+`ml_deney_<tarih-saat>_run.json` dosyasına kaydedilir; bu dosya deney
+manifestinin parçası değildir. Uyarılar dahil terminal çıktısı ayrıca
+incelenir. İlk gerçek çalışma 3 Kasım'da kullanıcı terminalinde çıkış 0 ile
+44,33 saniyede tamamlandı; bu tek ortamın ölçümüdür, süre garantisi değildir.
+Kanıtlar `artifacts/ml_deney_20261103_135053_501/`, süre/çıkış kodu yanındaki
+`ml_deney_20261103_135053_501_run.json` dosyasındadır. Girdi/çıktı zinciri ve
+tahmin üyelikleri yeniden eğitim yapılmadan doğrulandı; yedi modelin kat
+ve birleşik AP/Brier/log loss/Brier skill puanları kayıtlı tahminlerden
+yeniden hesaplanıp raporla eşleştirildi. Saklı test açılmadı.
 
 Çıkış 0; rapor yolu, görüntü SHA-256, değerlendirilen kat ve doğrulama satırı
 sayısı, ham/kalibre modellerin AP/Brier/log loss puanları ve seçim önerisi
@@ -2814,9 +2836,45 @@ puanlanmadığı ve modelin dondurulmadığı denetlenir. Manifesti olmayan yar�
 yazım tamamlanmış deney değildir; yeni klasörle tekrarlanır. Aynı
 girdi/kod/ortam aynı dosya baytlarını üretir.
 
-**Sınırlar:** gerçek veride deneyin başarısı ve süresi henüz ölçülmedi;
-ölçüm Adım 4.6'dadır. Yapay küçük kalibrasyon dilimlerinde scikit-learn az
-olumlu örnek uyarısı verebilir. Bazı deney testlerinde yalnız süreyi azaltmak
+#### İlk gerçek deneyin değerlendirmesi
+
+İlk deneyin kapsam ve puanları [README Güncel kapsam](../README.md#-güncel-kapsam)
+tablosundadır; ayrıntılı kat, güvenilirlik ve kırılım tabloları yukarıdaki
+kanıt klasörünün `report.md`/`report.json` dosyalarındadır.
+
+- LightGBM + Platt'ın birleşik AP, Brier ve log loss değerleri R2 + Platt'tan
+  iyi olsa da AP farkının tarih bloklu güven aralığı sıfırı içerir. Hesaplama
+  eksikliği yoktur; alt sınırın pozitif olması koşulu sağlanmadığı için sonuç
+  `not_met` olur. Bu sonuç LightGBM'nin kesin daha kötü olduğunu veya R2'nin
+  otomatik seçildiğini belirtmez; model henüz dondurulmamıştır.
+- Kalibre AP'de Nisan ve Temmuz'da R2, Mayıs ve Haziran'da LightGBM öndedir.
+  Marka içinde Apple'da LightGBM, Samsung ve Xiaomi'de R2 öndedir; bu
+  kırılımların ayrı güven aralığı yoktur. Marka olumlu oranları farklıdır;
+  markalar arasında ham AP büyüklükleri doğrudan başarı sırası sayılmaz.
+  Aylık farklara kampanya gibi dış nedenler kanıt olmadan atanmaz.
+- Platt, LightGBM'nin birleşik Brier ve log loss değerlerini iyileştirmiştir;
+  her alt grupta iyileşme veya her olasılık aralığında güvenilirlik anlamına
+  gelmez. Özellikle yüksek olasılık kovalarında destek sınırlıdır. R2 bütün
+  katlarda yakınsamış; kalibrasyon her katta modellerin sıralamasını korumuştur.
+- Çoğu ürünün olumlu pencere kümesi sayısı ürün bazında skor raporlamaya
+  yetmez. Makro ortalama yalnız yeterli ürünlerdendir; bütün kataloğun
+  tipik başarısı olarak yorumlanmaz. POCO'nun marka kırılımı da yetersizdir.
+  Birleşik ölçütler ile ürün bazındaki kanıt desteği ayrı değerlendirilir.
+- R1 + Platt − R0 ve R2 + Platt − R1 + Platt AP fark aralıkları pozitiftir;
+  referans basamaklarının sıralama katkısına işaret eder. Kendi kaynağımızda
+  başarı, kesin seçim veya gösterim yeterliliği sonucu çıkarılmaz.
+
+R0 her katta ayrı eğitim olumlu oranıdır; birleşik tahmin tek sabit değildir.
+Bu nedenle birleşik R0 AP'si genel olumlu oranla aynı olmak zorunda değildir.
+Benzer şekilde kalibrasyon kat içinde sıralamayı korurken katlar arasındaki
+puan ölçeğini değiştirebilir; birleşik AP'nin değişmesi bu durumla uyumludur.
+Kullanıcının paylaştığı gerçek terminal çıktısında uyarı görünmedi; ayrı tam
+terminal günlüğü olmadan uyarıların kesin yokluğu iddia edilmez.
+
+**Sınırlar:** ilk ölçüm yalnız mevcut Cimri dönemine aittir; kendi verimizde
+başarıyı veya gösterim yeterliliğini kanıtlamaz. Yapay küçük kalibrasyon
+dilimlerinde scikit-learn az olumlu örnek uyarısı verebilir. Bazı deney
+testlerinde yalnız süreyi azaltmak
 için bootstrap 100 tekrar/90 geçerli tekrar eşiğiyle çalışır; gerçek komutun
 2000/1800 ayarları değişmez ve `tests/test_ml_metrics.py` içinde ayrıca
 sınanır. Ay/ürün kimliği ablasyonu, TL kaybı raporu, kendi verimizde sınama,
@@ -2949,3 +3007,8 @@ yeniden yüklenebilir model kaydı ve gölge mod bu komutta uygulanmış değild
   iki ürünün eşleştirmesi yok. Seri kendi ölçümümüzle aynı kapsamda değildir;
   tarihsel satıcı kapsamı ve günlerin bağımsız ölçülüp ölçülmediği bilinmez.
   Akakçe'nin ilk örneği HTTP 403 verdi; engel aşılmaz.
+- **ML sonuçlarının kapsamı:** ilk deneyde ay/marka üstünlüğü değişiyor;
+  ürün bazında değerlendirme ve yüksek olasılık kalibrasyonu çoğu hücrede
+  sınırlı desteğe sahip. Ayrıntı [ilk gerçek deneyin değerlendirmesinde](#ilk-gerçek-deneyin-değerlendirmesi),
+  güncel kapsam sayıları README'dedir. Cimri sonucu kendi kaynağımızda veya
+  ekranda tahmin göstermeye yeterlilik kanıtı değildir.
