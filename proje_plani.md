@@ -45,7 +45,7 @@ Kullanıcı arayüzde arama yaptığında canlı scraping veya model eğitimi
 | Proje yapısının sadeleştirilmesi (Bölüm 8, Adım 1–5) | ✅ Tamamlandı (26 Ekim) | `75d4732` |
 | ML öncesi ekran iyileştirmeleri 1–2 | ✅ Tamamlandı (28 Ekim) | `dd2e262`, `94045bd`, CI 40643349065 |
 | Proje mühendisliğini pekiştirme | ⏸️ Pasif (28 Ekim kararı): iş sırasında değil; kullanıcı istediğinde Oturum 2'den sürer | Program aşağıda; oturum ilerlemesi yerel devir notunda |
-| 8. ML (indirim tahmini) | 🔄 ML hazırlığı 4.0–4.6, komutlar ve dondurma (5.1–5.2) tamamlandı; R2 + Platt ile saklı test açıldı ve doğrulandı (5.3), sonuç belgeleri gönderim bekliyor; model değişmedi, gölge mod sonraki ayrı plan | Bölüm 9 |
+| 8. ML (indirim tahmini) | 🔄 ML hazırlığı 4.0–4.6, dondurma ve saklı test (5.1–5.3) tamamlandı; R2 + Platt değişmedi, sonuç belgeleri gönderildi ve CI doğrulandı; gölge mod planı 4 Kasım'da onaylandı (adımlar 6.0–6.5, uygulama sürüyor) | Bölüm 9 |
 | 9. Sürekli işletim ve Docker | 🔄 Sürekli işletim kararı verildi (22 Ekim: dizüstü sürekli açık); Docker başlanmadı | Bölüm 9 |
 
 Bugünkü işletim: fiyat turu her gün 10:00 ve 22:00'de, haftalık keşif her
@@ -205,7 +205,7 @@ rehberde, o günkü tartışması arşivdedir.
 | 22 Ekim | Adım 4 kapsamı: katalog yazıcıları, zamanlanmış çalışma kopyası ve Cimri'nin kullanılmayan yolları sadeleşir; keşifteki eski kimlik kontrolü Adım 5'e taşınır; API'nin istek başı denetimi ve katalog okuma olduğu gibi kalır. | İnceleme: eski kimlik kontrolü ölü kod değil (rapor gerekçesi, Hepsiburada varyant kuyruğu); diğer iki madde gerekçesiyle "Bilerek değiştirilmeyen davranışlar"da. |
 | 22 Ekim | Test dosyaları birbirinden içe aktarma yapmaz (bir test denetler); ortak fixture ve yardımcılar `tests/support/`'tadır. Yalnız `test_discovery.py` bölünür; tek konulu büyük dosyalar (toplama, Cimri, veritabanı) bölünmez. | Bölme, konu karışık olduğunda testi bulmayı kolaylaştırır; tek konulu dosyada yalnız dosya sayısını artırır. |
 | 22 Ekim | Sürekli işletim için GitHub Actions + bulut PostgreSQL yolu kullanıcı isteğiyle yeniden sınandı ve kapandı: Hepsiburada okundu, Trendyol okunmadı. Toplama GitHub'a taşınmaz; engel aşılmaz. | `bulut-deneme.yml`: ilk denemede ürün verisi olmayan sayfa, teşhisli denemede HTTP 403 ve Cloudflare çerezleri; aynı iki sayfa aynı sabah evden okunmuştu. Sorun okuma kodunda değil, erişim engelinde. |
-| 22 Ekim | Sürekli işletim: dizüstü sürekli açık kalır (prizde, oturum açık, ekran kilitli, kapak kapalı); prizdeyken kapak kapanınca uyumaz. Görevler ve 10:00/22:00 düzeni değişmez. | Trendyol yalnız ev internetinden okunuyor; kullanıcı yeni cihaz alamıyor, eski cihazı yok. Uyku ve hazırda bekletme prizde zaten kapalıydı. |
+| 22 Ekim | Sürekli işletim: dizüstü sürekli açık kalır (prizde, oturum açık, ekran kilitli, kapak kapalı); prizdeyken kapak kapanınca uyumaz. Görevler ve 10:00/22:00 düzeni değişmez. 4 Kasım'da kullanıcı bilgisayarı geceleri çoğu zaman kapattığını, bazen açık bıraktığını bildirdi; karar fiilî durumla örtüşmüyor, güç ayarlarına yeni müdahale kararı yok. | Trendyol yalnız ev internetinden okunuyor; kullanıcı yeni cihaz alamıyor, eski cihazı yok. Uyku ve hazırda bekletme prizde zaten kapalıydı. |
 | 23 Ekim | Cimri'den son bir defalık alım yapılır ve Cimri geçmişi ML eğitiminde kullanılır. Alım mevcut güvenli yolla (`python -m app.market_history capture`), kullanıcının terminalinden ve ayrı onayla, ML hazırlığına başlarken yapılır; sonrasında yalnız kendi verimiz birikir. Düzenli Cimri toplaması yine yoktur. | Kullanıcı kararı: proje yayınlanmayan bir staj projesi; Cimri'ye yazılan e-postaya yanıt gelmedi. Kullanım uygunluğu resmî olarak doğrulanmadı; bu bilinen sınır olarak kalır. |
 | 26 Ekim | Galaxy S25 256 GB'ın `hepsiburada_hbcv0000atwvmc` bağlantısı kullanıcı onayıyla pasife alındı; katalog kaydı ve geçmişi korunur. | Tur 43–54'te kapasite doğrulanamadı; kullanıcının ekran görüntüsünde satış kapalı ve görünen bölümde kapasite yok. Ürün diğer bağlantılarıyla izleniyor. |
 | 26 Ekim | Adım 5.2 davranışı koruyarak uygulanır: kullanılmayan aday üretimi kaldırılır; kabul kuralları, ayrıntılı retler ve Hepsiburada seçenek taraması korunur. | Kullanıcının kapsam seçimi ve uygulama onayı; eski yolun tamamını kaldırmak tarama kapsamını değiştirebilirdi. |
@@ -242,6 +242,8 @@ rehberde, o günkü tartışması arşivdedir.
 | 3 Kasım | 4.5 seçim sonucunda dört kat hazır değilse “değerlendirilemedi”; dört kat hazırken hesaplanan bir koşul sağlanmıyorsa, başka koşul hesaplanamasa bile “karşılanmadı”; sağlanmayan koşul yokken eksik hesap varsa “değerlendirilemedi”; hepsi sağlanırsa “karşılandı”. | Kullanıcı sonuç görülmeden bu ayrımı onayladı: bilgi eksikliği ile sağlanmayan seçim koşulu ayrılır; NULL başarısız ölçüm sayılmaz. Kesin seçim yapılmaz; bugünkü davranış [teknik rehberde](docs/teknik.md#modeller-ve-deney-python--m-appml-experiment). |
 | 3 Kasım | 4.6 uygulama planı onaylandı: mevcut 2 Kasım kanıtlarıyla sabit ayarlı ilk Cimri deneyi kullanıcı terminalinde çalıştırılır; süre/çıkış kodu kaydedilir, çıktılar yeniden eğitim olmadan doğrulanıp yorumlanır. | Başarı koşulları sonuçtan önce sabit kalır; saklı test, kendi kaynak değerlendirmesi ve kesin model seçimi sonraki ayrı adımlardadır. |
 | 3 Kasım | Adım 5 uygulama planı onaylandı. Dondurulan model deney seçiminden kurala göre türetilir (`met` → LightGBM + Platt, `not_met` → R2 + Platt; bugünkü sonuç `not_met` olduğundan R2 + Platt). Saklı testte yalnız dondurulan model ve R0 puanlanır. Model pickle ile saklanır ve yalnız ön kayıtlı manifest SHA-256'sı, dosya parmak izleri ve birebir kütüphane sürümleri denetlendikten sonra açılır; yüklenen model kayıtlı kalibrasyon tahminlerini üretmelidir. Dondurma kaydı test açılmadan Git'e işlenir. Test sonucu zayıf olsa da model değişmez, gölge moda geçilir. Saklı test bir kez açılır ve seçim veya ayar için bir daha kullanılmaz. | Kullanıcı seçimleri. Kural sonuçtan önce sabittir; sonuç görüldükten sonra model değiştirmek testi bilgi vermez hâle getirir ve Cimri'de dokunulmamış başka test kalmadı. "Tek açılış" kodla zorlanmaz, ön kayıt ve bu kuralla sağlanır. Ayrıntılı davranış [teknik rehberde](docs/teknik.md#model-dondurma-ve-saklı-test-python--m-appml-freeze-final-test). |
+| 4 Kasım | Gölge mod planı onaylandı (Bölüm 9, 6.0–6.5). Dondurulan R2 + Platt hiç değişmeden ve yeniden kalibrasyon olmadan kullanılır. Tahminler `data/ml/golge/` altında (Git dışı) değişmeyen, manifestli dosyalara yazılır; veritabanı tablosu ve migration yoktur. Günlük tahmin her gün 11:00'de, bilgisayar kapalıysa açılınca çalışır ve dünün 22:00 fiyatı için üretilir; kaçan gün sonraki çalışmada geç işaretiyle doldurulur. | Kullanıcı seçimleri. Ölçülen model, saklı testte sınanan modelin kendisi olur. Kullanıcı bilgisayarı geceleri çoğu zaman kapatıyor, gece görevi uygun değil; mevcut kod bir günü ancak ertesi takvim günü kapanmış sayar ve bu kural değişmez. Yeniden kalibrasyon sayım günlerini düşürürdü, 60 gün zaten sınırda. |
+| 4 Kasım | Gölge mod değerlendirme kuralları sonuç görülmeden sabitlendi (28 Ekim kapısının koşulları sayıya çevrildi): satır = kendi verimiz, başlangıç 27 Ekim ve sonrası, geçmiş ≥ 30 gün, `y_sabit` etiketi 0/1; asıl sonuç yalnız "gösterilebilir" satırlarla (son 14 günde eksik gün ≤ %30, ailesi eğitimde görülmüş), tümü ikincil rapor; etiketli başlangıçların aralığı ≥ 60 takvim günü, Kasım'ın tamamını ve Kasım dışında en az 14 günü kapsar; ≥ 30 olumlu pencere kümesi; Brier skill > 0 (R0 = dondurulan modeldeki Cimri eğitim oranı); ortalama tahmin ile gerçekleşen oran farkı ≤ 0,05 ve en az 20 kayıtlı her güvenilirlik kovasında ≤ 0,15; sonuç üç durumlu (karşılandı / karşılanmadı / değerlendirilemedi). Kesin değerlendirme 5 Ocak 2027 görüntüsüyle bir kez yapılır; ara raporlar yalnız bilgi verir, kuralı, modeli veya tarihi değiştirmez. AP ve AP farkı aralığı yalnız bilgidir. | Kapı koşulları sonuç görülmeden sayıya bağlanmalı; sonradan eşik seçmek ölçümü anlamsız kılar. Eşikler proje tercihidir (28 Ekim kapısı gibi) ve plan onayıyla sabitlendi. 27 Ekim–28 Aralık 63 gündür ve Kasım kampanyalarını içerir. |
 
 ### Bilerek değiştirilmeyen davranışlar
 
@@ -297,7 +299,7 @@ Ayrıntı ve kanıtları: [teknik rehber, Bilinen sınırlar](docs/teknik.md#bil
 
 | Konu | Durum |
 |---|---|
-| Sürekli işletimin doğrulanması | [Teknik rehberdeki işletim sınırı](docs/teknik.md#bilinen-sınırlar) kapanmadı; geciken turun nedeni açık. Güç ayarlarına yeni müdahale kararı verilmedi. |
+| Sürekli işletimin doğrulanması | [Teknik rehberdeki işletim sınırı](docs/teknik.md#bilinen-sınırlar) kapanmadı; geciken turun nedeni açık. Güç ayarlarına yeni müdahale kararı verilmedi. Kullanıcı 4 Kasım'da bilgisayarı geceleri çoğu zaman kapattığını bildirdi (22 Ekim kararıyla örtüşmüyor); gölge mod görevi bu yüzden 11:00'e planlandı. |
 | Staj bitişi ve Docker | Staj Ocak 2027'nin ilk veya ikinci haftasında bitiyor (kesin tarih belli değil). Takvim ve gösterim kapısı 2 Kasım kararıyla belirlendi; temel işlerin 31 Aralık'a kadar bitmesi hedefleniyor. Docker'ın staj içinde yapılıp yapılmayacağı karar bekliyor (öneri: gölge mod çalıştıktan sonra, zaman kalırsa). Sunumun ayrıntıları konuşulacak. |
 
 ## 8. Proje yapısının sadeleştirilmesi (tamamlandı)
@@ -375,14 +377,16 @@ beklenen davranışı ve sonuca güvenmek için gereken kanıtlar açıklanır.
    2 Kasım kanıtlarıyla ilk gerçek deney çalıştırıldı, doğrulandı ve yorumlandı;
    belgeler gönderildi, CI yeşil ([kayıt](docs/gecmis.md)). LightGBM seçim
    koşulu karşılanmadı; bu deneyde model dondurulmadı. Güncel puan ve kapsam README'de.
-5. **Model seçiminin dondurulması ve son testin tek kez açılması:** 🔄
-   R2 + Platt donduruldu, ön kayıt gönderildi ve CI doğrulandı; 4 Kasım'da
-   saklı test açıldı, doğrulandı ve yorumlandı. Sonuç belgelerinin gönderimi
-   bekliyor; adımlar Bölüm 9'daki 5.1–5.3 tablosundadır.
+5. **Model seçiminin dondurulması ve son testin tek kez açılması:** ✅
+   Tamamlandı (4 Kasım). R2 + Platt donduruldu; ön kayıt ve saklı test
+   sonucu doğrulandı, belgelendi, gönderildi ve CI doğrulandı
+   ([kayıt](docs/gecmis.md)). Adımlar Bölüm 9'daki 5.1–5.3 tablosundadır.
 6. **Gölge mod:** canlı günlük tahmin kaydı ve 27 Ekim'den itibaren geriye
-   dönük tahminler (2 Kasım kararı); hedef 6 Aralık; ayrı plan.
-7. **Gösterim:** ekran kodu Aralık'ta kapı kapalıyken hazırlanır; kapı Ocak
-   başında değerlendirilir, karşılanmazsa olasılık ekrana çıkmaz.
+   dönük tahminler (2 Kasım kararı); canlı çalışma en geç 6 Aralık. Plan
+   4 Kasım'da onaylandı; adımlar 6.0–6.5 Bölüm 9'daki tablodadır.
+7. **Gösterim:** ekran kodu Aralık'ta kapı kapalıyken hazırlanır; kapı
+   5 Ocak 2027 görüntüsüyle bir kez değerlendirilir, karşılanmazsa olasılık
+   ekrana çıkmaz.
 8. **Sunum hazırlığı:** 21–31 Aralık; içerik ve biçim sonra konuşulur.
 
 Hedefler, Ocak'ın ilk günlerini tampon bırakır (staj bitişi kesin değil).
@@ -461,7 +465,53 @@ Model seçiminin dondurulması ve son testin tek kez açılması (kalan sıra 5,
 |---|---|---|
 | 5.1 | `freeze` ve `final-test` komutları, saklı test için ayrı puanlama girişleri, güvenli model yükleme, testler ve belgeler | ✅ Tamamlandı (3 Kasım); kod, testler, belgeler, gönderim ve CI doğrulandı |
 | 5.2 | Dondurma (ön kayıt): kullanıcı `freeze` komutunu çalıştırır, model SHA-256'sı ve özeti belgeye işlenir, commit/push, CI | ✅ Tamamlandı (4 Kasım); R2 + Platt donduruldu ve doğrulandı, [ön kayıt](docs/teknik.md#4-kasım-2026-dondurma-ön-kaydı) gönderildi ve CI doğrulandı; bu adımda saklı test açılmadı |
-| 5.3 | Saklı testin tek kez açılması: kullanıcı `final-test` komutunu ön kayıtlı SHA ile çalıştırır; sonuç doğrulanır, belgelenir, commit/push, CI | 🔄 4 Kasım'da bir kez açıldı; kayıtlı tahminlerden puanlar ve güven aralığı doğrulandı, [sonuç](docs/teknik.md#4-kasım-2026-saklı-test-sonucu) belgelendi; gönderim onayı ve CI bekliyor, model değişmedi |
+| 5.3 | Saklı testin tek kez açılması: kullanıcı `final-test` komutunu ön kayıtlı SHA ile çalıştırır; sonuç doğrulanır, belgelenir, commit/push, CI | ✅ Tamamlandı (4 Kasım); bir kez açıldı, kayıtlı tahminlerden puanlar ve güven aralığı doğrulandı, [sonuç](docs/teknik.md#4-kasım-2026-saklı-test-sonucu) belgelendi ve gönderildi, CI doğrulandı; model değişmedi |
+
+### Gölge mod (kalan sıra 6, 4 Kasım planı)
+
+Amaç: dondurulan R2 + Platt, kendi verimizdeki her gün için "önümüzdeki 7
+günde ≥ %5 düşer mi" olasılığını üretir ve kaydeder; 7 gün sonra gerçek
+sonuçla karşılaştırılır. Olasılık ekranda gösterilmez. Kararlar ve ön kayıtlı
+değerlendirme kuralları Bölüm 5'te (4 Kasım). Aşağıdakiler **planlanmıştır,
+henüz uygulanmamıştır**.
+
+Günlük akış: her gün 11:00 (bilgisayar kapalıysa açılınca) → tur sürüyorsa
+5 dakikada bir, en çok 90 dakika bekle → okuma hesabıyla veri görüntüsü →
+dondurulan modeli ön kayıtlı SHA-256 ve kalibrasyon yeniden üretimiyle
+doğrula → kendi verimizin girdilerini hesapla → kaydı olmayan her (ürün, gün)
+için olasılık yaz → manifest en son. Girdi kodu yalnız `d−30…d` günlerini ve
+`d` gününün 22:00 turunu okur; 11:00'de veritabanında bulunan sabah turu
+girdiye girmez. Bir (ürün, gün) bir kez tahmin edilir; manifestli klasöre
+yeniden yazılmaz, manifestsiz yarım klasör sayılmaz. Kayıt "kaç gün sonra
+kaydedildi" bilgisini taşır (1 zamanında, daha fazlası geç; ilk toplu
+doldurma geriye dönük).
+
+Her alt adım ayrı commit ve ayrı onaydır:
+
+| Adım | İş | Hedef | Durum |
+|---|---|---|---|
+| 6.0 | Kararların belgelenmesi (yalnız belge): bu bölüm ve Bölüm 5'teki 4 Kasım satırları | 5 Kasım | 🔄 Belgeler yazıldı; commit onayı bekliyor |
+| 6.1 | Kendi verimizin ön ölçümü (kod yok): kullanıcı `snapshot` → `labels` → `features` komutlarını tur dışında çalıştırır; 27 Ekim'den beri geçerli başlangıç sayısı, eksik/NULL gerekçeleri, "son 14 günde eksik > %30" ve eğitimde görülmemiş aileler, `history_days`/`missing_ratio_30d` dağılımının Cimri'ye göre farkı salt okunur incelenir. Model yüklenmez, tahmin üretilmez | 6 Kasım | ⏳ Bekliyor |
+| 6.2 | `python -m app.ml shadow-predict`: `app/ml/shadow.py` (DB/ağ yüklemez; mevcut `load_frozen_model`, `analyze_features`, `predict_frozen` yeniden kullanılır), `config/shadow.json` (başlangıç günü 2026-10-27, ön kayıtlı model SHA-256, kanıt klasörleri), çıktı `data/ml/golge/tahmin_<zaman>/` (`predictions.jsonl`, `report.md`, `manifest.json`); yapay görüntülü testler (gelecek verisi sızmaz, yanlış SHA'da tahmin yok, 30 günden kısa geçmişe olasılık yok, mevcut anahtar yeniden tahmin edilmez, belirlenimci çıktı, DB/ağ yüklenmez); teknik rehberde "Gölge mod" bölümü | 12 Kasım | ⏳ Bekliyor |
+| 6.3 | `python -m app.ml shadow-daily [--scheduled]` (görüntü + tahmin, tur bekleme, `run_logged` ile `data/logs/golge_*.log`), `scripts/golge_zamanlayici_kur.ps1` (görev `\FiyatTakip\GolgeTahmin`, her gün 11:00, `StartWhenAvailable`, `-Kaldir`; `API_DATABASE_URL` yoksa kurmaz; UTF-8 BOM'lu). Kullanıcı bir kez `API_DATABASE_URL` tanımlar, ilk elle çalıştırma 27 Ekim'den dünü kadar geriye dönük doldurur, çıktı birlikte doğrulanır, görev kurulur | 16 Kasım | ⏳ Bekliyor |
+| 6.4 | `python -m app.ml shadow-evaluate`: yeni görüntüden etiketler, kayıtla anahtar eşleşmesi, **kayıttaki girdilerin sonraki görüntüden yeniden hesaplananlarla birebir aynı olduğu denetimi** (gerçek veride sızıntı kanıtı), `own_evaluation` rolüyle puanlar, güvenilirlik kovaları, Bölüm 5'teki kapı koşulları ve üç durumlu sonuç, Kasım/diğer günler kırılımı, `y_izlenen` ikincil rapor, işletim sağlığı (zamanında/geç/geriye dönük, eksik günler). AP farkı aralığı için `reserved_test_bootstrap` benzeri ayrı giriş eklenir; mevcut ölçüt işlevleri ve `METRIC_RULES` değişmez | 25 Kasım | ⏳ Bekliyor |
+| 6.5 | İşletim ve izleme (kod yok): görev günlük çalışır; her Pazar keşif raporuyla birlikte gölge logu ve `shadow-evaluate` sağlık kontrolü; yaklaşık 21 Aralık'ta sunum için ara rapor; 5 Ocak 2027'de kesin kapı değerlendirmesi; Ocak'a kadar ML kütüphaneleri güncellenmez | 6 Aralık'tan | ⏳ Bekliyor |
+
+Bilinen riskler:
+
+- 27 Ekim–28 Aralık 63 gündür; 60 gün sınırda, turların kusurlu günleri satırı
+  azaltır. ≥ 30 farklı olay sağlanmayabilir; o zaman olasılık ekrana çıkmaz.
+- Model Cimri'nin günlük en düşük fiyatıyla eğitildi, kendi serimiz 22:00
+  turudur; olasılık ölçeği kayabilir. Yeniden kalibrasyon yoktur, bu sapma
+  kapıda görünür.
+- Kendi geçmişimiz kısa (`history_days` Cimri eğitiminde 365'e kadar çıkar);
+  6.1'de ölçülür.
+- 11:00 tahmini, tahmin penceresinin ilk sabah turundan sonra kaydedilir. Kod
+  o veriyi okumaz (test ve 6.4 denetimi), ama "gelecek veri oluşmadan
+  kaydedildi" denmez.
+- Kayıt yerel ve imzasızdır; parmak izi yalnız bütünlük kontrolüdür.
+- Python, NumPy, scikit-learn veya LightGBM sürümü değişirse dondurulan model
+  yüklenmez (bilinçli güvenlik); yeniden dondurma yeni bir model sayılır.
 
 ## 10. Çalışma ve Git disiplini
 

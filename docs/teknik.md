@@ -1455,6 +1455,17 @@ katalogla, başlık ve H1'lerin her biri model/kapasiteyle doğrulanır. Kategor
 Grafik API'si kimliği de aynı olmalıdır. HTTP `blocked` alınırsa kalan eşleşmiş
 ürünlere istek yapılmaz; diğer ürün hatalarında sıradaki ürüne devam edilir.
 
+**Yeni / yenilenmiş ayrımı:** `verified_page`, ürünün gömülü başlığına ve
+her H1 başlığına ortak `verify_identity` kuralını uygular. Başlıktaki
+yenilenmiş, refurbished, ikinci el, teşhir ve diğer kapsam dışı ifadeler
+reddedilir; kategori tam `cep-telefonlari` olmalıdır. `yenilenmis-cep-telefonlari`
+bu kontrolden geçmez. Aktarım da kaydedilmiş HTML'den aynı kimliği yeniden
+doğrular; yalnız alım raporundaki sonuca güvenmez. Kategori ve başlık
+korumaları ilk alım kodunda da vardır; testler yenilenmiş başlık ve kategoriyi
+ayrı ayrı sınar. Bu kontrol sayfa kimliğine aittir; Cimri tekliflerinin her
+birine ayrı durum filtresi uygulanmaz. Tarihsel fiyatların durum kanıtı
+[Cimri sınırında](#bilinen-sınırlar) açıklanır.
+
 Grafik, `lastDay`'den geriye sıralanmış en çok 366 nokta verir. Mevcut
 araştırmada doğrulanan bu biçim kullanılır; bilinmeyen biçim için tahmin
 yapılmaz. Geçersiz tarih, fiyat veya ortak tarihte tablo uyuşmazlığı hata olur.
@@ -3227,6 +3238,9 @@ anlamına gelmez. Model ve ayarlar değişmedi.
 - **Cimri:** kullanım uygunluğu doğrulanmadı ([değerlendirme](#kullanım-değerlendirmesi));
   iki ürünün eşleştirmesi yok. Seri kendi ölçümümüzle aynı kapsamda değildir;
   tarihsel satıcı kapsamı ve günlerin bağımsız ölçülüp ölçülmediği bilinmez.
+  Grafik yanıtında günlük satıcı veya yeni/yenilenmiş ürün durumu alanı yoktur;
+  geçmişteki her günlük fiyatın yeni ürün teklifinden geldiği ayrıca
+  doğrulanamaz. Başlık/kategori denetimi bu tarihsel kanıtın yerine geçmez.
   Akakçe'nin ilk örneği HTTP 403 verdi; engel aşılmaz.
 - **ML sonuçlarının kapsamı:** ilk deneyde ay/marka üstünlüğü değişiyor;
   ürün bazında değerlendirme ve yüksek olasılık kalibrasyonu çoğu hücrede
