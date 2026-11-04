@@ -244,6 +244,7 @@ rehberde, o günkü tartışması arşivdedir.
 | 3 Kasım | Adım 5 uygulama planı onaylandı. Dondurulan model deney seçiminden kurala göre türetilir (`met` → LightGBM + Platt, `not_met` → R2 + Platt; bugünkü sonuç `not_met` olduğundan R2 + Platt). Saklı testte yalnız dondurulan model ve R0 puanlanır. Model pickle ile saklanır ve yalnız ön kayıtlı manifest SHA-256'sı, dosya parmak izleri ve birebir kütüphane sürümleri denetlendikten sonra açılır; yüklenen model kayıtlı kalibrasyon tahminlerini üretmelidir. Dondurma kaydı test açılmadan Git'e işlenir. Test sonucu zayıf olsa da model değişmez, gölge moda geçilir. Saklı test bir kez açılır ve seçim veya ayar için bir daha kullanılmaz. | Kullanıcı seçimleri. Kural sonuçtan önce sabittir; sonuç görüldükten sonra model değiştirmek testi bilgi vermez hâle getirir ve Cimri'de dokunulmamış başka test kalmadı. "Tek açılış" kodla zorlanmaz, ön kayıt ve bu kuralla sağlanır. Ayrıntılı davranış [teknik rehberde](docs/teknik.md#model-dondurma-ve-saklı-test-python--m-appml-freeze-final-test). |
 | 4 Kasım | Gölge mod planı onaylandı (Bölüm 9, 6.0–6.5). Dondurulan R2 + Platt hiç değişmeden ve yeniden kalibrasyon olmadan kullanılır. Tahminler `data/ml/golge/` altında (Git dışı) değişmeyen, manifestli dosyalara yazılır; veritabanı tablosu ve migration yoktur. Günlük tahmin her gün 11:00'de, bilgisayar kapalıysa açılınca çalışır ve dünün 22:00 fiyatı için üretilir; kaçan gün sonraki çalışmada geç işaretiyle doldurulur. | Kullanıcı seçimleri. Ölçülen model, saklı testte sınanan modelin kendisi olur. Kullanıcı bilgisayarı geceleri çoğu zaman kapatıyor, gece görevi uygun değil; mevcut kod bir günü ancak ertesi takvim günü kapanmış sayar ve bu kural değişmez. Yeniden kalibrasyon sayım günlerini düşürürdü, 60 gün zaten sınırda. |
 | 4 Kasım | Gölge mod değerlendirme kuralları sonuç görülmeden sabitlendi (28 Ekim kapısının koşulları sayıya çevrildi): satır = kendi verimiz, başlangıç 27 Ekim ve sonrası, geçmiş ≥ 30 gün, `y_sabit` etiketi 0/1; asıl sonuç yalnız "gösterilebilir" satırlarla (son 14 günde eksik gün ≤ %30, ailesi eğitimde görülmüş), tümü ikincil rapor; etiketli başlangıçların aralığı ≥ 60 takvim günü, Kasım'ın tamamını ve Kasım dışında en az 14 günü kapsar; ≥ 30 olumlu pencere kümesi; Brier skill > 0 (R0 = dondurulan modeldeki Cimri eğitim oranı); ortalama tahmin ile gerçekleşen oran farkı ≤ 0,05 ve en az 20 kayıtlı her güvenilirlik kovasında ≤ 0,15; sonuç üç durumlu (karşılandı / karşılanmadı / değerlendirilemedi). Kesin değerlendirme 5 Ocak 2027 görüntüsüyle bir kez yapılır; ara raporlar yalnız bilgi verir, kuralı, modeli veya tarihi değiştirmez. AP ve AP farkı aralığı yalnız bilgidir. | Kapı koşulları sonuç görülmeden sayıya bağlanmalı; sonradan eşik seçmek ölçümü anlamsız kılar. Eşikler proje tercihidir (28 Ekim kapısı gibi) ve plan onayıyla sabitlendi. 27 Ekim–28 Aralık 63 gündür ve Kasım kampanyalarını içerir. |
+| 4 Kasım | Gölge mod 6.4 raporuna yalnız bilgi amaçlı kırılım eklenir: `missing_ratio_30d` dilimleri (≤ 0,10 ve üstü) ve 22 Kasım öncesi/sonrası. Ön kayıtlı kapı kuralları, model ve 5 Ocak 2027 tarihi değişmez. | 6.1 ölçümü: kendi satırlarında `missing_ratio_30d` eğitimden yaklaşık 5 sapma uzakta (ortalama 0,24 / 0,005) ve kaynağı 8 kusurlu gün; kapı kötü çıkarsa nedeni ayrılabilmeli. Kırılım karar değil açıklama aracıdır, sonuca bakıp kural değiştirilmez. |
 
 ### Bilerek değiştirilmeyen davranışlar
 
@@ -490,22 +491,37 @@ Her alt adım ayrı commit ve ayrı onaydır:
 
 | Adım | İş | Hedef | Durum |
 |---|---|---|---|
-| 6.0 | Kararların belgelenmesi (yalnız belge): bu bölüm ve Bölüm 5'teki 4 Kasım satırları | 5 Kasım | 🔄 Belgeler yazıldı; commit onayı bekliyor |
-| 6.1 | Kendi verimizin ön ölçümü (kod yok): kullanıcı `snapshot` → `labels` → `features` komutlarını tur dışında çalıştırır; 27 Ekim'den beri geçerli başlangıç sayısı, eksik/NULL gerekçeleri, "son 14 günde eksik > %30" ve eğitimde görülmemiş aileler, `history_days`/`missing_ratio_30d` dağılımının Cimri'ye göre farkı salt okunur incelenir. Model yüklenmez, tahmin üretilmez | 6 Kasım | ⏳ Bekliyor |
+| 6.0 | Kararların belgelenmesi (yalnız belge): bu bölüm ve Bölüm 5'teki 4 Kasım satırları | 5 Kasım | ✅ Tamamlandı (4 Kasım); belgeler gönderildi, CI başarılı ([kayıt](docs/gecmis.md)) |
+| 6.1 | Kendi verimizin ön ölçümü (kod yok): kullanıcı `snapshot` → `labels` → `features` komutlarını tur dışında çalıştırır; 27 Ekim'den beri geçerli başlangıç sayısı, eksik/NULL gerekçeleri, "son 14 günde eksik > %30" ve eğitimde görülmemiş aileler, `history_days`/`missing_ratio_30d` dağılımının Cimri'ye göre farkı salt okunur incelenir. Model yüklenmez, tahmin üretilmez | 6 Kasım | 🔄 Ölçüm yapıldı (4 Kasım), bulgular aşağıdaki risklerde ve [teknik rehberde](docs/teknik.md#bilinen-sınırlar); commit onayı bekliyor |
 | 6.2 | `python -m app.ml shadow-predict`: `app/ml/shadow.py` (DB/ağ yüklemez; mevcut `load_frozen_model`, `analyze_features`, `predict_frozen` yeniden kullanılır), `config/shadow.json` (başlangıç günü 2026-10-27, ön kayıtlı model SHA-256, kanıt klasörleri), çıktı `data/ml/golge/tahmin_<zaman>/` (`predictions.jsonl`, `report.md`, `manifest.json`); yapay görüntülü testler (gelecek verisi sızmaz, yanlış SHA'da tahmin yok, 30 günden kısa geçmişe olasılık yok, mevcut anahtar yeniden tahmin edilmez, belirlenimci çıktı, DB/ağ yüklenmez); teknik rehberde "Gölge mod" bölümü | 12 Kasım | ⏳ Bekliyor |
 | 6.3 | `python -m app.ml shadow-daily [--scheduled]` (görüntü + tahmin, tur bekleme, `run_logged` ile `data/logs/golge_*.log`), `scripts/golge_zamanlayici_kur.ps1` (görev `\FiyatTakip\GolgeTahmin`, her gün 11:00, `StartWhenAvailable`, `-Kaldir`; `API_DATABASE_URL` yoksa kurmaz; UTF-8 BOM'lu). Kullanıcı bir kez `API_DATABASE_URL` tanımlar, ilk elle çalıştırma 27 Ekim'den dünü kadar geriye dönük doldurur, çıktı birlikte doğrulanır, görev kurulur | 16 Kasım | ⏳ Bekliyor |
-| 6.4 | `python -m app.ml shadow-evaluate`: yeni görüntüden etiketler, kayıtla anahtar eşleşmesi, **kayıttaki girdilerin sonraki görüntüden yeniden hesaplananlarla birebir aynı olduğu denetimi** (gerçek veride sızıntı kanıtı), `own_evaluation` rolüyle puanlar, güvenilirlik kovaları, Bölüm 5'teki kapı koşulları ve üç durumlu sonuç, Kasım/diğer günler kırılımı, `y_izlenen` ikincil rapor, işletim sağlığı (zamanında/geç/geriye dönük, eksik günler). AP farkı aralığı için `reserved_test_bootstrap` benzeri ayrı giriş eklenir; mevcut ölçüt işlevleri ve `METRIC_RULES` değişmez | 25 Kasım | ⏳ Bekliyor |
+| 6.4 | `python -m app.ml shadow-evaluate`: yeni görüntüden etiketler, kayıtla anahtar eşleşmesi, **kayıttaki girdilerin sonraki görüntüden yeniden hesaplananlarla birebir aynı olduğu denetimi** (gerçek veride sızıntı kanıtı), `own_evaluation` rolüyle puanlar, güvenilirlik kovaları, Bölüm 5'teki kapı koşulları ve üç durumlu sonuç, Kasım/diğer günler kırılımı, `y_izlenen` ikincil rapor, işletim sağlığı (zamanında/geç/geriye dönük, eksik günler). AP farkı aralığı için `reserved_test_bootstrap` benzeri ayrı giriş eklenir; mevcut ölçüt işlevleri ve `METRIC_RULES` değişmez. Rapora yalnız bilgi amaçlı kırılım da girer: `missing_ratio_30d` dilimleri (≤ 0,10 ve üstü) ve 22 Kasım öncesi/sonrası; kapı kuralı bunlara bakmaz | 25 Kasım | ⏳ Bekliyor |
 | 6.5 | İşletim ve izleme (kod yok): görev günlük çalışır; her Pazar keşif raporuyla birlikte gölge logu ve `shadow-evaluate` sağlık kontrolü; yaklaşık 21 Aralık'ta sunum için ara rapor; 5 Ocak 2027'de kesin kapı değerlendirmesi; Ocak'a kadar ML kütüphaneleri güncellenmez | 6 Aralık'tan | ⏳ Bekliyor |
 
-Bilinen riskler:
+Bilinen riskler (6.1 ölçümü, 4 Kasım 2026 12:57 UTC görüntüsü):
 
-- 27 Ekim–28 Aralık 63 gündür; 60 gün sınırda, turların kusurlu günleri satırı
-  azaltır. ≥ 30 farklı olay sağlanmayabilir; o zaman olasılık ekrana çıkmaz.
+- 27 Ekim–28 Aralık 63 gündür; 60 gün sınırda (üç gün pay). ≥ 30 farklı olay
+  için kaba öngörü 29–39 (eşik 30): kendi serimizde 28 Eylül–27 Ekim arası
+  1.050 örnekte %7,6 olumlu ve 22 küme; Cimri oranıyla 29. Öngörü 8 kusurlu
+  günü de içerir, yani sınırdadır; sağlanmazsa olasılık ekrana çıkmaz.
+- Kapsam: 60 üründen 11'i 22:00'de hep stoksuz (iPhone 15 Pro 128/256/1024,
+  15 Pro Max 512/1024, iPhone 16 256/512, 16 Pro 256/512/1024, Galaxy S25
+  512 GB); başlangıçları olmadığından tahmin almazlar, en çok 49 ürün. Günlük
+  "gösterilebilir" ürün 44–48; S24 FE 128 GB geçmişi yaklaşık 17 Kasım'a kadar
+  30 günden azdır. 13 aile de eğitimde görülmüştür.
+- Kendi başlangıçlarımız yok olan 8 gün: 30 Eylül; 2, 3, 4, 6, 17, 22, 23
+  Ekim. 24 Ekim'den beri her gün 48–50 ürünün başlangıcı var.
+- Girdi kayması: kendi satırlarında `missing_ratio_30d` ortalaması 0,24
+  (eğitimde 0,005; 14.923 satırın 14.649'unda sıfır, sapma 0,048, yani yaklaşık
+  5 sapma uzaklık) ve `history_days` 30–37 (eğitim medyanı 159, satırların %3'ü
+  30–37). Dondurulan R2'nin katsayılarıyla tahmini ortalama lojit kayması
+  yaklaşık +0,9, Platt sonrası yaklaşık +0,3. Bu doğrusal bir yaklaşımdır;
+  gerçek etki gölge modda görülür. Kaynak yukarıdaki 8 kusurlu gündür: 22
+  Kasım'dan itibaren 30 günlük pencereler bu günleri içermez (yeni kusurlu gün
+  çıkmazsa). Yeniden kalibrasyon yoktur; sapma kapıda görünür. 6.4 raporu
+  nedeni ayırmak için bilgi amaçlı kırılım taşır.
 - Model Cimri'nin günlük en düşük fiyatıyla eğitildi, kendi serimiz 22:00
-  turudur; olasılık ölçeği kayabilir. Yeniden kalibrasyon yoktur, bu sapma
-  kapıda görünür.
-- Kendi geçmişimiz kısa (`history_days` Cimri eğitiminde 365'e kadar çıkar);
-  6.1'de ölçülür.
+  turudur; olasılık ölçeği ayrıca bu yüzden kayabilir.
 - 11:00 tahmini, tahmin penceresinin ilk sabah turundan sonra kaydedilir. Kod
   o veriyi okumaz (test ve 6.4 denetimi), ama "gelecek veri oluşmadan
   kaydedildi" denmez.

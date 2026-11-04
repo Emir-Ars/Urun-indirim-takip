@@ -3248,3 +3248,15 @@ anlamına gelmez. Model ve ayarlar değişmedi.
   son testin sınırları [saklı test sonucunda](#4-kasım-2026-saklı-test-sonucu),
   güncel kapsam sayıları README'dedir. Cimri sonucu kendi kaynağımızda veya
   ekranda tahmin göstermeye yeterlilik kanıtı değildir.
+- **Cimri eğitim diliminde uç değerler (4 Kasım ölçümü):** dondurulan modelin
+  eğitim diliminde (14.923 satır, başlangıç 7 Kasım 2025–27 Temmuz 2026) 87
+  satırda `ratio_min_30d` 3'ten büyük veya 1/3'ten küçüktür (en büyüğü 899);
+  `log_return_1d/7d/14d/30d` alanlarının her birinde 6 satırın mutlak değeri
+  1'i aşar (en uç değer yaklaşık ±6,8, yani yaklaşık ×900 oranı). Nedeni
+  incelenmedi. Bu satırlar `StandardScaler` sapmasını şişirir: `ratio_min_30d`
+  için eğitim ortalaması 2,83, sapması 39,35'tir; bu yüzden R2, girdinin
+  normal aralığında (1,0–1,3) fiilen etkisizdir (R1'in kova kuralı etkilenmez).
+  Model dondurulduğu ve saklı test o modelle yapıldığı için değiştirilmedi;
+  ileride yeni bir model sürümü kurulursa bu satırlar önce ele alınmalıdır.
+  Kendi girdilerimizin eğitimden kayması
+  [planın gölge mod bölümündedir](../proje_plani.md#gölge-mod-kalan-sıra-6-4-kasım-planı).
