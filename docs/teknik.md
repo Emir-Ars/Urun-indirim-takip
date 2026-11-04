@@ -2850,7 +2850,9 @@ kanıt klasörünün `report.md`/`report.json` dosyalarındadır.
   iyi olsa da AP farkının tarih bloklu güven aralığı sıfırı içerir. Hesaplama
   eksikliği yoktur; alt sınırın pozitif olması koşulu sağlanmadığı için sonuç
   `not_met` olur. Bu sonuç LightGBM'nin kesin daha kötü olduğunu veya R2'nin
-  otomatik seçildiğini belirtmez; model henüz dondurulmamıştır.
+  otomatik seçildiğini belirtmez; deney komutu modeli dondurmaz. Sonraki
+  [ön kayıtta](#4-kasım-2026-dondurma-ön-kaydı) onaylı kurala göre R2 + Platt
+  donduruldu.
 - Kalibre AP'de Nisan ve Temmuz'da R2, Mayıs ve Haziran'da LightGBM öndedir.
   Marka içinde Apple'da LightGBM, Samsung ve Xiaomi'de R2 öndedir; bu
   kırılımların ayrı güven aralığı yoktur. Marka olumlu oranları farklıdır;
@@ -2979,8 +2981,9 @@ Bu kontrolde yeniden eğitim veya saklı test puanlaması yapılmadı.
 
 Bu ön kayıt commit/push ve CI doğrulamasından sonra `final-test` için
 kullanılır. Test sonucu modeli veya ayarlarını değiştirmez. Deneydeki
-doğrulama puanları kat modellerinindir; bu dondurulan model henüz
-puanlanmadı ve kendi kaynağımızda başarı kanıtı yoktur.
+doğrulama puanları kat modellerinindir. Dondurma sırasında bu model
+puanlanmadı; sonraki [saklı test sonucu](#4-kasım-2026-saklı-test-sonucu)
+aşağıdadır. Kendi kaynağımızda başarı kanıtı yoktur.
 
 #### Model yükleme (pickle güvenliği)
 
@@ -3056,6 +3059,47 @@ içinde ve raporun bayrakları gerçek durumu söylemelidir.
   gösterme yeterliliğini kanıtlamaz. Kendi kaynağımız bu komutlarda puanlanmaz.
 - Dondurulan model, doğrulama aylarında puanlanan kat modellerinden farklı bir
   eğitim dilimiyle kurulur; kat puanları bu modelin puanı değildir.
+
+#### 4 Kasım 2026 saklı test sonucu
+
+Kullanıcı `final-test` komutunu gönderilmiş [dondurma ön kaydındaki](#4-kasım-2026-dondurma-ön-kaydı)
+model manifest SHA-256'sıyla kendi terminalinde bir kez çalıştırdı.
+Kapsam, puanlar, süre ve güven aralığı [README Güncel kapsam](../README.md#-güncel-kapsam)
+tablosundadır. Kanıt klasörü: `artifacts/ml_son_test_20261104_112007_023/`.
+
+Manifest ve dosya parmak izleri, ön kayıtlı modelin değişmediği, tahminlerin
+yalnız saklı test üyelerine ait olduğu, etiketler ve rapor bayrakları
+doğrulandı. Kayıtlı tahminlerden AP (eşit puanları birlikte işleyen ayrı
+hesap), Brier, log loss, Brier skill, güvenilirlik kovaları ve destekli
+marka/aile/ürün hücreleri bağımsız yeniden hesaplandı. Önceden belirlenen
+tarih örneklemesiyle AP farkı aralığı da yeniden üretildi; raporla uyuştu.
+Bu denetim yeni tahmin veya eğitim yapmadı; `final-test` yeniden
+çalıştırılmadı. Yerel denetim kanıtı:
+`artifacts/final_test_verification_20261104.json`.
+
+**Sonucun anlamı:** R2 + Platt bu Cimri döneminde düşüş olan pencereleri
+R0 sabit referansından daha iyi sıraladı; olasılık hatasını ölçen Brier ve
+log loss da daha düşük. Brier skill ve AP farkı aralığının alt sınırı pozitif
+olduğundan ön kayıtlı okuma koşulları karşılandı. AP bir doğruluk yüzdesi
+değildir; bu sonuç her ürünün indirime girip girmeyeceğinin doğru bilindiği
+anlamına gelmez. Model ve ayarlar değişmedi.
+
+**Sınırlar:**
+
+- Ürünlerin hiçbiri ürün bazında puan raporlamak için gereken olumlu pencere
+  kümesi desteğine ulaşmadı; makro ortalama yok. POCO marka hücresi de yetersiz.
+  Olumlu pencere kümeleri bağımsız gerçek indirim olayları değildir.
+- Olumlu genel sonuç her olasılık diliminin kalibre olduğunu göstermez.
+  Rapordaki 0,2–0,3 ve 0,3–0,4 kovalarında gerçekleşen oran ortalama tahminden
+  belirgin yüksek; daha yüksek kovalar çok az kayıtlıdır. Son test bu
+  kalibrasyonu veya modeli düzeltmek için yeniden kullanılmaz.
+- Tek dönem ve az sayıda tarih bloğu vardır; pozitif aralık başka bir dönem
+  veya kaynağa başarı garantisi değildir. Doğrulama aylarıyla satır, olumlu
+  oranı ve eğitim dilimi farklı olduğundan puan artışı doğrudan modelin
+  iyileşmesi olarak yorumlanmaz.
+- Kendi serimiz puanlanmadı. Bu sonuç ekranda olasılık göstermeye yetmez;
+  sıradaki iş kendi verimizde gölge modun ayrı planıdır. Gösterim kapısı
+  plandaki koşullara bağlıdır.
 
 ## Testler ne kanıtlar, ne kanıtlamaz
 
@@ -3187,5 +3231,6 @@ içinde ve raporun bayrakları gerçek durumu söylemelidir.
 - **ML sonuçlarının kapsamı:** ilk deneyde ay/marka üstünlüğü değişiyor;
   ürün bazında değerlendirme ve yüksek olasılık kalibrasyonu çoğu hücrede
   sınırlı desteğe sahip. Ayrıntı [ilk gerçek deneyin değerlendirmesinde](#ilk-gerçek-deneyin-değerlendirmesi),
+  son testin sınırları [saklı test sonucunda](#4-kasım-2026-saklı-test-sonucu),
   güncel kapsam sayıları README'dedir. Cimri sonucu kendi kaynağımızda veya
   ekranda tahmin göstermeye yeterlilik kanıtı değildir.

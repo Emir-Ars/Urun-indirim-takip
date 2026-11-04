@@ -45,7 +45,7 @@ Kullanıcı arayüzde arama yaptığında canlı scraping veya model eğitimi
 | Proje yapısının sadeleştirilmesi (Bölüm 8, Adım 1–5) | ✅ Tamamlandı (26 Ekim) | `75d4732` |
 | ML öncesi ekran iyileştirmeleri 1–2 | ✅ Tamamlandı (28 Ekim) | `dd2e262`, `94045bd`, CI 40643349065 |
 | Proje mühendisliğini pekiştirme | ⏸️ Pasif (28 Ekim kararı): iş sırasında değil; kullanıcı istediğinde Oturum 2'den sürer | Program aşağıda; oturum ilerlemesi yerel devir notunda |
-| 8. ML (indirim tahmini) | 🔄 ML hazırlığı 4.0–4.6 ve komutlar (5.1) tamamlandı; R2 + Platt donduruldu ve doğrulandı (5.2), ön kayıt gönderimi bekliyor; saklı test (5.3) açılmadı; gölge mod sonraki ayrı plan | Bölüm 9 |
+| 8. ML (indirim tahmini) | 🔄 ML hazırlığı 4.0–4.6, komutlar ve dondurma (5.1–5.2) tamamlandı; R2 + Platt ile saklı test açıldı ve doğrulandı (5.3), sonuç belgeleri gönderim bekliyor; model değişmedi, gölge mod sonraki ayrı plan | Bölüm 9 |
 | 9. Sürekli işletim ve Docker | 🔄 Sürekli işletim kararı verildi (22 Ekim: dizüstü sürekli açık); Docker başlanmadı | Bölüm 9 |
 
 Bugünkü işletim: fiyat turu her gün 10:00 ve 22:00'de, haftalık keşif her
@@ -374,10 +374,11 @@ beklenen davranışı ve sonuca güvenmek için gereken kanıtlar açıklanır.
 4. **ML hazırlığı:** ✅ 4.0–4.6 tamamlandı (3 Kasım); son Cimri alımını içeren
    2 Kasım kanıtlarıyla ilk gerçek deney çalıştırıldı, doğrulandı ve yorumlandı;
    belgeler gönderildi, CI yeşil ([kayıt](docs/gecmis.md)). LightGBM seçim
-   koşulu karşılanmadı; kesin model seçilmedi. Güncel puan ve kapsam README'de.
-5. **Model seçiminin dondurulması ve son testin tek kez açılması:** hedef
-   22 Kasım; 3 Kasım planı onaylandı (Bölüm 5), adımlar Bölüm 9'daki 5.1–5.3
-   tablosundadır.
+   koşulu karşılanmadı; bu deneyde model dondurulmadı. Güncel puan ve kapsam README'de.
+5. **Model seçiminin dondurulması ve son testin tek kez açılması:** 🔄
+   R2 + Platt donduruldu, ön kayıt gönderildi ve CI doğrulandı; 4 Kasım'da
+   saklı test açıldı, doğrulandı ve yorumlandı. Sonuç belgelerinin gönderimi
+   bekliyor; adımlar Bölüm 9'daki 5.1–5.3 tablosundadır.
 6. **Gölge mod:** canlı günlük tahmin kaydı ve 27 Ekim'den itibaren geriye
    dönük tahminler (2 Kasım kararı); hedef 6 Aralık; ayrı plan.
 7. **Gösterim:** ekran kodu Aralık'ta kapı kapalıyken hazırlanır; kapı Ocak
@@ -459,8 +460,8 @@ Model seçiminin dondurulması ve son testin tek kez açılması (kalan sıra 5,
 | Adım | İş | Durum |
 |---|---|---|
 | 5.1 | `freeze` ve `final-test` komutları, saklı test için ayrı puanlama girişleri, güvenli model yükleme, testler ve belgeler | ✅ Tamamlandı (3 Kasım); kod, testler, belgeler, gönderim ve CI doğrulandı |
-| 5.2 | Dondurma (ön kayıt): kullanıcı `freeze` komutunu çalıştırır, model SHA-256'sı ve özeti belgeye işlenir, commit/push, CI | 🔄 R2 + Platt 4 Kasım'da donduruldu ve doğrulandı; [ön kayıt](docs/teknik.md#4-kasım-2026-dondurma-ön-kaydı) hazır, gönderim onayı ve CI bekliyor; saklı test kapalı |
-| 5.3 | Saklı testin tek kez açılması: kullanıcı `final-test` komutunu ön kayıtlı SHA ile çalıştırır; sonuç doğrulanır, belgelenir, commit/push, CI | ⏳ Bekliyor |
+| 5.2 | Dondurma (ön kayıt): kullanıcı `freeze` komutunu çalıştırır, model SHA-256'sı ve özeti belgeye işlenir, commit/push, CI | ✅ Tamamlandı (4 Kasım); R2 + Platt donduruldu ve doğrulandı, [ön kayıt](docs/teknik.md#4-kasım-2026-dondurma-ön-kaydı) gönderildi ve CI doğrulandı; bu adımda saklı test açılmadı |
+| 5.3 | Saklı testin tek kez açılması: kullanıcı `final-test` komutunu ön kayıtlı SHA ile çalıştırır; sonuç doğrulanır, belgelenir, commit/push, CI | 🔄 4 Kasım'da bir kez açıldı; kayıtlı tahminlerden puanlar ve güven aralığı doğrulandı, [sonuç](docs/teknik.md#4-kasım-2026-saklı-test-sonucu) belgelendi; gönderim onayı ve CI bekliyor, model değişmedi |
 
 ## 10. Çalışma ve Git disiplini
 

@@ -10,8 +10,8 @@ Uzun vadeli hedef, bu geçmişten telefonun yakında indirime girme olasılığ�
 hesaplamaktır.
 
 > ✅ Keşif, fiyat toplama, veritabanı, yerel API ve Streamlit ekranı tamamlandı
-> ve gerçek verilerle doğrulandı. İlk gerçek Cimri deneyi çalıştırıldı ve
-> doğrulandı; kesin model seçimi bekliyor, ekranda tahmin yok.
+> ve gerçek verilerle doğrulandı. R2 + Platt modeli donduruldu; Cimri saklı
+> testi çalıştırılıp doğrulandı. Kendi verimizde gölge mod sırada; ekranda tahmin yok.
 
 ## ✨ Özellikler
 
@@ -98,14 +98,18 @@ başlatılması [teknik rehberde](docs/teknik.md#komutlar) anlatılır.
 | Katalog | 60 ürün, 376 bağlantı (373 etkin); Hepsiburada 237, Trendyol 139 |
 | Toplama düzeni | Her gün 10:00 ve 22:00; haftalık keşif Pazar 14:00 (otomatik güvenli kabul) |
 | Cimri geçmişi | 58 ürün, 22.595 tarihli kayıt (699 eksik fiyat), 9 Ekim 2025–2 Kasım 2026; eşleştirme 58/60, iki ürün eşleştirilemedi; son alım yapıldı, düzenli alım yok (2 Kasım) |
-| Otomatik testler | 2348 test, 0 atlanan; Black ve Flake8 temiz (3 Kasım) |
+| Otomatik testler | 2348 test, 0 atlanan; Black ve Flake8 temiz (4 Kasım) |
 | ML etiket denetimi | Son alımı içeren 2 Kasım görüntüsüyle (son kapanmış gün 1 Kasım) doğrulandı: kendi serimizde 0 kullanılabilir / 1.323 belirsiz (30 gün geçmişi dolan 27 Ekim–1 Kasım başlangıçlarının gelecek penceresi henüz kapanmadı); Cimri'de 19.561 kullanılabilir (2.086 olumlu, 17.475 olumsuz) / 2.231 belirsiz. Sıkı çapraz kontrolde 24.616 pencere kaydı eşleşti. |
 | ML girdi denetimi | Aynı görüntüyle 2 Kasım'da doğrulandı: kendi serimizde 1.323, Cimri'de 21.792 girdi satırı; toplam 23.115 başlangıç 4.2 ile birebir eşleşti, eksik/fazla/tekrarlı başlangıç ve tanınmayan model ailesi yok. |
-| ML bölme denetimi | Aynı görüntüyle 2 Kasım'da doğrulandı: eğitim 13.647, doğrulama 2.531, saklı test 2.632 kayıt (3 Eylül–25 Ekim 2026); purge 751 kayıt. Dört kat Nisan–Temmuz 2026; bütün eğitim/kalibrasyon/doğrulama dilimleri iki sınıflı. Test sınıf dağılımı veya puanı açılmadı. |
+| ML bölme denetimi | Aynı görüntüyle 2 Kasım'da doğrulandı: eğitim 13.647, doğrulama 2.531, saklı test 2.632 kayıt (3 Eylül–25 Ekim 2026); purge 751 kayıt. Dört kat Nisan–Temmuz 2026; bütün eğitim/kalibrasyon/doğrulama dilimleri iki sınıflı. Bu bölme adımında test sınıf dağılımı veya puanı açılmadı; sonraki son test aşağıda. |
 | ML ilk gerçek deney | 3 Kasım: aynı 2 Kasım kanıtlarıyla Nisan–Temmuz 2026 dört kat, 5.267 doğrulama satırı / 524 olumlu (%9,95); çıkış 0, süre 44,33 sn. Dosya/üyelik denetimi ve kayıtlı tahminlerden yedi modelin kat/birleşik puanları doğrulandı. Saklı test ve kendi serimiz puanlanmadı. |
 | ML deney puanları | 3 Kasım birleşik doğrulama: R2 + Platt AP 0,2679 / Brier 0,0835 / log loss 0,3151; LightGBM + Platt AP 0,2770 / Brier 0,0822 / log loss 0,2931. LightGBM + Platt'ın R0'a göre Brier skill değeri 0,0834. |
-| ML seçim önerisi | 3 Kasım: karşılanmadı (`not_met`). LightGBM + Platt − R2 + Platt AP farkı +0,0091; %95 tarih bloklu aralık [−0,0483; +0,1025], alt sınır >0 değil. Dört hazır kat, Brier ve log loss koşulları sağlandı; üç karşılaştırmada da 2.000/2.000 geçerli bootstrap tekrarı. Kesin model seçilmedi. |
+| ML seçim önerisi | 3 Kasım: karşılanmadı (`not_met`). LightGBM + Platt − R2 + Platt AP farkı +0,0091; %95 tarih bloklu aralık [−0,0483; +0,1025], alt sınır >0 değil. Dört hazır kat, Brier ve log loss koşulları sağlandı; üç karşılaştırmada da 2.000/2.000 geçerli bootstrap tekrarı. Deney komutu modeli dondurmaz; sonraki [ön kayıtta](docs/teknik.md#4-kasım-2026-dondurma-ön-kaydı) R2 + Platt donduruldu. |
 | ML ürün değerlendirme desteği | 3 Kasım: en az 5 olumlu pencere kümesi şartını 58 üründen 2'si sağlıyor; LightGBM + Platt makro AP 0,7579 yalnız bu ürünlerin ortalaması. POCO 4 kümeyle yetersiz; birleşik 103 olumlu pencere kümesi bağımsız gerçek düşüş sayısı değildir. Ürün bazındaki sonuçlar bütün kataloğa genellenemez. |
+| ML saklı test kapsamı | 4 Kasım: ön kayıtlı R2 + Platt ile tek açılış, 3 Eylül–25 Ekim 2026 başlangıçları; 2.632 satır / 349 olumlu (%13,26), 56 ürün. Çıkış 0, süre 25,76 sn; model değişmedi, kendi serimiz puanlanmadı. |
+| ML saklı test puanları | 4 Kasım: R0 AP 0,1326 / Brier 0,1160 / log loss 0,3961; R2 + Platt AP 0,3931 / Brier 0,1046 / log loss 0,3560 / R0'a göre Brier skill 0,0977. Dosya/üyelik denetimi ve kayıtlı tahminlerden bağımsız puan hesabı doğrulandı. |
+| ML saklı test okuması | 4 Kasım: model − R0 AP farkı +0,2605; %95 tarih bloklu aralık [+0,2377; +0,3093], 14 günlük bloklar, 2.000/2.000 geçerli tekrar. Brier skill ve AP alt sınırı pozitif; önceden belirlenen okuma koşulları karşılandı (`met`), model seçimi değişmedi. |
+| ML saklı test desteği | 4 Kasım: 61 olumlu pencere kümesi; bağımsız gerçek düşüş sayısı değildir. En az 5 küme eşiğine ulaşan ürün 0/56; ürün makro puanları hesaplanmadı. POCO 2 kümeyle yetersiz; Apple, Samsung ve Xiaomi marka kırılımları destekli. Kalibrasyon ve kapsam sınırları [sonuç değerlendirmesinde](docs/teknik.md#4-kasım-2026-saklı-test-sonucu). |
 
 Katalogdaki **376 bağlantının markalara göre dağılımı** (üç pasif bağlantı dahil):
 
@@ -132,7 +136,7 @@ canlı ağa çıkmaz; veritabanı testleri yalnız test veritabanını kullanır
 | ML öncesi bakım ve otomatik güvenli keşif kabulü | ✅ Tamamlandı |
 | Proje yapısının sadeleştirilmesi | ✅ Tamamlandı (26 Ekim) |
 | Sürekli çalışma ortamı | 🔄 Dizüstü sürekli açık kararı uygulandı; işletim doğrulaması sürüyor ([plan](proje_plani.md)) |
-| ML ile indirim olasılığı tahmini | 🔄 ML hazırlığı ve ilk gerçek Cimri deneyi tamamlandı; doğrulama, yorum, belgeler, gönderim ve CI doğrulandı. LightGBM seçim koşulu karşılanmadı. Model dondurma ve saklı test komutları kodlandı; dondurma ve saklı test henüz çalıştırılmadı. Ekranda tahmin gölge mod ve gösterim kapısından sonra ([plan](proje_plani.md#ml)) |
+| ML ile indirim olasılığı tahmini | 🔄 R2 + Platt donduruldu, ön kayıt gönderildi ve CI doğrulandı. Cimri saklı testi çalıştırıldı ve doğrulandı; sonuç belgelerinin gönderimi bekliyor. Kendi verimizde gölge mod ayrı plan; ekranda tahmin gösterim kapısından sonra ([plan](proje_plani.md#ml)) |
 
 ## 📚 Belgeler
 
