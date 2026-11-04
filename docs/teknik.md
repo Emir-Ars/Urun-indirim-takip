@@ -2943,6 +2943,45 @@ kayıt olarak belgeye işlenir. Platt sıralamayı korumazsa komut yine çıkı�
 verir ve bunu açıkça yazar; yeni bir ret kuralı yoktur. Aynı girdi, kod ve
 ortam `model.pkl` dahil aynı baytları üretir.
 
+#### 4 Kasım 2026 dondurma ön kaydı
+
+Kullanıcı `freeze` komutunu kendi terminalinde çalıştırdı: çıkış 0,
+süre 14,54 saniye. Deneyde LightGBM seçim koşulu karşılanmadığı için
+önceden onaylanan kurala göre **R2 + Platt** donduruldu. Saklı test
+açılmadı; kendi serimiz puanlanmadı; DB veya ağ kullanılmadı.
+
+Model klasörü: `artifacts/ml_model_20261104_104617_170/` (Git dışında).
+Ön kayıtlı **model manifest SHA-256** değeri:
+
+```text
+89c819ed7c9f5eaf0dcc11c8f403a4439f53cfad2527d973646b71474fba4cf2
+```
+
+Kanıtlar: `artifacts/ml_etiket_20261102_201553_161/`,
+`artifacts/ml_girdi_20261102_201744_673/`,
+`artifacts/ml_bolme_20261102_202101_484/` ve
+`artifacts/ml_deney_20261103_135053_501/`.
+
+| Dilim | Satır | Olumlu | İlk başlangıç | Son başlangıç | En geç hedef sonu |
+|---|---:|---:|---|---|---|
+| Eğitim | 14.923 | 1.517 | 7 Kasım 2025 | 27 Temmuz 2026 | 3 Ağustos 2026 |
+| Kalibrasyon | 1.254 | 148 | 4 Ağustos 2026 | 26 Ağustos 2026 | 2 Eylül 2026 |
+
+Saklı testin ilk günü 3 Eylül 2026'dır. R2 yakınsadı; Platt sıralamayı
+koruyor. Manifestteki sürümler: Python 3.13.15, NumPy 2.5.3,
+scikit-learn 1.9.1, LightGBM 4.7.0.
+
+Yerel kontrolde manifest SHA-256'sı, dört çıktı dosyasının parmak izi,
+girdi ve deney manifestleri ile dilim üyeliği/sayıları doğrulandı. Model
+mevcut dosyadan yeniden yüklendi; kayıtlı 1.254 kalibrasyon satırının
+olasılıkları birebir yeniden üretildi. Manifest `test_opened=false`.
+Bu kontrolde yeniden eğitim veya saklı test puanlaması yapılmadı.
+
+Bu ön kayıt commit/push ve CI doğrulamasından sonra `final-test` için
+kullanılır. Test sonucu modeli veya ayarlarını değiştirmez. Deneydeki
+doğrulama puanları kat modellerinindir; bu dondurulan model henüz
+puanlanmadı ve kendi kaynağımızda başarı kanıtı yoktur.
+
 #### Model yükleme (pickle güvenliği)
 
 `load_frozen_model` bir pickle dosyasını yalnız şu sırayla açar; her adım
