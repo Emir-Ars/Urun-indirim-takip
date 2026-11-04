@@ -1,0 +1,11 @@
+{
+  "start_day": "2026-10-27",
+  "model_manifest_sha256": "89c819ed7c9f5eaf0dcc11c8f403a4439f53cfad2527d973646b71474fba4cf2",
+  "evidence": {
+    "labels": "artifacts/ml_etiket_20261102_201553_161",
+    "features": "artifacts/ml_girdi_20261102_201744_673",
+    "split": "artifacts/ml_bolme_20261102_202101_484",
+    "model": "artifacts/ml_model_20261104_104617_170"
+  },
+  "records_dir": "data/ml/golge"
+}

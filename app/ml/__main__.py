@@ -108,6 +108,18 @@ def main(argv=None) -> int:
     final_test.add_argument(
         "--output-dir", type=Path, required=True, metavar="YENI_KLASOR"
     )
+    shadow_predict = commands.add_parser(
+        "shadow-predict",
+        help="Dondurulan modelle kendi serimiz için değişmeyen tahmin kaydı yaz",
+    )
+    shadow_predict.add_argument(
+        "--snapshot", type=Path, required=True, metavar="GORUNTU_KLASORU"
+    )
+    shadow_predict.add_argument(
+        "--output-dir", type=Path, required=True, metavar="YENI_KLASOR"
+    )
+    shadow_predict.add_argument("--config", type=Path, metavar="AYAR_DOSYASI")
+    shadow_predict.add_argument("--records-dir", type=Path, metavar="KAYIT_KLASORU")
     args = parser.parse_args(argv)
     utf8_output()
     if args.command == "labels":
@@ -136,6 +148,10 @@ def main(argv=None) -> int:
             args.model_dir,
             args.expected_model_sha256,
             args.output_dir,
+        )
+    if args.command == "shadow-predict":
+        return run_shadow_predict(
+            args.snapshot, args.output_dir, args.config, args.records_dir
         )
     return run_snapshot(args.output_dir)
 
@@ -496,6 +512,70 @@ def run_reserved_test(
         "Dosyalar doğrulandı. Saklı test bu komutla açıldı; model değişmedi. "
         "Kendi serimiz puanlanmadı; DB/ağ kullanılmadı."
     )
+    return 0
+
+
+def run_shadow_predict(
+    source: Path,
+    directory: Path,
+    config_path: Path | None,
+    records_override: Path | None,
+) -> int:
+    if directory.exists():
+        print(
+            "Tahmin yazılmadı: klasör zaten var; yeni bir klasör seç.",
+            file=sys.stderr,
+        )
+        return 1
+    try:
+        # numpy, scikit-learn ve LightGBM yalnız bu komutta yüklenir.
+        from app.ml import shadow
+
+        config = shadow.load_config(config_path)
+        records_dir = records_override or shadow.resolve_path(config.records_dir)
+        snapshot, digest = read_snapshot(source)
+        model = shadow.load_model(config)
+        recorded = shadow.recorded_keys(records_dir, config.model_manifest_sha256)
+        result = shadow.build_shadow_predictions(
+            snapshot, digest, model, config.start_day, recorded
+        )
+        if not result.rows:
+            print(
+                f"Yeni tahmin yok ({result.skipped_recorded} gün zaten kayıtlı); "
+                "klasör oluşturulmadı."
+            )
+            return 0
+        shadow.write_shadow_outputs(directory, result, model, config.start_day)
+        manifest, _ = shadow.read_shadow_outputs(directory)
+    except KeyboardInterrupt:
+        print("Tahmin kaydı kullanıcı tarafından durduruldu.", file=sys.stderr)
+        return 130
+    except ImportError as exc:
+        print(
+            "Tahmin yazılmadı: ML kütüphaneleri eksik " f"('.[ml]' kurulu mu?): {exc}",
+            file=sys.stderr,
+        )
+        return 1
+    except (SnapshotError, ValueError, OSError, TypeError, KeyError) as exc:
+        print(f"Tahmin yazılmadı: {exc}", file=sys.stderr)
+        return 1
+    summary = manifest["summary"]
+    print(f"Tahmin raporu: {directory / 'report.md'}")
+    print(f"Görüntü SHA-256: {digest} · son kapanmış gün: {result.last_closed_day}")
+    print(f"Model manifest SHA-256: {manifest['model_manifest_sha256']}")
+    print(
+        f"Yeni kayıt: {summary['rows']} · olasılık üretilen: {summary['predicted']} "
+        f"· gösterilebilir: {summary['showable']} "
+        f"· daha önce kayıtlı: {summary['skipped_recorded']}"
+    )
+    if shadow.is_official(directory, records_dir):
+        print("Resmi kayıt klasörüne yazıldı.")
+    else:
+        print(
+            f"Deneme çıktısı: resmi kayıt klasörünün ({records_dir}) dışında, "
+            "kayıt sayılmaz."
+        )
+    print("Dosyalar doğrulandı. Ekranda tahmin yok; veritabanı ve ağ kullanılmadı.")
     return 0
 
 

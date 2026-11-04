@@ -224,6 +224,7 @@ def write_ml_evidence(root, count=365):
     write_outputs(root / "labels", digest, analyze_labels(snapshot))
     write_feature_outputs(root / "features", digest, analyze_features(snapshot))
     paths = dict(
+        source=root / "source",
         labels=root / "labels",
         features=root / "features",
         split=root / "split",
@@ -264,6 +265,39 @@ def write_experiment_evidence(root, count=365):
         ]
     )
     assert code == 0
+    return paths
+
+
+def write_model_evidence(root, count=365):
+    """`write_experiment_evidence` kanıtlarına dondurulmuş model klasörünü ekler.
+
+    `model_sha256`, model manifestinin parmak izidir (gerçek akıştaki ön kayıt).
+    """
+    import hashlib
+
+    from app.ml.__main__ import main
+
+    paths = write_experiment_evidence(root, count)
+    paths["model"] = root / "model"
+    code = main(
+        [
+            "freeze",
+            "--labels-dir",
+            str(paths["labels"]),
+            "--features-dir",
+            str(paths["features"]),
+            "--split-dir",
+            str(paths["split"]),
+            "--experiment-dir",
+            str(paths["experiment"]),
+            "--output-dir",
+            str(paths["model"]),
+        ]
+    )
+    assert code == 0
+    paths["model_sha256"] = hashlib.sha256(
+        (paths["model"] / "manifest.json").read_bytes()
+    ).hexdigest()
     return paths
 
 

@@ -58,6 +58,7 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 | `catalog.json` | Keşfin doğruladığı ürünler ve sayfalar | Keşif (elle yazılmaz) |
 | `runtime.json` | Zaman aşımı, tekrar deneme, istekler arası bekleme (3 sn) | Kullanıcı, nadiren |
 | `market_history.json` | Bir defalık Cimri alımı: `product_key`, URL ve beklenen Cimri kimliği. 58 eşleştirme: 57'si 8 Ekim alımında, Galaxy S24 FE 128 GB 2 Kasım son alımında doğrulandı; Galaxy S25 512 GB ve Redmi Note 14 Pro 5G 256 GB eşleştirmesiz ([ayrıntı](#eşleştirme-dosyası)). | Araştırma ve gerçek çıktı kontrolüyle |
+| `shadow.json` | Gölge mod: başlangıç günü (27 Ekim 2026), dondurulan modelin ön kayıtlı manifest SHA-256'sı, model ve 2 Kasım kanıt klasörlerinin yolları (Git dışı `artifacts/`) ve resmi kayıt klasörü (`data/ml/golge`). Ayrıntı: [Gölge mod tahmin kaydı](#gölge-mod-tahmin-kaydı-python--m-appml-shadow-predict). | Kullanıcı, nadiren; model değişmez |
 
 ### Ortak parçalar: `app/`
 
@@ -155,8 +156,9 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 | `models.py` | R0 sabit oran, R1 dip kuralı, R2 lojistik regresyon ve LightGBM; yalnız eğitimden öğrenilen ön işlemler, ayrı dilimde Platt kalibrasyonu, ham/kalibre tahminler ve öğrenilen değerlerin özeti. Dondurulan model (`FrozenModel`: R0 + seçilen model) ve özeti. |
 | `experiment.py` | Etiket/girdiden bölmeyi yeniden üretip kanıt dosyalarıyla karşılaştırır; hazır katlarda eğitim/kalibrasyon/doğrulama akışını, birleşik ölçütleri, güven aralıklarını ve seçim önerisini yürütür. Saklı test ve kendi serimiz puanlanmaz. |
 | `final.py` | Deneyin seçim sonucundan modeli türetir, son dilimlerle dondurur, dondurulan modeli yalnız denetimlerden sonra yükler ve saklı testi bir kez puanlar. |
+| `shadow.py` | Gölge mod: ön kayıtlı SHA-256'sı ve kanıt zinciri doğrulanmış dondurulan modeli açar, veri görüntüsünden kendi serimizin girdilerini bellekte hesaplar, kayıtsız her (ürün, gün) için olasılık ve gerekçe üretir, değişmeyen tahmin klasörünü yazar/yeniden doğrular ve resmi kayıtlardaki anahtarları çıkarır. Veritabanı, ağ ve pazaryeri katmanı yüklemez. |
 | `reporting.py` | Etiket, girdi, bölme, deney, dondurulan model ve saklı test için belirlenimci JSON/JSONL, Türkçe Markdown ve en son yazılan parmak izli başarı manifesti; çıktıların yeniden doğrulanması. `split_plan_files` bölme yazımıyla deneyin bayt karşılaştırmasına ortak dosya içeriği üretir. |
-| `__main__.py` | `snapshot` yalnız `API_DATABASE_URL` okuma hesabıyla görüntü alır; `labels`/`features` görüntüden, `split` etiket/girdiden, `experiment` etiket/girdi/bölme klasörlerinden, `freeze` ve `final-test` ayrıca deney/model klasöründen ağsız çalışır. Son altı komut DB katmanı/sürücüsünü yüklemez; model kütüphaneleri yalnız deney, dondurma ve saklı test yollarında yüklenir. Çıkış kodları [ML hazırlığı](#ml-hazırlığı) bölümündedir. |
+| `__main__.py` | `snapshot` yalnız `API_DATABASE_URL` okuma hesabıyla görüntü alır; `labels`/`features` görüntüden, `split` etiket/girdiden, `experiment` etiket/girdi/bölme klasörlerinden, `freeze` ve `final-test` ayrıca deney/model klasöründen, `shadow-predict` bir veri görüntüsü ve ayar dosyasındaki model/kanıt klasörlerinden ağsız çalışır. Son yedi komut DB katmanı/sürücüsünü yüklemez; model kütüphaneleri yalnız deney, dondurma, saklı test ve gölge tahmin yollarında yüklenir. Çıkış kodları [ML hazırlığı](#ml-hazırlığı) bölümündedir. |
 
 ### Kurulum ve zamanlayıcı: `scripts/`
 
@@ -173,7 +175,7 @@ Test sayıları burada tutulmaz; güncel sayı `pytest -q` çıktısındadır.
 | Yer | Ne sınar |
 |---|---|
 | `tests/conftest.py` | Her testte gerçek curl_cffi ve HTTPX ağ transport'ları kesilir; ASGI/TestClient/MockTransport süreç içinde çalışır. Kalıcı `DATABASE_URL` ve `API_DATABASE_URL` silinir. `db` yalnız `TEST_DATABASE_URL`'deki `_test` DB'yi her testte boşaltır; ortak test kilidi en çok 30 sn bekler. `api_db` ayrıca `TEST_API_DATABASE_URL` ve `fiyat_takip_api_test` ister; iki bağlantının aynı `_test` DB olduğunu denetleyip test şemasında SELECT izinlerini yeniden kurar. `migrated`, `db`'ye bütün migration'ları uygular. `world`, `client` ve `stub` fixture'ları `tests/support/read_world.py` ile `tests/support/api.py`'dedir; burada `pytest_plugins` ile kaydedildikleri için testler onları içe aktarmadan kullanır. Eksik test adresleri yerelde atlama, CI'da hata üretir. |
-| `tests/support/` | Test değildir; birden fazla test dosyasının ortak yardımcılarıdır: sahte HTTP oturumu ve yanıtı (`fake_http.py`), `_test` DB'ye satır yazan `insert` (`database.py`), toplama turunun küçük sahte kataloğu ve sahte scraper'ları (`collection.py`), Cimri kayıtlı örnekleri ve sahte istemcisi (`market_history.py`), salt okunur sorgu ve API testlerinin küçük veritabanı dünyası ve satır ekleme yardımcıları (`read_world.py`), ML veri görüntüsünün küçük tablo örneği (`ml.py`), yerel API'nin sahte havuzu ve TestClient fixture'ları (`api.py`), istatistik testlerinin sentetik tur ve Cimri geçmişi (`price_statistics.py`), keşif testlerinin örnek dosyası okuyucusu, sabit katalog kopyası ve hedefleri (`discovery.py`), Streamlit ekranının yapay örnekleri, ekran yazılarını toplayan `messages` ve AppTest süre sınırı (`ui_samples.py`, 30 sn; varsayılan 3 sn yavaş makinede doğru ekranı da düşürebilir). Test dosyaları birbirinden içe aktarma yapmaz (`from test_…`, `import test_…`, `from tests.test_…`); bunu `tests/test_http.py` denetler. Yalnız tek dosyada kullanılan yardımcı o dosyada kalır. Buradaki `assert`'ler de pytest'in ayrıntılı hata mesajını verir (`conftest.py`'deki kayıt). |
+| `tests/support/` | Test değildir; birden fazla test dosyasının ortak yardımcılarıdır: sahte HTTP oturumu ve yanıtı (`fake_http.py`), `_test` DB'ye satır yazan `insert` (`database.py`), toplama turunun küçük sahte kataloğu ve sahte scraper'ları (`collection.py`), Cimri kayıtlı örnekleri ve sahte istemcisi (`market_history.py`), salt okunur sorgu ve API testlerinin küçük veritabanı dünyası ve satır ekleme yardımcıları (`read_world.py`), ML veri görüntüsünün küçük tablo örneği ve etiket, girdi, bölme, deney ile dondurulmuş model kanıtını üreten yardımcılar (`ml.py`), yerel API'nin sahte havuzu ve TestClient fixture'ları (`api.py`), istatistik testlerinin sentetik tur ve Cimri geçmişi (`price_statistics.py`), keşif testlerinin örnek dosyası okuyucusu, sabit katalog kopyası ve hedefleri (`discovery.py`), Streamlit ekranının yapay örnekleri, ekran yazılarını toplayan `messages` ve AppTest süre sınırı (`ui_samples.py`, 30 sn; varsayılan 3 sn yavaş makinede doğru ekranı da düşürebilir). Test dosyaları birbirinden içe aktarma yapmaz (`from test_…`, `import test_…`, `from tests.test_…`); bunu `tests/test_http.py` denetler. Yalnız tek dosyada kullanılan yardımcı o dosyada kalır. Buradaki `assert`'ler de pytest'in ayrıntılı hata mesajını verir (`conftest.py`'deki kayıt). |
 | `tests/test_http.py` | HTTP katmanı: hata kodları (`invalid_host` mesajı hedef alan adını yazar, sorgu metnini yazmaz), indirme sırasında 8 MB sınırı, büyük hata/yönlendirme yanıtları, yönlendirme kuralları, 5xx tekrarı ve bekleme süreleri, istekler arası bekleme, scraper factory. Mimari sınır da burada: pazaryeri HTTP'si yalnız `app/scraper/http.py` ve curl_cffi ile; HTTPX yalnız `app/ui/api_client.py` için; UI veritabanı/havuz/sunucu katmanını yüklemez; test ve araç dosyaları başka bir test dosyasından içe aktarma yapmaz. |
 | `tests/test_contracts.py` | Pydantic sözleşmeleri: satılabilir teklif fiyat ve satıcı taşır, puan ölçeği aşamaz, üstü çizili fiyat güncel fiyattan büyüktür, katalog kimlik/referans/alan adı kuralları, `money()` kuruş çevirimi. |
 | `tests/test_url_identity.py` | Ortak ürün adresi kimliği: ürün yolu, sorgu, son eğik çizgi, küçük harfli SKU, eksik/bozuk kimlik ve bütün tüketicilerin aynı kimliği okuması. |
@@ -203,6 +205,8 @@ Test sayıları burada tutulmaz; güncel sayı `pytest -q` çıktısındadır.
 | `tests/test_ml_experiment_cli.py` | Deney kanıt zinciri, parmak izi yenilense de değiştirilmiş bölmenin reddi, aynı dosyaların tekrarı, doğrulama dışı/saklı test tahmininin reddi, yarım yazım ve mevcut klasör koruması, çıkış kodları, DB/ağ katmanı yüklememe. |
 | `tests/test_ml_final.py` | Seçimden modelin türetilmesi, son dilimlerin ve katlarla aynı yöntemin kanıtı; saklı test etiket/girdisinin dondurmayı değiştirmemesi ve kalibrasyon etiketinin değiştirdiği olumlu kontrol; model yüklemede SHA, parmak izi, sürüm, çelişkili manifest ve yeniden üretim denetimleri (pickle açılmadan reddedilir); saklı test puanlarının bağımsız yeniden hesabı, okuma koşullarının üç durumu ve çıktı doğrulayıcısı. |
 | `tests/test_ml_final_cli.py` | `freeze` ve `final-test` komutları: tam çalışma, aynı baytlar, var olan klasör, kesinti, yanlış SHA/değişmiş model/başka girdi (saklı test satırlarına gelinmeden çıkış 1), zorunlu SHA, DB/ağ katmanı yüklememe ve dondurmanın saklı test girişlerini çağırmaması. |
+| `tests/test_ml_shadow.py` | Gölge tahmin kaydı (yapay veri): satırların `features` komutuyla aynı girdiler olması, olasılıkların dondurulan modelin çıktısı olması, 30 günden kısa geçmişe olasılık verilmemesi, gelecek verinin önceki tahmini değiştirmemesi (olumlu kontrolle), eksik gün eşiği, eğitimde olmayan aile, `recorded_after_days`; yazılan kaydın yeniden okunması, aynı baytlar, kayıtlı günün yeniden tahmin edilmemesi, manifestsiz klasörün kayıt sayılmaması, bozuk/yabancı/yinelenen kaydın hata vermesi, parmak izi yenilenmiş tutarsız satırların reddi, yanlış SHA'da pickle'ın açılmaması ve gerçek `config/shadow.json`'ın geçerliliği. |
+| `tests/test_ml_shadow_cli.py` | `shadow-predict` komutu: deneme/resmi kayıt ayrımı, aynı günlerin ikinci kez yazılmaması (`--records-dir` dahil), var olan klasör, eksik/fazla alanlı ayar, yanlış SHA, eksik görüntü, kesinti sonrası manifestsiz klasör ve DB/ağ katmanı yüklememe. |
 | `tests/test_price_statistics.py` | İstatistik hesabı: tam kapsam dönemi, 30 gün/14 geçiş/7 gün/18 saat eşikleri, İstanbul günü, NULL üzerinden geçmeme, değişkenlik, grafik aralığından bağımsızlık. Veritabanısız. |
 | `tests/test_api_foundation.py` | API okuma rolünün izinleri (yazamaması, kalıcı nesne kuramaması) ve test ortamının ağ/adres korumaları. |
 | `tests/test_api.py` | FastAPI: dört adres ve OpenAPI, kuruş/UTC/NULL, fiyat yaşı, rol/şema hataları, dört bağlantı sınırı, kesinti ve yeniden bağlantı, 5 sn sorgu zaman aşımı, tutarlı cevap. |
@@ -3111,6 +3115,101 @@ anlamına gelmez. Model ve ayarlar değişmedi.
 - Kendi serimiz puanlanmadı. Bu sonuç ekranda olasılık göstermeye yetmez;
   sıradaki iş kendi verimizde gölge modun ayrı planıdır. Gösterim kapısı
   plandaki koşullara bağlıdır.
+
+### Gölge mod tahmin kaydı (`python -m app.ml shadow-predict`)
+
+Dondurulan model ([ön kayıt](#4-kasım-2026-dondurma-ön-kaydı)) kendi serimizin
+her başlangıcı için "önümüzdeki 7 günde ≥ %5 düşüş" olasılığı üretir ve bu
+olasılık, ekranda gösterilmeyen **değişmez** dosyalara yazılır. Bu komut yalnız
+tahmin kaydını üretir. Günlük otomatik çalışma (`shadow-daily`, zamanlanmış
+görev) ve sonradan değerlendirme (`shadow-evaluate`) henüz yoktur; sıra ve
+kapı kuralları [planın gölge mod bölümündedir](../proje_plani.md#gölge-mod-kalan-sıra-6-4-kasım-planı).
+Komut DB'ye bağlanmaz, siteye gitmez ve ortak tarama kilidini almaz; bir tur
+sürerken de çalışabilir, çünkü yalnız verilen görüntü klasörünü okur.
+
+```powershell
+$mlShadowOut = "artifacts\golge_deneme_$(Get-Date -Format yyyyMMdd_HHmmss_fff)"
+.venv\Scripts\python.exe -m app.ml shadow-predict --snapshot <GORUNTU_KLASORU> --output-dir $mlShadowOut
+$LASTEXITCODE
+```
+
+`--snapshot` bir [veri görüntüsü](#veri-görüntüsü-python--m-appml-snapshot)
+klasörüdür; `--output-dir` yeni bir klasördür. İsteğe bağlı `--config`
+(varsayılan `config/shadow.json`) ve `--records-dir` (varsayılan ayardaki
+`records_dir`, yani `data/ml/golge`) verilebilir.
+
+**Model.** `load_experiment_inputs` 2 Kasım etiket/girdi/bölme klasörlerini
+doğrular, `load_frozen_model` modeli yalnız ayardaki ön kayıtlı manifest
+SHA-256'sı, dosya parmak izleri, birebir kütüphane sürümleri ve kalibrasyon
+yeniden üretimi tutarsa açar; hata varsa pickle'a hiç gelinmez. Bu kanıt
+klasörleri `artifacts/` altında yerinde olmalıdır; taşınmış veya silinmişse
+komut çıkış 1 verir.
+
+**Satırlar.** Girdiler `features` komutuyla aynı koddan (`feature_rows`) gelir.
+Kendi serimizin, başlangıç günü ayardaki `start_day` ve sonrası olan, kaydı
+bulunmayan her başlangıcı için tek satır yazılır. Görüntünün İstanbul tarihinden
+önceki son kapanmış güne kadar olan günler değerlendirilir; bilgisayarın
+çalıştırma anındaki saati sonucu değiştirmez.
+
+| Gerekçe kodu | Anlamı |
+|---|---|
+| `history_below_30` | Geçmiş 30 günden az (`history_days`); **olasılık verilmez** (`probabilities` NULL). |
+| `recent_missing_over_30_percent` | `d−13…d` içinde 22:00 fiyatı olmayan gün sayısı 14 günün %30'unu aşıyor (en az 5 gün); olasılık yazılır, satır gösterilebilir sayılmaz. |
+| `family_not_in_training` | Ürün ailesi dondurulan modelin eğitim diliminde yok; olasılık yazılır, gösterilebilir sayılmaz. |
+
+Gerekçesi olmayan satır `showable` olur. `missing_days_14` ham sayıdır.
+Olasılıklar `r0` (eğitim olumlu oranı) ve model adıyla (`r2_platt`) anahtarlanır.
+`recorded_after_days`, görüntünün İstanbul tarihi eksi başlangıç günüdür: 1
+ertesi gün kaydedildiğini, daha fazlası geç veya geriye dönük kaydedildiğini
+söyler. Satır yalnız `d` gününün 22:00 turuna kadar bilinen girdileri taşır;
+bunu sınırlayan kural `features` komutununkidir.
+
+**Çıktı klasörü.** Yeni klasöre yazılır, `manifest.json` en son oluşur:
+
+| Dosya | İçerik |
+|---|---|
+| `predictions.jsonl` | Ürün ve güne göre sıralı, tekil satırlar: anahtar, `anchor_at`, `recorded_after_days`, girdiler, `missing_days_14`, gerekçeler, `showable`, olasılıklar. |
+| `report.md` | Türkçe özet: sayılar, gerekçe dağılımı ve günlük döküm. |
+| `manifest.json` | Biçim/kural sürümü, model adı ve manifest SHA-256'sı, görüntü SHA-256'sı ve okuma anı, son kapanmış gün, başlangıç günü, kütüphane sürümleri, özet ve dosya parmak izleri. |
+
+Yazımdan sonra klasör yeniden okunur: parmak izleri, satır alanları ve
+sıralaması, olasılıkların [0,1] aralığında olması, gerekçelerle `showable`
+tutarlılığı ve özetin satırlardan yeniden hesaplanması denetlenir. Parmak izi
+yenilenmiş tutarsız bir satır da reddedilir. Aynı görüntü, kod ve ortam aynı
+baytları üretir.
+
+**Resmi kayıt ve yinelenmeme.** Resmi kayıt, `records_dir` altındaki adı
+`tahmin_` ile başlayan ve manifesti olan klasörlerdir. Komut başlarken bu
+klasörleri doğrular ve içlerindeki (ürün, gün) anahtarlarını atlar; kayıtlı
+gün yeniden tahmin edilmez, değişmez. Manifestsiz yarım klasör kayıt sayılmaz.
+Parmak izi tutmayan, başka bir modelle üretilmiş veya aynı günü iki klasörde
+taşıyan kayıt sessizce geçilmez; komut çıkış 1 verir. Çıktı `records_dir`
+altına yazılmadıysa komut bunu "Deneme çıktısı… kayıt sayılmaz" diye bildirir.
+Yeni kayıt yoksa komut çıkış 0 verir ve klasör oluşturmaz.
+
+| Çıkış | Anlamı |
+|---|---|
+| 0 | Kayıt yazılıp doğrulandı veya yeni kayıt yoktu. |
+| 1 | Klasör var; ayar, görüntü, model/SHA, kanıt klasörü, kayıt klasörü ya da dosya hatası; ML kütüphaneleri eksik. |
+| 2 | Argüman hatası. |
+| 130 | Kullanıcı durdurdu (manifestsiz klasör kalır, kayıt sayılmaz). |
+
+İlk gerçek deneme (4 Kasım görüntüsü, kullanıcı terminali, çıkış 0) ve
+bağımsız denetimin sayıları [README Güncel kapsam](../README.md#-güncel-kapsam)
+tablosundadır; kanıt klasörü `artifacts/golge_deneme_20261104_162830_686/`
+resmi kayıt değildir. Denetim, olasılıkları `model.json` katsayıları ve eğitim
+diliminin ortalama/sapma/medyanlarıyla pickle'ı açmadan yeniden hesapladı.
+
+**Sınırlar.**
+
+- Kayıt yerel dosyadır; parmak izi bütünlük kontrolüdür, imza değildir.
+- Tahminler, kendi girdilerimizin Cimri eğitiminden kaymış olduğu koşulda
+  üretilir ([ölçüm](../proje_plani.md#gölge-mod-kalan-sıra-6-4-kasım-planı));
+  olasılık ölçeği bu yüzden kayabilir. Bu komut kaymayı düzeltmez, yeniden
+  kalibrasyon yapmaz.
+- `showable` yalnız yukarıdaki kuralların sonucudur; kapı koşullarını
+  karşıladığı veya olasılığın doğru olduğu anlamına gelmez.
+- Python, NumPy, scikit-learn veya LightGBM sürümü değişirse model yüklenmez.
 
 ## Testler ne kanıtlar, ne kanıtlamaz
 
