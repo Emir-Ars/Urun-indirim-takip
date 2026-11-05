@@ -125,6 +125,12 @@ def main(argv=None) -> int:
     )
     shadow_daily.add_argument("--scheduled", action="store_true")
     shadow_daily.add_argument("--config", type=Path, metavar="AYAR_DOSYASI")
+    shadow_evaluate = commands.add_parser(
+        "shadow-evaluate", help="Resmi gölge kayıtlarını yeni görüntüyle değerlendir"
+    )
+    shadow_evaluate.add_argument("--snapshot", type=Path, required=True)
+    shadow_evaluate.add_argument("--output-dir", type=Path, required=True)
+    shadow_evaluate.add_argument("--config", type=Path, metavar="AYAR_DOSYASI")
     args = parser.parse_args(argv)
     utf8_output()
     if args.command == "labels":
@@ -162,6 +168,8 @@ def main(argv=None) -> int:
         from app.ml.daily import run_daily
 
         return run_daily(args.config, args.scheduled, run_snapshot, run_shadow_predict)
+    if args.command == "shadow-evaluate":
+        return run_shadow_evaluate(args.snapshot, args.output_dir, args.config)
     return run_snapshot(args.output_dir)
 
 
@@ -597,6 +605,54 @@ def run_shadow_predict(
     print(
         "Dosyalar doğrulandı. Ekranda tahmin yok; tahmin aşamasında "
         "veritabanı ve ağ kullanılmadı."
+    )
+    return 0
+
+
+def run_shadow_evaluate(source: Path, directory: Path, config_path: Path | None) -> int:
+    if directory.exists():
+        print("Değerlendirme yazılmadı: klasör zaten var.", file=sys.stderr)
+        return 1
+    from filelock import Timeout
+
+    try:
+        from app.ml import shadow, shadow_evaluation
+
+        config = shadow.load_config(config_path)
+        snapshot, digest = read_snapshot(source)
+        result = shadow_evaluation.evaluate_snapshot(snapshot, digest, config)
+        shadow_evaluation.write_outputs(directory, result)
+        report, _ = shadow_evaluation.read_outputs(directory)
+    except Timeout:
+        print("Değerlendirme yapılmadı: gölge kayıt kilidi meşgul.", file=sys.stderr)
+        return 3
+    except KeyboardInterrupt:
+        print("Değerlendirme kullanıcı tarafından durduruldu.", file=sys.stderr)
+        return 130
+    except (
+        ImportError,
+        SnapshotError,
+        ValueError,
+        OSError,
+        TypeError,
+        KeyError,
+        RuntimeError,
+    ) as exc:
+        print(f"Değerlendirme yazılmadı: {exc}", file=sys.stderr)
+        return 1
+    summary = report["summary"]
+    print(f"Değerlendirme raporu: {directory / 'report.md'}")
+    print(f"Görüntü SHA-256: {digest}")
+    print(f"Model manifest SHA-256: {report['input']['model_manifest_sha256']}")
+    print(
+        f"Doğrulanan kayıt: {summary['rows']} "
+        f"· asıl sonuç: {summary['groups']['main']} "
+        f"· NULL y_sabit: {summary['null_primary']}"
+    )
+    print(f"Kapı sonucu: {shadow_evaluation.STATUS_TITLES[report['gate']['status']]}")
+    print(
+        "Dosyalar doğrulandı. DB/ağ kullanılmadı; kayıtlar ve model değişmedi. "
+        "Kesin değerlendirme tarihi 5 Ocak 2027; ekran açılmadı."
     )
     return 0
 

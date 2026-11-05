@@ -322,6 +322,33 @@ def write_model_evidence(root, count=365):
     return paths
 
 
+def write_evaluation_evidence(root):
+    """Yalnız yapay veriden dondurulmuş model ve ilk resmi kayıt üretir."""
+    from app.ml.__main__ import main
+
+    evidence = write_model_evidence(root)
+    evidence["records"] = root / "records"
+    evidence["record"] = evidence["records"] / "tahmin_01"
+    evidence["config"] = write_shadow_config(
+        root / "shadow.json", evidence, evidence["records"]
+    )
+    assert (
+        main(
+            [
+                "shadow-predict",
+                "--snapshot",
+                str(evidence["source"]),
+                "--config",
+                str(evidence["config"]),
+                "--output-dir",
+                str(evidence["record"]),
+            ]
+        )
+        == 0
+    )
+    return evidence
+
+
 def remove_label_run(tables, run_id):
     tables["collection_runs"] = [
         row for row in tables["collection_runs"] if row["run_id"] != run_id

@@ -13,6 +13,7 @@ from app.ml.metrics import (
     Target,
     calendar_block_indices,
     paired_bootstrap,
+    own_evaluation_bootstrap,
     positive_clusters,
     reserved_test_bootstrap,
     score_predictions,
@@ -281,3 +282,38 @@ def test_bootstrap_insufficient_span_or_valid_resamples_has_no_interval():
     assert result["valid_repeats"] < 1800
     assert result["lower"] is result["upper"] is None
     assert result["reasons"] == ["insufficient_valid_repeats"]
+
+
+@pytest.mark.parametrize(
+    "role,source",
+    [
+        ("train", "own"),
+        ("calibration", "own"),
+        ("validation", "own"),
+        ("test_reserved", "own"),
+        ("own_evaluation", "cimri"),
+    ],
+)
+def test_own_bootstrap_rejects_wrong_role_or_source_before_predictions(role, source):
+    rows = [target(0, 1, role=role).model_copy(update={"source": source})]
+
+    def forbidden():
+        pytest.fail("Yanlış rol için tahminler okundu")
+        yield
+
+    with pytest.raises(ValueError):
+        own_evaluation_bootstrap(rows, forbidden(), forbidden())
+
+
+def test_own_bootstrap_reuses_the_exact_calendar_algorithm_and_defaults():
+    rows = [
+        target(day, day % 2, role="own_evaluation").model_copy(update={"source": "own"})
+        for day in range(60)
+    ]
+    good = probabilities(rows, [0.9 if row.label else 0.1 for row in rows])
+    bad = probabilities(rows, [0.1 if row.label else 0.9 for row in rows])
+    result = own_evaluation_bootstrap(rows, good, bad)
+    validation = [row.model_copy(update={"role": "validation"}) for row in rows]
+    assert result == paired_bootstrap(validation, good, bad)
+    assert result["repeats"] == 2000
+    assert own_evaluation_bootstrap([], [], [])["lower"] is None

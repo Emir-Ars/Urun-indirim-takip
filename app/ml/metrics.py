@@ -282,6 +282,16 @@ def reserved_test_bootstrap(targets, model, reference_model):
     return _bootstrap(targets, model, reference_model)
 
 
+def own_evaluation_bootstrap(targets, model, reference_model):
+    """Kendi verisi için bilgi amaçlı AP farkı; seçim ve saklı test girişi değil."""
+    targets = list(targets)
+    _guard(targets, "own_evaluation")
+    if any(row.source != "own" for row in targets):
+        raise ValueError("Gölge güven aralığı yalnız kendi kaynağını kabul eder")
+    model, reference_model = _align(targets, (model, reference_model))
+    return _bootstrap(targets, model, reference_model)
+
+
 def _bootstrap(targets, model, reference_model):
     import numpy as np
     from sklearn.metrics import average_precision_score
