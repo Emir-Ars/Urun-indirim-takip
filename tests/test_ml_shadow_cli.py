@@ -10,7 +10,7 @@ import pytest
 from app.ml.__main__ import main
 from app.ml.metrics import METRIC_RULES
 from app.ml.shadow import read_shadow_outputs
-from tests.support.ml import write_model_evidence
+from tests.support.ml import write_model_evidence, write_shadow_config
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -30,25 +30,6 @@ def evidence(tmp_path_factory):
     return write_model_evidence(tmp_path_factory.mktemp("evidence"))
 
 
-def write_config(path, evidence, records, sha=None, **extra):
-    path.write_text(
-        json.dumps(
-            dict(
-                start_day="2026-01-20",
-                model_manifest_sha256=sha or evidence["model_sha256"],
-                evidence={
-                    name: str(evidence[name])
-                    for name in ("labels", "features", "split", "model")
-                },
-                records_dir=str(records),
-                **extra,
-            )
-        ),
-        encoding="utf-8",
-    )
-    return path
-
-
 def predict(evidence, config, target, *extra):
     return main(
         [
@@ -66,7 +47,7 @@ def predict(evidence, config, target, *extra):
 
 @pytest.fixture
 def config(evidence, tmp_path):
-    return write_config(tmp_path / "shadow.json", evidence, tmp_path / "kayit")
+    return write_shadow_config(tmp_path / "shadow.json", evidence, tmp_path / "kayit")
 
 
 def test_trial_run_writes_a_verified_folder_and_says_it_is_not_a_record(
@@ -79,7 +60,7 @@ def test_trial_run_writes_a_verified_folder_and_says_it_is_not_a_record(
     assert rows and manifest["summary"]["rows"] == len(rows)
     assert "Deneme çıktısı" in out and "kayıt sayılmaz" in out
     assert "Model manifest SHA-256: " + evidence["model_sha256"] in out
-    assert "Ekranda tahmin yok; veritabanı ve ağ kullanılmadı" in out
+    assert "Ekranda tahmin yok; tahmin aşamasında veritabanı ve ağ kullanılmadı" in out
 
 
 def test_official_folder_is_reported_and_its_days_are_not_predicted_again(
@@ -118,7 +99,7 @@ def test_existing_output_folder_is_never_touched(evidence, config, tmp_path, cap
 def test_missing_or_unknown_config_is_a_clear_error(evidence, config, tmp_path, capsys):
     target = tmp_path / "out"
     assert predict(evidence, tmp_path / "yok.json", target) == 1
-    broken = write_config(
+    broken = write_shadow_config(
         tmp_path / "fazla.json", evidence, tmp_path / "kayit", ekstra=1
     )
     assert predict(evidence, broken, target) == 1
@@ -129,7 +110,7 @@ def test_missing_or_unknown_config_is_a_clear_error(evidence, config, tmp_path, 
 def test_model_with_another_sha_is_rejected_before_any_prediction(
     evidence, tmp_path, capsys
 ):
-    wrong = write_config(
+    wrong = write_shadow_config(
         tmp_path / "yanlis.json", evidence, tmp_path / "kayit", sha="2" * 64
     )
     target = tmp_path / "out"
@@ -203,3 +184,37 @@ raise SystemExit(main(['shadow-predict', '--snapshot', sys.argv[1],
     )
     assert result.returncode == 0, result.stderr
     assert json.loads((target / "manifest.json").read_bytes())["status"] == "complete"
+
+
+def test_separate_process_cannot_enter_an_active_record_writer(
+    evidence, config, tmp_path
+):
+    from app.ml.shadow import record_lock
+
+    target = tmp_path / "kayit" / "tahmin_rakip"
+    code = (
+        "import sys; from app.ml.__main__ import main; "
+        "raise SystemExit(main(sys.argv[1:]))"
+    )
+    with record_lock(tmp_path / "kayit"):
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                code,
+                "shadow-predict",
+                "--snapshot",
+                str(evidence["source"]),
+                "--config",
+                str(config),
+                "--output-dir",
+                str(target),
+            ],
+            cwd=ROOT,
+            capture_output=True,
+            encoding="utf-8",
+            timeout=60,
+        )
+    assert result.returncode == 3, result.stderr
+    assert "başka bir gölge tahmin kaydı" in result.stderr
+    assert not target.exists()

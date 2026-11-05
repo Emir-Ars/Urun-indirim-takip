@@ -367,6 +367,8 @@ def test_official_records_are_only_those_under_the_records_folder(tmp_path):
     assert shadow.is_official(records / "tahmin_01", records)
     assert not shadow.is_official(tmp_path / "deneme" / "tahmin_01", records)
     assert not shadow.is_official(records, records)
+    assert not shadow.is_official(records / "deneme", records)
+    assert not shadow.is_official(records / "alt" / "tahmin_01", records)
 
 
 def test_the_committed_config_is_valid_and_names_the_preregistered_model():
@@ -379,6 +381,6 @@ def test_the_committed_config_is_valid_and_names_the_preregistered_model():
         shadow.resolve_path(config.records_dir) == Path(shadow.ROOT) / "data/ml/golge"
     )
     for text in config.evidence.model_dump().values():
-        assert text.startswith("artifacts/")
+        assert text.startswith("data/ml/golge/kanitlar/")
     with pytest.raises(ValueError):
         ShadowConfig.model_validate_json(b'{"start_day": "2026-10-27"}')

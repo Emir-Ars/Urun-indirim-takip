@@ -120,6 +120,11 @@ def main(argv=None) -> int:
     )
     shadow_predict.add_argument("--config", type=Path, metavar="AYAR_DOSYASI")
     shadow_predict.add_argument("--records-dir", type=Path, metavar="KAYIT_KLASORU")
+    shadow_daily = commands.add_parser(
+        "shadow-daily", help="Yeni veri görüntüsü alıp resmi gölge tahminlerini kaydet"
+    )
+    shadow_daily.add_argument("--scheduled", action="store_true")
+    shadow_daily.add_argument("--config", type=Path, metavar="AYAR_DOSYASI")
     args = parser.parse_args(argv)
     utf8_output()
     if args.command == "labels":
@@ -153,6 +158,10 @@ def main(argv=None) -> int:
         return run_shadow_predict(
             args.snapshot, args.output_dir, args.config, args.records_dir
         )
+    if args.command == "shadow-daily":
+        from app.ml.daily import run_daily
+
+        return run_daily(args.config, args.scheduled, run_snapshot, run_shadow_predict)
     return run_snapshot(args.output_dir)
 
 
@@ -521,6 +530,8 @@ def run_shadow_predict(
     config_path: Path | None,
     records_override: Path | None,
 ) -> int:
+    from filelock import Timeout
+
     if directory.exists():
         print(
             "Tahmin yazılmadı: klasör zaten var; yeni bir klasör seç.",
@@ -534,19 +545,27 @@ def run_shadow_predict(
         config = shadow.load_config(config_path)
         records_dir = records_override or shadow.resolve_path(config.records_dir)
         snapshot, digest = read_snapshot(source)
-        model = shadow.load_model(config)
-        recorded = shadow.recorded_keys(records_dir, config.model_manifest_sha256)
-        result = shadow.build_shadow_predictions(
-            snapshot, digest, model, config.start_day, recorded
-        )
-        if not result.rows:
-            print(
-                f"Yeni tahmin yok ({result.skipped_recorded} gün zaten kayıtlı); "
-                "klasör oluşturulmadı."
+        with shadow.record_lock(records_dir):
+            if directory.exists():
+                raise FileExistsError("Tahmin klasörü zaten var")
+            model = shadow.load_model(config)
+            recorded = shadow.recorded_keys(records_dir, config.model_manifest_sha256)
+            result = shadow.build_shadow_predictions(
+                snapshot, digest, model, config.start_day, recorded
             )
-            return 0
-        shadow.write_shadow_outputs(directory, result, model, config.start_day)
-        manifest, _ = shadow.read_shadow_outputs(directory)
+            if not result.rows:
+                print(
+                    f"Yeni tahmin yok ({result.skipped_recorded} gün zaten kayıtlı); "
+                    "klasör oluşturulmadı."
+                )
+                return 0
+            shadow.write_shadow_outputs(directory, result, model, config.start_day)
+            manifest, _ = shadow.read_shadow_outputs(directory)
+    except Timeout:
+        print(
+            "Tahmin yazılmadı: başka bir gölge tahmin kaydı sürüyor.", file=sys.stderr
+        )
+        return 3
     except KeyboardInterrupt:
         print("Tahmin kaydı kullanıcı tarafından durduruldu.", file=sys.stderr)
         return 130
@@ -572,10 +591,13 @@ def run_shadow_predict(
         print("Resmi kayıt klasörüne yazıldı.")
     else:
         print(
-            f"Deneme çıktısı: resmi kayıt klasörünün ({records_dir}) dışında, "
-            "kayıt sayılmaz."
+            f"Deneme çıktısı: resmi kayıt düzenine ({records_dir}/tahmin_*) "
+            "uymuyor; kayıt sayılmaz."
         )
-    print("Dosyalar doğrulandı. Ekranda tahmin yok; veritabanı ve ağ kullanılmadı.")
+    print(
+        "Dosyalar doğrulandı. Ekranda tahmin yok; tahmin aşamasında "
+        "veritabanı ve ağ kullanılmadı."
+    )
     return 0
 
 

@@ -207,6 +207,7 @@ Test sayıları burada tutulmaz; güncel sayı `pytest -q` çıktısındadır.
 | `tests/test_ml_final_cli.py` | `freeze` ve `final-test` komutları: tam çalışma, aynı baytlar, var olan klasör, kesinti, yanlış SHA/değişmiş model/başka girdi (saklı test satırlarına gelinmeden çıkış 1), zorunlu SHA, DB/ağ katmanı yüklememe ve dondurmanın saklı test girişlerini çağırmaması. |
 | `tests/test_ml_shadow.py` | Gölge tahmin kaydı (yapay veri): satırların `features` komutuyla aynı girdiler olması, olasılıkların dondurulan modelin çıktısı olması, 30 günden kısa geçmişe olasılık verilmemesi, gelecek verinin önceki tahmini değiştirmemesi (olumlu kontrolle), eksik gün eşiği, eğitimde olmayan aile, `recorded_after_days`; yazılan kaydın yeniden okunması, aynı baytlar, kayıtlı günün yeniden tahmin edilmemesi, manifestsiz klasörün kayıt sayılmaması, bozuk/yabancı/yinelenen kaydın hata vermesi, parmak izi yenilenmiş tutarsız satırların reddi, yanlış SHA'da pickle'ın açılmaması ve gerçek `config/shadow.json`'ın geçerliliği. |
 | `tests/test_ml_shadow_cli.py` | `shadow-predict` komutu: deneme/resmi kayıt ayrımı, aynı günlerin ikinci kez yazılmaması (`--records-dir` dahil), var olan klasör, eksik/fazla alanlı ayar, yanlış SHA, eksik görüntü, kesinti sonrası manifestsiz klasör ve DB/ağ katmanı yüklememe. |
+| `tests/test_ml_shadow_daily.py` | Günlük görüntü + gerçek tahmin akışı, tekrar çalışmada kayıtların değişmemesi, tur/keşif ve DB `running` kaydı için 5 dakika / 90 dakika bekleme, kayıt kilidi çakışması, eksik/hatalı kanıt ve adres, penceresiz log, çıkış kodları, gerçek `_test` okuma rolü ve yazan hesabın reddi; görev betiğinin BOM ve çalışma sözleşmesi. |
 | `tests/test_price_statistics.py` | İstatistik hesabı: tam kapsam dönemi, 30 gün/14 geçiş/7 gün/18 saat eşikleri, İstanbul günü, NULL üzerinden geçmeme, değişkenlik, grafik aralığından bağımsızlık. Veritabanısız. |
 | `tests/test_api_foundation.py` | API okuma rolünün izinleri (yazamaması, kalıcı nesne kuramaması) ve test ortamının ağ/adres korumaları. |
 | `tests/test_api.py` | FastAPI: dört adres ve OpenAPI, kuruş/UTC/NULL, fiyat yaşı, rol/şema hataları, dört bağlantı sınırı, kesinti ve yeniden bağlantı, 5 sn sorgu zaman aşımı, tutarlı cevap. |
@@ -3121,8 +3122,8 @@ anlamına gelmez. Model ve ayarlar değişmedi.
 Dondurulan model ([ön kayıt](#4-kasım-2026-dondurma-ön-kaydı)) kendi serimizin
 her başlangıcı için "önümüzdeki 7 günde ≥ %5 düşüş" olasılığı üretir ve bu
 olasılık, ekranda gösterilmeyen **değişmez** dosyalara yazılır. Bu komut yalnız
-tahmin kaydını üretir. Günlük otomatik çalışma (`shadow-daily`, zamanlanmış
-görev) ve sonradan değerlendirme (`shadow-evaluate`) henüz yoktur; sıra ve
+tahmin kaydını üretir. Günlük otomatik çalışma aşağıdaki `shadow-daily`
+komutuyla yapılır. Sonradan değerlendirme (`shadow-evaluate`) henüz yoktur; sıra ve
 kapı kuralları [planın gölge mod bölümündedir](../proje_plani.md#gölge-mod-kalan-sıra-6-4-kasım-planı).
 Komut DB'ye bağlanmaz, siteye gitmez ve ortak tarama kilidini almaz; bir tur
 sürerken de çalışabilir, çünkü yalnız verilen görüntü klasörünü okur.
@@ -3142,8 +3143,11 @@ klasörüdür; `--output-dir` yeni bir klasördür. İsteğe bağlı `--config`
 doğrular, `load_frozen_model` modeli yalnız ayardaki ön kayıtlı manifest
 SHA-256'sı, dosya parmak izleri, birebir kütüphane sürümleri ve kalibrasyon
 yeniden üretimi tutarsa açar; hata varsa pickle'a hiç gelinmez. Bu kanıt
-klasörleri `artifacts/` altında yerinde olmalıdır; taşınmış veya silinmişse
-komut çıkış 1 verir.
+klasörleri `config/shadow.json` içindeki `data/ml/golge/kanitlar/` altında
+`labels`, `features`, `split`, `model` olarak bulunmalıdır. Kaynak `artifacts/`
+klasörlerinin bayt aynı kopyalarıdır; model manifest SHA-256'sı değişmez.
+Eksik veya değiştirilmiş kanıt varsa komut çıkış 1 verir. Kopya denetimi
+`artifacts/golge_kanit_kopya_20261105.json` içindedir; orijinaller korunur.
 
 **Satırlar.** Girdiler `features` komutuyla aynı koddan (`feature_rows`) gelir.
 Kendi serimizin, başlangıç günü ayardaki `start_day` ve sonrası olan, kaydı
@@ -3178,20 +3182,29 @@ tutarlılığı ve özetin satırlardan yeniden hesaplanması denetlenir. Parmak
 yenilenmiş tutarsız bir satır da reddedilir. Aynı görüntü, kod ve ortam aynı
 baytları üretir.
 
-**Resmi kayıt ve yinelenmeme.** Resmi kayıt, `records_dir` altındaki adı
+**Resmi kayıt ve yinelenmeme.** Resmi kayıt, `records_dir` doğrudan altındaki adı
 `tahmin_` ile başlayan ve manifesti olan klasörlerdir. Komut başlarken bu
 klasörleri doğrular ve içlerindeki (ürün, gün) anahtarlarını atlar; kayıtlı
 gün yeniden tahmin edilmez, değişmez. Manifestsiz yarım klasör kayıt sayılmaz.
 Parmak izi tutmayan, başka bir modelle üretilmiş veya aynı günü iki klasörde
-taşıyan kayıt sessizce geçilmez; komut çıkış 1 verir. Çıktı `records_dir`
-altına yazılmadıysa komut bunu "Deneme çıktısı… kayıt sayılmaz" diye bildirir.
+taşıyan kayıt sessizce geçilmez; komut çıkış 1 verir. Çıktı doğrudan
+`records_dir` altına `tahmin_` adıyla yazılmadıysa komut bunu
+"Deneme çıktısı… kayıt sayılmaz" diye bildirir.
 Yeni kayıt yoksa komut çıkış 0 verir ve klasör oluşturmaz.
+
+Anahtarların okunması, model doğrulaması, tahmin ve kayıt yazımı aynı
+`records_dir/tahmin.lock` dosya kilidi altında yapılır. `shadow-predict` ve
+`shadow-daily` aynı kilidi kullanır; doluysa beklemeden çıkış 3 verir. İşletim
+sistemi süreç kapanınca kilidi bırakır; diskte kilit dosyasının bulunması
+tek başına çalışan süreç olduğu anlamına gelmez. Deneme çıktısı üreten
+`shadow-predict` de okuduğu resmi kayıt dizinini aynı kilitle korur.
 
 | Çıkış | Anlamı |
 |---|---|
 | 0 | Kayıt yazılıp doğrulandı veya yeni kayıt yoktu. |
 | 1 | Klasör var; ayar, görüntü, model/SHA, kanıt klasörü, kayıt klasörü ya da dosya hatası; ML kütüphaneleri eksik. |
 | 2 | Argüman hatası. |
+| 3 | Aynı resmi kayıt dizininde başka bir gölge tahmin yazıcısı çalışıyor. |
 | 130 | Kullanıcı durdurdu (manifestsiz klasör kalır, kayıt sayılmaz). |
 
 İlk gerçek deneme (4 Kasım görüntüsü, kullanıcı terminali, çıkış 0) ve
@@ -3210,6 +3223,109 @@ diliminin ortalama/sapma/medyanlarıyla pickle'ı açmadan yeniden hesapladı.
 - `showable` yalnız yukarıdaki kuralların sonucudur; kapı koşullarını
   karşıladığı veya olasılığın doğru olduğu anlamına gelmez.
 - Python, NumPy, scikit-learn veya LightGBM sürümü değişirse model yüklenmez.
+
+### Günlük gölge çalışması (`python -m app.ml shadow-daily`)
+
+`app/ml/daily.py`, mevcut `snapshot` ve `shadow-predict` komutlarını sırayla
+çalıştırır. İlk aşama yalnız `API_DATABASE_URL` okuma hesabıyla veritabanı
+görüntüsü alır; ikinci aşama bu dosyadan tahmin üretir. Siteye istek gitmez,
+veritabanına yazılmaz, model eğitilmez ve olasılıklar ekranda gösterilmez.
+
+```powershell
+# Kullanıcı ortamına bir kez; parola yalnız pgpass.conf'ta kalır.
+[Environment]::SetEnvironmentVariable('API_DATABASE_URL', 'postgresql://fiyat_takip_api@localhost:5432/fiyat_takip', 'User')
+$env:API_DATABASE_URL = [Environment]::GetEnvironmentVariable('API_DATABASE_URL', 'User')
+.venv\Scripts\python.exe -m app.ml shadow-daily
+$LASTEXITCODE
+```
+
+İsteğe bağlı `--config AYAR_DOSYASI` farklı gölge ayarı seçer; varsayılan
+`config/shadow.json`'dır. `--scheduled` log başlığında zamanlanmış çalışmayı
+belirtir; veri ve tahmin kuralları elle çalışmayla aynıdır. Her iki biçim de
+`run_logged` ile `data/logs/golge_<yerel tarih-saat>.log` dosyasına stdout,
+stderr ve son çıkış kodunu yazar (`LOG_DIR` ile değiştirilebilir). Log
+açılamazsa görüntü ve tahmin başlamaz. `pythonw.exe` altında konsol olmasa da
+log yazılır.
+
+**Bekleme.** Görüntü okunurken ortak tarama kilidi tutulur; yeni tur/keşif
+bu kısa okumanın arasına giremez. Kilit doluysa veya DB okuması `running`
+tur nedeniyle çıkış 3 verirse 5 dakika beklenip yeniden denenir. Bekleme
+monoton saatle en çok 90 dakikadır; sınır dolarsa çıkış 3 olur ve tahmin
+üretilmez. Diğer görüntü hataları yeniden denenmez. Görüntü bittiğinde
+tarama kilidi bırakılır; model doğrulaması ve tahmin sırasında tutulmaz.
+Yarım kalmış `running` tur bu komutla değiştirilmez; toplama akışının kendi
+uzlaştırması gerekir.
+
+**Dosyalar.** Zaman damgası İstanbul saatinde, mikrosaniye içerir. Varsayılan
+kayıt dizini `data/ml/golge/` altında:
+
+| Yol | İçerik |
+|---|---|
+| `kanitlar/{labels,features,split,model}/` | Dondurulmuş modelin değişmeyen kanıtları. |
+| `goruntuler/veri_<zaman>/snapshot.json` | O çalışmada alınan ve tahmin manifestinde SHA-256'sı kayıtlı görüntü. |
+| `tahmin_<zaman>/` | Yukarıdaki değişmez resmi tahmin dosyaları; manifest en son yazılır. |
+| `tahmin.lock` | Elle ve günlük tahmin yazıcısının ortak kilit dosyası. |
+
+İlk çalışma 27 Ekim 2026'dan görüntünün son kapanmış gününe kadar olan
+kayıtsız başlangıçları doldurur. Geçmişi kısa satırların olasılığı NULL
+kalır; geç kayıt bilgisi mevcut `recorded_after_days` kuralıyla korunur.
+Aynı görüntüyle ikinci çalışma yeni tahmin klasörü üretmez; günlük komut
+her çağrıda yeni görüntü ve log alır. Kayıt kilidi doluysa çıkış 3 verir;
+bu bekleme tur beklemesinden ayrıdır, kullanıcı daha sonra tekrar çalıştırır.
+
+| Çıkış | Anlamı |
+|---|---|
+| 0 | Görüntü ve tahmin doğrulandı veya bütün başlangıçlar zaten kayıtlıydı. |
+| 1 | Log, okuma adresi/rolü, görüntü, ayar, kanıt, model veya dosya hatası. |
+| 2 | Argüman hatası. |
+| 3 | 90 dakika sonunda tur/keşif/DB `running` sürüyor veya kayıt yazıcısı meşgul. |
+| 130 | Kullanıcı durdurdu; tamamlanmamış tahmin klasörü resmi kayıt sayılmaz. |
+
+**Windows görevi.** İlk elle çalışmanın sonucu doğrulandıktan sonra kullanıcı
+kurar; betik UTF-8 BOM'ludur ve yönetici izni istemez:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\golge_zamanlayici_kur.ps1
+# Geri almak için:
+powershell -ExecutionPolicy Bypass -File scripts\golge_zamanlayici_kur.ps1 -Kaldir
+```
+
+Görev `\FiyatTakip\GolgeTahmin`, her gün 11:00'de
+`.venv\Scripts\pythonw.exe -m app.ml shadow-daily --scheduled` çalıştırır.
+Çalışma klasörü proje köküdür; konsol penceresi açılmaz. `StartWhenAvailable`
+açıktır, kaçan tetikleme uygun oturumda telafi edilir; komut eksik günleri
+bulur. Kullanıcının oturumu açık olmalıdır (`Interactive`, `Limited`);
+ikinci tetikleme atlanır (`IgnoreNew`), süre sınırı 2 saattir, pilde de
+çalışır. Bilgisayarı uyandırmaz. Kullanıcı ortamında `API_DATABASE_URL`
+tanımlı değilse kurulmaz; kaldırma için bu değişken aranmaz. Tekrar kurulum
+aynı görevi günceller; fiyat toplama ve keşif görevlerine dokunmaz.
+
+İlk resmi çalışma kullanıcı terminalinde `shadow-daily` ile doğrulandı.
+Kanıtlar `data/ml/golge/goruntuler/veri_20261105_135714_411970/` ve
+`data/ml/golge/tahmin_20261105_135714_411970/` klasörleridir. Görüntü, dosya
+ve model kanıtlarının parmak izleri doğrulandı; girdiler görüntüden yeniden
+hesaplandı, olasılıklar `model.json` katsayıları ve eğitim istatistiklerinden
+pickle açılmadan bağımsız hesaplandı. Sayılar [README Güncel kapsam](../README.md#-güncel-kapsam)
+tablosundadır. Denetim ve ikinci çalışmadan önceki dosya parmak izleri:
+`artifacts/golge_resmi_denetim_20261105.json`.
+
+İkinci elle çalışmanın görüntüsü
+`data/ml/golge/goruntuler/veri_20261105_150548_714723/` altındadır. Komut
+çıkış 0 ve "Yeni tahmin yok" verdi; ilk resmi kaydın bütün dosyalarının
+SHA-256'ları değişmedi ve yeni tahmin klasörü oluşmadı. İki görüntüde veri
+tabloları aynıdır; okuma anı değiştiği için görüntü SHA-256'sı farklıdır.
+Denetim kanıtı: `artifacts/golge_yinelenmeme_20261105.json`.
+
+Görev kullanıcı terminalinde kuruldu; eylem, çalışma klasörü, tetikleyici,
+telafi, süreç/süre ve oturum ayarları kullanıcı tarafından okunan görev
+çıktısıyla doğrulandı. Kanıt: `artifacts/golge_gorev_kurulum_20261105.json`.
+Bir sonraki çalışma 6 Kasım 2026 11:00 (İstanbul); ilk zamanlanmış çalışmanın
+sonucu henüz gözlenmedi. Kurulum ile zamanlanmış çalışma başarısı aynı kanıt
+değildir.
+
+Adımın gönderim ve kapanış durumu
+[planda](../proje_plani.md#gölge-mod-kalan-sıra-6-4-kasım-planı) tutulur.
+Test sonucu bu işletim doğrulamasının yerine geçmez.
 
 ## Testler ne kanıtlar, ne kanıtlamaz
 

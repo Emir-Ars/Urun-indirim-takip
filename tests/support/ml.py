@@ -1,5 +1,6 @@
 """ML veri görüntüsü testlerinin küçük, tutarlı tablo örneği (veritabanısız)."""
 
+import json
 import random
 from datetime import date, datetime, timedelta, timezone
 
@@ -266,6 +267,26 @@ def write_experiment_evidence(root, count=365):
     )
     assert code == 0
     return paths
+
+
+def write_shadow_config(path, evidence, records, sha=None, **extra):
+    """Yapay model kanıtlarıyla, gerçek kayıt dizininden bağımsız gölge ayarı."""
+    path.write_text(
+        json.dumps(
+            dict(
+                start_day="2026-01-20",
+                model_manifest_sha256=sha or evidence["model_sha256"],
+                evidence={
+                    name: str(evidence[name])
+                    for name in ("labels", "features", "split", "model")
+                },
+                records_dir=str(records),
+                **extra,
+            )
+        ),
+        encoding="utf-8",
+    )
+    return path
 
 
 def write_model_evidence(root, count=365):

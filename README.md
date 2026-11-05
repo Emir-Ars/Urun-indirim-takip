@@ -11,8 +11,9 @@ hesaplamaktır.
 
 > ✅ Keşif, fiyat toplama, veritabanı, yerel API ve Streamlit ekranı tamamlandı
 > ve gerçek verilerle doğrulandı. R2 + Platt modeli donduruldu; Cimri saklı
-> testi çalıştırılıp doğrulandı. Kendi verimizde gölge mod planlandı: tahmin
-> kaydı komutu kodlandı, resmi kayıt henüz başlamadı; ekranda tahmin yok.
+> testi çalıştırılıp doğrulandı. Kendi verimizde gölge tahmin kaydı, günlük
+> komut ve görev kurma betiği kodlandı; ilk resmi çalışma doğrulandı.
+> Yinelenmeme kontrolü doğrulandı ve günlük görev kuruldu. Ekranda tahmin yok.
 
 ## ✨ Özellikler
 
@@ -101,7 +102,7 @@ başlatılması [teknik rehberde](docs/teknik.md#komutlar) anlatılır.
 | Cimri geçmişi | 4 Kasım salt okuma denetimi: 58 ürün, 22.595 tarihli kayıt (14 üründe 699 eksik fiyat), 9 Ekim 2025–2 Kasım 2026; ürünlerin kendi ilk–son kayıtları arasında kayıtsız gün yok. Galaxy S24 FE 128 GB 3 Kasım 2025'ten başlıyor; diğer 57 ürün 9 Ekim'den. Galaxy S25 512 GB ve Redmi Note 14 Pro 5G 256 GB eşleştirmesi yok; son alım 2 Kasım, düzenli alım yok. |
 | Kendi toplama geçmişi | 4 Kasım 13:48 salt okuma denetimi: 28 Eylül 2026 15:39–4 Kasım 2026 10:34 (İstanbul); 73 tamamlanmış tur (71 zamanlanmış, 2 elle). 58 ürün bu tarih aralığında; Galaxy S24 FE 128 GB 19 Ekim'den başlıyor, Galaxy S25 512 GB son kontrolü 16 Ekim (etkin sayfası yok; son fiyat 13 Ekim). |
 | Kendi geçmişimizdeki fiyat boşlukları | 4 Kasım denetimi; yalnız 3 Kasım sonuna kadar kapanmış günler: 2.199 ürün-günün 1.796'sında en az bir ham fiyat, 310'unda yalnız stoksuz sonuç, 16'sında fiyat yok ve hata var, 77'sinde hiç kontrol yok. ML için kullanılabilir 22:00 fiyatı 776 ürün-günde, günlük minimum 463 ürün-günde yok; bu iki sayı birbirine eklenmez ve ham fiyat yokluğuyla aynı ölçü değildir. |
-| Otomatik testler | 2374 test, 0 atlanan; Black ve Flake8 temiz (4 Kasım) |
+| Otomatik testler | 2395 test, 0 atlanan; Black ve Flake8 temiz (5 Kasım) |
 | ML etiket denetimi | Son alımı içeren 2 Kasım görüntüsüyle (son kapanmış gün 1 Kasım) doğrulandı: kendi serimizde 0 kullanılabilir / 1.323 belirsiz (30 gün geçmişi dolan 27 Ekim–1 Kasım başlangıçlarının gelecek penceresi henüz kapanmadı); Cimri'de 19.561 kullanılabilir (2.086 olumlu, 17.475 olumsuz) / 2.231 belirsiz. Sıkı çapraz kontrolde 24.616 pencere kaydı eşleşti. |
 | ML girdi denetimi | Aynı görüntüyle 2 Kasım'da doğrulandı: kendi serimizde 1.323, Cimri'de 21.792 girdi satırı; toplam 23.115 başlangıç 4.2 ile birebir eşleşti, eksik/fazla/tekrarlı başlangıç ve tanınmayan model ailesi yok. |
 | ML bölme denetimi | Aynı görüntüyle 2 Kasım'da doğrulandı: eğitim 13.647, doğrulama 2.531, saklı test 2.632 kayıt (3 Eylül–25 Ekim 2026); purge 751 kayıt. Dört kat Nisan–Temmuz 2026; bütün eğitim/kalibrasyon/doğrulama dilimleri iki sınıflı. Bu bölme adımında test sınıf dağılımı veya puanı açılmadı; sonraki son test aşağıda. |
@@ -114,6 +115,7 @@ başlatılması [teknik rehberde](docs/teknik.md#komutlar) anlatılır.
 | ML saklı test okuması | 4 Kasım: model − R0 AP farkı +0,2605; %95 tarih bloklu aralık [+0,2377; +0,3093], 14 günlük bloklar, 2.000/2.000 geçerli tekrar. Brier skill ve AP alt sınırı pozitif; önceden belirlenen okuma koşulları karşılandı (`met`), model seçimi değişmedi. |
 | ML saklı test desteği | 4 Kasım: 61 olumlu pencere kümesi; bağımsız gerçek düşüş sayısı değildir. En az 5 küme eşiğine ulaşan ürün 0/56; ürün makro puanları hesaplanmadı. POCO 2 kümeyle yetersiz; Apple, Samsung ve Xiaomi marka kırılımları destekli. Kalibrasyon ve kapsam sınırları [sonuç değerlendirmesinde](docs/teknik.md#4-kasım-2026-saklı-test-sonucu). |
 | Gölge mod ilk deneme kaydı | 4 Kasım, 12:57 UTC görüntüsü (son kapanmış gün 3 Kasım), kullanıcı terminalinde çıkış 0: 27 Ekim–3 Kasım kendi başlangıçları için 398 kayıt, 389 olasılık (9 satır 30 günden kısa geçmişli), 368 gösterilebilir. Deneme klasörüdür, resmi kayıt değildir. Parmak izleri, girdiler (`features` çıktısıyla 398/398 aynı) ve olasılıklar (`model.json` katsayılarından, pickle açılmadan; en çok 1×10⁻¹⁶ fark) bağımsız doğrulandı. Etiketler okunmadı. |
+| Gölge mod ilk resmi kayıt | 5 Kasım, 10:57 UTC görüntüsü (son kapanmış gün 4 Kasım), kullanıcı terminalinde `shadow-daily`, çıkış 0: 27 Ekim–4 Kasım için 448 ürün-gün kaydı, 438 olasılık, 416 gösterilebilir; 50 kayıt ertesi gün, 398 geç/geriye dönük. Dosya ve model/kanıt parmak izleri doğrulandı; 448/448 girdinin görüntüden yeniden hesabı birebir, 438 olasılığın `model.json` katsayılarından pickle açılmadan hesabında en büyük fark 1,67×10⁻¹⁶. Kendi gerçek sonuçları kullanılmadı, başarı puanı hesaplanmadı; yinelenmeme kontrolü ve görev kurulumu doğrulandı. |
 | Gölge mod olasılık dağılımı | 4 Kasım deneme kaydı, yalnız bilgi: R2 + Platt ortalaması 0,168, medyan 0,158, en çok 0,404; eğitim olumlu oranı (R0) 0,102. 389 olasılığın 118'i ≥ 0,20, 12'si ≥ 0,30. Ortalamanın R0'ın üstünde olması [planda ölçülen girdi kaymasıyla](proje_plani.md#gölge-mod-kalan-sıra-6-4-kasım-planı) aynı yöndedir; nedenleri bu kayıttan ayrıştırılamaz ve kendi verimizde doğruluk veya kalibrasyon göstermez. |
 
 Katalogdaki **376 bağlantının markalara göre dağılımı** (üç pasif bağlantı dahil):
@@ -141,7 +143,7 @@ canlı ağa çıkmaz; veritabanı testleri yalnız test veritabanını kullanır
 | ML öncesi bakım ve otomatik güvenli keşif kabulü | ✅ Tamamlandı |
 | Proje yapısının sadeleştirilmesi | ✅ Tamamlandı (26 Ekim) |
 | Sürekli çalışma ortamı | 🔄 Dizüstü sürekli açık kararı uygulandı; işletim doğrulaması sürüyor ([plan](proje_plani.md)) |
-| ML ile indirim olasılığı tahmini | 🔄 R2 + Platt donduruldu, Cimri saklı testi çalıştırılıp doğrulandı; ön kayıt ve sonuç belgeleri gönderildi, CI doğrulandı. Kendi verimizde gölge mod planı onaylandı, tahmin kaydı komutu kodlandı (günlük görev ve resmi kayıt sırada); ekranda tahmin gösterim kapısından sonra ([plan](proje_plani.md#gölge-mod-kalan-sıra-6-4-kasım-planı)) |
+| ML ile indirim olasılığı tahmini | 🔄 R2 + Platt donduruldu, Cimri saklı testi çalıştırılıp doğrulandı; ön kayıt ve sonuç belgeleri gönderildi, CI doğrulandı. Gölge tahmin kaydı, günlük komut ve görev betiği kodlandı; ilk resmi çalışma, yinelenmeme kontrolü ve görev kurulumu doğrulandı. Ekranda tahmin gösterim kapısından sonra ([plan](proje_plani.md#gölge-mod-kalan-sıra-6-4-kasım-planı)) |
 
 ## 📚 Belgeler
 

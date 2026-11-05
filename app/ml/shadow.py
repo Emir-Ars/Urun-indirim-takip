@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from datetime import date, timedelta, timezone
 from pathlib import Path
 
+from filelock import FileLock
 from pydantic import Field
 
 from app.contracts import Contract
@@ -121,8 +122,17 @@ def load_model(config):
 
 
 def is_official(directory, records_dir):
-    """Çıktı kayıt klasörünün altındaysa resmi kayıt adayıdır (manifest ayrı)."""
-    return Path(records_dir).resolve() in Path(directory).resolve().parents
+    """Yalnız kayıt okuyucusunun taradığı doğrudan alt klasörler resmidir."""
+    directory = Path(directory).resolve()
+    records_dir = Path(records_dir).resolve()
+    return directory.parent == records_dir and directory.name.startswith(RECORD_PREFIX)
+
+
+def record_lock(records_dir):
+    """Anahtar okuma ve yazma birlikte kilitlenir; iki süreç aynı günü yazamaz."""
+    records_dir = Path(records_dir).resolve()
+    records_dir.mkdir(parents=True, exist_ok=True)
+    return FileLock(str(records_dir / "tahmin.lock"), timeout=0)
 
 
 def _utc_text(value):
