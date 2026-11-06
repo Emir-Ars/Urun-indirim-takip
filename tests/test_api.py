@@ -161,7 +161,10 @@ def test_unknown_route_and_wrong_method_use_safe_errors(stub):
 def test_openapi_describes_routes_models_and_parameter_bounds(stub):
     _, client = stub
     spec = client.get("/openapi.json").json()
-    assert set(spec["paths"]) == set(PATHS[:3]) | {"/api/v1/products/{product_key}"}
+    assert set(spec["paths"]) == set(PATHS[:3]) | {
+        "/api/v1/products/{product_key}",
+        "/api/v1/products/{product_key}/prediction",
+    }
     product = spec["paths"]["/api/v1/products/{product_key}"]["get"]
     parameters = {entry["name"]: entry["schema"] for entry in product["parameters"]}
     assert parameters["history_days"]["default"] == 30

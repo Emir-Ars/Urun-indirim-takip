@@ -44,6 +44,7 @@ def stub(monkeypatch):
         read, "read_run_status", lambda conn: read.RunStatus(None, None)
     )
     monkeypatch.setattr(read, "read_product", lambda *args: None)
+    monkeypatch.setattr(read, "read_product_identity", lambda *args: None)
     with TestClient(main.create_app(), raise_server_exceptions=False) as client:
         yield pool, client
     assert pool.opened == pool.closed == 1

@@ -1,9 +1,17 @@
 """API ve yerel istemcinin bağımsız, ortak cevap sözleşmeleri."""
 
-from datetime import date, timezone
+from datetime import date, timedelta, timezone
 from typing import Annotated, Literal
+from zoneinfo import ZoneInfo
 
-from pydantic import AfterValidator, AwareDatetime, ConfigDict, Field, FiniteFloat
+from pydantic import (
+    AfterValidator,
+    AwareDatetime,
+    ConfigDict,
+    Field,
+    FiniteFloat,
+    model_validator,
+)
 
 from app.contracts import Contract, OfferURL, Product, Reason, Stock, URL
 
@@ -29,6 +37,75 @@ class ErrorResponse(APIModel):
 
 class HealthResponse(APIModel):
     ready: Literal[True] = True
+
+
+class ForecastResponse(APIModel):
+    probability: Annotated[FiniteFloat, Field(ge=0, le=1)]
+    model_name: str = Field(min_length=1)
+    anchor_day: date
+    anchor_at: UTCDateTime
+    reference_price_kurus: Price
+    target_start: date
+    target_end: date
+    recorded_at: UTCDateTime
+    listing_count: Annotated[int, Field(gt=0)]
+
+    @model_validator(mode="after")
+    def valid_period(self):
+        if (
+            self.target_start != self.anchor_day + timedelta(days=1)
+            or self.target_end != self.anchor_day + timedelta(days=7)
+            or self.recorded_at < self.anchor_at
+            or self.anchor_at.astimezone(ZoneInfo("Europe/Istanbul")).date()
+            != self.anchor_day
+        ):
+            raise ValueError("Tahmin dönemi veya kayıt zamanı tutarsız")
+        return self
+
+
+PredictionReason = Literal[
+    "display_closed",
+    "display_not_approved",
+    "expected_daily_record_missing",
+    "history_below_30",
+    "recent_missing_over_30_percent",
+    "family_not_in_training",
+]
+
+
+class PredictionResponse(APIModel):
+    state: Literal["closed", "unavailable", "insufficient_data", "available"]
+    reasons: tuple[PredictionReason, ...]
+    forecast: ForecastResponse | None
+    generated_at: UTCDateTime
+
+    @model_validator(mode="after")
+    def valid_state(self):
+        allowed = {
+            "closed": {"display_closed", "display_not_approved"},
+            "unavailable": {"expected_daily_record_missing"},
+            "insufficient_data": {
+                "history_below_30",
+                "recent_missing_over_30_percent",
+                "family_not_in_training",
+            },
+            "available": set(),
+        }[self.state]
+        if (
+            (self.forecast is not None) != (self.state == "available")
+            or bool(self.reasons) != (self.state != "available")
+            or not set(self.reasons) <= allowed
+            or tuple(sorted(set(self.reasons))) != self.reasons
+        ):
+            raise ValueError("Tahmin durumu, gerekçeleri ve olasılığı tutarsız")
+        if self.forecast is not None and (
+            self.forecast.anchor_day
+            != self.generated_at.astimezone(ZoneInfo("Europe/Istanbul")).date()
+            - timedelta(days=1)
+            or self.forecast.recorded_at > self.generated_at
+        ):
+            raise ValueError("Tahmin güncel güne ait değil")
+        return self
 
 
 class RunResponse(APIModel):

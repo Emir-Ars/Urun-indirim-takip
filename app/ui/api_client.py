@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field, TypeAdapter, ValidationError
 from app.api.schemas import (
     ErrorResponse,
     HealthResponse,
+    PredictionResponse,
     ProductResponse,
     StatusResponse,
 )
@@ -20,6 +21,7 @@ _HEALTH = TypeAdapter(HealthResponse)
 _STATUS = TypeAdapter(StatusResponse)
 _PRODUCTS = TypeAdapter(tuple[Product, ...])
 _PRODUCT = TypeAdapter(ProductResponse)
+_PREDICTION = TypeAdapter(PredictionResponse)
 _ERRORS = {
     (404, "product_not_found"): "Telefon bulunamadı.",
     (404, "not_found"): "İstenen API adresi bulunamadı.",
@@ -30,6 +32,7 @@ _ERRORS = {
     (503, "database_unavailable"): "Veritabanı şu anda okunamıyor.",
     (503, "read_access_denied"): "API okuma hesabının izinleri uygun değil.",
     (503, "schema_not_ready"): "Veritabanı şeması API için hazır değil.",
+    (503, "prediction_unavailable"): "Tahmin kaydı şu anda doğrulanamıyor.",
 }
 
 
@@ -55,6 +58,9 @@ def _complete(value) -> bool:
 def _validate_target(request: httpx.Request) -> None:
     url = request.url
     product_path = re.fullmatch(r"/api/v1/products/([a-z][a-z0-9_]*)", url.path)
+    prediction_path = re.fullmatch(
+        r"/api/v1/products/([a-z][a-z0-9_]*)/prediction", url.path
+    )
     allowed_query = {"history_days", "cimri_days"} if product_path else set()
     query = url.params.multi_items()
     if (
@@ -66,6 +72,7 @@ def _validate_target(request: httpx.Request) -> None:
         or (
             url.path not in ("/health", "/api/v1/status", "/api/v1/products")
             and not product_path
+            and not prediction_path
         )
         or len(query) != len({key for key, value in query})
         or any(
@@ -125,6 +132,15 @@ class ApiClient:
             _PRODUCT,
             {"history_days": history_days, "cimri_days": cimri_days},
         )
+
+    def get_prediction(self, product_key: str) -> PredictionResponse:
+        try:
+            _KEY.validate_python(product_key, strict=True)
+        except ValidationError:
+            raise ApiClientError(
+                "invalid_request", "İstek parametreleri geçersiz."
+            ) from None
+        return self._get(f"/api/v1/products/{product_key}/prediction", _PREDICTION)
 
     def _get[T](self, path: str, adapter: TypeAdapter[T], params=None) -> T:
         if self._client.is_closed:

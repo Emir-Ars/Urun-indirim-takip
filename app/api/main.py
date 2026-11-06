@@ -17,11 +17,13 @@ from app.api.schemas import (
     ErrorDetail,
     ErrorResponse,
     HealthResponse,
+    PredictionResponse,
     ProductResponse,
     StatusResponse,
 )
 from app.contracts import Product, utc_now
 from app.database import read
+from app.ml import shadow_display
 
 Days = Annotated[int, Query(ge=1, le=366)]
 
@@ -127,5 +129,22 @@ def create_app() -> FastAPI:
         if snapshot is None:
             return error_response(404, "product_not_found", "Telefon bulunamadı.")
         return product_response(snapshot, utc_now())
+
+    @app.get(
+        "/api/v1/products/{product_key}/prediction", response_model=PredictionResponse
+    )
+    def prediction(request: Request, product_key: str):
+        with request.app.state.pool.connection() as conn:
+            database.validate_readiness(conn)
+            identity = read.read_product_identity(conn, product_key)
+        if identity is None:
+            return error_response(404, "product_not_found", "Telefon bulunamadı.")
+        try:
+            result = shadow_display.prediction_for(identity)
+            return PredictionResponse.model_validate(result)
+        except shadow_display.READ_ERRORS:
+            return error_response(
+                503, "prediction_unavailable", "Tahmin kaydı şu anda doğrulanamıyor."
+            )
 
     return app

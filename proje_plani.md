@@ -45,7 +45,7 @@ Kullanıcı arayüzde arama yaptığında canlı scraping veya model eğitimi
 | Proje yapısının sadeleştirilmesi (Bölüm 8, Adım 1–5) | ✅ Tamamlandı (26 Ekim) | `75d4732` |
 | ML öncesi ekran iyileştirmeleri 1–2 | ✅ Tamamlandı (28 Ekim) | `dd2e262`, `94045bd`, CI 40643349065 |
 | Proje mühendisliğini pekiştirme | ⏸️ Pasif (28 Ekim kararı): iş sırasında değil; kullanıcı istediğinde Oturum 2'den sürer | Program aşağıda; oturum ilerlemesi yerel devir notunda |
-| 8. ML (indirim tahmini) | 🔄 Hazırlık, model dondurma/saklı test ve gölge mod 6.0–6.4 tamamlandı; ilk otomatik günlük çalışma doğrulandı (6 Kasım). 7.1 gösterim planı onaylandı ve belgelendi; belge gönderimi bekliyor. 6.5 izleme paralel; sonraki uygulama adımı 7.2 | Bölüm 9 ve kalan iş sırası |
+| 8. ML (indirim tahmini) | 🔄 Hazırlık, model dondurma/saklı test ve gölge mod 6.0–6.4 tamamlandı; ilk otomatik günlük çalışma doğrulandı (6 Kasım). 7.1 gösterim planı belgelendi, gönderildi ve CI doğrulandı. 6.5 izleme paralel; 7.2 uygulandı, yerel kontroller geçti; gönderim onaylandı, gönderim/CI doğrulaması bekliyor; sıradaki ekran adımı 7.3 | Bölüm 9 ve kalan iş sırası |
 | 9. Sürekli işletim ve Docker | 🔄 Sürekli işletim kararı verildi (22 Ekim: dizüstü sürekli açık); Docker başlanmadı | Bölüm 9 |
 
 Bugünkü işletim: fiyat turu her gün 10:00 ve 22:00'de, haftalık keşif her
@@ -387,16 +387,16 @@ dosyalar, kabul koşulları ve kontroller koddan önce netleştirilip onaylanır
 | Ana başlık | İş / adım | Somut çıktı | Sıra ve durum |
 |---|---|---|---|
 | Aşama 8 — ML | 6.5 — Gölge işletim ve performans izleme | Günlük tahmin kaydı; haftalık veri/kayıt sağlığı ve model performansı raporu; ara ve kesin değerlendirme | Paralel sürer. İlk otomatik kontrol tamam; ilk haftalık kontrol 8 Kasım keşfi bittikten sonra. Hepsiburada arama düzeltmesinin ilk tam canlı sonucu da o gün incelenir. |
-| Aşama 8 — ML | 7.1 — Gösterim kapsamı ve veri akışı planı | Bir ürün örneği üzerinden kayıt → API → ekran akışı; gösterilecek tarih/kapsam, kapalı gösterim ve yetersiz veri durumları; [onaylı sözleşme aşağıda](#gösterim-kalan-sıra-7-6-kasım-planı) | Plan onaylandı ve belgelendi (6 Kasım); yalnız belge değişti. Gönderim/CI bekliyor; API ve ekran henüz uygulanmadı. |
-| Aşama 8 — ML | 7.2 — API'den tahmin okuma | Kayıtlı tahmin ve yeterlilik bilgisinin doğrulanarak sunulması; eksik/bozuk kayıt ve kapalı gösterim davranışı | 7.1 ve ayrıntılı uygulama onayı sonrası. İstek sırasında eğitim veya canlı fiyat toplama yapılmaz; sözleşme ve testler birlikte hazırlanır. |
+| Aşama 8 — ML | 7.1 — Gösterim kapsamı ve veri akışı planı | Bir ürün örneği üzerinden kayıt → API → ekran akışı; gösterilecek tarih/kapsam, kapalı gösterim ve yetersiz veri durumları; [onaylı sözleşme aşağıda](#gösterim-kalan-sıra-7-6-kasım-planı) | ✅ Tamamlandı (6 Kasım); plan onaylandı, belgelendi, gönderildi ve aynı SHA'nın CI'ı başarılı. 7.1 kod içermedi; API 7.2, ekran 7.3 kapsamındadır. |
+| Aşama 8 — ML | 7.2 — API'den tahmin okuma | Kayıtlı tahmin ve yeterlilik bilgisinin doğrulanarak sunulması; eksik/bozuk kayıt ve kapalı gösterim davranışı | 🔄 Kullanıcının 6 Kasım uygulama isteğiyle ortak okuyucu, gösterim onayı, API ve yerel istemci uygulandı; tam test ve biçim kontrolleri geçti. Kullanıcı commit/push işlemini onayladı; gönderim/CI doğrulaması bekliyor. |
 | Aşama 8 — ML | 7.3 — Ekranda tahmin durumları | Onaylı API sözleşmesine bağlı ekran; tarih/kapsam açıklamaları, yeterli/yetersiz veri ve kapalı gösterim durumları | 7.2 sonrası. Kesin gösterim kararı öncesinde gerçek olasılık kullanıcıya açılmaz; ekran testleri bu adımın içindedir. |
 | Aşama 8 — ML | 7.4 — Gösterim akışının bütün olarak doğrulanması | API/istemci/ekran uyumu, uygun ve yetersiz veri senaryoları, kapı durumları, güncel kullanım belgeleri | 7.2–7.3 sonrası. Her kod adımı zaten tam test/biçim kontrolü içerir; testler bu adıma ertelenmez. |
 | Aşama 9 — Sürekli işletim ve Docker | 9.1 — Sürekli işletim kanıtı | Zamanında/geç/kayıp görevlerin nedenleri ve mevcut çalışma düzeninin doğrulanması | 6.5 ve iş 7 ile paralel. İlk başarılı görev sürekli işletimin tamamlandığı anlamına gelmez; güç ayarlarına yeni müdahale ayrıca kararlaştırılır. |
 | Aşama 9 — Sürekli işletim ve Docker | 9.2 — Docker kapsam kararı ve planı | Staj kapsamı, sağlayacağı fayda, taşınacak parçalar ve veri/model kalıcılığı için karar ve gerekirse uygulama planı | Planda kalır; öncelikli gösterim işleri sonrasında ele alınır. Docker uygulamasının kapsamı ve planı henüz onaylanmadı. |
 | Proje kapanışı | İş 8 — Sunum ve teslim hazırlığı | Sistemin akışı, örnek kullanım, sonuçlar ve sınırlar; onaylı kapsamın belgelerle teslimi | Planda kalır. Sunum iskeleti önceden hazırlanabilir; hazırlık hedefi 21–31 Aralık. Biçim ve içerik ayrıca netleştirilecek. |
 
-**Takvim:** 7.1 planı onaylandı ve belgelendi. 7.2–7.4, kendi uygulama
-onaylarıyla sırayla başlayabilir; 6.5'in kapanmasını beklemez.
+**Takvim:** 7.1 gönderildi ve CI doğrulandı; 7.2 yerel kontrolleri geçti, gönderim onaylandı, gönderim/CI doğrulaması bekliyor.
+7.3–7.4 kendi uygulama onaylarıyla sırayla ilerler; 6.5'in kapanmasını beklemez.
 Temel geliştirmeler için **31 Aralık hedefi**, 21 Aralık haftasının
 ara raporu ve **5 Ocak 2027 kesin değerlendirme tarihi** korunur.
 Stajın kesin bitiş tarihi ve Docker'ın teslim kapsamı açık karardır.
@@ -640,19 +640,20 @@ Bilinen riskler (6.1 ölçümü, 4 Kasım 2026 12:57 UTC görüntüsü):
 ### Gösterim (kalan sıra 7, 6 Kasım planı)
 
 **7.1'in onaylı çıktısı bu sözleşmenin belgelenmesidir.** Aşağıdaki API,
-okuyucu, komut ve kart henüz uygulanmadı; uygulama 7.2–7.4'ün işidir.
+okuyucu, komut ve istemci 7.2'de uygulandı ve yerel kontrolleri geçti; gönderim onaylandı, gönderim/CI doğrulaması bekliyor. Kart
+7.3'te, ekranla bütün akış doğrulaması 7.4'te yapılacak.
 R2 + Platt, girdiler ve değerlendirme eşikleri değişmez. İlk sürümde seçili
 telefon için tek tahmin kartı vardır; tahmin geçmişi listesi/grafiği yoktur.
 
 #### Veri akışı ve API sözleşmesi
 
 **Günlük resmi kayıt → kayıt ve kaynak görüntü doğrulaması → API → kart.**
-Yeni uç `GET /api/v1/products/{product_key}/prediction` olacaktır. Mevcut
+Uç `GET /api/v1/products/{product_key}/prediction` olarak uygulandı. Mevcut
 ürün cevabı değişmez; tahmin hatası fiyat ekranını kapatmaz. API kayıtlı
 tahmini okur; model yüklemez, eğitim veya yeni tahmin çalıştırmaz.
 
 Gölge kayıt doğrulayıcıları NumPy/scikit-learn bağımlılığı olmayan
-`app/ml/shadow_records.py` modülüne ayrılacaktır. Mevcut CLI sözleşmeleri ve
+`app/ml/shadow_records.py` modülüne ayrıldı. Mevcut CLI sözleşmeleri ve
 resmi dosya biçimi korunur. Yalnız manifesti tamamlanmış resmi klasörler
 kullanılır; hash, model kimliği ve ürün-gün tekilliği doğrulanır. Yarım
 klasörler kullanılmaz. Başlangıç fiyatı ve sayfa kapsamı, manifestteki SHA
@@ -691,7 +692,7 @@ başlangıç fiyatına ve **6–12 Kasım** dönemine aittir. Kaynak görüntü
 `data/ml/golge/tahmin_20261106_110023_673048/predictions.jsonl` içindedir.
 Gösterim kapalıyken bu kaydın olasılığı API'ye veya karta çıkarılmaz.
 
-Gösterim varsayılan kapalıdır. Planlanan açılış komutu
+Gösterim varsayılan kapalıdır. Açılış komutu
 `python -m app.ml shadow-display --evaluation <KESIN_RAPOR_KLASORU>`:
 
 - Rapor bütünlüğünü, ön kayıtlı modeli, görüntünün İstanbul tarihinin
@@ -703,7 +704,9 @@ Gösterim varsayılan kapalıdır. Planlanan açılış komutu
 - `shadow-display --disable` gösterimi tekrar kapatır. Bu işlemler resmi
   tahmin veya değerlendirme dosyalarını değiştirmez.
 
-Bu komutlar henüz yoktur; bugün çalıştırılacak komut olarak verilmez.
+Komutlar 7.2'de uygulandı; bugünkü tarih açılışa izin vermez. Gerçek
+gösterim kapalıdır. Güncel alanlar, çıkış kodları ve kullanım
+[teknik rehberdedir](docs/teknik.md#tahmin-gösterim-onayı-python--m-appml-shadow-display).
 
 #### Uygulama sırası ve kabul kontrolleri
 

@@ -130,7 +130,7 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 
 | Dosya | Ne işe yarar |
 |---|---|
-| `main.py` | `create_app()` fabrikası, lifespan ile havuz açma/kapatma, dört GET adresi, cevap doğrulaması ve Türkçe güvenli hata cevapları. İçe aktarmada bağlantı açmaz. |
+| `main.py` | `create_app()` fabrikası, lifespan ile havuz açma/kapatma, beş GET adresi, cevap doğrulaması ve Türkçe güvenli hata cevapları. İçe aktarmada bağlantı açmaz. |
 | `database.py` | Yalnız `API_DATABASE_URL` ile 1–4 bağlantılık Psycopg havuzu; her istekte rol, SELECT/yazma izinleri, nesneler ve migration durumunun salt okunur denetimi. |
 | `schemas.py` | API ve istemcinin ortak, ağsız cevap modelleri. DB/havuz/hesaplama/FastAPI yüklemez; JSON alanları ve OpenAPI aynı kalır. |
 | `models.py` | Tek `ProductSnapshot` içinden istatistik ve fiyat yaşıyla ortak cevaba dönüşüm. İç `all_history`, ham sayfa hata metni ve tur notu dışarı verilmez. |
@@ -139,7 +139,7 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 
 | Dosya | Ne işe yarar |
 |---|---|
-| `api_client.py` | `ApiClient`: dört sabit yerel GET, katı girdi/JSON/hedef doğrulaması; proxy/yönlendirme/tekrar/önbellek yok, açık zaman aşımı ve güvenli Türkçe hatalar. UI veritabanı/sunucu uygulamasını yüklemez. |
+| `api_client.py` | `ApiClient`: beş sabit yerel GET, katı girdi/JSON/hedef doğrulaması; proxy/yönlendirme/tekrar/önbellek yok, açık zaman aşımı ve güvenli Türkçe hatalar. UI veritabanı/sunucu uygulamasını yüklemez. |
 | `main.py` | Kartlı Streamlit ekranı: telefon/aralık seçimi, güncel sonuç, API istatistikleri, iki grafik ve 30 sn/elle yenileme. Hata halinde eski veri kaldırılır; yalnız seçim tercihleri korunur. |
 | `presentation.py` | Tamsayı kuruş ve İstanbul saati biçimleme, Türkçe gerekçeler, açık boşluk/kapsam sınırlarına sahip Altair çizgi/nokta verisi. İstatistik hesaplamaz veya veri kaynağına bağlanmaz. |
 
@@ -156,11 +156,13 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 | `models.py` | R0 sabit oran, R1 dip kuralı, R2 lojistik regresyon ve LightGBM; yalnız eğitimden öğrenilen ön işlemler, ayrı dilimde Platt kalibrasyonu, ham/kalibre tahminler ve öğrenilen değerlerin özeti. Dondurulan model (`FrozenModel`: R0 + seçilen model) ve özeti. |
 | `experiment.py` | Etiket/girdiden bölmeyi yeniden üretip kanıt dosyalarıyla karşılaştırır; hazır katlarda eğitim/kalibrasyon/doğrulama akışını, birleşik ölçütleri, güven aralıklarını ve seçim önerisini yürütür. Saklı test ve kendi serimiz puanlanmaz. |
 | `final.py` | Deneyin seçim sonucundan modeli türetir, son dilimlerle dondurur, dondurulan modeli yalnız denetimlerden sonra yükler ve saklı testi bir kez puanlar. |
+| `shadow_records.py` | Ortak ayar, gerekçe, satır/manifest/parmak izi ve tekillik doğrulamaları. NumPy/scikit-learn yüklemez; eski gölge komutları bu işlevleri aynı adlarla kullanır. |
+| `shadow_display.py` | Ayrı gösterim onayını atomik yazar/kapatır; kayıt ve kaynak görüntüden güncel tahmini salt okunur hazırlar. API yolu model/puanlama kütüphanelerini yüklemez. |
 | `shadow.py` | Gölge mod: ön kayıtlı SHA-256'sı ve kanıt zinciri doğrulanmış dondurulan modeli açar, veri görüntüsünden kendi serimizin girdilerini bellekte hesaplar, kayıtsız her (ürün, gün) için olasılık ve gerekçe üretir, değişmeyen tahmin klasörünü yazar/yeniden doğrular ve resmi kayıtlardaki anahtarları çıkarır. Veritabanı, ağ ve pazaryeri katmanı yüklemez. |
 | `daily.py` | Günlük gölge akışı: kısa ortak tarama kilidi altında salt okunur görüntü, sınırlı tur/DB bekleme ve ardından mevcut gölge tahmin komutu; her çalışmada tarihli log. Kayıtlı ürün-günleri yeniden yazmaz. |
 | `shadow_evaluation.py` | Kayıtlı olasılıkları yeni görüntünün gerçek sonuçlarıyla eşleştirir; kayıt girdilerini yeniden hesaplayıp doğrular, puan/kapı/sağlık raporunu yeni klasöre yazar ve yeniden okur. DB/ağ, pickle, eğitim veya yeni tahmin kullanmaz. |
 | `reporting.py` | Etiket, girdi, bölme, deney, dondurulan model ve saklı test için belirlenimci JSON/JSONL, Türkçe Markdown ve en son yazılan parmak izli başarı manifesti; çıktıların yeniden doğrulanması. `split_plan_files` bölme yazımıyla deneyin bayt karşılaştırmasına ortak dosya içeriği üretir. |
-| `__main__.py` | `snapshot` yalnız `API_DATABASE_URL` okuma hesabıyla görüntü alır; `labels`/`features` görüntüden, `split` etiket/girdiden, `experiment` etiket/girdi/bölme klasörlerinden, `freeze` ve `final-test` ayrıca deney/model klasöründen çalışır. `shadow-predict` görüntü ve model/kanıt klasörlerinden tahmin üretir; `shadow-evaluate` kayıtları yeni görüntüyle değerlendirir. Dosyadan çalışan bu komutlar DB katmanını yüklemez. `shadow-daily` görüntü + tahmin akışını ve loglamayı yürütür; yalnız görüntü aşaması okuma bağlantısı kullanır. Çıkış kodları ilgili [ML hazırlığı](#ml-hazırlığı) alt bölümündedir. |
+| `__main__.py` | `snapshot` yalnız `API_DATABASE_URL` okuma hesabıyla görüntü alır; `labels`/`features` görüntüden, `split` etiket/girdiden, `experiment` etiket/girdi/bölme klasörlerinden, `freeze` ve `final-test` ayrıca deney/model klasöründen çalışır. `shadow-predict` görüntü ve model/kanıt klasörlerinden tahmin üretir; `shadow-evaluate` kayıtları yeni görüntüyle değerlendirir; `shadow-display` kesin rapora bağlı ayrı gösterim onayını yönetir. Dosyadan çalışan bu komutlar DB katmanını yüklemez. `shadow-daily` görüntü + tahmin akışını ve loglamayı yürütür; yalnız görüntü aşaması okuma bağlantısı kullanır. Çıkış kodları ilgili [ML hazırlığı](#ml-hazırlığı) alt bölümündedir. |
 
 ### Kurulum ve zamanlayıcı: `scripts/`
 
@@ -1934,6 +1936,7 @@ toplama/keşif başlatmaz; tarama/tur kilidi almaz.
 | `/api/v1/status` | `running` ve son global `completed`; olmayan alan `null` |
 | `/api/v1/products` | Kimlik sırasıyla etkin ürün dizisi |
 | `/api/v1/products/{product_key}` | Ürün cevabı; pasif ürün doğrudan okunabilir, bilinmeyen ürün 404 |
+| `/api/v1/products/{product_key}/prediction` | Ayrı kayıtlı tahmin cevabı; bilinmeyen ürün 404, doğrulanamayan dosya 503 |
 
 Ürün parametreleri `history_days=30` ve `cimri_days=366`; ikisi de 1–366.
 Okuma katmanının son kayıtlı veriden açtığı, sınırları dahil aralıklar korunur.
@@ -1980,10 +1983,45 @@ Bağlantı adresi/şifre/SQL/ham istisna cevaba eklenmez.
 | 405 | `method_not_allowed` | Yazma isteği kabul edilmez |
 | 422 | `invalid_request` | Gün parametreleri geçersiz |
 | 503 | `pool_unavailable` | Havuzdan bağlantı edinilemedi |
+| 503 | `prediction_unavailable` | Tahmin dosyaları veya kaynak görüntü doğrulanamadı |
 | 503 | `database_unavailable` | DB bağlantısı/sorgusu veya zaman aşımı |
 | 503 | `read_access_denied` | Okuma hesabı/izinleri uygun değil |
 | 503 | `schema_not_ready` | Şema eksik/tutarsız |
 | 500 | `internal_error` | Beklenmeyen kod/cevap doğrulama hatası |
+
+### Kayıtlı tahmin cevabı
+
+`GET /api/v1/products/{product_key}/prediction` sorgu parametresi istemez.
+Ürün kimliği kısa bir salt okunur DB işlemiyle kontrol edilir; bağlantı
+bırakıldıktan sonra dosyalar okunur. Mevcut fiyat cevabı değişmez.
+
+| `state` | `reasons` | `forecast` |
+|---|---|---|
+| `closed` | `display_closed` veya `display_not_approved` | `null` |
+| `unavailable` | `expected_daily_record_missing` | `null` |
+| `insufficient_data` | Mevcut üç gölge yeterlilik gerekçesi | `null` |
+| `available` | Boş dizi | Tahmin nesnesi |
+
+Her cevapta UTC `generated_at` bulunur. Tahmin nesnesi `probability` (0–1),
+`model_name`, `anchor_day`, `anchor_at`, `reference_price_kurus`,
+`target_start`, `target_end`, `recorded_at` ve `listing_count` taşır.
+Para tam sayı TRY kuruşudur; dönem başlangıç gününden sonraki 1–7. günlerdir.
+Zamanlar UTC'dir; güncellik İstanbul takvimine göre yalnız dünün kaydıdır.
+11:00 işi bitmeden `unavailable` dönebilir; eski güne geri dönüş yapılmaz.
+
+Yalnız tamamlanmış resmi klasörler kullanılır; dosya hash'leri, ön kayıtlı
+model, başlangıç ayarı, zamanlar ve ürün-gün tekilliği kontrol edilir.
+Yarım klasörler atlanır. Başlangıç fiyatı, gerçek akşam turu zamanı ve sayfa
+sayısı manifest SHA'sıyla eşleşen kaynak görüntünün günlük serisinden
+çıkarılır. Kayıt girdileri ve yeterlilik gerekçeleri de bu görüntüyle
+karşılaştırılır; güncel DB fiyatı başlangıcın yerine geçirilmez.
+
+Bozuk kayıt, kaynak uyuşmazlığı veya okunamayan dosya, ayrıntı sızdırmayan
+`503 prediction_unavailable` üretir. Fiyat uçları çalışmayı sürdürür.
+API kilit/onay dosyası yazmaz, model açmaz, pickle yüklemez, eğitim veya
+olasılık üretimi çalıştırmaz; dış ağa çıkmaz. Kapalı gösterim cevabında
+olasılık bulunmaz. [Gösterim onayı](#tahmin-gösterim-onayı-python--m-appml-shadow-display)
+ayrıdır; Streamlit kartı henüz uygulanmadı.
 
 ### Yerel başlatma
 
@@ -2001,7 +2039,7 @@ görevi yoktur.
 
 `app/ui/api_client.py` içindeki `ApiClient`, Streamlit'in kullanacağı
 eşzamanlı okuma istemcisidir. Ekran, veritabanı bağlantısı veya hesaplama
-içermez. Dört GET yalnız `http://127.0.0.1:8000` adresine gider;
+içermez. Beş GET yalnız `http://127.0.0.1:8000` adresine gider;
 adres/port ortam ayarı veya genel URL isteyen işlev yoktur.
 
 ### Ortak sözleşme ve işlevler
@@ -2010,11 +2048,13 @@ adres/port ortam ayarı veya genel URL isteyen işlev yoktur.
 İstatistiklerin `Reason` tipi temel sözleşmededir; hesaplar değişmedi.
 API'nin `models.py` modülü kaynak görüntüsünü ortak cevaba dönüştürür.
 İstemci yalnız ortak sözleşmeleri yükler; DB/havuz/istatistik/uygulama
-modüllerini içe aktarmaz. API JSON alanları ve OpenAPI bütünü öncekiyle aynıdır.
+modüllerini içe aktarmaz. Mevcut ürün JSON alanları korunur; tahmin ayrı
+cevap modelidir.
 
 | İşlev | Doğrulanmış sonuç |
 |---|---|
 | `get_health()` | `HealthResponse` |
+| `get_prediction(product_key)` | `PredictionResponse`; tahmin isteğinde gün parametresi yoktur |
 | `get_status()` | `StatusResponse`; bulunmayan turlar `None` |
 | `list_products()` | Değiştirilemez `tuple[Product, ...]` |
 | `get_product(product_key, history_days=30, cimri_days=366)` | `ProductResponse`; teklifler, iki ayrı geçmiş ve mevcut istatistikler |
@@ -2036,7 +2076,7 @@ gösterilmez. Bu kontrol API'nin nesne kurma varsayılanlarını değiştirmez.
 
 ### Hedef, zaman aşımı ve yaşam döngüsü
 
-İstek gönderilmeden GET yöntemi, şema/host/port, dört izinli yol ve
+İstek gönderilmeden GET yöntemi, şema/host/port, beş izinli yol ve
 ürün isteğinin yalnız iki gün parametresi denetlenir. Anahtar bir URL veya
 başka yol oluşturamaz. Kullanıcı bilgisi/fragment, dış hedef ve tekrarlanan
 sorgu parametresi reddedilir.
@@ -3471,6 +3511,53 @@ eşikler değiştirilmedi; bu ara sonuçtan kesin karar verilmez.
 
 Gönderim durumu
 [planda](../proje_plani.md#gölge-mod-kalan-sıra-6-4-kasım-planı) tutulur.
+
+### Tahmin gösterim onayı (`python -m app.ml shadow-display`)
+
+Gösterim varsayılan kapalıdır. Açılış yalnız 5 Ocak 2027 veya sonrasında,
+İstanbul tarihi tam 5 Ocak olan kesin görüntünün raporuyla yapılır:
+
+```powershell
+.venv\Scripts\python.exe -m app.ml shadow-display --evaluation <KESIN_RAPOR_KLASORU>
+```
+
+Komut mevcut değerlendirme doğrulayıcısıyla tüm dosyaları, satır özetlerini,
+kapıyı ve Türkçe raporu doğrular; asıl grubun puanlarını kayıtlı
+olasılıklardan yeniden hesaplar. Ön kayıtlı modelin kanıt zinciri ve R0'ı
+pickle açılmadan kontrol edilir. Raporun model kimliği, kaynak görüntü
+SHA'sı/zamanı ve `met` kapısı uyuşmalıdır. Görüntü, kayıt kökünün
+`goruntuler/*/snapshot.json` dosyaları arasında SHA'sıyla bulunur; elle
+hazırlanan kesin görüntü de bu kökün altında tutulmalıdır.
+
+Başarıda `config/shadow.json` içindeki `records_dir` altında
+`gosterim_onayi.json` atomik olarak yazılır. Onay, model ve kesin rapor
+manifest SHA'larını, rapor yolunu, model adını/eğitim ailelerini ve UTC
+onay/güncelleme zamanlarını taşır. Aynı onayla tekrar açma etkisizdir;
+farklı rapor veya modelle mevcut onay, kapatılsa bile sessizce değişmez.
+Onay dosyası ve tüm kaynak dosyalar yereldir; hash bir imza değildir.
+
+```powershell
+.venv\Scripts\python.exe -m app.ml shadow-display --disable
+```
+
+Kapatma mevcut bağları koruyarak `enabled=false` yazar; zaten kapalıysa
+başarılı ve etkisizdir. İki eylem birlikte verilemez. Ayrı
+`gosterim_onayi.lock` yalnız bu elle yönetim işlemlerini sıraya alır;
+resmi tahminler, değerlendirmeler ve model değiştirilmez. İki eylem de
+isteğe bağlı `--config <AYAR_DOSYASI>` kabul eder.
+
+| Çıkış | Anlamı |
+|---|---|
+| 0 | Gösterim açıldı/kapatıldı veya aynı durumda kaldı |
+| 1 | Tarih, rapor, model, kaynak veya dosya doğrulanamadı; onay değiştirilmedi |
+| 2 | Eksik/çelişkili komut parametresi |
+| 3 | Gösterim onayı kilidi meşgul |
+| 130 | Kullanıcı durdurdu |
+
+API her açık okumada onayın model bağını ve onaylı rapor dosyalarının
+hash'lerini tekrar kontrol eder. Kayıt/model ayarı değişmişse eski onay
+olasılık açmaz; rapor bozulmuşsa güvenli 503 döner. Bugün açılış koşulu
+sağlanamaz; geliştirme testleri yalnız yapay klasörlerle yapılır.
 
 ### Gölge işletiminde kontrol komutları
 

@@ -200,6 +200,12 @@ def list_products(conn: psycopg.Connection) -> tuple[Product, ...]:
         return tuple(Product(**row) for row in rows)
 
 
+def read_product_identity(conn: psycopg.Connection, product_key: str) -> Product | None:
+    with _read_transaction(conn):
+        rows = _rows(conn, _PRODUCT_QUERY + " WHERE product_key = %s", (product_key,))
+        return Product(**rows[0]) if rows else None
+
+
 def read_run_status(conn: psycopg.Connection) -> RunStatus:
     with _read_transaction(conn):
         results = []

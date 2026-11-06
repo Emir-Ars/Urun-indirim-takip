@@ -131,6 +131,15 @@ def main(argv=None) -> int:
     shadow_evaluate.add_argument("--snapshot", type=Path, required=True)
     shadow_evaluate.add_argument("--output-dir", type=Path, required=True)
     shadow_evaluate.add_argument("--config", type=Path, metavar="AYAR_DOSYASI")
+    shadow_display = commands.add_parser(
+        "shadow-display", help="Kesin değerlendirmeyle tahmin gösterimini aç veya kapat"
+    )
+    display_action = shadow_display.add_mutually_exclusive_group(required=True)
+    display_action.add_argument(
+        "--evaluation", type=Path, metavar="KESIN_RAPOR_KLASORU"
+    )
+    display_action.add_argument("--disable", action="store_true")
+    shadow_display.add_argument("--config", type=Path, metavar="AYAR_DOSYASI")
     args = parser.parse_args(argv)
     utf8_output()
     if args.command == "labels":
@@ -170,6 +179,8 @@ def main(argv=None) -> int:
         return run_daily(args.config, args.scheduled, run_snapshot, run_shadow_predict)
     if args.command == "shadow-evaluate":
         return run_shadow_evaluate(args.snapshot, args.output_dir, args.config)
+    if args.command == "shadow-display":
+        return run_shadow_display(args.evaluation, args.disable, args.config)
     return run_snapshot(args.output_dir)
 
 
@@ -654,6 +665,27 @@ def run_shadow_evaluate(source: Path, directory: Path, config_path: Path | None)
         "Dosyalar doğrulandı. DB/ağ kullanılmadı; kayıtlar ve model değişmedi. "
         "Kesin değerlendirme tarihi 5 Ocak 2027; ekran açılmadı."
     )
+    return 0
+
+
+def run_shadow_display(evaluation_dir, disable, config_path) -> int:
+    from filelock import Timeout
+    from app.ml import shadow_display, shadow_records
+
+    try:
+        config = shadow_records.load_config(config_path)
+        enabled = shadow_display.set_display(config, evaluation_dir, disable)
+    except Timeout:
+        print("Gösterim değişmedi: onay kilidi meşgul.", file=sys.stderr)
+        return 3
+    except KeyboardInterrupt:
+        print("Gösterim işlemi kullanıcı tarafından durduruldu.", file=sys.stderr)
+        return 130
+    except (*shadow_display.READ_ERRORS, ImportError, RuntimeError) as exc:
+        print(f"Gösterim değişmedi: {exc}", file=sys.stderr)
+        return 1
+    print("Tahmin gösterimi açık." if enabled else "Tahmin gösterimi kapalı.")
+    print("Resmi tahminler, model ve değerlendirme raporları değiştirilmedi.")
     return 0
 
 
