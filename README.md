@@ -15,7 +15,7 @@ tahminler dosyalara kaydedilir ve gerçek sonuçlarla karşılaştırılır.
 > kurulumu tamamlandı; elle yapılan ilk resmi çalışma, yinelenmeme kontrolü ve ilk
 > gerçek değerlendirme raporu bağımsız doğrulandı. İlk otomatik günlük
 > çalışma da 6 Kasım'da doğrulandı. Kayıtlı tahmin API'si ve gösterim onayı komutu
-> hazır; gösterim kapalı, ekran kartı sonraki adım. Ekranda tahmin yok; kesin gösterim değerlendirmesi
+> hazır; tek tahmin kartı eklendi, gerçek olasılık gösterimi kapalı. Kesin gösterim değerlendirmesi
 > [plana göre](proje_plani.md#gölge-mod-kalan-sıra-6-4-kasım-planı) 5 Ocak 2027'de yapılacak.
 
 ## ✨ Özellikler
@@ -36,13 +36,13 @@ tahminler dosyalara kaydedilir ve gerçek sonuçlarla karşılaştırılır.
   saklar; kendi gözlemlerimizle birleştirmez.
 - 🌐 **Yerel API ve ekran:** kayıtlı teklifleri, iki ayrı fiyat geçmişini ve
   veri yeterliliği açıklanan istatistikleri salt okunur sunar; Streamlit ekranı
-  telefon seçimi, teklif/istatistik kartları ve iki grafik gösterir. Doğrulanmış
+  telefon seçimi, teklif/istatistik kartları, tek tahmin kartı ve iki grafik gösterir. Doğrulanmış
   satıcı bağlantısını açar; sıfır fiyat farkını gri ve oksuz gösterir.
 - 🧪 **Gölge tahmin ve değerlendirme:** dondurulan model, salt okunur veri
   görüntüsünden her ürün ve başlangıç günü için sonraki 7 günde en az %5
   fiyat düşüşü olasılığını bir kez kaydeder. Sonraki görüntüyle kayıtlı
   tahminlerin gerçek sonuçları, veri yeterliliği ve kapı koşulları raporlanır;
-  olasılıklar ekranda gösterilmez.
+  gerçek olasılık gösterimi kesin rapora bağlı onay açılana kadar kapalıdır.
 
 ## 🔄 Çalışma akışı
 
@@ -60,6 +60,7 @@ flowchart LR
     J --> K["Değişmez tahmin kayıtları"]
     I --> L["Kayıtlı tahminleri değerlendirme"]
     K --> L
+    K -->|Onaylı güncel kayıt| F
     L --> M["Kapı ve sağlık raporu"]
     classDef targets fill:#fff3bf,stroke:#b08900,color:#1b4332
     classDef processing fill:#d8f3dc,stroke:#2d6a4f,color:#1b4332
@@ -74,8 +75,9 @@ flowchart LR
 Telefonlar marka, model ve kapasite düzeyinde takip edilir. Keşif hangi
 sayfaların izleneceğini belirler; toplama bu sayfaların fiyat, stoksuzluk veya
 hata sonucunu kaydeder. Cimri geçmişi bu akışın gözlemleriyle birleştirilmez.
-Gölge tahmin ve değerlendirme ayrı dosyalarla yürür; veritabanına yazmaz ve
-Streamlit ekranına olasılık göndermez.
+Gölge tahmin ve değerlendirme ayrı dosyalarla yürür; veritabanına yazmaz.
+Ekran, kayıtlı tahmini ayrı API ucundan okur; onay yoksa kapalı durumu,
+eksik/yetersiz veride gerekçeyi gösterir. Tahmin hatası fiyat ekranını kapatmaz.
 
 ## 🛠️ Teknolojiler
 
@@ -88,7 +90,7 @@ Streamlit ekranına olasılık göndermez.
 | FastAPI · Uvicorn · Psycopg Pool | Yerel, salt okunur API ve bağlantı havuzu |
 | HTTPX | Yalnız yerel API'den veri alan doğrulayıcı istemci |
 | Streamlit · Altair | Telefon ekranı, ayrı fiyat grafikleri ve yenileme |
-| NumPy · scikit-learn · LightGBM | Model deneyleri, dondurulan R2 + Platt ve gölge tahmin/değerlendirme; ekranda tahmin yok |
+| NumPy · scikit-learn · LightGBM | Model deneyleri, dondurulan R2 + Platt ve gölge tahmin/değerlendirme; ekran modeli yüklemez |
 | Windows Görev Zamanlayıcı | Fiyat toplama, haftalık keşif ve günlük gölge tahmin görevi |
 | pytest · Black · Flake8 · GitHub Actions | Otomatik testler ve kod denetimleri |
 
@@ -122,7 +124,7 @@ kontrolleri [gölge mod rehberindedir](docs/teknik.md#gölge-mod-tahmin-kaydı-p
 | Cimri geçmişi | 4 Kasım salt okuma denetimi: 58 ürün, 22.595 tarihli kayıt (14 üründe 699 eksik fiyat), 9 Ekim 2025–2 Kasım 2026; ürünlerin kendi ilk–son kayıtları arasında kayıtsız gün yok. Galaxy S24 FE 128 GB 3 Kasım 2025'ten başlıyor; diğer 57 ürün 9 Ekim'den. Galaxy S25 512 GB ve Redmi Note 14 Pro 5G 256 GB eşleştirmesi yok; son alım 2 Kasım, düzenli alım yok. |
 | Kendi toplama geçmişi | 4 Kasım 13:48 salt okuma denetimi: 28 Eylül 2026 15:39–4 Kasım 2026 10:34 (İstanbul); 73 tamamlanmış tur (71 zamanlanmış, 2 elle). 58 ürün bu tarih aralığında; Galaxy S24 FE 128 GB 19 Ekim'den başlıyor, Galaxy S25 512 GB son kontrolü 16 Ekim (etkin sayfası yok; son fiyat 13 Ekim). |
 | Kendi geçmişimizdeki fiyat boşlukları | 4 Kasım denetimi; yalnız 3 Kasım sonuna kadar kapanmış günler: 2.199 ürün-günün 1.796'sında en az bir ham fiyat, 310'unda yalnız stoksuz sonuç, 16'sında fiyat yok ve hata var, 77'sinde hiç kontrol yok. ML için kullanılabilir 22:00 fiyatı 776 ürün-günde, günlük minimum 463 ürün-günde yok; bu iki sayı birbirine eklenmez ve ham fiyat yokluğuyla aynı ölçü değildir. |
-| Otomatik testler | 2507 test, 0 atlanan; Black ve Flake8 temiz (6 Kasım) |
+| Otomatik testler | 2536 test, 0 atlanan; Black ve Flake8 temiz (6 Kasım) |
 | ML etiket denetimi | Son alımı içeren 2 Kasım görüntüsüyle (son kapanmış gün 1 Kasım) doğrulandı: kendi serimizde 0 kullanılabilir / 1.323 belirsiz (30 gün geçmişi dolan 27 Ekim–1 Kasım başlangıçlarının gelecek penceresi henüz kapanmadı); Cimri'de 19.561 kullanılabilir (2.086 olumlu, 17.475 olumsuz) / 2.231 belirsiz. Sıkı çapraz kontrolde 24.616 pencere kaydı eşleşti. |
 | ML girdi denetimi | Aynı görüntüyle 2 Kasım'da doğrulandı: kendi serimizde 1.323, Cimri'de 21.792 girdi satırı; toplam 23.115 başlangıç 4.2 ile birebir eşleşti, eksik/fazla/tekrarlı başlangıç ve tanınmayan model ailesi yok. |
 | ML bölme denetimi | Aynı görüntüyle 2 Kasım'da doğrulandı: eğitim 13.647, doğrulama 2.531, saklı test 2.632 kayıt (3 Eylül–25 Ekim 2026); purge 751 kayıt. Dört kat Nisan–Temmuz 2026; bütün eğitim/kalibrasyon/doğrulama dilimleri iki sınıflı. Bu bölme adımında test sınıf dağılımı veya puanı açılmadı; sonraki son test aşağıda. |
@@ -165,7 +167,7 @@ canlı ağa çıkmaz; veritabanı testleri yalnız test veritabanını kullanır
 | FastAPI ve Streamlit ile verileri sunma ve görüntüleme | ✅ Tamamlandı |
 | ML öncesi bakım ve otomatik güvenli keşif kabulü | ✅ Tamamlandı |
 | Proje yapısının sadeleştirilmesi | ✅ Tamamlandı (26 Ekim) |
-| ML ile indirim olasılığı tahmini | 🔄 Model dondurma/saklı test ve gölge mod 6.0–6.4 tamamlandı; gönderimler ve CI doğrulandı. İlk otomatik günlük çalışma doğrulandı (6 Kasım). 6.5 izleme paralel sürüyor. 7.1 gösterim planı belgelendi, gönderildi ve CI doğrulandı. 7.2 ortak okuyucu/onay komutu/API/istemci uygulandı; yerel test/biçim kontrolleri geçti, gönderim onaylandı, gönderim/CI doğrulaması bekliyor. Ekran kartı ve bütün akış 7.3–7.4'te yapılacak ([plan](proje_plani.md#gösterim-kalan-sıra-7-6-kasım-planı)) |
+| ML ile indirim olasılığı tahmini | 🔄 Model dondurma/saklı test ve gölge mod 6.0–6.4 tamamlandı; gönderimler ve CI doğrulandı. İlk otomatik günlük çalışma doğrulandı (6 Kasım). 6.5 izleme paralel sürüyor. 7.1 gösterim planı belgelendi, gönderildi ve CI doğrulandı. 7.2 ortak okuyucu/onay komutu/API/istemci tamamlandı; gönderildi, aynı SHA için CI doğrulandı. 7.3 tek kart ve durum açıklamaları uygulandı; tam test/biçim kontrolleri geçti, gönderim onaylandı, gönderim/CI doğrulaması bekliyor. Bütün akış 7.4'te doğrulanacak ([plan](proje_plani.md#gösterim-kalan-sıra-7-6-kasım-planı)) |
 | Sürekli çalışma ortamı | 🔄 Aşama 9.1: görevlerin düzenli çalışmasına ilişkin işletim doğrulaması ML işleriyle paralel sürüyor ([plan](proje_plani.md)) |
 | Docker | ⏳ Planda: aşama 9.2'de kapsam ve uygulama planı ele alınacak; Docker uygulaması henüz onaylanmadı |
 | Sunum ve teslim | ⏳ Planda: iş 8, hazırlık hedefi 21–31 Aralık; biçim ve içerik netleştirilecek |

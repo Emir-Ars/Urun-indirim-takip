@@ -4,12 +4,19 @@ from collections.abc import Callable
 
 import streamlit as st
 
-from app.api.schemas import ListingResponse, ProductResponse, StatusResponse
+from app.api.schemas import (
+    ListingResponse,
+    PredictionResponse,
+    ProductResponse,
+    StatusResponse,
+)
 from app.ui.api_client import ApiClient, ApiClientError
 from app.ui.presentation import (
+    PREDICTION_REASONS,
     format_day,
     format_money,
     format_number,
+    format_probability,
     format_time,
     history_rows,
     market_rows,
@@ -120,6 +127,60 @@ def _current(snapshot: ProductResponse) -> None:
             with st.expander("Son başarılı teklif · güncel fiyatın yerine kullanılmaz"):
                 st.metric("Son başarılı fiyat", format_money(previous.current_price))
                 _offer_details(previous)
+
+
+def _prediction(
+    response: PredictionResponse | None, error: ApiClientError | None
+) -> None:
+    with st.container(border=True):
+        st.subheader("🔮 İndirim olasılığı")
+        if error is not None:
+            st.warning("Tahmin şu anda alınamıyor.")
+            st.caption(error.message)
+            st.caption(
+                "Sonraki yenilemede yeniden denenecek; önceki olasılık gösterilmiyor."
+            )
+            return
+        if response.state != "available":
+            titles = {
+                "closed": "Tahmin gösterimi kapalı.",
+                "unavailable": "Güncel tahmin kaydı bekleniyor.",
+                "insufficient_data": "Bu telefon için tahmin verisi yeterli değil.",
+            }
+            st.info(titles[response.state])
+            for reason in response.reasons:
+                st.caption(PREDICTION_REASONS[reason])
+            if response.state == "unavailable":
+                st.caption("Önceki günün olasılığı gösterilmez.")
+        else:
+            forecast = response.forecast
+            st.metric(
+                "Belirtilen dönemde en az %5 düşüş olasılığı",
+                format_probability(forecast.probability),
+            )
+            st.caption("Takip edilen başlangıç sayfaları kapsamında en az %5 düşüş.")
+            start, period = st.columns(2)
+            with start:
+                st.text(
+                    f"Başlangıç fiyatı: {format_money(forecast.reference_price_kurus)}"
+                )
+                st.text(f"Başlangıç günü: {format_day(forecast.anchor_day)}")
+                st.text(f"Akşam turu: {format_time(forecast.anchor_at)} · İstanbul")
+            with period:
+                st.text(
+                    f"Tahmin dönemi: {format_day(forecast.target_start)} — "
+                    f"{format_day(forecast.target_end)}"
+                )
+                st.text(f"Başlangıç kapsamı: {forecast.listing_count} sayfa")
+            model_name = {"r2_platt": "R2 + Platt"}.get(
+                forecast.model_name, forecast.model_name
+            )
+            st.caption(
+                f"Model: {model_name} · Tahmin kaydı: "
+                f"{format_time(forecast.recorded_at)} · İstanbul"
+            )
+            st.caption("Grafik aralığı seçimi tahmin dönemini değiştirmez.")
+        st.caption(f"Tahmin kontrolü: {format_time(response.generated_at)} · İstanbul")
 
 
 def _statistics(snapshot: ProductResponse) -> None:
@@ -287,8 +348,14 @@ def render_app(client_factory: Callable[[], ApiClient] = ApiClient) -> None:
                     st.session_state[key] = value
                     ranges.append(value)
                 snapshot = client.get_product(selected, *ranges)
+                prediction, prediction_error = None, None
+                try:
+                    prediction = client.get_prediction(selected)
+                except ApiClientError as error:
+                    prediction_error = error
             _run_status(status)
             _current(snapshot)
+            _prediction(prediction, prediction_error)
             _statistics(snapshot)
             _histories(snapshot, *ranges)
             _checks(snapshot)

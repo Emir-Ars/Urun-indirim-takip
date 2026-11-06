@@ -9,6 +9,8 @@ from app.api.schemas import (
     IndicatorResponse,
     ListingResponse,
     MarketResponse,
+    ForecastResponse,
+    PredictionResponse,
     ProductResponse,
     RunResponse,
     StatisticsResponse,
@@ -17,6 +19,7 @@ from app.api.schemas import (
 )
 from app.contracts import Product
 from app.ui.api_client import ApiClient
+from app.ui.presentation import ISTANBUL
 
 # AppTest'in süre sınırı yalnız takılan bir çalıştırmayı yakalamak içindir.
 # Varsayılan 3 sn, yavaş makinede (CI, ilk içe aktarmalar) doğru ekranı da
@@ -52,7 +55,52 @@ SCENARIOS = (
     "API bağlantı hatası",
     "Bozuk API cevabı",
     "Etkin telefon yok",
+    "Tahmin gösterimi açık (yapay)",
+    "Güncel tahmin kaydı yok",
+    "Tahmin için kısa geçmiş",
+    "Tahmin için eksik günler",
+    "Tahminde görülmemiş aile",
+    "Tahmin API hatası",
+    "Bozuk tahmin cevabı",
 )
+
+
+def sample_prediction(
+    state="closed",
+    *,
+    now=AT,
+    reasons=None,
+    probability=0.12345,
+    price=5664900,
+):
+    day = now.astimezone(ISTANBUL).date() - timedelta(days=1)
+    defaults = {
+        "closed": ("display_closed",),
+        "unavailable": ("expected_daily_record_missing",),
+        "insufficient_data": ("history_below_30",),
+        "available": (),
+    }
+    forecast = None
+    if state == "available":
+        forecast = ForecastResponse(
+            probability=probability,
+            model_name="r2_platt",
+            anchor_day=day,
+            anchor_at=datetime.combine(day, datetime.min.time(), timezone.utc).replace(
+                hour=19, minute=34, second=37
+            ),
+            reference_price_kurus=price,
+            target_start=day + timedelta(days=1),
+            target_end=day + timedelta(days=7),
+            recorded_at=now,
+            listing_count=10,
+        )
+    return PredictionResponse(
+        state=state,
+        reasons=defaults[state] if reasons is None else reasons,
+        forecast=forecast,
+        generated_at=now,
+    )
 
 
 def sample_history(run_id=1, **updates) -> HistoryResponse:
@@ -372,9 +420,50 @@ def preview_client(scenario: str) -> ApiClient:
             )
         if request.url.path == "/api/v1/status":
             return httpx.Response(200, json=sample_status().model_dump(mode="json"))
-        product = next(
-            p for p in PRODUCTS if p.product_key == request.url.path.rsplit("/", 1)[-1]
+        prediction_path = request.url.path.endswith("/prediction")
+        key = (
+            request.url.path.rsplit("/", 2)[-2]
+            if prediction_path
+            else request.url.path.rsplit("/", 1)[-1]
         )
+        product = next(p for p in PRODUCTS if p.product_key == key)
+        if prediction_path:
+            if scenario == "Tahmin API hatası":
+                return httpx.Response(
+                    503,
+                    json={
+                        "detail": {
+                            "code": "prediction_unavailable",
+                            "message": "Tahmin kaydı şu anda doğrulanamıyor.",
+                        }
+                    },
+                )
+            if scenario == "Bozuk tahmin cevabı":
+                return httpx.Response(200, content=b"{}")
+            state, reasons = {
+                "Tahmin gösterimi açık (yapay)": ("available", ()),
+                "Güncel tahmin kaydı yok": (
+                    "unavailable",
+                    ("expected_daily_record_missing",),
+                ),
+                "Tahmin için kısa geçmiş": ("insufficient_data", ("history_below_30",)),
+                "Tahmin için eksik günler": (
+                    "insufficient_data",
+                    ("recent_missing_over_30_percent",),
+                ),
+                "Tahminde görülmemiş aile": (
+                    "insufficient_data",
+                    ("family_not_in_training",),
+                ),
+            }.get(scenario, ("closed", ("display_closed",)))
+            response = sample_prediction(
+                state,
+                reasons=reasons,
+                now=datetime.now(timezone.utc),
+                probability=0.12345 if product == PRODUCTS[0] else 0.237,
+                price=5664900 if product == PRODUCTS[0] else 3499900,
+            )
+            return httpx.Response(200, json=response.model_dump(mode="json"))
         snapshot = sample_product(
             scenario, now=datetime.now(timezone.utc), product=product
         )

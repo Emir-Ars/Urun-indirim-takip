@@ -5,7 +5,7 @@ from zoneinfo import ZoneInfo
 
 import altair as alt
 
-from app.api.schemas import HistoryResponse, MarketResponse
+from app.api.schemas import HistoryResponse, MarketResponse, PredictionReason
 from app.contracts import Reason
 
 ISTANBUL = ZoneInfo("Europe/Istanbul")
@@ -17,6 +17,28 @@ REASONS: dict[Reason, str] = {
     "insufficient_transitions": "En az 14 geçerli fiyat geçişi gerekiyor.",
     "insufficient_days": "Geçerli geçişlerde en az 7 farklı İstanbul günü gerekiyor.",
 }
+PREDICTION_REASONS: dict[PredictionReason, str] = {
+    "display_closed": (
+        "Gösterim için 5 Ocak 2027 kesin değerlendirmesinin koşulları sağlaması "
+        "ve ayrıca onaylanması gerekir."
+    ),
+    "display_not_approved": "Geçerli bir gösterim onayı bulunmuyor.",
+    "expected_daily_record_missing": (
+        "Dünün başlangıç günü için güncel tahmin kaydı henüz yok. "
+        "Günlük 11:00 çalışması henüz tamamlanmamış olabilir."
+    ),
+    "history_below_30": "Bu telefonun fiyat geçmişi henüz 30 güne ulaşmadı.",
+    "recent_missing_over_30_percent": (
+        "Son 14 gündeki eksik günlük fiyat oranı %30'dan fazla."
+    ),
+    "family_not_in_training": (
+        "Bu telefon ailesi modelin eğitim verisinde bulunmuyor."
+    ),
+}
+
+
+def format_probability(value: float) -> str:
+    return f"%{value * 100:.1f}".replace(".", ",")
 
 
 def format_money(value: int | None, *, signed: bool = False) -> str:

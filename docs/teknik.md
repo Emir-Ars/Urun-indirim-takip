@@ -140,8 +140,8 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 | Dosya | Ne işe yarar |
 |---|---|
 | `api_client.py` | `ApiClient`: beş sabit yerel GET, katı girdi/JSON/hedef doğrulaması; proxy/yönlendirme/tekrar/önbellek yok, açık zaman aşımı ve güvenli Türkçe hatalar. UI veritabanı/sunucu uygulamasını yüklemez. |
-| `main.py` | Kartlı Streamlit ekranı: telefon/aralık seçimi, güncel sonuç, API istatistikleri, iki grafik ve 30 sn/elle yenileme. Hata halinde eski veri kaldırılır; yalnız seçim tercihleri korunur. |
-| `presentation.py` | Tamsayı kuruş ve İstanbul saati biçimleme, Türkçe gerekçeler, açık boşluk/kapsam sınırlarına sahip Altair çizgi/nokta verisi. İstatistik hesaplamaz veya veri kaynağına bağlanmaz. |
+| `main.py` | Kartlı Streamlit ekranı: telefon/aralık seçimi, güncel sonuç, tek tahmin kartı, API istatistikleri, iki grafik ve 30 sn/elle yenileme. Tahmin hatası yalnız kendi kartında kalır; fiyat hatasında eski veriler kaldırılır. Yalnız seçim tercihleri korunur. |
+| `presentation.py` | Tamsayı kuruş, bir ondalıklı olasılık yüzdesi ve İstanbul saati biçimleme, Türkçe gerekçeler, açık boşluk/kapsam sınırlarına sahip Altair çizgi/nokta verisi. İstatistik hesaplamaz veya veri kaynağına bağlanmaz. |
 
 ### ML hazırlığı: `app/ml/`
 
@@ -2021,7 +2021,7 @@ Bozuk kayıt, kaynak uyuşmazlığı veya okunamayan dosya, ayrıntı sızdırma
 API kilit/onay dosyası yazmaz, model açmaz, pickle yüklemez, eğitim veya
 olasılık üretimi çalıştırmaz; dış ağa çıkmaz. Kapalı gösterim cevabında
 olasılık bulunmaz. [Gösterim onayı](#tahmin-gösterim-onayı-python--m-appml-shadow-display)
-ayrıdır; Streamlit kartı henüz uygulanmadı.
+ayrıdır; Streamlit bu cevabı [tek tahmin kartında](#tek-tahmin-kartı) gösterir.
 
 ### Yerel başlatma
 
@@ -2162,6 +2162,36 @@ veritabanına veya pazaryerine erişmez. API ve ekran ortak cevap sözleşmesini
   Global tur ve ürün turu ayrı etiketlenir; iki API okumasının aynı
   veritabanı görüntüsü olduğu iddia edilmez.
 
+### Tek tahmin kartı
+
+Kart, **Güncel sonuç** bölümünden sonra ve fiyat istatistiklerinden önce
+yer alır. Seçilen telefonun `get_prediction(product_key)` cevabını kullanır;
+fiyat cevabından veya grafiklerden tahmin üretmez. Tahmin geçmişi listesi
+veya grafiği yoktur.
+
+| Durum | Ekran |
+|---|---|
+| `closed` | Gösterimin kapalı olduğu ve gerekli kesin değerlendirme/onay açıklaması; yüzde yok |
+| `unavailable` | Dünün kaydı bekleniyor; 11:00 çalışması henüz bitmemiş olabilir; eski oran yok |
+| `insufficient_data` | Kısa geçmiş, son 14 günde fazla eksik fiyat veya eğitimde görülmemiş aile gerekçeleri; yüzde yok |
+| `available` | Bir ondalıklı Türkçe yüzde, ayrı başlangıç fiyatı, başlangıç günü, gerçek akşam turu zamanı, dönem, sayfa sayısı, model ve kayıt zamanı |
+
+Kartın açıklaması “Takip edilen başlangıç sayfaları kapsamında en az %5
+düşüş”tür. Para API'nin tamsayı kuruş alanından, saatler İstanbul'a
+çevrilerek gösterilir. Başlangıç fiyatı güncel teklifin yerine geçirilmez.
+Grafik aralığı seçimleri tahmin isteğine aktarılmaz ve dönemi değiştirmez.
+
+Her yenilemede tahmin yeniden okunur; cevap veya hata oturumda saklanmaz.
+Telefon değişince, kayıt eksilince, gösterim kapanınca veya tahmin isteği
+başarısız olunca önceki yüzde kaldırılır. Tahmin hatası yalnız bu kartta
+güvenli açıklama olarak görünür; fiyatlar, istatistikler ve grafikler
+gösterilmeye devam eder. Sonraki yenileme yeniden dener. Fiyat cevabı
+alınamazsa önceki fiyatlarla birlikte eski tahmin de ekranda tutulmaz.
+
+Kartın bulunması gösterim onayı değildir. Gerçek gösterim
+[kesin rapor ve açılış komutuna](#tahmin-gösterim-onayı-python--m-appml-shadow-display)
+bağlıdır; varsayılan kapalıdır.
+
 ### Grafikler ve yenileme
 
 İki grafikte bağımsız 7/30/90/366 gün seçimi vardır. Varsayılan kendi
@@ -2196,9 +2226,10 @@ boşluklar değişmez; konsol uyarısı susturulmaz.
 
 Tek `st.fragment(run_every=30)` veri/seçim bölümünü oturum açıkken yeniler.
 Elle Yenile düğmesi aynı bölümü çalıştırır. Her yenilemede ürün listesi,
-global durum ve seçilen ürün yeniden okunur; istemci `with` ile bırakılır.
+global durum, seçilen ürün ve onun tahmini yeniden okunur; istemci `with` ile bırakılır.
 Yalnız seçim/aralık tercihleri oturumda tutulur; veri/istemci önbelleği yoktur.
-API hatasında eski teklif/grafik/göstergeler kaldırılır, güvenli Türkçe hata
+Fiyat API hatasında eski teklif/grafik/göstergeler ve tahmin kaldırılır;
+tahmin isteği hatası yalnız tahmin kartında kalır. Güvenli Türkçe açıklama
 gösterilir; sonraki yenileme yeniden okuyabilir. Beklenmeyen kod hatası
 olağan API hatası gibi gizlenmez.
 [Streamlit fragment](https://docs.streamlit.io/develop/api-reference/execution-flow/st.fragment)
@@ -2224,6 +2255,10 @@ işlevine testteki MockTransport istemcisini verir; üretim demo modu yoktur.
 `tests/support/ui_samples.py` örnekleri AppTest ve önizleme için ortaktır; gerçek
 fiyat kanıtı değildir. Sidebar'dan teklif/boşluk, eski/kısmi fiyat, stoksuzluk,
 doğrulanamama, yalnız Cimri, eksik geçmiş, API hatası ve boş liste denenir.
+Tahmin için açık (yapay), kapalı, kayıt yok, üç veri yetersizliği gerekçesi,
+tahmin API hatası ve bozuk cevap senaryoları da vardır. Telefon değişimi
+ve grafik aralığı seçimleri aynı kart üzerinden denenebilir; gerçek gösterim
+onayı veya model kullanılmaz.
 
 Telefon/aralık seçimi, dar ekran görünümü, grafik boşlukları ve hata sonrası
 dönüş kontrol edilir. API cevabı saatinin açık oturumda yaklaşık 30 saniyede

@@ -15,10 +15,12 @@ from streamlit.proto.Metric_pb2 import Metric
 from app.ui import api_client
 from app.ui.api_client import ApiClientError
 from app.ui.presentation import (
+    PREDICTION_REASONS,
     REASONS,
     format_day,
     format_money,
     format_number,
+    format_probability,
     format_time,
     history_rows,
     market_rows,
@@ -36,6 +38,7 @@ from tests.support.ui_samples import (
     sample_market,
     sample_offer,
     sample_product,
+    sample_prediction,
     sample_status,
 )
 
@@ -50,6 +53,8 @@ def screen(monkeypatch):
         products=PRODUCTS,
         snapshot=sample_product(),
         status=sample_status(),
+        prediction=sample_prediction(),
+        predictions={},
         failures={},
         calls=[],
         opened=0,
@@ -84,6 +89,10 @@ def screen(monkeypatch):
                     "product": next(p for p in state.products if p.product_key == key)
                 }
             )
+
+        def get_prediction(self, key):
+            self.call("prediction", key)
+            return state.predictions.get(key, state.prediction)
 
     monkeypatch.setattr(api_client, "ApiClient", Client)
     app = AppTest.from_file(SCREEN, default_timeout=APP_TEST_TIMEOUT)
@@ -276,6 +285,7 @@ def test_initial_screen_reads_fresh_data_and_separates_global_run(screen):
         ("products",),
         ("status",),
         ("product", PRODUCTS[0].product_key, 30, 366),
+        ("prediction", PRODUCTS[0].product_key),
     ]
     assert state.opened == state.closed == 1
     assert app.metric[0].value == "29.300,01 TL"
@@ -287,6 +297,194 @@ def test_initial_screen_reads_fresh_data_and_separates_global_run(screen):
     assert app.dataframe[0].value["Sonuç"].tolist() == ["Teklif", "Teklif"]
 
 
+@pytest.mark.parametrize(
+    "value,expected", [(0.0, "%0,0"), (0.12345, "%12,3"), (1.0, "%100,0")]
+)
+def test_probability_is_a_turkish_percentage_with_one_decimal(value, expected):
+    assert format_probability(value) == expected
+
+
+def test_prediction_card_uses_its_own_price_period_and_actual_evening_time(screen):
+    app, state = screen
+    state.prediction = sample_prediction(
+        "available", now=datetime(2026, 11, 6, 9, tzinfo=timezone.utc)
+    )
+    original = state.prediction.model_dump_json()
+    app.run()
+    assert not app.exception
+    assert [item.value for item in app.subheader[:3]] == [
+        "🏷️ Güncel sonuç",
+        "🔮 İndirim olasılığı",
+        "📊 Fiyat istatistikleri",
+    ]
+    assert sum(item.value == "🔮 İndirim olasılığı" for item in app.subheader) == 1
+    values = {item.label: item.value for item in app.metric}
+    assert values["Belirtilen dönemde en az %5 düşüş olasılığı"] == "%12,3"
+    assert values["Takip edilen en ucuz teklif"] == "29.300,01 TL"
+    text = messages(app)
+    for expected in (
+        "Başlangıç fiyatı: 56.649,00 TL",
+        "Başlangıç günü: 05.11.2026",
+        "Akşam turu: 05.11.2026 22:34:37 · İstanbul",
+        "Tahmin dönemi: 06.11.2026 — 12.11.2026",
+        "Başlangıç kapsamı: 10 sayfa",
+        "Takip edilen başlangıç sayfaları kapsamında en az %5 düşüş",
+        "Model: R2 + Platt",
+        "Tahmin kaydı: 06.11.2026 12:00:00 · İstanbul",
+        "Grafik aralığı seçimi tahmin dönemini değiştirmez.",
+    ):
+        assert expected in text
+    assert state.prediction.model_dump_json() == original
+    assert len(chart_specs(app)) == 2 and len(app.dataframe) == 1
+
+
+@pytest.mark.parametrize(
+    "state_name,reasons,title",
+    [
+        ("closed", ("display_closed",), "Tahmin gösterimi kapalı."),
+        ("closed", ("display_not_approved",), "Tahmin gösterimi kapalı."),
+        (
+            "unavailable",
+            ("expected_daily_record_missing",),
+            "Güncel tahmin kaydı bekleniyor.",
+        ),
+        (
+            "insufficient_data",
+            ("history_below_30",),
+            "Bu telefon için tahmin verisi yeterli değil.",
+        ),
+        (
+            "insufficient_data",
+            ("recent_missing_over_30_percent",),
+            "Bu telefon için tahmin verisi yeterli değil.",
+        ),
+        (
+            "insufficient_data",
+            (
+                "family_not_in_training",
+                "history_below_30",
+                "recent_missing_over_30_percent",
+            ),
+            "Bu telefon için tahmin verisi yeterli değil.",
+        ),
+    ],
+)
+def test_non_available_prediction_has_explanations_and_no_percentage(
+    screen, state_name, reasons, title
+):
+    app, state = screen
+    state.prediction = sample_prediction(state_name, reasons=reasons)
+    app.run()
+    assert not app.exception and title in messages(app)
+    assert not any(
+        item.label == "Belirtilen dönemde en az %5 düşüş olasılığı"
+        for item in app.metric
+    )
+    assert "Başlangıç fiyatı:" not in messages(app)
+    for reason in reasons:
+        assert PREDICTION_REASONS[reason] in messages(app)
+        assert reason not in messages(app)
+    assert any(item.value == "29.300,01 TL" for item in app.metric)
+    assert len(chart_specs(app)) == 2
+    if state_name == "unavailable":
+        assert "11:00" in messages(
+            app
+        ) and "Önceki günün olasılığı gösterilmez." in messages(app)
+
+
+@pytest.mark.parametrize("next_state", ["closed", "unavailable", "insufficient_data"])
+def test_refresh_removes_previous_probability_when_state_changes(screen, next_state):
+    app, state = screen
+    state.prediction = sample_prediction("available")
+    app.run()
+    assert any(item.value == "%12,3" for item in app.metric)
+    state.prediction = sample_prediction(next_state)
+    app.button(key="refresh").click().run()
+    assert not app.exception
+    assert all(item.value != "%12,3" for item in app.metric)
+    assert "Başlangıç fiyatı: 56.649,00 TL" not in messages(app)
+    assert len(chart_specs(app)) == 2 and app.dataframe
+
+
+@pytest.mark.parametrize(
+    "code,message",
+    [
+        ("prediction_unavailable", "Tahmin kaydı şu anda doğrulanamıyor."),
+        ("timeout", "Yerel API yanıtı zaman aşımına uğradı."),
+        ("invalid_response", "Yerel API cevabı geçersiz."),
+        ("connection_error", "Yerel API'ye erişilemiyor."),
+    ],
+)
+def test_prediction_error_removes_only_prediction_and_recovers(screen, code, message):
+    app, state = screen
+    state.prediction = sample_prediction("available")
+    app.run()
+    state.failures["prediction"] = ApiClientError(code, message)
+    app.button(key="refresh").click().run()
+    assert not app.exception and not app.error
+    assert "Tahmin şu anda alınamıyor." in messages(app) and message in messages(app)
+    assert all(item.value != "%12,3" for item in app.metric)
+    assert "Başlangıç fiyatı: 56.649,00 TL" not in messages(app)
+    assert any(item.value == "29.300,01 TL" for item in app.metric)
+    assert len(chart_specs(app)) == 2 and app.dataframe
+    assert state.opened == state.closed
+    state.failures.clear()
+    state.prediction = sample_prediction("available", probability=0.237)
+    app.button(key="refresh").click().run()
+    assert not app.exception and not app.error
+    assert any(item.value == "%23,7" for item in app.metric)
+    assert "Tahmin şu anda alınamıyor." not in messages(app)
+
+
+def test_product_change_does_not_keep_previous_products_probability(screen):
+    app, state = screen
+    state.predictions = {
+        PRODUCTS[0].product_key: sample_prediction("available"),
+        PRODUCTS[1].product_key: sample_prediction("unavailable"),
+    }
+    app.run()
+    assert any(item.value == "%12,3" for item in app.metric)
+    app.selectbox(key="_product").select(PRODUCTS[1].product_key).run()
+    assert not app.exception and "Güncel tahmin kaydı bekleniyor." in messages(app)
+    assert all(item.value != "%12,3" for item in app.metric)
+    assert "Başlangıç fiyatı: 56.649,00 TL" not in messages(app)
+    assert state.calls[-1] == ("prediction", PRODUCTS[1].product_key)
+    state.predictions[PRODUCTS[1].product_key] = sample_prediction(
+        "available", probability=0.237, price=3499900
+    )
+    app.button(key="refresh").click().run()
+    assert any(item.value == "%23,7" for item in app.metric)
+    assert "Başlangıç fiyatı: 34.999,00 TL" in messages(app)
+
+
+def test_graph_ranges_do_not_change_prediction_period_or_probability(screen):
+    app, state = screen
+    state.prediction = sample_prediction("available")
+    original = state.prediction.model_dump_json()
+    app.run()
+    app.selectbox(key="_history_days").select(7).run()
+    app.selectbox(key="_cimri_days").select(90).run()
+    assert not app.exception
+    assert any(item.value == "%12,3" for item in app.metric)
+    assert "Tahmin dönemi: 09.10.2026 — 15.10.2026" in messages(app)
+    assert state.calls[-2] == ("product", PRODUCTS[0].product_key, 7, 90)
+    assert state.calls[-1] == ("prediction", PRODUCTS[0].product_key)
+    assert state.prediction.model_dump_json() == original
+
+
+def test_price_error_does_not_leave_an_old_prediction_visible(screen):
+    app, state = screen
+    state.prediction = sample_prediction("available")
+    app.run()
+    state.failures["product"] = ApiClientError(
+        "invalid_response", "Yerel API cevabı geçersiz."
+    )
+    app.button(key="refresh").click().run()
+    assert not app.exception and app.error
+    assert not app.metric and not chart_specs(app)
+    assert "Başlangıç fiyatı:" not in messages(app)
+
+
 def test_selection_ranges_and_manual_refresh_preserve_preferences(screen):
     app, state = screen
     app.run()
@@ -295,7 +493,8 @@ def test_selection_ranges_and_manual_refresh_preserve_preferences(screen):
     app.selectbox(key="_cimri_days").set_value(7).run()
     app.button(key="refresh").click().run()
     assert not app.exception
-    assert state.calls[-1] == ("product", PRODUCTS[1].product_key, 90, 7)
+    assert state.calls[-2] == ("product", PRODUCTS[1].product_key, 90, 7)
+    assert state.calls[-1] == ("prediction", PRODUCTS[1].product_key)
     assert state.calls.count(("products",)) == 5
     assert state.opened == state.closed == 5
     assert app.session_state["selected_product"] == PRODUCTS[1].product_key
@@ -522,13 +721,14 @@ def test_api_failure_removes_old_cards_and_recovers_with_same_preferences(
     state.failures.clear()
     app.button(key="refresh").click().run()
     assert not app.exception
-    assert state.calls[-1] == ("product", PRODUCTS[1].product_key, 90, 366)
+    assert state.calls[-2] == ("product", PRODUCTS[1].product_key, 90, 366)
     assert state.opened == state.closed
 
 
-def test_unexpected_programming_error_is_not_hidden_as_api_failure(screen):
+@pytest.mark.parametrize("method", ["product", "prediction"])
+def test_unexpected_programming_error_is_not_hidden_as_api_failure(screen, method):
     app, state = screen
-    state.failures["product"] = RuntimeError("Sahte kod hatası")
+    state.failures[method] = RuntimeError("Sahte kod hatası")
     app.run()
     assert len(app.exception) == 1
     assert not app.error

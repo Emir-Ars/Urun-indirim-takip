@@ -13,7 +13,7 @@ from app.contracts import PriceObservation
 from app.collection.service import to_result
 from app.database import runs
 from tests.support.read_world import KEY, START, add_market, add_run, close_run
-from tests.support.ui_samples import APP_TEST_TIMEOUT, messages
+from tests.support.ui_samples import APP_TEST_TIMEOUT, messages, sample_prediction
 
 SCREEN = Path(__file__).resolve().parents[1] / "app/ui/main.py"
 
@@ -74,7 +74,9 @@ def integrated_screen(client, monkeypatch):
         if failures["enabled"]:
             raise httpx.ConnectError("Yerel test kesintisi", request=request)
         response = client.get(str(request.url))
-        if request.url.path.startswith("/api/v1/products/"):
+        if request.url.path.startswith(
+            "/api/v1/products/"
+        ) and not request.url.path.endswith("/prediction"):
             failures["last_product"] = response.json()
         return httpx.Response(response.status_code, content=response.content)
 
@@ -134,6 +136,7 @@ def test_real_result_and_previous_success_reach_the_screen(
         "/api/v1/products",
         "/api/v1/status",
         f"/api/v1/products/{KEY}",
+        f"/api/v1/products/{KEY}/prediction",
     ]
 
 
@@ -169,7 +172,8 @@ def test_selection_ranges_error_and_recovery_use_real_api(world, integrated_scre
         == app.selectbox(key="_cimri_days").value
         == 7
     )
-    assert calls[-1].url.params["history_days"] == "7"
+    assert calls[-2].url.params["history_days"] == "7"
+    assert calls[-1].url.path.endswith("/prediction") and not calls[-1].url.query
     assert any(item.value == "299,01 TL" for item in app.metric)
 
 
@@ -182,3 +186,36 @@ def test_no_completed_history_is_not_substituted_with_cimri(world, integrated_sc
     assert "Kendi fiyat geçmişimiz bulunmuyor." in messages(app)
     assert all(item.value == "—" for item in app.metric)
     assert len(app.get("vega_lite_chart")) == 1
+
+
+def test_prediction_503_is_isolated_from_real_price_api_and_can_recover(
+    world, integrated_screen, monkeypatch
+):
+    from app.ml import shadow_display
+
+    outcome = {"broken": False}
+
+    def prediction(product):
+        if outcome["broken"]:
+            raise ValueError("private: bozuk kayıt")
+        return sample_prediction("available").model_dump()
+
+    monkeypatch.setattr(shadow_display, "prediction_for", prediction)
+    add_run(world, START, {"a": ("offer", 20001)})
+    app, _, calls = integrated_screen
+    app.run()
+    assert not app.exception
+    assert any(item.value == "%12,3" for item in app.metric)
+    outcome["broken"] = True
+    app.button(key="refresh").click().run()
+    assert not app.exception and not app.error
+    assert "Tahmin kaydı şu anda doğrulanamıyor." in messages(app)
+    assert "private" not in messages(app)
+    assert all(item.value != "%12,3" for item in app.metric)
+    assert any(item.value == "200,01 TL" for item in app.metric)
+    assert len(app.get("vega_lite_chart")) == 1 and app.dataframe
+    assert calls[-1].url.path == f"/api/v1/products/{KEY}/prediction"
+    outcome["broken"] = False
+    app.button(key="refresh").click().run()
+    assert not app.exception
+    assert any(item.value == "%12,3" for item in app.metric)
