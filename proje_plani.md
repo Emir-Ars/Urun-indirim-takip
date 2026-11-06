@@ -1,6 +1,6 @@
 # Akıllı Telefon İndirim Takip ve Tahmin Sistemi — Proje Planı
 
-Son güncelleme: 5 Kasım 2026.
+Son güncelleme: 6 Kasım 2026.
 
 Bu belge **kararların, aşama durumunun ve sıradaki işin** tek kaynağıdır ve
 kısa tutulur. Diğer bilgiler şuralardadır:
@@ -45,7 +45,7 @@ Kullanıcı arayüzde arama yaptığında canlı scraping veya model eğitimi
 | Proje yapısının sadeleştirilmesi (Bölüm 8, Adım 1–5) | ✅ Tamamlandı (26 Ekim) | `75d4732` |
 | ML öncesi ekran iyileştirmeleri 1–2 | ✅ Tamamlandı (28 Ekim) | `dd2e262`, `94045bd`, CI 40643349065 |
 | Proje mühendisliğini pekiştirme | ⏸️ Pasif (28 Ekim kararı): iş sırasında değil; kullanıcı istediğinde Oturum 2'den sürer | Program aşağıda; oturum ilerlemesi yerel devir notunda |
-| 8. ML (indirim tahmini) | 🔄 ML hazırlığı 4.0–4.6, dondurma ve saklı test (5.1–5.3) tamamlandı; R2 + Platt değişmedi, sonuç belgeleri gönderildi ve CI doğrulandı; gölge mod planı 4 Kasım'da onaylandı (adımlar 6.0–6.5, uygulama sürüyor) | Bölüm 9 |
+| 8. ML (indirim tahmini) | 🔄 Hazırlık, model dondurma/saklı test ve gölge mod 6.0–6.4 tamamlandı; ilk otomatik günlük çalışma doğrulandı (6 Kasım). 7.1 gösterim planı onaylandı ve belgelendi; belge gönderimi bekliyor. 6.5 izleme paralel; sonraki uygulama adımı 7.2 | Bölüm 9 ve kalan iş sırası |
 | 9. Sürekli işletim ve Docker | 🔄 Sürekli işletim kararı verildi (22 Ekim: dizüstü sürekli açık); Docker başlanmadı | Bölüm 9 |
 
 Bugünkü işletim: fiyat turu her gün 10:00 ve 22:00'de, haftalık keşif her
@@ -224,7 +224,7 @@ rehberde, o günkü tartışması arşivdedir.
 | 28 Ekim | ML ilk girdileri (yalnız 22:00 turunun bitişinde bilinen bilgi): son 1/7/14/30 gün fiyat değişim oranları; bugün / son 7 ve 30 günün en düşüğü; bugün / 30 gün ortalaması; 30 gün oynaklığı ve değişim sayısı; son ≥%5 düşüşten geçen gün (geçmiş fiyattan); haftanın günü; marka, aile, segment ve kapasite (kategori); geçmiş gün sayısı ve eksik gün oranı. "Ay" yalnız ablasyonda denenir. Kampanya takvimi, kur, enflasyon ve çıkış tarihi sonraya kalır. Stok, sayfa sayısı ve tur içi fark ilk modele girmez. Gelecek penceresine ait hiçbir bilgi girdi olmaz; TargetEncoder kullanılmaz. | Oranlar farklı fiyat düzeylerini karşılaştırılabilir yapar. Bir yıllık Cimri'de her ay bir kez geçer, "ay" ezbere yol açar. Kampanya tarihi ilan tarihi tutulmadan sızıntıdır. Stok ve sayfa bilgisi Cimri'de yok (Cimri'de eğitim kararı). sklearn 1.9.1 TargetEncoder zaman sıralı bölücüyü kabul etmiyor (her örnek doğrulamada tam bir kez olmalı). |
 | 28 Ekim | ML bölme ve sızıntı: zaman sıralı %70/%15/%15 ve purge korunur; son %15 test, bütün seçimler dondurulduktan sonra tek kez kullanılır. Model seçimi ilk %85 içinde en az 4 ileri yürüyen katla yapılır (genişleyen eğitim, aylık doğrulama). Bütün ürünler aynı tarihte kesilir; kalibrasyon modelin eğitilmediği dilimde, ön işlemler yalnız eğitim kısmından öğrenilir. | Ardışık günlerin 7 günlük gelecekleri 6 gün ortaktır; rastgele bölme cevabı sızdırır. Tek dönemde iyi sonuç şans olabilir (Ma & Fildes 2022). Kampanya günleri bütün ürünleri birlikte etkiler. |
 | 28 Ekim | ML başarı ölçütü: referans basamakları R0 (sabit oran), R1 (dipten uzaklık kovalarına göre basit kural), R2 (lojistik regresyon). LightGBM, R2'yi PR-AUC'de tarih bloklu bootstrap güven aralığıyla geçerse ve kalibrasyondan sonra Brier ile log loss'ta R2'den kötü değilse seçilir. Raporlananlar: PR-AUC (taban oranla), Brier, log loss, Brier skill, güvenilirlik diyagramı; marka ve ürün kırılımı (5'ten az olaylı hücre "yetersiz"); "yanlış bekle" TL kaybı ikincil rapor. | Olumlu oran ~%10; "hiç düşmez" diyen model %90 doğru görünür. PR eğrisi dengesiz veride ROC'tan bilgilendiricidir (Saito & Rehmsmeier 2015). Ardışık günler bağımsız değildir. Yalnız sabit referansı geçmek düşük bir çıtadır. |
-| 28 Ekim | ML gösterim kapısı: Cimri deneyi (gösterim yok) → kendi verimizde gölge mod (tahmin kaydedilir, gösterilmez) → olasılık ekrana ancak gölge modda en az 60–90 günlük, bir kampanya ve bir sakin dönem içeren dönemde en az 30 farklı düşüş olayı, Brier skill > 0 ve büyük kalibrasyon sapması olmamasıyla çıkar. Ürün bazında geçmiş 30 günden azsa, son 14 günde eksik gün %30'u aşıyorsa veya ailesi eğitimde hiç görülmediyse "yetersiz veri" gösterilir. Ekran, olasılığın takip edilen sayfalara ve hangi 22:00 fiyatına göre olduğunu yazar. Model kaydı, yeniden eğitim ve geri alma ML hazırlığı planında. | Cimri'deki iyi sonuç, farklı ölçüm ve kapsam yüzünden kendi verimizde doğrulanmadan yeterli değildir. Eşikler proje tercihidir, sonra güncellenebilir. Kullanıcı bedeli kabul etti: ekranda olasılık en erken birkaç ay sonra çıkar. Sayımın başlangıcı 2 Kasım kararıyla değişti. |
+| 28 Ekim | ML gösterim kapısı: Cimri deneyi (gösterim yok) → kendi verimizde gölge mod (tahmin kaydedilir, gösterilmez) → olasılık ekrana ancak gölge modda en az 60–90 günlük, bir kampanya ve bir sakin dönem içeren dönemde en az 30 farklı düşüş olayı, Brier skill > 0 ve büyük kalibrasyon sapması olmamasıyla çıkar. Ürün bazında geçmiş 30 günden azsa, son 14 günde eksik gün %30'u aşıyorsa veya ailesi eğitimde hiç görülmediyse "yetersiz veri" gösterilir. Ekran, olasılığın takip edilen sayfalara ve hangi 22:00 fiyatına göre olduğunu yazar. Model kaydı, yeniden eğitim ve geri alma ML hazırlığı planında. | Cimri'deki iyi sonuç, farklı ölçüm ve kapsam yüzünden kendi verimizde doğrulanmadan yeterli değildir. Eşikler proje tercihidir; gölge mod için 4 Kasım kararıyla sabitlendi. Kullanıcı bedeli kabul etti: ekranda olasılık en erken birkaç ay sonra çıkar. Sayımın başlangıcı 2 Kasım kararıyla değişti. |
 | 28 Ekim | Son Cimri alımı Kasım başında, aktarım çakışması ve eşleştirme ön koşulları çözülünce yapılır; kalan sıra değişmez. Cimri serisi 9 Ekim 2025'ten alım gününe kadar uzanır (grafik alım gününden geriye en çok 366 gün verir); alım günü yarım gündür. | Kullanıcı projeyi bir ay bekletmek istemiyor. Bilinen bedel: Kasım 2026 kampanyaları Cimri verisine girmez; kendi verimizle örtüşme ~5 hafta kalır. |
 | 28 Ekim | Cimri aktarımında yarım gün kuralı: günü, alım anının İstanbul tarihine eşit olan değer yarım gündür. Ortak günde yarım gün farkı çelişki sayılmaz; ilk satır korunur, fark raporlanır, ürünün yeni günleri eklenir. Tam gün farkı ve Cimri kimliği farkı çelişki kalır. Şema ve "kayıt değişmez" koruması değişmez. ML yarım günü gözlenmemiş gün sayar. | 8 Ekim satırları alım gününün 16:00 değeridir (57 satır, 5'i boş); gün sonu değeri farklı gelirse ürün tümden reddedilirdi. 8 Ekim alımları arasında 19.292 geçmiş gün değeri değişmedi. Arşivdeki 13:51 alımının önizlemesi eski kodla S24 256 GB'ı reddetti (çıkış 2), yeni kodla 1 yarım gün farkı raporladı (çıkış 0). Kullanıcı tabloyu değiştiren migration yerine bu yolu seçti. |
 | 28 Ekim | Cimri eşleştirmesi 58/60: Galaxy S24 FE 128 GB, ana sayfası (`a2372356868`) ile eklenir; kimliğini son alımın kendi kontrolleri doğrular, tutmazsa ürün aktarılmaz. Galaxy S25 512 GB ve Redmi Note 14 Pro 5G 256 GB eşleştirmesiz kalır; yerlerine başka kapasite veya model konmaz. Ayrı doğrulama alımı yapılmaz. | Web aramasında S24 FE 128 GB için S25 128 GB ile aynı kalıpta ana sayfa bulundu; diğer ikisi için yine yalnız başka ürünlerin sayfaları çıktı. S25 512 GB'ın katalogda sayfası yok. Üç ürünün ailesi Cimri'de olduğu için ML engellenmez. |
@@ -235,7 +235,7 @@ rehberde, o günkü tartışması arşivdedir.
 | 2 Kasım | 4.3 uygulama planı onaylandı: fiyat değişimleri logaritmik oran, son ≥%5 düşüş ardışık takvim günleri arasındaki düşüş, aile nesil ve segment sürüm olacak. Girdiler etiketten bağımsız, eksikler NULL; ay ve ürün anahtarı çekirdek dışında tutulur. | Gelecek bilgisi karışmadan iki kaynakta ortak girdiler hazırlanır; formül ve sınırlar teknik rehberde sabittir. |
 | 2 Kasım | Kalan sıra: bekleyen kayıt (1 Kasım keşfinin 7 sayfası ve 4.4 belgeleri) → Hepsiburada arama API'si düzeltmesi (8 Kasım keşfinden önce) → son Cimri alımı → 4.1–4.4 komutlarının uzatılmış veriyle yeniden çalıştırılması → 4.5 → 4.6. 4.5 ve 4.6 uzatılmış Cimri verisiyle yapılır. | API 1 Kasım'dan beri cevap veriyor ve canlı yanıtta iki kusur görüldü; düzeltmenin ilk canlı sınavı 8 Kasım keşfi. Alım 4.5'ten önce yapılınca modeller doğrudan güncel veriyle kurulur, aynı iş iki kez yapılmaz. |
 | 2 Kasım | Hepsiburada arama API'si: ürünün ana kategori veya tanım adı yeni telefon diyorsa ürün geçer, biri aksesuar/yenilenmiş diyorsa elenir; ikinci sayfadan itibaren hedefe uyan yeni varyant yoksa sayfalama uyarısız durur, `repeated_page` yalnız sayfadaki bütün ürün kodları tekrarlanınca verilir. Ortak `phone_category` ve ürün sayfasındaki kimlik doğrulaması değişmez. | Canlı yanıtta iPhone'ların kategorisi "iPhone iOS Telefonlar" (tanımı "Cep Telefonu") olduğu için API'deki bütün iPhone'lar eleniyor, aksesuarla dolu ikinci sayfa "tekrar" sayılıyordu. Bilinen bedel: "tam" sonuç alaka sırası varsayımına dayanır. |
-| 2 Kasım | Gösterim kapısının koşulları (60–90 gün, ≥30 farklı düşüş olayı, Brier skill > 0, büyük kalibrasyon sapması yok) değişmez; dönemin sayımı geriye dönük başlar. Yalnız Cimri'de seçilip dondurulan model, kendi verimizde ilk uygun başlangıç günü olan 27 Ekim'den itibaren her gün için yalnız o günün 22:00 turuna kadar bilinen veriyle tahmin üretir. Canlı gölge mod da başlar ve sayıma eklenir. Kendi verimizle yeniden kalibrasyon yapılırsa o günler değerlendirme sayımına girmez (ayrıntı gölge mod planında). Kapı Ocak başında karşılanmazsa olasılık ekrana çıkmaz. | Staj Ocak 2027'nin ilk veya ikinci haftasında bitiyor; canlı gölge mod Kasım sonundan önce başlayamaz ve süre içinde 60 güne ulaşamaz. Model kendi verimizi eğitimde ve seçimde görmediği için geriye dönük tahmin geçerli bir dışarıdan sınamadır; ancak zamanlayıcı ve kayıt gibi işletim parçalarını sınamaz. Kapının Ocak başında ancak sınırda karşılanabilmesi bilinen bedeldir. |
+| 2 Kasım | Gösterim kapısının koşulları (60–90 gün, ≥30 farklı düşüş olayı, Brier skill > 0, büyük kalibrasyon sapması yok) değişmez; dönemin sayımı geriye dönük başlar. Yalnız Cimri'de seçilip dondurulan model, kendi verimizde ilk uygun başlangıç günü olan 27 Ekim'den itibaren her gün için yalnız o günün 22:00 turuna kadar bilinen veriyle tahmin üretir. Canlı gölge mod da başlar ve sayıma eklenir. Kendi verimizle yeniden kalibrasyon yapılırsa o günler değerlendirme sayımına girmez (ayrıntı gölge mod planında). Kapı Ocak başında karşılanmazsa olasılık ekrana çıkmaz. | Staj Ocak 2027'nin ilk veya ikinci haftasında bitiyor; o günkü takvimde canlı gölge modun Kasım sonunda başlaması ve yalnız ileriye dönük kaydın süreye yetmemesi bekleniyordu. Model kendi verimizi eğitimde ve seçimde görmediği için geriye dönük tahmin geçerli bir dışarıdan sınamadır; ancak zamanlayıcı ve kayıt gibi işletim parçalarını sınamaz. Kapının Ocak başında ancak sınırda karşılanabilmesi bilinen bedeldir. |
 | 2 Kasım | Staj sonunda sunum yapılacak; içeriği ve biçimi sonra konuşulur. Hazırlığı takvimin son haftasındadır. | Kullanıcının staj gereksinimi. |
 | 2 Kasım | 4.4 planı onaylandı: dört tam doğrulama ayı, her katta ayrı 30 gün kalibrasyon, olumlu pencere kümeleri ve %95 tarih bloklu güven aralığı; saklı testin puanlaması kapalı kalır. | Kullanıcı seçimleri: ölçülen ay kalibrasyonda görülmesin, tekrar eden olumlu satırlar olay diye sayılmasın; kesin kurallar teknik rehberde. |
 | 2 Kasım | Sabah turunun katkısı ölçüldü; 10:00 ve 22:00 turları korunur (19 Ekim kararı sürer). | 2 Kasım görüntüsü, kendi serimiz (28 Eylül–25 Ekim başlangıçları, 4.2 kuralı, 30 gün şartı aranmadan): yalnız akşam turuyla kullanılabilir pencere 903'ten 508'e düşer (akşam turunun kullanılamadığı 7 gün); iki yolla da etiketlenen 508 pencerenin 8'inde (4 ürün) ≥%5 düşüşü yalnız sabah turu gördü. Veri ~5 hafta; ardışık pencereler bağımsız değil. |
@@ -247,6 +247,8 @@ rehberde, o günkü tartışması arşivdedir.
 | 4 Kasım | Gölge mod 6.4 raporuna yalnız bilgi amaçlı kırılım eklenir: `missing_ratio_30d` dilimleri (≤ 0,10 ve üstü) ve 22 Kasım öncesi/sonrası. Ön kayıtlı kapı kuralları, model ve 5 Ocak 2027 tarihi değişmez. | 6.1 ölçümü: kendi satırlarında `missing_ratio_30d` eğitimden yaklaşık 5 sapma uzakta (ortalama 0,24 / 0,005) ve kaynağı 8 kusurlu gün; kapı kötü çıkarsa nedeni ayrılabilmeli. Kırılım karar değil açıklama aracıdır, sonuca bakıp kural değiştirilmez. |
 | 5 Kasım | Gölge mod 6.3 ayrıntılı uygulama planı onaylandı: günlük komut ve görev kurulumu, kalıcı kanıt kopyaları ve ortak kayıt kilidi; yalnız 6.3 uygulanır. | Kullanıcının açık uygulama onayı; ilk resmi çalışma ve görev kurulumu kullanıcı terminalinde, gönderim ayrıca onaylanır. |
 | 5 Kasım | 6.4 ayrıntılı uygulama planı onaylandı: süre ilk–son etiketli başlangıcın dahil takvim aralığıdır, Kasım'ın tamamı aralıkla kapsanır, Kasım dışında en az 14 farklı etiketli gün aranır. Süre/dönem/olay desteği yetersizse değerlendirilemedi; yeterli veride ölçülen başarısız performans koşulu karşılanmadı, eksik ölçü değerlendirilemedi, tümü sağlanırsa karşılandı. | Kullanıcı sayım ve üç durum yorumunu koddan önce açıkça onayladı; sayısal eşikler, model ve kesin tarih değişmedi. |
+| 6 Kasım | Yol haritası öncelikleri onaylandı: R2 + Platt sabitken 6.5 haftalık performans/işletim izlemesi sürer (ilk kontrol 8 Kasım keşfi sonrası); sıradaki plan 7.1, ardından 7.2–7.4 gösterim işleri. 9.1 işletim paralel; 9.2 Docker kapsam/uygulama planı ve iş 8 sunum planda kalır. Model iyileştirmesi kalıcı sorun görülürse ayrı planlanır; 5 Ocak tarihi değişmez. | Kullanıcı önerilen sırayı kabul etti; kısa dönem sonucu nedeniyle yeni eğitime öncelik verilmedi. Bu karar ayrıntılı kod uygulaması veya commit/push onayı değildir. |
+| 6 Kasım | 7.1 gösterim planı onaylandı: tek tahmin kartı; İstanbul takvimine göre yalnız dünün kaydı, eski orana dönüş yok; ayrı API ucu ve mevcut kayıttan okuma; 5 Ocak kesin raporuna bağlı komutla açılış ve kapatma. 7.1'in uygulaması yalnız kararların belgelenmesidir; API/CLI/ekran 7.2–7.4'te geliştirilir. | Kullanıcı planın uygulanmasını istedi. Seçili ürünün hangi fiyat/döneme göre değerlendirildiği açık kalır; geçersiz veya onaysız olasılık kullanıcıya çıkmaz. Commit/push onayı verilmedi. |
 
 ### Bilerek değiştirilmeyen davranışlar
 
@@ -364,37 +366,57 @@ ML ve Docker kavramsal hazırlıktır; model seçimi, eğitim veya kurulum yapı
 Son oturumda fiyatın kaynaktan ekrana yolu, hata/stok/kapsam durumlarının
 beklenen davranışı ve sonuca güvenmek için gereken kanıtlar açıklanır.
 
-### Kalan iş sırası (2 Kasım kararı)
+### Kalan iş sırası (6 Kasım kararı)
 
-1. **Ekranın canlı kontrolü:** ✅ Tamamlandı (28 Ekim; [kayıt](docs/gecmis.md)).
-2. **[ML araştırma raporları](docs/arastirma/asama_08_ml/):** ✅ Tamamlandı
-   (28 Ekim); kararlar Bölüm 5'te, özet Bölüm 9'da.
-3. **Son Cimri alımı:** ✅ Tamamlandı (2 Kasım). Kullanıcının terminalinden
-   alım, önizleme ve aktarım yapıldı: 1.790 yeni gün eklendi, çelişki yok.
-   Sayılar README'de, ayrıntı
-   [teknik rehberde](docs/teknik.md#cimri-geçmişi-bir-defalık-alım-ve-aktarım).
-   Önceki iki ara iş de aynı gün tamamlandı ([kayıt](docs/gecmis.md)):
-   1 Kasım keşfinin kaydı ve Hepsiburada arama API'si düzeltmesi.
-   Düzeltmenin ilk tam canlı sonucu 8 Kasım keşfinde kontrol edilir.
-4. **ML hazırlığı:** ✅ 4.0–4.6 tamamlandı (3 Kasım); son Cimri alımını içeren
-   2 Kasım kanıtlarıyla ilk gerçek deney çalıştırıldı, doğrulandı ve yorumlandı;
-   belgeler gönderildi, CI yeşil ([kayıt](docs/gecmis.md)). LightGBM seçim
-   koşulu karşılanmadı; bu deneyde model dondurulmadı. Güncel puan ve kapsam README'de.
-5. **Model seçiminin dondurulması ve son testin tek kez açılması:** ✅
-   Tamamlandı (4 Kasım). R2 + Platt donduruldu; ön kayıt ve saklı test
-   sonucu doğrulandı, belgelendi, gönderildi ve CI doğrulandı
-   ([kayıt](docs/gecmis.md)). Adımlar Bölüm 9'daki 5.1–5.3 tablosundadır.
-6. **Gölge mod:** canlı günlük tahmin kaydı ve 27 Ekim'den itibaren geriye
-   dönük tahminler (2 Kasım kararı); canlı çalışma en geç 6 Aralık. Plan
-   4 Kasım'da onaylandı; adımlar 6.0–6.5 Bölüm 9'daki tablodadır.
-7. **Gösterim:** ekran kodu Aralık'ta kapı kapalıyken hazırlanır; kapı
-   5 Ocak 2027 görüntüsüyle bir kez değerlendirilir, karşılanmazsa olasılık
-   ekrana çıkmaz.
-8. **Sunum hazırlığı:** 21–31 Aralık; içerik ve biçim sonra konuşulur.
+**Onaylanan öncelik:** mevcut R2 + Platt sabit tutulur; 6.5'te kayıt sağlığı ve
+performans düzenli incelenirken ekran ve teslim işleri ilerler. Yeni model
+eğitimi şu an öncelik değildir; daha geniş dönemde kalıcı sorun görülürse
+ayrı iyileştirme planı hazırlanır. Docker ve sunum planda kalır.
 
-Hedefler, Ocak'ın ilk günlerini tampon bırakır (staj bitişi kesin değil).
-Her Pazar keşif raporu kontrol edilir. Docker karar bekliyor (Bölüm 7).
-Öğrenme turu bu sıranın dışında, pasif (28 Ekim kararı).
+**Numaraları okuma:** ana aşama **8 = ML**, ana aşama **9 = sürekli işletim ve
+Docker**. ML içindeki iş 6 gölge mod, **6.0–6.5** onun alt adımlarıdır;
+**6.6 yoktur**. ML'deki sonraki geliştirme iş 7 Gösterim ve alt adımları
+**7.1–7.4** olur. **İş 8 — Sunum**, proje kapanışıdır; ana aşama 8 değildir.
+ML hazırlığı, dondurma ve gölge modun tamamlanan adımları Bölüm 9'da;
+gönderim/kapanış kanıtları [geçmiştedir](docs/gecmis.md).
+
+Aşağıdaki öncelik sırası ve adım başlıkları onaylandı. Bu, ayrıntılı
+uygulama planlarının veya kodun onayı değildir; her uygulama adımında amaç,
+dosyalar, kabul koşulları ve kontroller koddan önce netleştirilip onaylanır.
+
+| Ana başlık | İş / adım | Somut çıktı | Sıra ve durum |
+|---|---|---|---|
+| Aşama 8 — ML | 6.5 — Gölge işletim ve performans izleme | Günlük tahmin kaydı; haftalık veri/kayıt sağlığı ve model performansı raporu; ara ve kesin değerlendirme | Paralel sürer. İlk otomatik kontrol tamam; ilk haftalık kontrol 8 Kasım keşfi bittikten sonra. Hepsiburada arama düzeltmesinin ilk tam canlı sonucu da o gün incelenir. |
+| Aşama 8 — ML | 7.1 — Gösterim kapsamı ve veri akışı planı | Bir ürün örneği üzerinden kayıt → API → ekran akışı; gösterilecek tarih/kapsam, kapalı gösterim ve yetersiz veri durumları; [onaylı sözleşme aşağıda](#gösterim-kalan-sıra-7-6-kasım-planı) | Plan onaylandı ve belgelendi (6 Kasım); yalnız belge değişti. Gönderim/CI bekliyor; API ve ekran henüz uygulanmadı. |
+| Aşama 8 — ML | 7.2 — API'den tahmin okuma | Kayıtlı tahmin ve yeterlilik bilgisinin doğrulanarak sunulması; eksik/bozuk kayıt ve kapalı gösterim davranışı | 7.1 ve ayrıntılı uygulama onayı sonrası. İstek sırasında eğitim veya canlı fiyat toplama yapılmaz; sözleşme ve testler birlikte hazırlanır. |
+| Aşama 8 — ML | 7.3 — Ekranda tahmin durumları | Onaylı API sözleşmesine bağlı ekran; tarih/kapsam açıklamaları, yeterli/yetersiz veri ve kapalı gösterim durumları | 7.2 sonrası. Kesin gösterim kararı öncesinde gerçek olasılık kullanıcıya açılmaz; ekran testleri bu adımın içindedir. |
+| Aşama 8 — ML | 7.4 — Gösterim akışının bütün olarak doğrulanması | API/istemci/ekran uyumu, uygun ve yetersiz veri senaryoları, kapı durumları, güncel kullanım belgeleri | 7.2–7.3 sonrası. Her kod adımı zaten tam test/biçim kontrolü içerir; testler bu adıma ertelenmez. |
+| Aşama 9 — Sürekli işletim ve Docker | 9.1 — Sürekli işletim kanıtı | Zamanında/geç/kayıp görevlerin nedenleri ve mevcut çalışma düzeninin doğrulanması | 6.5 ve iş 7 ile paralel. İlk başarılı görev sürekli işletimin tamamlandığı anlamına gelmez; güç ayarlarına yeni müdahale ayrıca kararlaştırılır. |
+| Aşama 9 — Sürekli işletim ve Docker | 9.2 — Docker kapsam kararı ve planı | Staj kapsamı, sağlayacağı fayda, taşınacak parçalar ve veri/model kalıcılığı için karar ve gerekirse uygulama planı | Planda kalır; öncelikli gösterim işleri sonrasında ele alınır. Docker uygulamasının kapsamı ve planı henüz onaylanmadı. |
+| Proje kapanışı | İş 8 — Sunum ve teslim hazırlığı | Sistemin akışı, örnek kullanım, sonuçlar ve sınırlar; onaylı kapsamın belgelerle teslimi | Planda kalır. Sunum iskeleti önceden hazırlanabilir; hazırlık hedefi 21–31 Aralık. Biçim ve içerik ayrıca netleştirilecek. |
+
+**Takvim:** 7.1 planı onaylandı ve belgelendi. 7.2–7.4, kendi uygulama
+onaylarıyla sırayla başlayabilir; 6.5'in kapanmasını beklemez.
+Temel geliştirmeler için **31 Aralık hedefi**, 21 Aralık haftasının
+ara raporu ve **5 Ocak 2027 kesin değerlendirme tarihi** korunur.
+Stajın kesin bitiş tarihi ve Docker'ın teslim kapsamı açık karardır.
+Öğrenme turu iş sırasının dışında, pasif kalır (28 Ekim kararı); 7.1'de
+örnek ürünle akışın açıklanması bu adımın kapsamındadır.
+
+**Model performansına göre hareket:** günlük otomatik görev tahmin kaydeder;
+performans değerlendirmesi ayrıca alınır. Haftalık raporda veri desteği,
+R0 karşılaştırması, olasılık hatası ve kalibrasyon birlikte incelenir.
+Kötü bir ara sonuçta veri/hesap hatası, eksik geçmiş ve kaynak farkları
+kesin tarihi beklemeden araştırılır. Veri birikmesi model ağırlıklarını
+değiştirmez veya başarının artacağını garanti etmez.
+
+Daha geniş dönemde sorun sürerse ayrı model iyileştirmesi planlanır; önce
+kapsam, kullanılacak veri ve yeni bağımsız değerlendirme dönemi kararlaştırılır.
+Mevcut resmi kayıtlar korunur; açılmış Cimri saklı testi yeni ayar/seçim için
+kullanılmaz, ayarlamada kullanılan günler tarafsız başarı kanıtı sayılmaz.
+Girdi gruplarının tek tek katkısını çıkararak karşılaştıran deney henüz
+yapılmadı. Kesin koşullar karşılanmazsa olasılık kapalı kalır; sonuç ve
+sınırlar belgelenir.
 
 ## 9. Sonraki aşamalar
 
@@ -475,11 +497,12 @@ Model seçiminin dondurulması ve son testin tek kez açılması (kalan sıra 5,
 Amaç: dondurulan R2 + Platt, kendi verimizdeki her gün için "önümüzdeki 7
 günde ≥ %5 düşer mi" olasılığını üretir ve kaydeder; 7 gün sonra gerçek
 sonuçla karşılaştırılır. Olasılık ekranda gösterilmez. Kararlar ve ön kayıtlı
-değerlendirme kuralları Bölüm 5'te (4 Kasım). 6.0–6.3 tamamlandı; kod,
-belgeler, ilk resmi kayıt, yinelenmeme kontrolü ve Windows görevi kurulumu
-doğrulandı, gönderildi ve aynı commit'in CI'ı başarılı oldu.
-6.4 değerlendirmesi uygulandı ve ilk gerçek raporu bağımsız doğrulandı;
-gönderim ve CI bekliyor. 6.5 işletim adımı henüz uygulanmadı.
+değerlendirme kuralları Bölüm 5'te (4 Kasım). 6.0–6.4 tamamlandı; günlük
+kayıt/görev kurulumu ve değerlendirme komutu uygulandı, ilk gerçek kayıt
+ve rapor bağımsız doğrulandı, gönderildi ve ilgili commit'lerin CI'ı
+başarılı oldu. İlk otomatik günlük çalışma da doğrulandı (6 Kasım).
+6.5'in kontrol takvimi 6 Kasım kararıyla onaylandı; ilk haftalık kontrol
+8 Kasım keşfi sonrasında yapılacak. İş 7 ile paralel izleme sürer.
 Ayrı adımların durumu aşağıdaki tabloda gösterilir.
 
 Günlük akış: her gün 11:00 (bilgisayar kapalıysa açılınca) → tur sürüyorsa
@@ -501,8 +524,87 @@ Her alt adım ayrı commit ve ayrı onaydır:
 | 6.1 | Kendi verimizin ön ölçümü (kod yok): kullanıcı `snapshot` → `labels` → `features` komutlarını tur dışında çalıştırır; 27 Ekim'den beri geçerli başlangıç sayısı, eksik/NULL gerekçeleri, "son 14 günde eksik > %30" ve eğitimde görülmemiş aileler, `history_days`/`missing_ratio_30d` dağılımının Cimri'ye göre farkı salt okunur incelenir. Model yüklenmez, tahmin üretilmez | 6 Kasım | ✅ Tamamlandı (4 Kasım); bulgular aşağıdaki risklerde ve [teknik rehberde](docs/teknik.md#bilinen-sınırlar), gönderildi, CI başarılı ([kayıt](docs/gecmis.md)) |
 | 6.2 | `python -m app.ml shadow-predict`: `app/ml/shadow.py` (DB/ağ yüklemez; mevcut `load_frozen_model`, `analyze_features`, `predict_frozen` yeniden kullanılır), `config/shadow.json` (başlangıç günü 2026-10-27, ön kayıtlı model SHA-256, kanıt klasörleri), çıktı `data/ml/golge/tahmin_<zaman>/` (`predictions.jsonl`, `report.md`, `manifest.json`); yapay görüntülü testler (gelecek verisi sızmaz, yanlış SHA'da tahmin yok, 30 günden kısa geçmişe olasılık yok, mevcut anahtar yeniden tahmin edilmez, belirlenimci çıktı, DB/ağ yüklenmez); teknik rehberde "Gölge mod" bölümü | 12 Kasım | ✅ Tamamlandı (4 Kasım); kod, testler, belgeler ve gerçek görüntüyle deneme bağımsız denetimle doğrulandı, gönderildi, CI başarılı ([kayıt](docs/gecmis.md)) |
 | 6.3 | `python -m app.ml shadow-daily [--scheduled]` (görüntü + tahmin, tur bekleme, `run_logged` ile `data/logs/golge_*.log`), `scripts/golge_zamanlayici_kur.ps1` (görev `\FiyatTakip\GolgeTahmin`, her gün 11:00, `StartWhenAvailable`, `-Kaldir`; `API_DATABASE_URL` yoksa kurmaz; UTF-8 BOM'lu). Kullanıcı bir kez `API_DATABASE_URL` tanımlar, ilk elle çalıştırma 27 Ekim'den dünü kadar geriye dönük doldurur, çıktı birlikte doğrulanır, görev kurulur | 16 Kasım | ✅ Tamamlandı (5 Kasım); günlük akış, ilk resmi kayıt ve bağımsız denetim, yinelenmeme ve gerçek görev kurulumu doğrulandı; gönderildi, aynı SHA için CI başarılı ([kayıt](docs/gecmis.md)) |
-| 6.4 | `python -m app.ml shadow-evaluate`: yeni görüntüden etiketler, kayıtla anahtar eşleşmesi, **kayıttaki girdilerin sonraki görüntüden yeniden hesaplananlarla birebir aynı olduğu denetimi** (gerçek veride sızıntı kanıtı), `own_evaluation` rolüyle puanlar, güvenilirlik kovaları, Bölüm 5'teki kapı koşulları ve üç durumlu sonuç, Kasım/diğer günler kırılımı, `y_izlenen` ikincil rapor, işletim sağlığı (zamanında/geç/geriye dönük, eksik günler). AP farkı aralığı için `reserved_test_bootstrap` benzeri ayrı giriş eklenir; mevcut ölçüt işlevleri ve `METRIC_RULES` değişmez. Rapora yalnız bilgi amaçlı kırılım da girer: `missing_ratio_30d` dilimleri (≤ 0,10 ve üstü) ve 22 Kasım öncesi/sonrası; kapı kuralı bunlara bakmaz | 25 Kasım | 🔄 Kod, testler ve belgeler hazır; tam yerel testler ve biçim kontrolleri temiz. Kullanıcı terminalindeki ilk gerçek raporun girdileri, ham turlardan etiketleri, kayıtlı olasılıklardan puanları ve kapı sonucu bağımsız doğrulandı (5 Kasım); model/kayıtlar değişmedi. Gönderim onayı ve CI bekliyor |
-| 6.5 | İşletim ve izleme (kod yok): görev günlük çalışır; her Pazar keşif raporuyla birlikte gölge logu ve `shadow-evaluate` sağlık kontrolü; yaklaşık 21 Aralık'ta sunum için ara rapor; 5 Ocak 2027'de kesin kapı değerlendirmesi; Ocak'a kadar ML kütüphaneleri güncellenmez | 6 Aralık'tan | ⏳ Bekliyor |
+| 6.4 | `python -m app.ml shadow-evaluate`: yeni görüntüden etiketler, kayıtla anahtar eşleşmesi, **kayıttaki girdilerin sonraki görüntüden yeniden hesaplananlarla birebir aynı olduğu denetimi** (gerçek veride sızıntı kanıtı), `own_evaluation` rolüyle puanlar, güvenilirlik kovaları, Bölüm 5'teki kapı koşulları ve üç durumlu sonuç, Kasım/diğer günler kırılımı, `y_izlenen` ikincil rapor, işletim sağlığı (zamanında/geç/geriye dönük, eksik günler). AP farkı aralığı için `reserved_test_bootstrap` benzeri ayrı giriş eklenir; mevcut ölçüt işlevleri ve `METRIC_RULES` değişmez. Rapora yalnız bilgi amaçlı kırılım da girer: `missing_ratio_30d` dilimleri (≤ 0,10 ve üstü) ve 22 Kasım öncesi/sonrası; kapı kuralı bunlara bakmaz | 25 Kasım | ✅ Tamamlandı (5 Kasım); kod/test/belgeler, kullanıcı terminalindeki ilk rapor ve bağımsız girdi/etiket/puan/kapı denetimi doğrulandı; model/kayıtlar değişmedi, gönderildi ve aynı SHA için CI başarılı ([kayıt](docs/gecmis.md)) |
+| 6.5 | İşletim ve izleme (kod yok): günlük görev kanıtı, haftalık keşif/gölge sağlığı, sunum ara raporu ve kesin değerlendirme; [kontrol planı aşağıda](#65-kontrol-planı) | İlk kontrol 6 Kasım; ilk haftalık kontrol 8 Kasım keşfi sonrası | 🔄 Kontrol takvimi onaylı; ilk otomatik çalışma doğrulandı, ilk haftalık kontrol bekliyor |
+
+#### 6.5 kontrol planı
+
+**Amaç ve sınır:** 6.3'te kurulan görevin gerçekten çalıştığını, değişmez
+tahminlerin eksiksiz biriktiğini ve 6.4 raporunun düzenli alınabildiğini
+kanıtlamak. Yeni kod, görev veya model ayarı yoktur. R2 + Platt, kapı
+eşikleri ve kesin değerlendirme tarihi değişmez; ML kütüphaneleri Ocak'taki
+kesin değerlendirmeye kadar güncellenmez. Kurulu günlük görev mevcut
+düzeninde çalışmaya devam eder; haftalık kontrol takvimi 6 Kasım
+kararıyla onaylanmıştır.
+
+**Durum ve takvim:** ilk otomatik günlük çalışma 6 Kasım'da doğrulandı.
+Haftalık kontrol 6 Kasım kararıyla 8 Kasım keşfi sonrasından itibaren her
+Pazar yapılır. Aşağıdaki tarihler İstanbul saatidir; canlı komutları kullanıcı
+çalıştırır, oluşan kanıtları ve salt okunur görev durumunu birlikte inceleriz.
+Görev/log okuma ve rapor komutları [teknik rehberdedir](docs/teknik.md#gölge-işletiminde-kontrol-komutları).
+
+| Ne zaman | Kontrol ve kanıt | Beklenen sonuç / doğrulama |
+|---|---|---|
+| 6 Kasım Cuma, 11:00 görevi tamamlandıktan sonra | Görevin son çalışma zamanı/durumu/sonucu, o çalışmanın `golge_*.log` dosyası, görüntü ve yeni tahmin manifesti | ✅ Doğrulandı: bugünkü tetikleme, `Ready`, görev sonucu ve log çıkışı 0; görüntü/kayıt/model parmak izleri, tekillik, ertesi gün kayıt ve eski dosyaların değişmediği doğrulandı ([kanıtlar](docs/teknik.md#günlük-gölge-çalışması-python--m-appml-shadow-daily)) |
+| Her gün otomatik 11:00 | Mevcut görev görüntü ve tahmin üretir; ilk doğrulamadan sonra ayrıca her gün elle değerlendirme zorunluluğu yoktur | Bilgisayar kapalıysa uygun oturumda telafi; zamanında/geç kayıt bilgisi korunur |
+| 8 Kasım Pazar'dan itibaren her Pazar, 14:00 keşfi gerçekten bittikten sonra | Keşif logu/raporu, haftanın gölge logları ve yeni salt okunur görüntüyle `shadow-evaluate` raporu | Kaynak sorunları ve gölge kayıt sağlığı ayrı incelenir; ilk Pazar Hepsiburada arama düzeltmesinin tam canlı sonucu da doğrulanır |
+| 21 Aralık haftası | Aynı komutlarla yeni ara rapor; sunum için veri yeterliliği, ölçümler ve sınırlar | Bilgi amaçlı sonuç; erken kapı kararı veya model ayarı yapılmaz |
+| 5 Ocak 2027 Salı, çalışan işler tamamlandıktan sonra | **O gün alınmış tek kesin görüntüyle** kesin değerlendirme ve kanıt dosyalarının korunması | Ön kayıtlı üç durumlu kapı sonucu belgelenir; komut ekranı kendiliğinden açmaz |
+
+**İlk otomatik çalışma kontrolü:** kurulum çıktısı veya eski bir `LastTaskResult = 0`
+yeterli değildir; son çalışma zamanı, log tarihi ve `(zamanlanmış)` başlığı
+aynı çalışmayı göstermelidir. Görev hâlâ çalışıyorsa tur/keşif bekleme
+satırlarına bakılır, tamamlanmadan sonuç verilmez. Yeni tahmin yoksa bu tek
+başına hata değildir; görüntüdeki uygun başlangıçların önceden kayıtlı olup
+olmadığı kontrol edilir. İlk tetikleme sorununu örtecek elle çalıştırmadan
+önce görev ve log kanıtı korunur. 22:00 ve 10:00 fiyat turları için bilgisayar
+açık, uyanık ve oturum açık tutulur; kilit ekranı uygundur. Sonradan çalışan
+gölge görevi, kaçmış bir turun geçmiş fiyatlarını geri getiremez.
+
+**Haftalık raporda bakılacaklar:**
+
+- Haftadaki her günün zamanlanmış logu ve son çıkışı kontrol edilir; eksik
+  log, kapanmamış log veya hata ayrıca araştırılır. Keşfin yaklaşık bitiş
+  saati yeterli kanıt değildir; bitiş logu/görev durumu görülür. Yeterli
+  kimlik kanıtıyla otomatik kabul edilen bağlantılar tek tek elle doğrulanmaz.
+- `health.missing_records` boş olmalıdır: başlangıcı bulunup resmi tahmini
+  olmayan ürün-günler araştırılır. `no_start_price`, `not_yet_observed` ve
+  NULL etiketler ayrı okunur; sabit günlük ürün/kayıt sayısı beklenmez.
+- Yarım klasörler ile zamanında, ilk toplu doldurma ve geç kayıt sayıları
+  incelenir. Önceki rapordaki kayıt manifest SHA-256'ları yeni raporun
+  `input.records` envanteriyle karşılaştırılır; eski kayıtlar aynı kalmalı,
+  yeni klasörler ayrıca görünmelidir. Bütünlük uyuşmazlığı normal kabul edilmez.
+- Asıl topluluğun veri desteği, kapı sonucu ve ölçümleri okunur; ikincil
+  etiketler ve kırılımlar yalnız açıklamadır. Kısa dönemde NULL güven aralığı
+  veya `Değerlendirilemedi` geçerli rapor sonucu olabilir; çıkış 0 modelin
+  gösterim koşullarını karşıladığını söylemez. Erken iyi/kötü puana göre
+  model, eşik veya kesin tarih değiştirilmez.
+
+**Sorun çıkarsa izlenecek sıra:**
+
+| Belirti | Yapılacak kontrol / sonraki adım |
+|---|---|
+| Log yok veya son çıkış satırı yok | Önce görev zamanı, durumu, sonucu ve varsa log korunur; çalışan iş ile hiç başlayamayan/kesilen iş ayrılır. Eylem, çalışma klasörü ve ortam değişkeninin varlığı incelenir; parola yazdırılmaz. |
+| Çıkış 1 | Logdaki somut girdi, izin, bağlantı, sürüm veya SHA hatası incelenir. Eski tahmin/kanıt dosyaları değiştirilmez; yeniden dondurma veya kalibrasyon çözüm sayılmaz. |
+| Çıkış 2 | Komut argümanları ve görev eylemi belgelenen komutla karşılaştırılır. |
+| Çıkış 3 | Günlük komutta 90 dakikalık tur/DB beklemesi ile kayıt kilidi ayrılır; değerlendirmede kayıt kilidi beklenmeden hata verir. Diğer iş bittikten sonra kullanıcı kontrollü yeniden dener. Kilit dosyasının varlığı tek başına etkin kilit değildir; dosya silinmez. |
+| Çıkış 130 veya yarım klasör | Kesinti kanıtı korunur; manifesti olmayan çıktı tamamlanmış sayılmaz. Gerekirse yeni çıktı klasörüyle yeniden denenir; resmi kayıtların üzerine yazılmaz. |
+| Eksik tahmin, değişmiş manifest veya girdi uyuşmazlığı | Kaynak görüntü ve loglarla neden araştırılır; hatalı/eksik çıktıyla kapı kararı verilmez. Veri uydurulmaz, eski kayıt değiştirilmez. |
+
+Bu çıkışlar uygulamanındır; Windows görev sonucu ayrıca yorumlanır. Sorun
+nedeni bulunmadan tekrar tekrar çalıştırmak kontrolün yerine geçmez.
+
+**İlerleme ve kapanış:** ilk otomatik çalışma ile ilk haftalık kontrolün
+kanıtları doğrulanınca durum "izleme sürüyor" olur; planın hazırlanması
+6.5'i tamamlamaz. Ara raporlar korunur; 5 Ocak kesin sonucu belgelenince
+işletim adımı kapatılır, kapı karşılanmadıysa veya değerlendirilemediyse
+olasılık gösterilmez. 5 Ocak görüntüsünde son kapanmış gün 4 Ocak olduğundan
+en geç 28 Aralık başlangıcının 7 günlük sonucu kapanmış olabilir; 27 Ekim–28
+Aralık 63 gün olması veri/olay desteğini garanti etmez. Tek kesin
+değerlendirme işletim kuralıdır; tarih alanı bunu teknik olarak zorlamaz.
+Kanıtlar `data/` ve `artifacts/` altında kalır; yeni sınır teknik rehbere,
+karar ana plana, süren iş yerel devir notuna yazılır. Her gönderim ayrıca
+açık onay ister.
 
 Bilinen riskler (6.1 ölçümü, 4 Kasım 2026 12:57 UTC görüntüsü):
 
@@ -534,6 +636,93 @@ Bilinen riskler (6.1 ölçümü, 4 Kasım 2026 12:57 UTC görüntüsü):
 - Kayıt yerel ve imzasızdır; parmak izi yalnız bütünlük kontrolüdür.
 - Python, NumPy, scikit-learn veya LightGBM sürümü değişirse dondurulan model
   yüklenmez (bilinçli güvenlik); yeniden dondurma yeni bir model sayılır.
+
+### Gösterim (kalan sıra 7, 6 Kasım planı)
+
+**7.1'in onaylı çıktısı bu sözleşmenin belgelenmesidir.** Aşağıdaki API,
+okuyucu, komut ve kart henüz uygulanmadı; uygulama 7.2–7.4'ün işidir.
+R2 + Platt, girdiler ve değerlendirme eşikleri değişmez. İlk sürümde seçili
+telefon için tek tahmin kartı vardır; tahmin geçmişi listesi/grafiği yoktur.
+
+#### Veri akışı ve API sözleşmesi
+
+**Günlük resmi kayıt → kayıt ve kaynak görüntü doğrulaması → API → kart.**
+Yeni uç `GET /api/v1/products/{product_key}/prediction` olacaktır. Mevcut
+ürün cevabı değişmez; tahmin hatası fiyat ekranını kapatmaz. API kayıtlı
+tahmini okur; model yüklemez, eğitim veya yeni tahmin çalıştırmaz.
+
+Gölge kayıt doğrulayıcıları NumPy/scikit-learn bağımlılığı olmayan
+`app/ml/shadow_records.py` modülüne ayrılacaktır. Mevcut CLI sözleşmeleri ve
+resmi dosya biçimi korunur. Yalnız manifesti tamamlanmış resmi klasörler
+kullanılır; hash, model kimliği ve ürün-gün tekilliği doğrulanır. Yarım
+klasörler kullanılmaz. Başlangıç fiyatı ve sayfa kapsamı, manifestteki SHA
+ile eşleşen kaynak görüntüden mevcut günlük seri kurallarıyla çıkarılır;
+güncel fiyat başlangıç fiyatının yerine geçmez.
+
+Cevap `state`, `reasons`, `forecast`, `generated_at` alanlarını taşır:
+
+| `state` | Anlamı | `forecast` |
+|---|---|---|
+| `closed` | Gösterim onayı yok veya kapatılmış | `null` |
+| `unavailable` | Beklenen gün için kayıt yok | `null` |
+| `insufficient_data` | Mevcut veri yeterliliği kuralları sağlanmıyor | `null` |
+| `available` | Onaylı, güncel ve yeterli kayıt var | Tahmin bilgileri |
+
+`forecast`; olasılık, model adı, başlangıç günü/saati, başlangıç fiyatı,
+tahmin dönemi, kayıt zamanı ve başlangıç kapsamındaki sayfa sayısını taşır.
+Para ve zamanlar mevcut API sözleşmesindeki birimlerle aktarılır.
+
+**Güncellik:** İstanbul takvimine göre dünün başlangıç günü aranır. Daha
+eski kayda dönülmez; 11:00 çalışması tamamlanmadan güncel kayıt bulunmadığı
+açıklanabilir. Bozuk kayıt, kaynak uyuşmazlığı veya okunamayan dosya güvenli
+`503` cevabı üretir; istemci hatayı yalnız tahmin kartında gösterir.
+
+#### Kart ve gösterim onayı
+
+Kart, **Güncel sonuç** bölümünden sonra ve fiyat istatistiklerinden önce
+yer alır. Gösterim açıkken olasılık bir ondalık basamakla yüzde olarak
+sunulur. Başlangıç fiyatı, gerçek akşam turu zamanı ve tahmin dönemi açıkça
+yazılır; "Takip edilen başlangıç sayfaları kapsamında en az %5 düşüş"
+açıklaması bulunur. Grafik aralığı seçimi tahmin dönemini değiştirmez.
+
+Gerçek örnek: iPhone 15 128 GB'ın 5 Kasım kaydı, o akşamki **56.649 TL**
+başlangıç fiyatına ve **6–12 Kasım** dönemine aittir. Kaynak görüntü
+`data/ml/golge/goruntuler/veri_20261106_110023_673048/`, kayıt
+`data/ml/golge/tahmin_20261106_110023_673048/predictions.jsonl` içindedir.
+Gösterim kapalıyken bu kaydın olasılığı API'ye veya karta çıkarılmaz.
+
+Gösterim varsayılan kapalıdır. Planlanan açılış komutu
+`python -m app.ml shadow-display --evaluation <KESIN_RAPOR_KLASORU>`:
+
+- Rapor bütünlüğünü, ön kayıtlı modeli, görüntünün İstanbul tarihinin
+  **5 Ocak 2027** olmasını ve kapı sonucunun `met` olmasını doğrular.
+  Çalıştırma tarihi de 5 Ocak veya sonrası olmalıdır.
+- Başarılı doğrulama kayıt kökünde `gosterim_onayi.json` oluşturur; onay
+  kesin rapor ve model SHA değerlerine bağlanır. Başka raporla sessizce
+  değiştirilmez; başarısız komut onay oluşturmaz.
+- `shadow-display --disable` gösterimi tekrar kapatır. Bu işlemler resmi
+  tahmin veya değerlendirme dosyalarını değiştirmez.
+
+Bu komutlar henüz yoktur; bugün çalıştırılacak komut olarak verilmez.
+
+#### Uygulama sırası ve kabul kontrolleri
+
+- **7.2:** ortak okuyucu, gösterim onayı komutu, API ve yerel istemci
+  sözleşmesi. **7.3:** kart, durum açıklamaları ve tahmin hatasının fiyat
+  ekranından ayrılması. **7.4:** bütün akış ve kullanım belgeleri.
+- Her kod adımında tam test ve biçim kontrolleri yapılır. Gösterim kapalıyken
+  cevapta olasılık bulunmaması; yeni günde eski oranın kaybolması ve yeni
+  kayıtla yenilenmesi sınanır.
+- Kısa geçmiş, fazla eksik gün, eğitimde görülmemiş aile; bozuk hash,
+  yabancı model, yinelenen anahtar ve eksik kaynak görüntü sınanır.
+- Uygun olmayan raporla açılışın reddi ve kapatmanın etkisi; telefon
+  değişiminde/API hatasında önceki olasılığın kalmaması sınanır.
+- İstek sırasında eğitim, tahmin, pickle yükleme veya dış ağ erişimi
+  yapılmadığı denetlenir.
+
+7.2–7.4, 6.5 kapanmadan sırayla ilerleyebilir. 31 Aralık temel işler hedefi,
+6.5 haftalık izleme, 9.1 işletim kontrolleri, Docker kapsam planı ve sunum
+hazırlığı korunur. Kesin gösterim kararı **5 Ocak** değerlendirmesine bağlıdır.
 
 ## 10. Çalışma ve Git disiplini
 

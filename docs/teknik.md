@@ -58,7 +58,7 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 | `catalog.json` | Keşfin doğruladığı ürünler ve sayfalar | Keşif (elle yazılmaz) |
 | `runtime.json` | Zaman aşımı, tekrar deneme, istekler arası bekleme (3 sn) | Kullanıcı, nadiren |
 | `market_history.json` | Bir defalık Cimri alımı: `product_key`, URL ve beklenen Cimri kimliği. 58 eşleştirme: 57'si 8 Ekim alımında, Galaxy S24 FE 128 GB 2 Kasım son alımında doğrulandı; Galaxy S25 512 GB ve Redmi Note 14 Pro 5G 256 GB eşleştirmesiz ([ayrıntı](#eşleştirme-dosyası)). | Araştırma ve gerçek çıktı kontrolüyle |
-| `shadow.json` | Gölge mod: başlangıç günü (27 Ekim 2026), dondurulan modelin ön kayıtlı manifest SHA-256'sı, model ve 2 Kasım kanıt klasörlerinin yolları (Git dışı `artifacts/`) ve resmi kayıt klasörü (`data/ml/golge`). Ayrıntı: [Gölge mod tahmin kaydı](#gölge-mod-tahmin-kaydı-python--m-appml-shadow-predict). | Kullanıcı, nadiren; model değişmez |
+| `shadow.json` | Gölge mod: başlangıç günü (27 Ekim 2026), dondurulan modelin ön kayıtlı manifest SHA-256'sı, model ve 2 Kasım kanıtlarının kalıcı kopya yolları (`data/ml/golge/kanitlar/`, Git dışı) ve resmi kayıt klasörü (`data/ml/golge`). Ayrıntı: [Gölge mod tahmin kaydı](#gölge-mod-tahmin-kaydı-python--m-appml-shadow-predict). | Kullanıcı, nadiren; model değişmez |
 
 ### Ortak parçalar: `app/`
 
@@ -157,8 +157,10 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 | `experiment.py` | Etiket/girdiden bölmeyi yeniden üretip kanıt dosyalarıyla karşılaştırır; hazır katlarda eğitim/kalibrasyon/doğrulama akışını, birleşik ölçütleri, güven aralıklarını ve seçim önerisini yürütür. Saklı test ve kendi serimiz puanlanmaz. |
 | `final.py` | Deneyin seçim sonucundan modeli türetir, son dilimlerle dondurur, dondurulan modeli yalnız denetimlerden sonra yükler ve saklı testi bir kez puanlar. |
 | `shadow.py` | Gölge mod: ön kayıtlı SHA-256'sı ve kanıt zinciri doğrulanmış dondurulan modeli açar, veri görüntüsünden kendi serimizin girdilerini bellekte hesaplar, kayıtsız her (ürün, gün) için olasılık ve gerekçe üretir, değişmeyen tahmin klasörünü yazar/yeniden doğrular ve resmi kayıtlardaki anahtarları çıkarır. Veritabanı, ağ ve pazaryeri katmanı yüklemez. |
+| `daily.py` | Günlük gölge akışı: kısa ortak tarama kilidi altında salt okunur görüntü, sınırlı tur/DB bekleme ve ardından mevcut gölge tahmin komutu; her çalışmada tarihli log. Kayıtlı ürün-günleri yeniden yazmaz. |
+| `shadow_evaluation.py` | Kayıtlı olasılıkları yeni görüntünün gerçek sonuçlarıyla eşleştirir; kayıt girdilerini yeniden hesaplayıp doğrular, puan/kapı/sağlık raporunu yeni klasöre yazar ve yeniden okur. DB/ağ, pickle, eğitim veya yeni tahmin kullanmaz. |
 | `reporting.py` | Etiket, girdi, bölme, deney, dondurulan model ve saklı test için belirlenimci JSON/JSONL, Türkçe Markdown ve en son yazılan parmak izli başarı manifesti; çıktıların yeniden doğrulanması. `split_plan_files` bölme yazımıyla deneyin bayt karşılaştırmasına ortak dosya içeriği üretir. |
-| `__main__.py` | `snapshot` yalnız `API_DATABASE_URL` okuma hesabıyla görüntü alır; `labels`/`features` görüntüden, `split` etiket/girdiden, `experiment` etiket/girdi/bölme klasörlerinden, `freeze` ve `final-test` ayrıca deney/model klasöründen, `shadow-predict` bir veri görüntüsü ve ayar dosyasındaki model/kanıt klasörlerinden ağsız çalışır. Son yedi komut DB katmanı/sürücüsünü yüklemez; model kütüphaneleri yalnız deney, dondurma, saklı test ve gölge tahmin yollarında yüklenir. Çıkış kodları [ML hazırlığı](#ml-hazırlığı) bölümündedir. |
+| `__main__.py` | `snapshot` yalnız `API_DATABASE_URL` okuma hesabıyla görüntü alır; `labels`/`features` görüntüden, `split` etiket/girdiden, `experiment` etiket/girdi/bölme klasörlerinden, `freeze` ve `final-test` ayrıca deney/model klasöründen çalışır. `shadow-predict` görüntü ve model/kanıt klasörlerinden tahmin üretir; `shadow-evaluate` kayıtları yeni görüntüyle değerlendirir. Dosyadan çalışan bu komutlar DB katmanını yüklemez. `shadow-daily` görüntü + tahmin akışını ve loglamayı yürütür; yalnız görüntü aşaması okuma bağlantısı kullanır. Çıkış kodları ilgili [ML hazırlığı](#ml-hazırlığı) alt bölümündedir. |
 
 ### Kurulum ve zamanlayıcı: `scripts/`
 
@@ -166,6 +168,7 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 |---|---|
 | `zamanlayici_kur.ps1` | Fiyat toplama turunu Windows Görev Zamanlayıcı'ya kurar (her gün 10:00 ve 22:00, penceresiz); `-Kaldir` ile siler. Ayarları [Zamanlanmış tur](#zamanlanmış-tur-görev-zamanlayıcı) bölümündedir. |
 | `kesif_zamanlayici_kur.ps1` | Haftalık keşfi Görev Zamanlayıcı'ya kurar (her Pazar 14:00, penceresiz, kaçan çalışmayı telafi etmez). Seçeneksiz kurulum önizleme (`--dry-run`), `-OtomatikKabul` otomatik kabul (`--auto-accept`) modunu kurar; `-Kaldir` siler. Ayarları [Zamanlanmış keşif](#zamanlanmış-keşif-görev-zamanlayıcı) bölümündedir. |
+| `golge_zamanlayici_kur.ps1` | Günlük gölge tahmin görevini kurar (11:00, penceresiz, uygun oturumda kaçan tetiklemeyi telafi eder); kullanıcı ortamında `API_DATABASE_URL` ister. `-Kaldir` ile siler. Ayarları [günlük gölge çalışması](#günlük-gölge-çalışması-python--m-appml-shadow-daily) bölümündedir. |
 | `api_okuma_rolu.sql` | Yönetici hesabıyla çalıştırılan, tek işlemde rol/SELECT izinlerini hazırlayan ortam kurulumu. Yeni tablo veya migration oluşturmaz; fiyat/katalog satırlarını değiştirmez. Üretimde `fiyat_takip_api`, `_test` DB'de `fiyat_takip_api_test`; mevcut ayrıcalıklı/üye/sahip veya yazma yetkili rolü reddeder. |
 
 ### Testler ve CI
@@ -3329,6 +3332,19 @@ Adımın gönderim ve kapanış durumu
 [planda](../proje_plani.md#gölge-mod-kalan-sıra-6-4-kasım-planı) tutulur.
 Test sonucu bu işletim doğrulamasının yerine geçmez.
 
+İlk otomatik günlük çalışma 6 Kasım'da doğrulandı. Görevin son çalışma
+zamanı o gün 11:00, durumu `Ready`, son sonucu 0; aynı çalışmanın
+`data/logs/golge_2026-11-06_11-00-02.log` dosyasında zamanlanmış başlık ve
+son çıkış 0 vardır. Logun son yazım saati 11:00:29'dur (İstanbul).
+Görüntü `data/ml/golge/goruntuler/veri_20261106_110023_673048/`, yeni resmi
+kayıt `data/ml/golge/tahmin_20261106_110023_673048/` altındadır.
+Görüntü/kayıt/model parmak izleri, kayıt sözleşmesi, anahtar tekilliği ve
+önceki resmi dosyaların değişmediği doğrulandı. Sayılar
+[README Güncel kapsam](../README.md#-güncel-kapsam) tablosundadır.
+Görev kanıtı `artifacts/golge_gorev_durum_20261106.json`, dosya denetimi
+`artifacts/golge_ilk_otomatik_denetim_20261106.json` içindedir. Denetim
+yalnız dosya okudu; DB/ağ, pickle veya yeni tahmin kullanmadı.
+
 ### Gölge değerlendirmesi (`python -m app.ml shadow-evaluate`)
 
 `app/ml/shadow_evaluation.py`, önceden dosyaya yazılmış olasılıkları yeni
@@ -3455,6 +3471,67 @@ eşikler değiştirilmedi; bu ara sonuçtan kesin karar verilmez.
 
 Gönderim durumu
 [planda](../proje_plani.md#gölge-mod-kalan-sıra-6-4-kasım-planı) tutulur.
+
+### Gölge işletiminde kontrol komutları
+
+Kontrol takvimi ve kabul ölçütleri [6.5 planındadır](../proje_plani.md#65-kontrol-planı).
+Aşağıdaki komutlar proje kökünde görevi ve yerel dosyaları yalnız okur;
+görevi başlatmaz veya yeniden kurmaz:
+
+```powershell
+$shadowTask = Get-ScheduledTask -TaskPath '\FiyatTakip\' -TaskName 'GolgeTahmin'
+$shadowTaskInfo = Get-ScheduledTaskInfo -TaskPath '\FiyatTakip\' -TaskName 'GolgeTahmin'
+$shadowTask | Select-Object TaskName, State
+$shadowTaskInfo | Select-Object LastRunTime, LastTaskResult, NextRunTime
+$shadowLog = Get-ChildItem -LiteralPath 'data\logs' -Filter 'golge_*.log' |
+    Sort-Object LastWriteTime -Descending | Select-Object -First 1
+if ($shadowLog) {
+    $shadowLog.FullName
+    Get-Content -LiteralPath $shadowLog.FullName -Encoding UTF8 -Tail 30
+}
+```
+
+En yeni log elle çalışmaya da ait olabilir. Dosyanın başlığındaki tarih ve
+`(zamanlanmış)` ifadesi, görev zamanı ve sondaki `Çıkış kodu: 0` birlikte
+okunur. Kısa görünüm başlığı içermiyorsa tam log okunur:
+
+```powershell
+if ($shadowLog) {
+    Get-Content -LiteralPath $shadowLog.FullName -Encoding UTF8
+}
+```
+
+Haftanın loglarını görmek için ilk komuttaki `Select-Object -First 1`
+sınırını kaldırıp ilgili tarihli dosyalar seçilir. `LastTaskResult` tek
+başına sonucun bugünkü çalışmaya ait olduğunu göstermez. Görev hâlâ
+`Running` ise log henüz son çıkışı taşımayabilir; günlük komutun tur bekleme
+aralığı 5 dakika, üst sınırı 90 dakika, görevin süre sınırı 2 saattir.
+Çalışan işi kesmek veya `tahmin.lock` dosyasını silmek kontrol adımı değildir.
+
+Yeni değerlendirme için [gölge değerlendirmesi bölümündeki](#gölge-değerlendirmesi-python--m-appml-shadow-evaluate)
+`snapshot` → `shadow-evaluate` komutları kullanılır. Görüntü gerçek
+veritabanını yalnız okur; kullanıcı bu komutları toplama/keşif bittikten
+sonra çalıştırır. `snapshot` çıkış 3 verirse değerlendirmeye geçilmez,
+diğer iş bittikten sonra yeni zaman damgasıyla tekrar denenir. Her rapor
+yeni klasöre yazılır; eski rapor ve tahminlere dokunulmaz.
+
+Başarılı değerlendirmeden sonra aynı komut bloğunun `$shadowReport`
+değişkeniyle özet alanları okunabilir. Bu okuma, raporu yeniden üretmez:
+
+```powershell
+$shadowReview = Get-Content -LiteralPath (Join-Path $shadowReport 'report.json') -Raw -Encoding UTF8 |
+    ConvertFrom-Json
+$shadowReview.summary
+$shadowReview.health.timing
+$shadowReview.health.missing_records.Count
+$shadowReview.health.incomplete_folders
+$shadowReview.gate
+```
+
+Günlük ayrıntı `health.per_day`, kaynak manifestleri `input.records`
+alanındadır; okunabilir tablolar `report.md` içindedir. Çıkış kodlarının
+anlamı ilgili komut bölümündedir. Geçerli bir raporun kapısı
+`not_evaluable` veya `not_met` olabilir; bu sonuçlar komut hatası değildir.
 
 ## Testler ne kanıtlar, ne kanıtlamaz
 

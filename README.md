@@ -6,15 +6,16 @@
 Trendyol ve Hepsiburada’daki akıllı telefonları keşfeden, fiyat ve stok
 bilgilerini düzenli toplayıp PostgreSQL’de saklayan bir proje. Takip edilen
 sayfalardan son toplanan teklifleri karşılaştırır ve fiyat geçmişi oluşturur.
-Uzun vadeli hedef, bu geçmişten telefonun yakında indirime girme olasılığını
-hesaplamaktır.
+Dondurulmuş indirim olasılığı modeli kendi verimizde gölge modda sınanır;
+tahminler dosyalara kaydedilir ve gerçek sonuçlarla karşılaştırılır.
 
 > ✅ Keşif, fiyat toplama, veritabanı, yerel API ve Streamlit ekranı tamamlandı
 > ve gerçek verilerle doğrulandı. R2 + Platt modeli donduruldu; Cimri saklı
-> testi çalıştırılıp doğrulandı. Kendi verimizde gölge tahmin kaydı, günlük
-> komut ve görev kurma betiği kodlandı; ilk resmi çalışma doğrulandı.
-> Yinelenmeme kontrolü doğrulandı ve günlük görev kuruldu. Ekranda tahmin yok.
-> İlk gerçek gölge değerlendirmesi bağımsız doğrulandı; yeterli veri birikiyor.
+> testi çalıştırılıp doğrulandı. Gölge tahmin kaydı, günlük komut ve görev
+> kurulumu tamamlandı; elle yapılan ilk resmi çalışma, yinelenmeme kontrolü ve ilk
+> gerçek değerlendirme raporu bağımsız doğrulandı. İlk otomatik günlük
+> çalışma da 6 Kasım'da doğrulandı. Ekranda tahmin yok; kesin gösterim değerlendirmesi
+> [plana göre](proje_plani.md#gölge-mod-kalan-sıra-6-4-kasım-planı) 5 Ocak 2027'de yapılacak.
 
 ## ✨ Özellikler
 
@@ -25,7 +26,7 @@ hesaplamaktır.
 - 🏷️ **Teklif seçimi:** ürün sayfasındaki uygun satıcı tekliflerini karşılaştırır;
   seçilen fiyatı, satıcıyı ve stok durumunu kaydeder.
 - ⏰ **Düzenli toplama:** Windows Görev Zamanlayıcı ile günde iki fiyat turu ve
-  haftalık keşif çalışır.
+  haftalık keşif çalışır; günlük gölge tahmin görevi de kuruludur.
 - 🗄️ **Kalıcı kayıt:** sonuçları tur ve sayfa düzeyinde saklar; tekrar kayıtları
   ve kapanmış sonuçların değiştirilmesini veritabanı kurallarıyla engeller.
 - ⚖️ **Güvenli karşılaştırma:** cevap veren sayfa kümesi değişen turları fiyat
@@ -36,6 +37,11 @@ hesaplamaktır.
   veri yeterliliği açıklanan istatistikleri salt okunur sunar; Streamlit ekranı
   telefon seçimi, teklif/istatistik kartları ve iki grafik gösterir. Doğrulanmış
   satıcı bağlantısını açar; sıfır fiyat farkını gri ve oksuz gösterir.
+- 🧪 **Gölge tahmin ve değerlendirme:** dondurulan model, salt okunur veri
+  görüntüsünden her ürün ve başlangıç günü için sonraki 7 günde en az %5
+  fiyat düşüşü olasılığını bir kez kaydeder. Sonraki görüntüyle kayıtlı
+  tahminlerin gerçek sonuçları, veri yeterliliği ve kapı koşulları raporlanır;
+  olasılıklar ekranda gösterilmez.
 
 ## 🔄 Çalışma akışı
 
@@ -48,33 +54,41 @@ flowchart LR
     E --> F["Yerel salt okunur API"]
     F --> G["Yerel API istemcisi"]
     G --> H["Streamlit telefon ekranı"]
+    E --> I["Salt okunur veri görüntüsü"]
+    I --> J["Dondurulan modelle gölge tahmin"]
+    J --> K["Değişmez tahmin kayıtları"]
+    I --> L["Kayıtlı tahminleri değerlendirme"]
+    K --> L
+    L --> M["Kapı ve sağlık raporu"]
     classDef targets fill:#fff3bf,stroke:#b08900,color:#1b4332
     classDef processing fill:#d8f3dc,stroke:#2d6a4f,color:#1b4332
     classDef records fill:#dbeafe,stroke:#2563eb,color:#172554
     classDef preview fill:#f3e8ff,stroke:#9333ea,color:#581c87
     class A targets
-    class B,D,F,G processing
-    class C,E records
-    class H preview
+    class B,D,F,G,J,L processing
+    class C,E,I,K records
+    class H,M preview
 ```
 
 Telefonlar marka, model ve kapasite düzeyinde takip edilir. Keşif hangi
 sayfaların izleneceğini belirler; toplama bu sayfaların fiyat, stoksuzluk veya
 hata sonucunu kaydeder. Cimri geçmişi bu akışın gözlemleriyle birleştirilmez.
+Gölge tahmin ve değerlendirme ayrı dosyalarla yürür; veritabanına yazmaz ve
+Streamlit ekranına olasılık göndermez.
 
 ## 🛠️ Teknolojiler
 
 | Teknoloji | Görevi |
 |---|---|
-| Python 3.13 | Keşif, fiyat toplama ve aktarım uygulaması |
+| Python 3.13 | Keşif, fiyat toplama, aktarım ve ML uygulaması |
 | curl_cffi · BeautifulSoup4 | HTTP erişimi ve sayfa ayrıştırma |
 | Pydantic | Veri şekilleri ve kimlik sözleşmelerinin doğrulanması |
 | PostgreSQL 17 · Psycopg 3 | Kalıcı kayıt, SQL kuralları ve işlemler |
 | FastAPI · Uvicorn · Psycopg Pool | Yerel, salt okunur API ve bağlantı havuzu |
 | HTTPX | Yalnız yerel API'den veri alan doğrulayıcı istemci |
 | Streamlit · Altair | Telefon ekranı, ayrı fiyat grafikleri ve yenileme |
-| NumPy · scikit-learn · LightGBM | ML deneyleri (hazırlık sürüyor; ekranda tahmin yok) |
-| Windows Görev Zamanlayıcı | Günlük toplama ve haftalık keşif |
+| NumPy · scikit-learn · LightGBM | Model deneyleri, dondurulan R2 + Platt ve gölge tahmin/değerlendirme; ekranda tahmin yok |
+| Windows Görev Zamanlayıcı | Fiyat toplama, haftalık keşif ve günlük gölge tahmin görevi |
 | pytest · Black · Flake8 · GitHub Actions | Otomatik testler ve kod denetimleri |
 
 ## 🚀 Hızlı başlangıç
@@ -89,6 +103,10 @@ python -m venv .venv
 
 Veritabanı kurulumu, zamanlanmış görevler, keşif, fiyat turu, API ve ekranın
 başlatılması [teknik rehberde](docs/teknik.md#komutlar) anlatılır.
+Veritabanı testleri ayrı `_test` bağlantıları ister; tanımlı değillerse ilgili
+testler atlanır ([test ortamı](docs/teknik.md#testler-ve-ci)). Gölge modun
+yerel model ve kanıt dosyaları Git dışındadır; gerekli yollar ve sürüm
+kontrolleri [gölge mod rehberindedir](docs/teknik.md#gölge-mod-tahmin-kaydı-python--m-appml-shadow-predict).
 
 ## 📊 Güncel kapsam
 
@@ -117,6 +135,7 @@ başlatılması [teknik rehberde](docs/teknik.md#komutlar) anlatılır.
 | ML saklı test desteği | 4 Kasım: 61 olumlu pencere kümesi; bağımsız gerçek düşüş sayısı değildir. En az 5 küme eşiğine ulaşan ürün 0/56; ürün makro puanları hesaplanmadı. POCO 2 kümeyle yetersiz; Apple, Samsung ve Xiaomi marka kırılımları destekli. Kalibrasyon ve kapsam sınırları [sonuç değerlendirmesinde](docs/teknik.md#4-kasım-2026-saklı-test-sonucu). |
 | Gölge mod ilk deneme kaydı | 4 Kasım, 12:57 UTC görüntüsü (son kapanmış gün 3 Kasım), kullanıcı terminalinde çıkış 0: 27 Ekim–3 Kasım kendi başlangıçları için 398 kayıt, 389 olasılık (9 satır 30 günden kısa geçmişli), 368 gösterilebilir. Deneme klasörüdür, resmi kayıt değildir. Parmak izleri, girdiler (`features` çıktısıyla 398/398 aynı) ve olasılıklar (`model.json` katsayılarından, pickle açılmadan; en çok 1×10⁻¹⁶ fark) bağımsız doğrulandı. Etiketler okunmadı. |
 | Gölge mod ilk resmi kayıt | 5 Kasım, 10:57 UTC görüntüsü (son kapanmış gün 4 Kasım), kullanıcı terminalinde `shadow-daily`, çıkış 0: 27 Ekim–4 Kasım için 448 ürün-gün kaydı, 438 olasılık, 416 gösterilebilir; 50 kayıt ertesi gün, 398 geç/geriye dönük. Dosya ve model/kanıt parmak izleri doğrulandı; 448/448 girdinin görüntüden yeniden hesabı birebir, 438 olasılığın `model.json` katsayılarından pickle açılmadan hesabında en büyük fark 1,67×10⁻¹⁶. Kendi gerçek sonuçları kullanılmadı, başarı puanı hesaplanmadı; yinelenmeme kontrolü ve görev kurulumu doğrulandı. |
+| Gölge mod ilk otomatik çalışma | 6 Kasım 11:00 görevi; zamanlanmış log 11:00:02–11:00:29 (İstanbul), uygulama çıkışı ve görev sonucu 0. Son kapanmış gün 5 Kasım: 51 yeni ürün-gün kaydı, 50 olasılık, 49 gösterilebilir; yeni kayıtların tamamı ertesi gün kaydedildi. Önceki 448 kayıt dosyası değişmedi; toplam 499 tekil resmi anahtar. Görüntü/kayıt/model parmak izleri, kayıt sözleşmesi ve tekillik doğrulandı; model ve ekran değişmedi. |
 | Gölge mod ilk değerlendirme kapsamı | 5 Kasım 13:44 UTC görüntüsü, kullanıcı terminalinde çıkış 0: 448 kayıt doğrulandı; y_sabit etiketi 96 satırda 0/1, 352 satırda NULL. Asıl sonuç 27–28 Ekim'e ait 90 gösterilebilir satır, 10 olumlu (%11,11), 6 olumlu pencere kümesi. Eşleşmiş y_sabit/y_izlenen etiket farkı 2 satır. Bütün girdiler görüntüden ve iki etiket ham turlardan bağımsız doğrulandı; puanlar stdlib ile yeniden hesaplandı, ilk kayıt dosyaları değişmedi. |
 | Gölge mod ilk değerlendirme puanları | 5 Kasım asıl sonuç (erken ara rapor): R0 AP 0,1111 / Brier 0,0989 / log loss 0,3493; R2 + Platt AP 0,2951 / Brier 0,0984 / log loss 0,3482 / Brier skill 0,0045. Ortalama olasılık %21,04, gerçekleşme %11,11 (fark 9,93 yüzde puanı); destekli kovada en büyük fark 15,68 yüzde puanı. Kapı değerlendirilemedi: süre/dönem/olay desteği yetersiz; kalibrasyon koşulları da bu küçük örnekte sınır dışında. AP farkı aralığı kısa dönem nedeniyle NULL. Model ve eşikler değişmedi; bu rapor kesin başarı/başarısızlık kararı değildir. |
 | Gölge mod olasılık dağılımı | 4 Kasım deneme kaydı, yalnız bilgi: R2 + Platt ortalaması 0,168, medyan 0,158, en çok 0,404; eğitim olumlu oranı (R0) 0,102. 389 olasılığın 118'i ≥ 0,20, 12'si ≥ 0,30. Ortalamanın R0'ın üstünde olması [planda ölçülen girdi kaymasıyla](proje_plani.md#gölge-mod-kalan-sıra-6-4-kasım-planı) aynı yöndedir; nedenleri bu kayıttan ayrıştırılamaz ve kendi verimizde doğruluk veya kalibrasyon göstermez. |
@@ -145,8 +164,10 @@ canlı ağa çıkmaz; veritabanı testleri yalnız test veritabanını kullanır
 | FastAPI ve Streamlit ile verileri sunma ve görüntüleme | ✅ Tamamlandı |
 | ML öncesi bakım ve otomatik güvenli keşif kabulü | ✅ Tamamlandı |
 | Proje yapısının sadeleştirilmesi | ✅ Tamamlandı (26 Ekim) |
-| Sürekli çalışma ortamı | 🔄 Dizüstü sürekli açık kararı uygulandı; işletim doğrulaması sürüyor ([plan](proje_plani.md)) |
-| ML ile indirim olasılığı tahmini | 🔄 R2 + Platt donduruldu, Cimri saklı testi çalıştırılıp doğrulandı; ön kayıt ve sonuç belgeleri gönderildi, CI doğrulandı. Gölge tahmin kaydı, günlük komut ve görev betiği kodlandı; ilk resmi çalışma, yinelenmeme kontrolü ve görev kurulumu doğrulandı. Ekranda tahmin gösterim kapısından sonra ([plan](proje_plani.md#gölge-mod-kalan-sıra-6-4-kasım-planı)) |
+| ML ile indirim olasılığı tahmini | 🔄 Model dondurma/saklı test ve gölge mod 6.0–6.4 tamamlandı; gönderimler ve CI doğrulandı. İlk otomatik günlük çalışma doğrulandı (6 Kasım). 6.5 izleme paralel sürüyor. 7.1 gösterim planı onaylandı ve belgelendi; belge gönderimi bekliyor. API/ekran uygulaması 7.2–7.4'te yapılacak ([plan](proje_plani.md#gösterim-kalan-sıra-7-6-kasım-planı)) |
+| Sürekli çalışma ortamı | 🔄 Aşama 9.1: görevlerin düzenli çalışmasına ilişkin işletim doğrulaması ML işleriyle paralel sürüyor ([plan](proje_plani.md)) |
+| Docker | ⏳ Planda: aşama 9.2'de kapsam ve uygulama planı ele alınacak; Docker uygulaması henüz onaylanmadı |
+| Sunum ve teslim | ⏳ Planda: iş 8, hazırlık hedefi 21–31 Aralık; biçim ve içerik netleştirilecek |
 
 ## 📚 Belgeler
 
