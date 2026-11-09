@@ -45,7 +45,7 @@ Kullanıcı arayüzde arama yaptığında canlı scraping veya model eğitimi
 | Proje yapısının sadeleştirilmesi (Bölüm 8, Adım 1–5) | ✅ Tamamlandı (26 Ekim) | `75d4732` |
 | ML öncesi ekran iyileştirmeleri 1–2 | ✅ Tamamlandı (28 Ekim) | `dd2e262`, `94045bd`, CI 40643349065 |
 | Proje mühendisliğini pekiştirme | ⏸️ Pasif (28 Ekim kararı): iş sırasında değil; kullanıcı istediğinde Oturum 2'den sürer | Program aşağıda; oturum ilerlemesi yerel devir notunda |
-| 8. ML (indirim tahmini) | 🔄 Hazırlık, model dondurma/saklı test ve gölge mod 6.0–6.4 tamamlandı; ilk otomatik günlük çalışma doğrulandı (6 Kasım). 7.1 gösterim planı belgelendi, gönderildi ve CI doğrulandı. 6.5 izleme paralel; 7.2 tamamlandı, gönderildi ve CI doğrulandı; 7.3 tek kart uygulandı, yerel kontroller geçti; gönderim onaylandı, gönderim/CI doğrulaması bekliyor; sıradaki adım 7.4 | Bölüm 9 ve kalan iş sırası |
+| 8. ML (indirim tahmini) | 🔄 Hazırlık, model dondurma/saklı test ve gölge mod 6.0–6.4 tamamlandı; ilk otomatik günlük çalışma doğrulandı (6 Kasım). 7.1–7.3 tamamlandı, gönderildi ve CI doğrulandı. 6.5 izleme paralel; 7.4 uygulama, yerel testler ve kullanıcıyla görsel kabul tamam; gönderim onaylandı; commit/push ve CI bekleniyor | Bölüm 9 ve kalan iş sırası |
 | 9. Sürekli işletim ve Docker | 🔄 Sürekli işletim kararı verildi (22 Ekim: dizüstü sürekli açık); Docker başlanmadı | Bölüm 9 |
 
 Bugünkü işletim: fiyat turu her gün 10:00 ve 22:00'de, haftalık keşif her
@@ -389,14 +389,15 @@ dosyalar, kabul koşulları ve kontroller koddan önce netleştirilip onaylanır
 | Aşama 8 — ML | 6.5 — Gölge işletim ve performans izleme | Günlük tahmin kaydı; haftalık veri/kayıt sağlığı ve model performansı raporu; ara ve kesin değerlendirme | Paralel sürer. İlk otomatik kontrol tamam; ilk haftalık kontrol 8 Kasım keşfi bittikten sonra. Hepsiburada arama düzeltmesinin ilk tam canlı sonucu da o gün incelenir. |
 | Aşama 8 — ML | 7.1 — Gösterim kapsamı ve veri akışı planı | Bir ürün örneği üzerinden kayıt → API → ekran akışı; gösterilecek tarih/kapsam, kapalı gösterim ve yetersiz veri durumları; [onaylı sözleşme aşağıda](#gösterim-kalan-sıra-7-6-kasım-planı) | ✅ Tamamlandı (6 Kasım); plan onaylandı, belgelendi, gönderildi ve aynı SHA'nın CI'ı başarılı. 7.1 kod içermedi; API 7.2, ekran 7.3 kapsamındadır. |
 | Aşama 8 — ML | 7.2 — API'den tahmin okuma | Kayıtlı tahmin ve yeterlilik bilgisinin doğrulanarak sunulması; eksik/bozuk kayıt ve kapalı gösterim davranışı | ✅ Tamamlandı (6 Kasım); ortak okuyucu, gösterim onayı, API ve yerel istemci uygulandı; yerel kontroller geçti. Kullanıcı onayıyla gönderildi, aynı SHA’nın CI’ı başarılı ([kayıt](docs/gecmis.md)). |
-| Aşama 8 — ML | 7.3 — Ekranda tahmin durumları | Onaylı API sözleşmesine bağlı ekran; tarih/kapsam açıklamaları, yeterli/yetersiz veri ve kapalı gösterim durumları | 🔄 Kullanıcının 6 Kasım uygulama isteğiyle tek kart, durum açıklamaları ve tahmin hatasının ayrılması uygulandı; tam test ve biçim kontrolleri geçti. Kullanıcı commit/push işlemini onayladı; gönderim/CI doğrulaması bekliyor. |
-| Aşama 8 — ML | 7.4 — Gösterim akışının bütün olarak doğrulanması | API/istemci/ekran uyumu, uygun ve yetersiz veri senaryoları, kapı durumları, güncel kullanım belgeleri | 7.2–7.3 sonrası. Her kod adımı zaten tam test/biçim kontrolü içerir; testler bu adıma ertelenmez. |
+| Aşama 8 — ML | 7.3 — Ekranda tahmin durumları | Onaylı API sözleşmesine bağlı ekran; tarih/kapsam açıklamaları, yeterli/yetersiz veri ve kapalı gösterim durumları | ✅ Tamamlandı (6 Kasım); tek kart ve durum/hata açıklamaları uygulandı. Kullanıcı onayıyla gönderildi; aynı SHA'nın CI'ı başarılı ([kayıt](docs/gecmis.md)). Görsel kabul 7.4'te kullanıcıyla tamamlandı. |
+| Aşama 8 — ML | 7.4 — Gösterim akışının bütün olarak doğrulanması | API/istemci/ekran uyumu, uygun ve yetersiz veri senaryoları, kapı durumları, güncel kullanım belgeleri | 🔄 Uygulama ve doğrulama tamamlandı (9 Kasım): kayıt dosyası → API → istemci → ekran testleri ve kullanım rehberi hazır; yerel tam test ve biçim kontrolleri başarılı. Yapay önizlemenin geniş/dar görünümü ve senaryo kartları kullanıcı görüntüleriyle, aralık/yenileme ve fiyat-grafik korunması kullanıcı teyidiyle doğrulandı. Kullanıcı bu gönderimi onayladı; commit/push ve CI doğrulaması bekleniyor. |
 | Aşama 9 — Sürekli işletim ve Docker | 9.1 — Sürekli işletim kanıtı | Zamanında/geç/kayıp görevlerin nedenleri ve mevcut çalışma düzeninin doğrulanması | 6.5 ve iş 7 ile paralel. İlk başarılı görev sürekli işletimin tamamlandığı anlamına gelmez; güç ayarlarına yeni müdahale ayrıca kararlaştırılır. |
 | Aşama 9 — Sürekli işletim ve Docker | 9.2 — Docker kapsam kararı ve planı | Staj kapsamı, sağlayacağı fayda, taşınacak parçalar ve veri/model kalıcılığı için karar ve gerekirse uygulama planı | Planda kalır; öncelikli gösterim işleri sonrasında ele alınır. Docker uygulamasının kapsamı ve planı henüz onaylanmadı. |
 | Proje kapanışı | İş 8 — Sunum ve teslim hazırlığı | Sistemin akışı, örnek kullanım, sonuçlar ve sınırlar; onaylı kapsamın belgelerle teslimi | Planda kalır. Sunum iskeleti önceden hazırlanabilir; hazırlık hedefi 21–31 Aralık. Biçim ve içerik ayrıca netleştirilecek. |
 
-**Takvim:** 7.1–7.2 tamamlandı, gönderildi ve CI doğrulandı.
-7.3 yerel kontrolleri geçti, gönderim onaylandı, gönderim/CI doğrulaması bekliyor; 7.4 ayrı uygulama isteğiyle ilerler.
+**Takvim:** 7.1–7.3 tamamlandı, gönderildi ve CI doğrulandı.
+7.4'ün uygulaması ve yerel/görsel doğrulaması tamamlandı; gönderim onaylandı; commit/push ve CI bekleniyor.
+[Görsel kabul adımları teknik rehberdedir](docs/teknik.md#tahmin-kartının-görsel-kabul-kontrolü).
 6.5'in kapanmasını beklemez.
 Temel geliştirmeler için **31 Aralık hedefi**, 21 Aralık haftasının
 ara raporu ve **5 Ocak 2027 kesin değerlendirme tarihi** korunur.
@@ -642,8 +643,9 @@ Bilinen riskler (6.1 ölçümü, 4 Kasım 2026 12:57 UTC görüntüsü):
 
 **7.1'in onaylı çıktısı bu sözleşmenin belgelenmesidir.** Aşağıdaki API,
 okuyucu, komut ve istemci 7.2'de tamamlandı, gönderildi ve CI doğrulandı. Kart
-7.3'te uygulandı ve yerel kontrolleri geçti; gönderim onaylandı, gönderim/CI doğrulaması bekliyor. Ekranla bütün akış doğrulaması
-7.4'te yapılacak.
+7.3'te tamamlandı, gönderildi ve CI doğrulandı. 7.4'te kayıt dosyasından
+ekrana kadar otomatik doğrulama, kullanım rehberi ve kullanıcıyla görsel
+kabul tamamlandı; gönderim onaylandı; commit/push ve CI bekleniyor.
 R2 + Platt, girdiler ve değerlendirme eşikleri değişmez. İlk sürümde seçili
 telefon için tek tahmin kartı vardır; tahmin geçmişi listesi/grafiği yoktur.
 

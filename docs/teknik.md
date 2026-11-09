@@ -2245,11 +2245,11 @@ Normal ekran (API açıkken):
 API sunucusu ve veritabanı gerektirmeyen test önizlemesi:
 
 ```powershell
-.venv\Scripts\python.exe -m streamlit run tools\ui_preview.py --server.address 127.0.0.1 --server.port 8501 --server.headless true --browser.gatherUsageStats false
+.venv\Scripts\python.exe -m streamlit run tools\ui_preview.py --server.address 127.0.0.1 --server.port 8502 --server.headless true --browser.gatherUsageStats false
 ```
 
-Proje klasöründen çalıştırılır; tarayıcıda `http://127.0.0.1:8501` açılır.
-İki ekran aynı portta birlikte başlatılmaz. Önizleme aynı `render_app`
+Proje klasöründen çalıştırılır; normal ekran `http://127.0.0.1:8501`,
+test önizlemesi `http://127.0.0.1:8502` adresindedir. Önizleme aynı `render_app`
 işlevine testteki MockTransport istemcisini verir; üretim demo modu yoktur.
 “Test verisi — gerçek fiyatlar değildir” uyarısı sürekli görünür.
 `tests/support/ui_samples.py` örnekleri AppTest ve önizleme için ortaktır; gerçek
@@ -2264,6 +2264,26 @@ Telefon/aralık seçimi, dar ekran görünümü, grafik boşlukları ve hata son
 dönüş kontrol edilir. API cevabı saatinin açık oturumda yaklaşık 30 saniyede
 değişmesi, elle Yenile'nin hemen yenilemesi ve tercihlerin korunması gözlenir.
 Terminalde Ctrl+C önizlemeyi kapatır.
+
+#### Tahmin kartının görsel kabul kontrolü
+
+Bu kontrol yalnız test önizlemesinde yapılır; gerçek gösterim onayı gerekmez.
+Geniş pencerede ve telefon genişliğine daraltılmış pencerede aşağıdaki sıra
+izlenir. Test verisi uyarısı her durumda görünmelidir.
+
+| Eylem | Beklenen sonuç |
+|---|---|
+| `Tahmin gösterimi açık (yapay)` seç | Kart Güncel sonuçtan sonra, istatistiklerden önce gelir; yüzde, başlangıç fiyatı, akşam turu, dönem ve kapsam okunur; metinler üst üste binmez. |
+| Telefonu değiştir | Yeni telefonun bilgileri gelir; önceki telefonun yüzdesi kalmaz. |
+| Grafik aralığını değiştir (örneğin 30 → 7 gün) | Yalnız ilgili grafik değişir; tahmin dönemi aynı kalır. |
+| Güncel kayıt yok, üç yetersizlik, tahmin API hatası ve bozuk cevap senaryolarını seç | Yüzde kaldırılır; gerekçe yalnız kartta görünür, mevcut fiyat ve grafikler okunabilir kalır. |
+| Açık yapay senaryoya geri dön | Uyarı kalkar ve o telefonun kartı yeniden gelir. |
+| Elle Yenile'ye bas, ardından yaklaşık 30 saniye bekle | Ekrandaki API cevap zamanı elle ve otomatik yenilenir; telefon ve grafik tercihleri korunur. |
+
+AppTest ekranın ürettiği değerleri ve durum geçişlerini denetler; tarayıcı
+yerleşimini, dar ekrandaki taşmayı veya gerçek zamanlı otomatik yenilemeyi
+görsel olarak doğrulamaz. Bu kontrollerin tamamlanma durumu
+[7.4 satırında](../proje_plani.md#kalan-iş-sırası-6-kasım-kararı) tutulur.
 
 ## SQL–API–Streamlit bağımsız denetimi
 
@@ -3593,6 +3613,70 @@ API her açık okumada onayın model bağını ve onaylı rapor dosyalarının
 hash'lerini tekrar kontrol eder. Kayıt/model ayarı değişmişse eski onay
 olasılık açmaz; rapor bozulmuşsa güvenli 503 döner. Bugün açılış koşulu
 sağlanamaz; geliştirme testleri yalnız yapay klasörlerle yapılır.
+
+#### Gösterimi işletme sırası
+
+1. Yerel [API'yi](#salt-okunur-fastapi) ve [ekranı](#başlatma-ve-test-önizlemesi)
+   başlat. Tahmin ucu eklenmeden önce açılmış API/ekran süreçlerini yeniden
+   başlat. Onay yokken kartta “Tahmin gösterimi kapalı” beklenir; gerçek
+   olasılığı görmek için test onayı veya yapay rapor kullanılmaz.
+2. Günlük `shadow-daily` görevi ve [6.5 izlemesi](../proje_plani.md#65-kontrol-planı)
+   devam eder. Kartın eklenmesi yeni eğitim başlatmaz. Resmi `tahmin_*`
+   klasörlerini, bunların kaynak `goruntuler/*/snapshot.json` dosyalarını,
+   model kanıtlarını ve onaylı değerlendirme klasörünü birlikte koru.
+   API onaylı raporu kayıtlı yolundan okur; raporu taşımak veya kaynak
+   görüntüyü silmek doğrulamayı bozabilir.
+3. **5 Ocak 2027'de** [değerlendirme komutlarıyla](#gölge-değerlendirmesi-python--m-appml-shadow-evaluate)
+   yeni salt okunur görüntü ve yeni rapor klasörü oluştur. Görüntünün İstanbul
+   tarihi 5 Ocak olmalıdır; önceki günün görüntüsünü daha sonra değerlendirmek
+   bu şartı sağlamaz. Günlük görevin yeni kayıtlarını da kapsaması için o
+   günkü görevin bitişini ve çıkış kodunu önce kontrol et.
+4. `report.md` içindeki kapı sonucunu ve veri desteğini incele. Yalnız `met`
+   (Karşılandı) sonucunda yukarıdaki `shadow-display --evaluation` komutuna
+   **rapor klasörünü** ver; çıkış `0` olmalıdır. `not_met` veya
+   `not_evaluable` sonucunda gösterim kapalı kalır; model/eşik değişikliği ayrı
+   karar ve değerlendirme planı gerektirir. Komut raporu yeniden doğrular;
+   yalnız rapor metnine bakıp onay dosyası elle hazırlanmaz.
+5. Açılıştan sonra Elle Yenile'ye bas; otomatik yenileme de en geç bir sonraki
+   başarılı okumada değişikliği görür. `available` için İstanbul takviminde
+   **dünün** yeterli kaydı gerekir. Gece yeni gün başladığında önceki oran
+   kaldırılır; 11:00 görevi bitene kadar `unavailable` olağandır. Eski güne
+   ait oranla boşluk doldurulmaz.
+6. Sorunda `shadow-display --disable` ile gösterimi kapat ve ekranı yenile.
+   `closed` cevabında `forecast=null` olmalı; yüzde kalkmalıdır. `503` yalnız
+   tahmin kartında görünüyorsa fiyat ekranı çalışmaya devam eder. Dosyaları
+   düzenleyerek veya hash'leri yenileyerek hata gizlenmez; kayıt/kaynak
+   uyuşmazlığı incelenir. Aynı doğrulanmış raporla yeniden açılabilir;
+   farklı raporla mevcut onayın değiştirilmesi reddedilir.
+
+API açıkken yalnız tahmin durumunu okumak için:
+
+```powershell
+Invoke-RestMethod -Uri 'http://127.0.0.1:8000/api/v1/products/apple_iphone_15_128gb/prediction' -MaximumRedirection 0 -TimeoutSec 10 | Select-Object state, reasons, forecast
+```
+
+Onay kapalıyken `state=closed`, `forecast` boş beklenir. Açık gösterimdeki
+durumlar ve güvenli hata cevapları [API sözleşmesinde](#salt-okunur-fastapi)
+açıklanır; bu okuma eğitim, yeni tahmin veya onay yazımı yapmaz.
+
+#### Otomatik doğrulamanın kapsamı
+
+`tests/test_api_ui_integration.py`, ayrı `_test` veritabanındaki ürün ve
+fiyatları yapay resmi tahmin, kaynak görüntü ve gösterim onayıyla birleştirir.
+Gerçek kayıt okuyucu → FastAPI → yerel istemci → Streamlit AppTest zinciri
+çalışır; yalnız test klasörü ve saat dışarıdan verilir. HTTP taşıması süreç
+içindedir; canlı API, pazaryeri veya gerçek veritabanı kullanılmaz.
+
+Bu zincir; güncel fiyatla başlangıç fiyatının ayrılmasını, üç yetersizlik
+gerekçesini, İstanbul gece yarısını, sonraki günlük kaydı, telefon/aralık
+değişimini, bozuk hash/tekrarlı anahtar/eksik kaynak sonrasında eski oranın
+kaldırılmasını, düzelme ve CLI ile kapatmayı denetler. Dosyaların değişmediği
+kontrol edilir; istek sırasında eğitim, tahmin ve pickle yükleme çağrıları
+testi düşürür. `tests/test_prediction.py` ayrıca temiz süreçte model
+kütüphanelerinin yüklenmediğini ve dış ağ açılmadığını;
+`tests/test_ml_shadow_display.py` kesin raporla açılışı, uygunsuz raporun
+reddini ve aynı/farklı rapor bağlarını sınar. Bunlar modelin canlı başarısı
+veya yukarıdaki görsel kontrolün tamamlandığı anlamına gelmez.
 
 ### Gölge işletiminde kontrol komutları
 

@@ -14,7 +14,13 @@ from app.api.schemas import PredictionResponse
 from app.database import read
 from app.ml import shadow_display as display
 from app.ui.api_client import ApiClient, ApiClientError, _validate_target
-from tests.support.shadow_display import NOW, display_case, seal_files, write_json
+from tests.support.shadow_display import (
+    NOW,
+    append_daily_record,
+    display_case,
+    seal_files,
+    write_json,
+)
 
 
 @pytest.fixture
@@ -96,10 +102,6 @@ def test_existing_eligibility_rules_hide_probabilities(tmp_path, kind, reason):
 
 
 def test_new_daily_record_becomes_available_after_old_probability_disappears(case):
-    from app.ml.dataset import write_snapshot
-    from app.ml.features import feature_rows
-    from app.ml.series import build_series
-    from app.ml.shadow_records import _summarize
     from tests.support.ml import label_snapshot
 
     now = NOW + timedelta(days=1)
@@ -107,33 +109,7 @@ def test_new_daily_record_becomes_available_after_old_probability_disappears(cas
         display.prediction_for(case.product, case.config, now)["state"] == "unavailable"
     )
     snapshot = label_snapshot(count=370, prices=[10000] * 369 + [15000])
-    digest = write_snapshot(snapshot, case.root / "goruntuler" / "veri_02")
-    day, series = build_series(snapshot)
-    own = next(item for item in series if item.source == "own")
-    feature = next(
-        item
-        for item in feature_rows(own, snapshot.products[0])
-        if item.metadata.anchor_day == day
-    )
-    row = dict(
-        case.row,
-        anchor_day=day.isoformat(),
-        anchor_at=feature.metadata.model_dump(mode="json")["anchor_at"],
-        features=feature.features.model_dump(mode="json"),
-        probabilities={"r0": 0.5, "r2_platt": 0.42},
-    )
-    folder = case.root / "tahmin_02"
-    folder.mkdir()
-    write_json(folder / "predictions.jsonl", row)
-    (folder / "report.md").write_text("Yapay yeni günlük kayıt", encoding="utf-8")
-    manifest = dict(
-        case.manifest,
-        snapshot_sha256=digest,
-        snapshot_captured_at=snapshot.captured_at.isoformat(),
-        last_closed_day=day.isoformat(),
-        summary=dict(_summarize([row]), skipped_recorded=0),
-    )
-    seal_files(folder, manifest)
+    append_daily_record(case, snapshot)
     before = {
         path: path.read_bytes() for path in case.root.rglob("*") if path.is_file()
     }
@@ -143,7 +119,7 @@ def test_new_daily_record_becomes_available_after_old_probability_disappears(cas
     assert result.state == "available"
     assert result.forecast.probability == 0.42
     assert result.forecast.reference_price_kurus == 15000
-    assert result.forecast.anchor_day == day
+    assert result.forecast.anchor_day.isoformat() == "2027-01-05"
     after = {path: path.read_bytes() for path in case.root.rglob("*") if path.is_file()}
     assert before == after
 

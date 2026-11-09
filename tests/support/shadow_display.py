@@ -28,6 +28,38 @@ def seal_files(directory, manifest):
     return hashlib.sha256((directory / "manifest.json").read_bytes()).hexdigest()
 
 
+def append_daily_record(case, snapshot, *, suffix="02", probability=0.42):
+    """Var olan kaydı değiştirmeden sonraki günün yapay resmi kaydını ekler."""
+    digest = write_snapshot(snapshot, case.root / "goruntuler" / f"veri_{suffix}")
+    day, series = build_series(snapshot)
+    own = next(item for item in series if item.source == "own")
+    feature = next(
+        item
+        for item in feature_rows(own, snapshot.products[0])
+        if item.metadata.anchor_day == day
+    )
+    row = dict(
+        case.row,
+        anchor_day=day.isoformat(),
+        anchor_at=feature.metadata.model_dump(mode="json")["anchor_at"],
+        features=feature.features.model_dump(mode="json"),
+        probabilities={"r0": 0.5, case.manifest["choice"]: probability},
+    )
+    folder = case.root / f"tahmin_{suffix}"
+    folder.mkdir()
+    write_json(folder / "predictions.jsonl", row)
+    (folder / "report.md").write_text("Yapay yeni günlük kayıt", encoding="utf-8")
+    manifest = dict(
+        case.manifest,
+        snapshot_sha256=digest,
+        snapshot_captured_at=snapshot.captured_at.isoformat(),
+        last_closed_day=day.isoformat(),
+        summary=dict(records._summarize([row]), skipped_recorded=0),
+    )
+    seal_files(folder, manifest)
+    return folder
+
+
 def display_case(root, *, prices=None, short=False, unseen=False):
     tables = label_tables(count=369, prices=prices)
     if short:
