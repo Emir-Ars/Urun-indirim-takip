@@ -1,6 +1,6 @@
 # Akıllı Telefon İndirim Takip ve Tahmin Sistemi — Proje Planı
 
-Son güncelleme: 6 Kasım 2026.
+Son güncelleme: 9 Kasım 2026.
 
 Bu belge **kararların, aşama durumunun ve sıradaki işin** tek kaynağıdır ve
 kısa tutulur. Diğer bilgiler şuralardadır:
@@ -46,7 +46,7 @@ Kullanıcı arayüzde arama yaptığında canlı scraping veya model eğitimi
 | ML öncesi ekran iyileştirmeleri 1–2 | ✅ Tamamlandı (28 Ekim) | `dd2e262`, `94045bd`, CI 40643349065 |
 | Proje mühendisliğini pekiştirme | ⏸️ Pasif (28 Ekim kararı): iş sırasında değil; kullanıcı istediğinde Oturum 2'den sürer | Program aşağıda; oturum ilerlemesi yerel devir notunda |
 | 8. ML (indirim tahmini) | 🔄 Hazırlık, model dondurma/saklı test ve gölge mod 6.0–6.4 tamamlandı; ilk otomatik günlük çalışma doğrulandı (6 Kasım). 7.1–7.3 tamamlandı, gönderildi ve CI doğrulandı. 6.5 izleme paralel; 7.4 uygulama, yerel testler ve kullanıcıyla görsel kabul tamam; gönderildi ve aynı SHA'nın CI'ı başarılı | Bölüm 9 ve kalan iş sırası |
-| 9. Sürekli işletim ve Docker | 🔄 Sürekli işletim izleniyor; Docker ile yerel web uygulaması teslim hedefi kabul edildi (9 Kasım). Bileşen seçimi ve ayrıntılı uygulama planı açık; Docker uygulaması başlamadı | Bölüm 9 |
+| 9. Sürekli işletim ve Docker | 🔄 Sürekli işletim izleniyor; 9.2 ayrıntılı Docker teslim planı onaylandı ve belgelendi (9 Kasım). 9.3–9.7 geliştirme sırası planlandı; sırada 9.3 imaj ve Compose temeli. Docker uygulaması başlamadı | Bölüm 9 |
 
 Bugünkü işletim: fiyat turu her gün 10:00 ve 22:00'de, haftalık keşif her
 Pazar 14:00'te (otomatik güvenli kabul modunda) Windows Görev Zamanlayıcı ile
@@ -249,7 +249,7 @@ rehberde, o günkü tartışması arşivdedir.
 | 5 Kasım | 6.4 ayrıntılı uygulama planı onaylandı: süre ilk–son etiketli başlangıcın dahil takvim aralığıdır, Kasım'ın tamamı aralıkla kapsanır, Kasım dışında en az 14 farklı etiketli gün aranır. Süre/dönem/olay desteği yetersizse değerlendirilemedi; yeterli veride ölçülen başarısız performans koşulu karşılanmadı, eksik ölçü değerlendirilemedi, tümü sağlanırsa karşılandı. | Kullanıcı sayım ve üç durum yorumunu koddan önce açıkça onayladı; sayısal eşikler, model ve kesin tarih değişmedi. |
 | 6 Kasım | Yol haritası öncelikleri onaylandı: R2 + Platt sabitken 6.5 haftalık performans/işletim izlemesi sürer (ilk kontrol 8 Kasım keşfi sonrası); sıradaki plan 7.1, ardından 7.2–7.4 gösterim işleri. 9.1 işletim paralel; 9.2 Docker kapsam/uygulama planı ve iş 8 sunum planda kalır. Model iyileştirmesi kalıcı sorun görülürse ayrı planlanır; 5 Ocak tarihi değişmez. | Kullanıcı önerilen sırayı kabul etti; kısa dönem sonucu nedeniyle yeni eğitime öncelik verilmedi. Bu karar ayrıntılı kod uygulaması veya commit/push onayı değildir. |
 | 6 Kasım | 7.1 gösterim planı onaylandı: tek tahmin kartı; İstanbul takvimine göre yalnız dünün kaydı, eski orana dönüş yok; ayrı API ucu ve mevcut kayıttan okuma; 5 Ocak kesin raporuna bağlı komutla açılış ve kapatma. 7.1'in uygulaması yalnız kararların belgelenmesidir; API/CLI/ekran 7.2–7.4'te geliştirilir. | Kullanıcı planın uygulanmasını istedi. Seçili ürünün hangi fiyat/döneme göre değerlendirildiği açık kalır; geçersiz veya onaysız olasılık kullanıcıya çıkmaz. Commit/push onayı verilmedi. |
-| 9 Kasım | 9.2 için [Docker ve teslim hedefi](#docker-ve-teslim-hedefi-92) kabul edildi: yerel web uygulamasının kurulumu tekrarlanabilir ve kolay başlatılabilir teslimi. Bileşen seçimi ve ayrıntılı uygulama planı sonraki iş; bu karar kod/kurulum veya gönderim onayı değildir. | Kullanıcı önerilen teslim biçimini beğenip kabul etti; staj sunumu ve başka bilgisayarda tekrarlanabilir çalıştırma hedefleniyor. |
+| 9 Kasım | [9.2 ayrıntılı Docker teslim planı](#docker-ve-teslim-hedefi-92) onaylandı: ayrı gerçek veri kopyası, tek PowerShell girişi, Docker'a özel gizli parola dosyaları ve ilk kurulumda internet; 9.3–9.7 sırası belirlendi. 9.2 yalnız planı ve çalışma kuralı istisnasını belgeler; geliştirmeler adım adım ilerler, gönderim ayrıca onaylanır. | Kullanıcı planın uygulanmasını istedi; canlı veri toplama ve dondurulan ML düzeni korunarak başka bilgisayarda tekrarlanabilir yerel web uygulaması teslim edilecek. |
 
 ### Bilerek değiştirilmeyen davranışlar
 
@@ -381,9 +381,10 @@ Docker**. ML içindeki iş 6 gölge mod, **6.0–6.5** onun alt adımlarıdır;
 ML hazırlığı, dondurma ve gölge modun tamamlanan adımları Bölüm 9'da;
 gönderim/kapanış kanıtları [geçmiştedir](docs/gecmis.md).
 
-Aşağıdaki öncelik sırası ve adım başlıkları onaylandı. Bu, ayrıntılı
-uygulama planlarının veya kodun onayı değildir; her uygulama adımında amaç,
-dosyalar, kabul koşulları ve kontroller koddan önce netleştirilip onaylanır.
+Aşağıdaki öncelik sırası ve adım başlıkları onaylandı. Gösterim işinin
+ayrıntılı sözleşmesi ve 9.2 Docker planı Bölüm 9'dadır. Her adımın amacı,
+ilgili dosyaları ve doğrulaması başlamadan önce açıklanır; adımlar ayrı
+tamamlanıp kullanıcıya sunulur. Commit/push onayı ayrıca alınır.
 
 | Ana başlık | İş / adım | Somut çıktı | Sıra ve durum |
 |---|---|---|---|
@@ -393,16 +394,22 @@ dosyalar, kabul koşulları ve kontroller koddan önce netleştirilip onaylanır
 | Aşama 8 — ML | 7.3 — Ekranda tahmin durumları | Onaylı API sözleşmesine bağlı ekran; tarih/kapsam açıklamaları, yeterli/yetersiz veri ve kapalı gösterim durumları | ✅ Tamamlandı (6 Kasım); tek kart ve durum/hata açıklamaları uygulandı. Kullanıcı onayıyla gönderildi; aynı SHA'nın CI'ı başarılı ([kayıt](docs/gecmis.md)). Görsel kabul 7.4'te kullanıcıyla tamamlandı. |
 | Aşama 8 — ML | 7.4 — Gösterim akışının bütün olarak doğrulanması | API/istemci/ekran uyumu, uygun ve yetersiz veri senaryoları, kapı durumları, güncel kullanım belgeleri | ✅ Tamamlandı (9 Kasım): kayıt dosyası → API → istemci → ekran testleri ve kullanım rehberi hazır; yerel tam test ve biçim kontrolleri başarılı. Yapay önizlemenin geniş/dar görünümü ve senaryo kartları kullanıcı görüntüleriyle, aralık/yenileme ve fiyat-grafik korunması kullanıcı teyidiyle doğrulandı. Kullanıcı onayıyla gönderildi; aynı SHA'nın CI tam test paketi, Black ve Flake8 kontrolleri başarılı ([kayıt](docs/gecmis.md)). |
 | Aşama 9 — Sürekli işletim ve Docker | 9.1 — Sürekli işletim kanıtı | Zamanında/geç/kayıp görevlerin nedenleri ve mevcut çalışma düzeninin doğrulanması | 6.5 ile paralel sürer. 6–9 Kasım denetiminde beklenen işler zamanında tamamlandı; görev ayarı değiştirilmedi. Önceki geç turların nedeni açık kalır; güç ayarlarına yeni müdahale ayrıca kararlaştırılır. |
-| Aşama 9 — Sürekli işletim ve Docker | 9.2 — Docker kapsam kararı ve planı | Staj kapsamı, sağlayacağı fayda, taşınacak parçalar ve veri/model kalıcılığı için karar ve uygulama planı | Teslim hedefi kabul edildi (9 Kasım); [ayrıntı](#docker-ve-teslim-hedefi-92). Sırada bileşen seçimi ve ayrıntılı plan var; kod/kurulum başlamadı. |
+| Aşama 9 — Sürekli işletim ve Docker | 9.2 — Docker kapsam kararı ve planı | Teslim mimarisi, veri/model kalıcılığı, parola istisnası ve numaralı uygulama sırası | ✅ Plan belgelemesi tamamlandı (9 Kasım); [sözleşme](#docker-ve-teslim-hedefi-92). Gönderim/CI kayıtları [geçmiştedir](docs/gecmis.md); Docker kodu veya kurulum değişikliği yapılmadı. |
+| Aşama 9 — Sürekli işletim ve Docker | 9.3 — İmaj ve Compose temeli | Dockerfile, .dockerignore, compose.yaml; sabit sürümler, Linux bağımlılık kilidi, kullanıcı ve ağ düzeni | Sıradaki geliştirme. İmaj kurulmalı, Compose yapılandırması geçerli olmalı; gerçek veri ve sırlar imaja girmemeli. Henüz başlanmadı. |
+| Aşama 9 — Sürekli işletim ve Docker | 9.4 — Paket ve veritabanı aktarımı | Dışa aktarma, manifest doğrulama, ayrı kalıcı alanlara geri yükleme ve okuma rolü | 9.3 sonrası. Kaynak/kopya eşleşmesi, canlı sistemin korunması ve API hesabının yazamaması doğrulanacak. Henüz başlanmadı. |
+| Aşama 9 — Sürekli işletim ve Docker | 9.5 — API, ekran ve ML bağlantısı | Servislerin bağlanması, salt okunur dosyalar, aktarım tarihi bildirimi ve bakım komutu | 9.4 sonrası. Fiyat/grafikler, gösterim kapısı ve hata ayrımı doğrulanacak. Henüz başlanmadı. |
+| Aşama 9 — Sürekli işletim ve Docker | 9.6 — Tek komutla kullanım | PowerShell ile hazırlama, başlatma, durdurma, durum, log ve geri dönüş | 9.5 sonrası. İlk hazırlıktan sonra tek komutla sağlıklı açılış ve Türkçe hata çıktısı doğrulanacak. Henüz başlanmadı. |
+| Aşama 9 — Sürekli işletim ve Docker | 9.7 — Bütün akış ve teslim kabulü | Docker CI kontrolü, temiz kurulum, kalıcılık/yenileme denemeleri ve kullanım rehberi | 9.6 sonrası. Yeni ortamda kurulum ve geri dönüş kanıtlanacak; belgeler tamamlanacak. Henüz başlanmadı. |
 | Proje kapanışı | İş 8 — Sunum ve teslim hazırlığı | Sistemin akışı, örnek kullanım, sonuçlar ve sınırlar; onaylı kapsamın belgelerle teslimi | Planda kalır. Sunum iskeleti önceden hazırlanabilir; hazırlık hedefi 21–31 Aralık. Biçim ve içerik ayrıca netleştirilecek. |
 
 **Takvim:** 7.1–7.3 tamamlandı, gönderildi ve CI doğrulandı.
 7.4'ün uygulaması ve yerel/görsel doğrulaması tamamlandı; gönderildi ve aynı SHA'nın CI'ı başarılı.
 [Görsel kabul adımları teknik rehberdedir](docs/teknik.md#tahmin-kartının-görsel-kabul-kontrolü).
-6.5'in kapanmasını beklemez.
+Docker geliştirmeleri 6.5'in kapanmasını beklemez.
 Temel geliştirmeler için **31 Aralık hedefi**, 21 Aralık haftasının
 ara raporu ve **5 Ocak 2027 kesin değerlendirme tarihi** korunur.
-Stajın kesin bitiş tarihi, Docker'a alınacak bileşenler ve başlatma/veri taşıma düzeni açık karardır.
+Stajın kesin bitiş tarihi ve sunumun biçimi/içeriği açık karardır.
+Docker bileşenleri ve başlatma/veri taşıma düzeni 9.2'de kararlaştırıldı.
 Öğrenme turu iş sırasının dışında, pasif kalır (28 Ekim kararı); 7.1'de
 örnek ürünle akışın açıklanması bu adımın kapsamındadır.
 
@@ -431,24 +438,188 @@ uyku ve ekran zamanlayıcıları uyku başlatmaz (üç ASUS güç planında; ayr
 [teknik rehber](docs/teknik.md#zamanlanmış-tur-görev-zamanlayıcı), 23 Ekim'de
 kapak kapalıyken tur 49 ile doğrulandı). GitHub'ın makinelerinde Trendyol okunmadı (Bölüm 5), evde
 ayrı cihaz yok. Görevler ve 10:00/22:00 düzeni değişmez. Etkisi birkaç gün
-sonra turların zamanında başlayıp başlamadığıyla ölçülür. Docker Compose ile
-süreç, veri ve model kalıcılığı ayrıca değerlendirilir.
+sonra turların zamanında başlayıp başlamadığıyla ölçülür. Docker teslim
+kopyasının süreç, veri ve model kalıcılığı aşağıdaki onaylı planla
+geliştirilecek; canlı Windows görevleri aynı düzende kalacak.
 
 ### Docker ve teslim hedefi (9.2)
 
-**Kabul edilen teslim hedefi (9 Kasım):** kullanıcının bilgisayarında çalışan,
-tarayıcıdan kullanılan Streamlit web uygulaması; gerekli ilk veri/ayar
-hazırlığından sonra kolay başlatma ve Docker ile çalışma ortamının
-tekrarlanabilmesi. Teslimde kod, PostgreSQL verisi ve model/tahmin/rapor
-dosyalarının nasıl hazırlanıp korunacağı açıklanacak. İnternette herkese
-açık yayın veya `.exe` dağıtımı bu hedefin kapsamında değildir.
+**9 Kasım'da onaylanan sözleşme.** 9.2'nin çıktısı bu planın ve Docker
+parola istisnasının belgelenmesidir. Belgeleme tamamlandı; gönderim/CI
+kayıtları [geçmişte](docs/gecmis.md) tutulur. Aşağıdaki davranışlar ve
+komutlar **planlanmıştır, henüz uygulanmamıştır**. Geliştirme sırası kalan
+işler tablosundaki 9.3–9.7'dir;
+her adım ayrı tamamlanıp kullanıcıya sunulur.
 
-**9.2'de netleştirilecekler:** hangi bileşenlerin Docker'a alınacağı; mevcut
-Windows görevleriyle bağlantı; yerel API sözleşmesine uygun ağ düzeni;
-kalıcı veri/model alanları ve başka bilgisayarda ilk kurulum/başlatma yolu.
-Mevcut veri, resmi kayıtlar, dondurulan ML ortamı ve gösterim kapısı korunur.
-Bu bölüm teslim hedefidir; ayrıntılı uygulama planı henüz hazırlanmadı,
-Docker kodu veya kurulum değişikliği yapılmadı.
+#### Teslim hedefi ve kapsam
+
+Kullanıcı, gerekli ilk veri/ayar hazırlığından sonra sistemi tek PowerShell
+komutuyla başlatıp tarayıcıdan kullanacak. Streamlit, FastAPI ve PostgreSQL
+Docker içinde çalışacak. Teslim; kod, veri paketi ve kullanım rehberidir.
+İnternette herkese açık yayın veya `.exe` dağıtımı kapsamda değildir.
+
+| Konu | Seçilen düzen |
+|---|---|
+| Ortam | Canlı sistemden ayrı Docker teslim ortamı |
+| Veri | Gerçek fiyat geçmişi, dondurulan model, kanıtlar ve doğrulanmış kayıtların kopyası |
+| Güncelleme | Canlı sistemden yeni paket hazırlama ve teslim ortamına kontrollü aktarma |
+| Başlatma | İlk hazırlıktan sonra tek PowerShell komutu |
+| İnternet | İlk kurulumda gerekli; hazırlanmış sistem sonraki açılışlarda çevrimdışı çalışabilir |
+| İlk destek | Windows 11, x64, Docker Desktop ve WSL2 üzerinden Linux konteynerleri |
+
+Windows'taki toplama, keşif ve 11:00 gölge görevleri kendi düzeninde
+çalışmayı sürdürecek. Docker teslim ortamı veri toplamayacak ve günlük
+tahmin üretmeyecek. Başka bilgisayarda uygulamayı açmak için Docker
+hazırlığından sonra ayrıca Python/PostgreSQL kurulması gerekmeyecek;
+kaynak bilgisayardaki dışa aktarma mevcut yerel araçları kullanacak.
+
+#### Servisler, bağlantılar ve sağlık
+
+**Tarayıcı → Streamlit → FastAPI → Docker PostgreSQL'i ve doğrulanmış
+tahmin dosyaları.** Üç sürekli servis bulunacak:
+
+| Servis | Görev ve erişim |
+|---|---|
+| `db` | Teslim kopyasının PostgreSQL verisini Docker ağı içinde saklar |
+| `api` | Veritabanına yalnız SELECT hesabıyla bağlanır; kayıtlı fiyat ve tahmin durumunu okur |
+| `ui` | Streamlit ekranını sunar; API'ye mevcut yerel istemci üzerinden erişir, veritabanı parolası almaz |
+
+Ekran **`http://127.0.0.1:8503`** üzerinden açılacak; mevcut 8501 ekranı ve
+8502 test önizlemesiyle çakışmayacak. API'nin 8000 ve veritabanının 5432
+portları bilgisayara yayımlanmayacak.
+
+Sabit `127.0.0.1:8000` istemci sözleşmesi korunacak: `ui`,
+`network_mode: service:api` ile `api` servisinin ağ alanını paylaşacak.
+Ekranın konteyner içindeki 8501 portunun dış eşlemesi ağ alanını sağlayan
+`api` servisinde tanımlanacak. API ve ekran yeniden oluşturulurken birlikte
+ele alınacak; ekran eski ağ alanında bırakılmayacak.
+[Compose ağ düzeni](https://docs.docker.com/compose/how-tos/networking/).
+
+Başlangıç sırası: DB bağlantı kabul eder → API `/health` ile şemayı,
+migration durumunu ve okuma rolünü doğrular → Streamlit başlar ve kendi
+sağlık ucu kontrol edilir. Kontroller bitmeden "uygulama hazır" denmeyecek.
+Servisler kullanıcı komutuyla açılacak; Docker Desktop açılışına otomatik
+çalışma eklenmeyecek. Sağlıklı sistemde tekrar `Start` veri aktarımını veya
+servisleri gereksiz yere tekrarlamayacak.
+[Compose başlangıç sırası](https://docs.docker.com/compose/how-tos/startup-order/).
+
+#### Ortam, kalıcılık ve parolalar
+
+- Python **3.13.15** (`python:3.13.15-slim-bookworm`) ve PostgreSQL **17.11**
+  (`postgres:17.11-bookworm`) kullanılacak. Taban imajları SHA-256 özetiyle
+  sabitlenecek. Linux'taki doğrudan ve dolaylı Python bağımlılıkları sürüm ve
+  dosya hash'leriyle kilitlenecek; mevcut web/ML sürümleri korunacak.
+  Linux kilidi Windows ortamından bağımsız hazırlanacak.
+- PostgreSQL verisi, yapılandırma kopyası ve ML dosyaları ayrı, isimli kalıcı
+  alanlarda tutulacak. Normal API çalışmasında yapılandırma ve ML alanları
+  salt okunur bağlanacak. Durdurma ve konteyner yenileme veriyi koruyacak;
+  kalıcı alanlar otomatik silinmeyecek.
+  [Docker kalıcı alanları](https://docs.docker.com/engine/storage/volumes/).
+- Yalnız ayrı Docker kopyası için üretilen yönetici/API parolalarının yerel
+  gizli dosyalarda tutulmasına kullanıcı istisnası verildi. Compose secrets,
+  geçici `PGPASSFILE`, canlı parola dosyasının taşınmaması ve çıktılarda
+  parolaların bulunmaması kurallarının tek kaynağı
+  [AGENTS.md — Canlı işler ve veri](AGENTS.md#canlı-işler-ve-veri) bölümüdür.
+  [Compose secrets](https://docs.docker.com/compose/how-tos/use-secrets/),
+  [PostgreSQL parola dosyası](https://www.postgresql.org/docs/17/libpq-pgpass.html).
+
+#### Paket hazırlama, içe alma ve yenileme
+
+`Export` kullanıcı tarafından çalıştırılacak:
+
+1. Mevcut ortak kilitler kontrol edilecek; toplama, keşif veya tahmin kaydı
+   yazımı sürüyorsa beklemeden durulacak. Veritabanında yarım tur bulunmadığı
+   da doğrulanacak.
+2. PostgreSQL 17 araçlarıyla canlı veritabanından salt okunur, tutarlı
+   `pg_dump` özel arşivi alınacak.
+   [PostgreSQL yedekleme sözleşmesi](https://www.postgresql.org/docs/17/app-pgdump.html).
+3. İlgili yapılandırmalar, dondurulan modelin kanıt zinciri, tamamlanmış
+   resmi tahmin/değerlendirme klasörleri ve bağlı kaynak görüntüleri
+   kopyalanacak. Resmi dosyaların içerikleri değiştirilmeyecek.
+4. Bütün kontrollerden sonra paket manifesti yazılacak: biçim sürümü,
+   hazırlanma zamanı, kod commit'i, şema/migration bilgileri, model manifest
+   SHA'sı ve taşınan dosyaların SHA-256 değerleri. Paket kimliği tamamlanmış
+   manifestin hash'i olacak.
+
+Parolalar, kilitler, geçici/yarım klasörler, yerel sanal ortam ve kişisel
+devir dosyaları pakete alınmayacak. Paketler ve gerçek veriler Git dışında
+kalacak.
+
+İçe alma ve yenileme kuralları:
+
+- Paket bütünlüğü ve kod uyumluluğu geri yüklemeden önce doğrulanacak.
+  Her farklı paket için ayrı Docker proje/kalıcı alan grubu oluşturulacak.
+- Geri yükleme yalnız Docker ağı içindeki sabit `db` adresine yapılacak;
+  canlı bağlantı adresleri aktarılmayacak. İç DB adı mevcut API rolü
+  sözleşmesi gereği `fiyat_takip` kalacak; ayrılık Docker ortamıyla
+  sağlanacak. Şema ayrı, giriş yapamayan role ait olacak; API hesabı mevcut
+  SELECT kurallarıyla kurulacak.
+- Uygulanmış migration dosyaları değiştirilmeyecek; uyumsuz şema reddedilecek.
+  Aynı paketin tekrar hazırlanması mevcut DB'nin üzerine yazmayacak.
+- Yeni paket doğrulandıktan sonra ekran ona geçirilecek. Açılış başarısızsa
+  önceki çalışan paket yeniden başlatılacak. Önceki paket ve kalıcı alanlar
+  geri dönüş için korunacak.
+
+#### Ekran ve gösterim onayı
+
+Docker ekranında "Teslim kopyası · Veri aktarımı: … · Otomatik veri toplama
+yapılmaz." bildirimi bulunacak. Yerel sunum bilgisini
+`DELIVERY_MANIFEST_PATH` ayarı sağlayacak. Mevcut HTTP uçları ve cevap
+şemaları değişmeyecek; normal Windows ekranı mevcut davranışını sürdürecek.
+
+R2 + Platt, girdiler, eşikler ve resmi dosyalar korunacak. Aktarım ve API
+istekleri eğitim, yeni tahmin veya pickle yüklemesi yapmayacak.
+Windows'taki gösterim onayı tam Windows yolu içerdiği için pakete
+alınmayacak; her yeni teslim kopyası gösterim kapalı başlayacak.
+
+5 Ocak 2027 veya sonrasında uygun kesin rapor mevcutsa kullanıcı bakım
+komutuyla mevcut `shadow-display` doğrulamasını Docker içinde
+çalıştırabilecek. Onay Linux yoluyla yalnız teslim kopyasında oluşturulacak;
+tarih, model ve `met` koşulları aynen uygulanacak. Erken açma seçeneği
+eklenmeyecek. Açma/kapatma resmi tahmin veya değerlendirmeyi değiştirmeyecek.
+
+#### Planlanan kullanım ve kabul kontrolleri
+
+Tek giriş `scripts/teslim.ps1` olacak. **Bu dosya ve aşağıdaki komutlar
+henüz mevcut değildir; kullanılabilir komutlar 9.6'da belgelenecek.**
+
+| İşlem | Planlanan komut |
+|---|---|
+| Canlı sistemden paket hazırlama | `.\scripts\teslim.ps1 -Action Export` |
+| İlk veya yeni paketi hazırlama | `.\scripts\teslim.ps1 -Action Prepare -Bundle <PAKET_KLASORU>` |
+| Uygulamayı açma | `.\scripts\teslim.ps1 -Action Start` |
+| Durumu görme | `.\scripts\teslim.ps1 -Action Status` |
+| Logları görme | `.\scripts\teslim.ps1 -Action Logs` |
+| Veriyi koruyarak kapatma | `.\scripts\teslim.ps1 -Action Stop` |
+| Önceki pakete dönme | `.\scripts\teslim.ps1 -Action Rollback` |
+
+Başlatma; Docker motorunu, hazırlanan paketi, portu ve servis sağlığını
+kontrol edip ekran adresini gösterecek. İmaj ilk hazırlıkta oluşturulacak;
+sonraki normal açılışlarda yeniden indirme veya kurulum gerekmeyecek.
+
+9.7'nin zorunlu kabul senaryoları:
+
+- Boş Docker ortamına kurulum ve aynı paketi tekrar hazırlama.
+- Eksik/bozuk dosya, yanlış model veya uyumsuz şemada aktarımın reddi.
+- Kaynak/kopya veri karşılaştırması; migration ve resmi dosya hash eşleşmesi.
+- API hesabıyla yazmanın reddi; ekranın DB bağlantısı/parolası almaması.
+- Yalnız `127.0.0.1:8503` ekran erişimi ve mevcut yerel uygulamayla birlikte
+  çalışma; API/DB kesintisi, yeniden başlatma ve API–ekranın birlikte
+  yeniden oluşturulması.
+- Durdur/aç ve konteyner yenilemesinde verinin korunması; yeni paket
+  geçişinin başarısızlığında önceki pakete dönüş.
+- Kapalı gösterimde olasılık çıkmaması, gün değişince eski tahminin
+  gösterilmemesi; açma/kapatma koşullarının yapay testlerle Linux'ta doğrulanması.
+- Hazırlanmış sistemin internet kapalıyken açılması.
+
+Her kod adımında tam pytest, Black ve Flake8 çalıştırılacak. Docker CI
+denemesi yalnız yapay veri ve `_test` DB kullanacak; gerçek teslim paketi
+CI'a gönderilmeyecek. Kullanım rehberi 9.7'de tamamlanacak.
+
+Docker geliştirmeleri 6.5'in kapanmasını beklemez. 31 Aralık temel
+geliştirme, 21–31 Aralık sunum hedefi ve 5 Ocak 2027 kesin değerlendirme
+tarihi korunur. Aralık sunumunda fiyat ve grafikler çalışacak; gerçek
+olasılık gösterimi kesin değerlendirmeye bağlı kalacak.
 
 ### ML
 
@@ -750,7 +921,7 @@ gösterim kapalıdır. Güncel alanlar, çıkış kodları ve kullanım
   yapılmadığı denetlenir.
 
 7.2–7.4, 6.5 kapanmadan sırayla ilerleyebilir. 31 Aralık temel işler hedefi,
-6.5 haftalık izleme, 9.1 işletim kontrolleri, Docker kapsam planı ve sunum
+6.5 haftalık izleme, 9.1 işletim kontrolleri, Docker 9.3–9.7 işleri ve sunum
 hazırlığı korunur. Kesin gösterim kararı **5 Ocak** değerlendirmesine bağlıdır.
 
 ## 10. Çalışma ve Git disiplini

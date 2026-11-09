@@ -162,7 +162,7 @@ canlı ağa çıkmaz; veritabanı testleri yalnız test veritabanını kullanır
 | Proje yapısının sadeleştirilmesi | ✅ Tamamlandı (26 Ekim) |
 | ML ile indirim olasılığı tahmini | 🔄 Model dondurma/saklı test ve gölge mod 6.0–6.4 tamamlandı; gönderimler ve CI doğrulandı. İlk otomatik günlük çalışma doğrulandı (6 Kasım). 6.5 izleme paralel sürüyor; ilk haftalık kontrol 9 Kasım'da doğrulandı. 7.1–7.3 gösterim planı, kayıtlı tahmin API'si/onay komutu ve tek kart tamamlandı; gönderimler ve CI doğrulandı. 7.4 bütün akış testleri, kullanım rehberi ve kullanıcıyla görsel kabul tamamlandı; kullanıcı onayıyla gönderildi; aynı SHA'nın CI'ı başarılı ([plan](proje_plani.md#gösterim-kalan-sıra-7-6-kasım-planı)) |
 | Sürekli çalışma ortamı | 🔄 Aşama 9.1: görevlerin düzenli çalışmasına ilişkin işletim doğrulaması ML işleriyle paralel sürüyor ([plan](proje_plani.md)) |
-| Docker | ⏳ 9.2 teslim hedefi kabul edildi: yerel web uygulamasını tekrarlanabilir ortamda ve kolay başlatılabilir biçimde teslim etmek. Bileşen seçimi ve uygulama planı açık; geliştirme başlamadı ([hedef](proje_plani.md#docker-ve-teslim-hedefi-92)) |
+| Docker | 🔄 9.2 ayrıntılı teslim planı onaylandı ve belgelendi (9 Kasım). Sırada 9.3 imaj ve Compose temeli; 9.4–9.7 aktarım, servis bağlantısı, tek komutla kullanım ve teslim kabulü planlandı. Docker uygulaması başlamadı ([plan](proje_plani.md#docker-ve-teslim-hedefi-92)) |
 | Sunum ve teslim | ⏳ Planda: iş 8, hazırlık hedefi 21–31 Aralık; biçim ve içerik netleştirilecek |
 
 ## 📚 Belgeler

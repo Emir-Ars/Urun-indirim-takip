@@ -103,9 +103,19 @@ Belge kuralları (20 Ekim kullanıcı kararı):
   çalıştırma; `app/discovery/` ve ortak dosyaları yarım bırakma.
 - Gerçek kaynakta bulunmayan fiyat, stok, kimlik veya kapsam bilgisini uydurma.
 - Gerçek veritabanına (`fiyat_takip`) yalnız okuma sorgusuyla bak. Testler
-  yalnız adı `_test` ile biten veritabanını kullanır. Veritabanı şifresi yalnız
-  `%APPDATA%\postgresql\pgpass.conf` dosyasındadır; repoya, belgeye veya mesaja
-  yazılmaz.
+  yalnız adı `_test` ile biten veritabanını kullanır. Canlı ve yerel test
+  veritabanlarının şifreleri yalnız `%APPDATA%\postgresql\pgpass.conf`
+  dosyasındadır; repoya, belgeye veya mesaja yazılmaz.
+- Docker teslim ortamı için 9 Kasım kullanıcı istisnası: yalnız bu ayrı
+  kopyaya ait yönetici ve API parolaları ilk hazırlıkta ayrı üretilir; Git ve
+  imaj dışında yerel gizli dosyalarda tutulup yalnız ilgili servise Compose
+  secrets ile verilir. Canlı `pgpass.conf` Docker'a veya veri paketine
+  taşınmaz. API, konteyner içinde `0600` izinli geçici `PGPASSFILE` kullanır.
+  Parolalar komut çıktısına, bağlantı adresine, belgeye veya paket manifestine
+  yazılmaz. Geri yükleme yalnız ayrı Docker kopyasına yapılır; canlı
+  `fiyat_takip` veritabanına yazma yasağı sürer. Docker CI denemeleri de yalnız
+  yapay veri ve `_test` veritabanı kullanır. Ayrıntılı teslim sözleşmesi
+  `proje_plani.md` içindeki 9.2 bölümündedir.
 - Uygulanmış bir migration dosyası (ör. `001_initial.sql`) tek bir bayt bile
   değiştirilmez; şema değişikliği yeni numaralı dosyayla yapılır.
 
