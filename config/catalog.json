@@ -3507,6 +3507,70 @@
       "url": "https://www.trendyol.com/xiaomi/redmi-note-14-pro-5g-12gb-512gb-yesil-xiaomi-turkiye-garantili-p-891692662",
       "color": "Yeşil",
       "active": true
+    },
+    {
+      "listing_id": "trendyol_762254829",
+      "product_id": 2,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-15-256-gb-yesil-apple-tr-garantili-p-762254829",
+      "color": "Yeşil",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_767487802",
+      "product_id": 41,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s23-fe-128-gb-yesil-samsung-turkiye-garantili-p-767487802",
+      "color": "Yeşil",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_792043223",
+      "product_id": 35,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s24-128-gb-gri-cep-telefonu-samsung-turkiye-garantili-p-792043223",
+      "color": "Gri",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_857140578",
+      "product_id": 60,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s24-fe-8-gb-ram-128-gb-gri-p-857140578",
+      "color": "Gri",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_792557598",
+      "product_id": 38,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s24-ultra-512-gb-titanyum-mor-p-792557598",
+      "color": "Mor",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_792557586",
+      "product_id": 39,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s24-ultra-1-tb-titanyum-sari-samsung-turkiye-garantili-p-792557586",
+      "color": "Sarı",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_897493928",
+      "product_id": 32,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s25-ultra-256-gb-titanyum-gumus-cep-telefonu-turkiye-garantili-p-897493928",
+      "color": "Gümüş",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv0000pij1gv",
+      "product_id": 59,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/xiaomi-redmi-note-14-pro-5g-256gb-8gb-ram-turkiye-garantili-p-HBCV0000PIJ1GV",
+      "color": "Siyah",
+      "active": true
     }
   ]
 }

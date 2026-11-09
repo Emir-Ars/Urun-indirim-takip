@@ -45,8 +45,8 @@ Kullanıcı arayüzde arama yaptığında canlı scraping veya model eğitimi
 | Proje yapısının sadeleştirilmesi (Bölüm 8, Adım 1–5) | ✅ Tamamlandı (26 Ekim) | `75d4732` |
 | ML öncesi ekran iyileştirmeleri 1–2 | ✅ Tamamlandı (28 Ekim) | `dd2e262`, `94045bd`, CI 40643349065 |
 | Proje mühendisliğini pekiştirme | ⏸️ Pasif (28 Ekim kararı): iş sırasında değil; kullanıcı istediğinde Oturum 2'den sürer | Program aşağıda; oturum ilerlemesi yerel devir notunda |
-| 8. ML (indirim tahmini) | 🔄 Hazırlık, model dondurma/saklı test ve gölge mod 6.0–6.4 tamamlandı; ilk otomatik günlük çalışma doğrulandı (6 Kasım). 7.1–7.3 tamamlandı, gönderildi ve CI doğrulandı. 6.5 izleme paralel; 7.4 uygulama, yerel testler ve kullanıcıyla görsel kabul tamam; gönderim onaylandı; commit/push ve CI bekleniyor | Bölüm 9 ve kalan iş sırası |
-| 9. Sürekli işletim ve Docker | 🔄 Sürekli işletim kararı verildi (22 Ekim: dizüstü sürekli açık); Docker başlanmadı | Bölüm 9 |
+| 8. ML (indirim tahmini) | 🔄 Hazırlık, model dondurma/saklı test ve gölge mod 6.0–6.4 tamamlandı; ilk otomatik günlük çalışma doğrulandı (6 Kasım). 7.1–7.3 tamamlandı, gönderildi ve CI doğrulandı. 6.5 izleme paralel; 7.4 uygulama, yerel testler ve kullanıcıyla görsel kabul tamam; gönderildi ve aynı SHA'nın CI'ı başarılı | Bölüm 9 ve kalan iş sırası |
+| 9. Sürekli işletim ve Docker | 🔄 Sürekli işletim izleniyor; Docker ile yerel web uygulaması teslim hedefi kabul edildi (9 Kasım). Bileşen seçimi ve ayrıntılı uygulama planı açık; Docker uygulaması başlamadı | Bölüm 9 |
 
 Bugünkü işletim: fiyat turu her gün 10:00 ve 22:00'de, haftalık keşif her
 Pazar 14:00'te (otomatik güvenli kabul modunda) Windows Görev Zamanlayıcı ile
@@ -249,6 +249,7 @@ rehberde, o günkü tartışması arşivdedir.
 | 5 Kasım | 6.4 ayrıntılı uygulama planı onaylandı: süre ilk–son etiketli başlangıcın dahil takvim aralığıdır, Kasım'ın tamamı aralıkla kapsanır, Kasım dışında en az 14 farklı etiketli gün aranır. Süre/dönem/olay desteği yetersizse değerlendirilemedi; yeterli veride ölçülen başarısız performans koşulu karşılanmadı, eksik ölçü değerlendirilemedi, tümü sağlanırsa karşılandı. | Kullanıcı sayım ve üç durum yorumunu koddan önce açıkça onayladı; sayısal eşikler, model ve kesin tarih değişmedi. |
 | 6 Kasım | Yol haritası öncelikleri onaylandı: R2 + Platt sabitken 6.5 haftalık performans/işletim izlemesi sürer (ilk kontrol 8 Kasım keşfi sonrası); sıradaki plan 7.1, ardından 7.2–7.4 gösterim işleri. 9.1 işletim paralel; 9.2 Docker kapsam/uygulama planı ve iş 8 sunum planda kalır. Model iyileştirmesi kalıcı sorun görülürse ayrı planlanır; 5 Ocak tarihi değişmez. | Kullanıcı önerilen sırayı kabul etti; kısa dönem sonucu nedeniyle yeni eğitime öncelik verilmedi. Bu karar ayrıntılı kod uygulaması veya commit/push onayı değildir. |
 | 6 Kasım | 7.1 gösterim planı onaylandı: tek tahmin kartı; İstanbul takvimine göre yalnız dünün kaydı, eski orana dönüş yok; ayrı API ucu ve mevcut kayıttan okuma; 5 Ocak kesin raporuna bağlı komutla açılış ve kapatma. 7.1'in uygulaması yalnız kararların belgelenmesidir; API/CLI/ekran 7.2–7.4'te geliştirilir. | Kullanıcı planın uygulanmasını istedi. Seçili ürünün hangi fiyat/döneme göre değerlendirildiği açık kalır; geçersiz veya onaysız olasılık kullanıcıya çıkmaz. Commit/push onayı verilmedi. |
+| 9 Kasım | 9.2 için [Docker ve teslim hedefi](#docker-ve-teslim-hedefi-92) kabul edildi: yerel web uygulamasının kurulumu tekrarlanabilir ve kolay başlatılabilir teslimi. Bileşen seçimi ve ayrıntılı uygulama planı sonraki iş; bu karar kod/kurulum veya gönderim onayı değildir. | Kullanıcı önerilen teslim biçimini beğenip kabul etti; staj sunumu ve başka bilgisayarda tekrarlanabilir çalıştırma hedefleniyor. |
 
 ### Bilerek değiştirilmeyen davranışlar
 
@@ -386,22 +387,22 @@ dosyalar, kabul koşulları ve kontroller koddan önce netleştirilip onaylanır
 
 | Ana başlık | İş / adım | Somut çıktı | Sıra ve durum |
 |---|---|---|---|
-| Aşama 8 — ML | 6.5 — Gölge işletim ve performans izleme | Günlük tahmin kaydı; haftalık veri/kayıt sağlığı ve model performansı raporu; ara ve kesin değerlendirme | Paralel sürer. İlk otomatik kontrol tamam; ilk haftalık kontrol 8 Kasım keşfi bittikten sonra. Hepsiburada arama düzeltmesinin ilk tam canlı sonucu da o gün incelenir. |
+| Aşama 8 — ML | 6.5 — Gölge işletim ve performans izleme | Günlük tahmin kaydı; haftalık veri/kayıt sağlığı ve model performansı raporu; ara ve kesin değerlendirme | İzleme sürüyor. İlk haftalık kontrol 9 Kasım'da, 8 Kasım keşfi ve bugünkü 11:00 görüntüsüyle tamamlandı; görev/log, kaynak/kayıt bütünlüğü ve ara rapor doğrulandı. Hepsiburada sayfa tekrarı düzeltmesi zamanlanmış keşifte doğrulandı; kısmi kapsam sınırı sürüyor. Güncel sayılar/ölçümler README'de; kesin karar 5 Ocak. |
 | Aşama 8 — ML | 7.1 — Gösterim kapsamı ve veri akışı planı | Bir ürün örneği üzerinden kayıt → API → ekran akışı; gösterilecek tarih/kapsam, kapalı gösterim ve yetersiz veri durumları; [onaylı sözleşme aşağıda](#gösterim-kalan-sıra-7-6-kasım-planı) | ✅ Tamamlandı (6 Kasım); plan onaylandı, belgelendi, gönderildi ve aynı SHA'nın CI'ı başarılı. 7.1 kod içermedi; API 7.2, ekran 7.3 kapsamındadır. |
 | Aşama 8 — ML | 7.2 — API'den tahmin okuma | Kayıtlı tahmin ve yeterlilik bilgisinin doğrulanarak sunulması; eksik/bozuk kayıt ve kapalı gösterim davranışı | ✅ Tamamlandı (6 Kasım); ortak okuyucu, gösterim onayı, API ve yerel istemci uygulandı; yerel kontroller geçti. Kullanıcı onayıyla gönderildi, aynı SHA’nın CI’ı başarılı ([kayıt](docs/gecmis.md)). |
 | Aşama 8 — ML | 7.3 — Ekranda tahmin durumları | Onaylı API sözleşmesine bağlı ekran; tarih/kapsam açıklamaları, yeterli/yetersiz veri ve kapalı gösterim durumları | ✅ Tamamlandı (6 Kasım); tek kart ve durum/hata açıklamaları uygulandı. Kullanıcı onayıyla gönderildi; aynı SHA'nın CI'ı başarılı ([kayıt](docs/gecmis.md)). Görsel kabul 7.4'te kullanıcıyla tamamlandı. |
-| Aşama 8 — ML | 7.4 — Gösterim akışının bütün olarak doğrulanması | API/istemci/ekran uyumu, uygun ve yetersiz veri senaryoları, kapı durumları, güncel kullanım belgeleri | 🔄 Uygulama ve doğrulama tamamlandı (9 Kasım): kayıt dosyası → API → istemci → ekran testleri ve kullanım rehberi hazır; yerel tam test ve biçim kontrolleri başarılı. Yapay önizlemenin geniş/dar görünümü ve senaryo kartları kullanıcı görüntüleriyle, aralık/yenileme ve fiyat-grafik korunması kullanıcı teyidiyle doğrulandı. Kullanıcı bu gönderimi onayladı; commit/push ve CI doğrulaması bekleniyor. |
-| Aşama 9 — Sürekli işletim ve Docker | 9.1 — Sürekli işletim kanıtı | Zamanında/geç/kayıp görevlerin nedenleri ve mevcut çalışma düzeninin doğrulanması | 6.5 ve iş 7 ile paralel. İlk başarılı görev sürekli işletimin tamamlandığı anlamına gelmez; güç ayarlarına yeni müdahale ayrıca kararlaştırılır. |
-| Aşama 9 — Sürekli işletim ve Docker | 9.2 — Docker kapsam kararı ve planı | Staj kapsamı, sağlayacağı fayda, taşınacak parçalar ve veri/model kalıcılığı için karar ve gerekirse uygulama planı | Planda kalır; öncelikli gösterim işleri sonrasında ele alınır. Docker uygulamasının kapsamı ve planı henüz onaylanmadı. |
+| Aşama 8 — ML | 7.4 — Gösterim akışının bütün olarak doğrulanması | API/istemci/ekran uyumu, uygun ve yetersiz veri senaryoları, kapı durumları, güncel kullanım belgeleri | ✅ Tamamlandı (9 Kasım): kayıt dosyası → API → istemci → ekran testleri ve kullanım rehberi hazır; yerel tam test ve biçim kontrolleri başarılı. Yapay önizlemenin geniş/dar görünümü ve senaryo kartları kullanıcı görüntüleriyle, aralık/yenileme ve fiyat-grafik korunması kullanıcı teyidiyle doğrulandı. Kullanıcı onayıyla gönderildi; aynı SHA'nın CI tam test paketi, Black ve Flake8 kontrolleri başarılı ([kayıt](docs/gecmis.md)). |
+| Aşama 9 — Sürekli işletim ve Docker | 9.1 — Sürekli işletim kanıtı | Zamanında/geç/kayıp görevlerin nedenleri ve mevcut çalışma düzeninin doğrulanması | 6.5 ile paralel sürer. 6–9 Kasım denetiminde beklenen işler zamanında tamamlandı; görev ayarı değiştirilmedi. Önceki geç turların nedeni açık kalır; güç ayarlarına yeni müdahale ayrıca kararlaştırılır. |
+| Aşama 9 — Sürekli işletim ve Docker | 9.2 — Docker kapsam kararı ve planı | Staj kapsamı, sağlayacağı fayda, taşınacak parçalar ve veri/model kalıcılığı için karar ve uygulama planı | Teslim hedefi kabul edildi (9 Kasım); [ayrıntı](#docker-ve-teslim-hedefi-92). Sırada bileşen seçimi ve ayrıntılı plan var; kod/kurulum başlamadı. |
 | Proje kapanışı | İş 8 — Sunum ve teslim hazırlığı | Sistemin akışı, örnek kullanım, sonuçlar ve sınırlar; onaylı kapsamın belgelerle teslimi | Planda kalır. Sunum iskeleti önceden hazırlanabilir; hazırlık hedefi 21–31 Aralık. Biçim ve içerik ayrıca netleştirilecek. |
 
 **Takvim:** 7.1–7.3 tamamlandı, gönderildi ve CI doğrulandı.
-7.4'ün uygulaması ve yerel/görsel doğrulaması tamamlandı; gönderim onaylandı; commit/push ve CI bekleniyor.
+7.4'ün uygulaması ve yerel/görsel doğrulaması tamamlandı; gönderildi ve aynı SHA'nın CI'ı başarılı.
 [Görsel kabul adımları teknik rehberdedir](docs/teknik.md#tahmin-kartının-görsel-kabul-kontrolü).
 6.5'in kapanmasını beklemez.
 Temel geliştirmeler için **31 Aralık hedefi**, 21 Aralık haftasının
 ara raporu ve **5 Ocak 2027 kesin değerlendirme tarihi** korunur.
-Stajın kesin bitiş tarihi ve Docker'ın teslim kapsamı açık karardır.
+Stajın kesin bitiş tarihi, Docker'a alınacak bileşenler ve başlatma/veri taşıma düzeni açık karardır.
 Öğrenme turu iş sırasının dışında, pasif kalır (28 Ekim kararı); 7.1'de
 örnek ürünle akışın açıklanması bu adımın kapsamındadır.
 
@@ -432,6 +433,22 @@ kapak kapalıyken tur 49 ile doğrulandı). GitHub'ın makinelerinde Trendyol ok
 ayrı cihaz yok. Görevler ve 10:00/22:00 düzeni değişmez. Etkisi birkaç gün
 sonra turların zamanında başlayıp başlamadığıyla ölçülür. Docker Compose ile
 süreç, veri ve model kalıcılığı ayrıca değerlendirilir.
+
+### Docker ve teslim hedefi (9.2)
+
+**Kabul edilen teslim hedefi (9 Kasım):** kullanıcının bilgisayarında çalışan,
+tarayıcıdan kullanılan Streamlit web uygulaması; gerekli ilk veri/ayar
+hazırlığından sonra kolay başlatma ve Docker ile çalışma ortamının
+tekrarlanabilmesi. Teslimde kod, PostgreSQL verisi ve model/tahmin/rapor
+dosyalarının nasıl hazırlanıp korunacağı açıklanacak. İnternette herkese
+açık yayın veya `.exe` dağıtımı bu hedefin kapsamında değildir.
+
+**9.2'de netleştirilecekler:** hangi bileşenlerin Docker'a alınacağı; mevcut
+Windows görevleriyle bağlantı; yerel API sözleşmesine uygun ağ düzeni;
+kalıcı veri/model alanları ve başka bilgisayarda ilk kurulum/başlatma yolu.
+Mevcut veri, resmi kayıtlar, dondurulan ML ortamı ve gösterim kapısı korunur.
+Bu bölüm teslim hedefidir; ayrıntılı uygulama planı henüz hazırlanmadı,
+Docker kodu veya kurulum değişikliği yapılmadı.
 
 ### ML
 
@@ -527,7 +544,7 @@ Her alt adım ayrı commit ve ayrı onaydır:
 | 6.2 | `python -m app.ml shadow-predict`: `app/ml/shadow.py` (DB/ağ yüklemez; mevcut `load_frozen_model`, `analyze_features`, `predict_frozen` yeniden kullanılır), `config/shadow.json` (başlangıç günü 2026-10-27, ön kayıtlı model SHA-256, kanıt klasörleri), çıktı `data/ml/golge/tahmin_<zaman>/` (`predictions.jsonl`, `report.md`, `manifest.json`); yapay görüntülü testler (gelecek verisi sızmaz, yanlış SHA'da tahmin yok, 30 günden kısa geçmişe olasılık yok, mevcut anahtar yeniden tahmin edilmez, belirlenimci çıktı, DB/ağ yüklenmez); teknik rehberde "Gölge mod" bölümü | 12 Kasım | ✅ Tamamlandı (4 Kasım); kod, testler, belgeler ve gerçek görüntüyle deneme bağımsız denetimle doğrulandı, gönderildi, CI başarılı ([kayıt](docs/gecmis.md)) |
 | 6.3 | `python -m app.ml shadow-daily [--scheduled]` (görüntü + tahmin, tur bekleme, `run_logged` ile `data/logs/golge_*.log`), `scripts/golge_zamanlayici_kur.ps1` (görev `\FiyatTakip\GolgeTahmin`, her gün 11:00, `StartWhenAvailable`, `-Kaldir`; `API_DATABASE_URL` yoksa kurmaz; UTF-8 BOM'lu). Kullanıcı bir kez `API_DATABASE_URL` tanımlar, ilk elle çalıştırma 27 Ekim'den dünü kadar geriye dönük doldurur, çıktı birlikte doğrulanır, görev kurulur | 16 Kasım | ✅ Tamamlandı (5 Kasım); günlük akış, ilk resmi kayıt ve bağımsız denetim, yinelenmeme ve gerçek görev kurulumu doğrulandı; gönderildi, aynı SHA için CI başarılı ([kayıt](docs/gecmis.md)) |
 | 6.4 | `python -m app.ml shadow-evaluate`: yeni görüntüden etiketler, kayıtla anahtar eşleşmesi, **kayıttaki girdilerin sonraki görüntüden yeniden hesaplananlarla birebir aynı olduğu denetimi** (gerçek veride sızıntı kanıtı), `own_evaluation` rolüyle puanlar, güvenilirlik kovaları, Bölüm 5'teki kapı koşulları ve üç durumlu sonuç, Kasım/diğer günler kırılımı, `y_izlenen` ikincil rapor, işletim sağlığı (zamanında/geç/geriye dönük, eksik günler). AP farkı aralığı için `reserved_test_bootstrap` benzeri ayrı giriş eklenir; mevcut ölçüt işlevleri ve `METRIC_RULES` değişmez. Rapora yalnız bilgi amaçlı kırılım da girer: `missing_ratio_30d` dilimleri (≤ 0,10 ve üstü) ve 22 Kasım öncesi/sonrası; kapı kuralı bunlara bakmaz | 25 Kasım | ✅ Tamamlandı (5 Kasım); kod/test/belgeler, kullanıcı terminalindeki ilk rapor ve bağımsız girdi/etiket/puan/kapı denetimi doğrulandı; model/kayıtlar değişmedi, gönderildi ve aynı SHA için CI başarılı ([kayıt](docs/gecmis.md)) |
-| 6.5 | İşletim ve izleme (kod yok): günlük görev kanıtı, haftalık keşif/gölge sağlığı, sunum ara raporu ve kesin değerlendirme; [kontrol planı aşağıda](#65-kontrol-planı) | İlk kontrol 6 Kasım; ilk haftalık kontrol 8 Kasım keşfi sonrası | 🔄 Kontrol takvimi onaylı; ilk otomatik çalışma doğrulandı, ilk haftalık kontrol bekliyor |
+| 6.5 | İşletim ve izleme (kod yok): günlük görev kanıtı, haftalık keşif/gölge sağlığı, sunum ara raporu ve kesin değerlendirme; [kontrol planı aşağıda](#65-kontrol-planı) | İlk kontrol 6 Kasım; ilk haftalık kontrol 9 Kasım'da tamamlandı | 🔄 İzleme sürüyor; ilk otomatik ve haftalık kontrol doğrulandı. Kesin değerlendirme 5 Ocak'ta; gösterim kapalı |
 
 #### 6.5 kontrol planı
 
@@ -540,6 +557,11 @@ düzeninde çalışmaya devam eder; haftalık kontrol takvimi 6 Kasım
 kararıyla onaylanmıştır.
 
 **Durum ve takvim:** ilk otomatik günlük çalışma 6 Kasım'da doğrulandı.
+İlk haftalık kontrol 9 Kasım'da tamamlandı: 8 Kasım keşfi, dönemin görev/logları
+ve bugünkü 11:00 görevinin mevcut salt okunur görüntüsü incelendi. Yeni yerel
+`shadow-evaluate` raporunda kayıt eksikliği veya yarım klasör yok; eski kayıtlar
+değişmemiş. Erken performans koşulları sağlansa da veri desteği yetersizdir;
+gösterim kapalı kalır. Sonuç sayıları README Güncel kapsam tablosundadır.
 Haftalık kontrol 6 Kasım kararıyla 8 Kasım keşfi sonrasından itibaren her
 Pazar yapılır. Aşağıdaki tarihler İstanbul saatidir; canlı komutları kullanıcı
 çalıştırır, oluşan kanıtları ve salt okunur görev durumunu birlikte inceleriz.
@@ -645,7 +667,7 @@ Bilinen riskler (6.1 ölçümü, 4 Kasım 2026 12:57 UTC görüntüsü):
 okuyucu, komut ve istemci 7.2'de tamamlandı, gönderildi ve CI doğrulandı. Kart
 7.3'te tamamlandı, gönderildi ve CI doğrulandı. 7.4'te kayıt dosyasından
 ekrana kadar otomatik doğrulama, kullanım rehberi ve kullanıcıyla görsel
-kabul tamamlandı; gönderim onaylandı; commit/push ve CI bekleniyor.
+kabul tamamlandı; gönderildi ve aynı SHA'nın CI'ı başarılı.
 R2 + Platt, girdiler ve değerlendirme eşikleri değişmez. İlk sürümde seçili
 telefon için tek tahmin kartı vardır; tahmin geçmişi listesi/grafiği yoktur.
 

@@ -3721,6 +3721,11 @@ sonra çalıştırır. `snapshot` çıkış 3 verirse değerlendirmeye geçilmez
 diğer iş bittikten sonra yeni zaman damgasıyla tekrar denenir. Her rapor
 yeni klasöre yazılır; eski rapor ve tahminlere dokunulmaz.
 
+Yakın tarihli günlük görevin doğrulanmış görüntüsü de `--snapshot` girdisi
+olabilir; aynı dosya için yeniden DB okuması gerekmez. Raporun kapsadığı son
+gün, görüntünün okuma anından gelir. Görevden sonra yeni veri oluşmuşsa o veri
+eski görüntüde bulunmaz; yeni değerlendirme klasörü daha yeni veri sağlamaz.
+
 Başarılı değerlendirmeden sonra aynı komut bloğunun `$shadowReport`
 değişkeniyle özet alanları okunabilir. Bu okuma, raporu yeniden üretmez:
 
@@ -3766,7 +3771,9 @@ anlamı ilgili komut bölümündedir. Geçerli bir raporun kapısı
 ## Bilinen sınırlar
 
 - **Hepsiburada arama API'si** uzun süre HTTP 403 ile engelledi; 1 ve 2 Kasım
-  2026'da cevap verdi. Kalıcı olup olmadığı bilinmiyor; engellenirse
+  2026'da cevap verdi; 8 Kasım zamanlanmış keşifte de erişildi. O çalışmada
+  `repeated_page` uyarısı tekrarlanmadı; diğer kısmi kapsam uyarıları sürüyor.
+  Kalıcı erişilebilirlik kanıtlanmış değildir; engellenirse
   `search_api` raporlanır. Sonuçlar aksesuarla doludur ("Apple iPhone 15"
   araması 10.000 ürün ve 50 sayfa bildirdi, ikinci sayfa yalnız aksesuardı);
   ikinci sayfadan itibaren hedefe uyan yeni telefon yoksa sayfalama durur ve
@@ -3807,8 +3814,8 @@ anlamı ilgili komut bölümündedir. Geçerli bir raporun kapısı
   renk kaynağı gibi bir kural değişirse katalog yeniden kurulur.
 - `exclude_terms` ve `network` keşif anında uygulanır; hedefe sonradan
   eklenirse daha önce kataloğa girmiş sayfalar kendiliğinden çıkarılmaz.
-- **Sürekli işletim:** üç güç planının priz ayarları doğru olsa da bütün
-  turların zamanında başlaması henüz doğrulanmadı. 26 Ekim kontrolünde geciken
+- **Sürekli işletim:** 6–9 Kasım görev/log/görüntü denetiminde beklenen işler
+  zamanında tamamlandı; düzenli izleme sürer. 26 Ekim kontrolünde geciken
   tur ve ayrı bir turda DNS/zaman aşımı hataları görüldü. Görev Zamanlayıcı
   geçmişi kapalı olduğundan gecikmenin nedeni doğrulanamadı; yalnız geç
   başlangıçtan uyku veya güç ayarı arızası sonucu çıkarılmaz. 31 Ekim sabah

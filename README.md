@@ -113,13 +113,14 @@ kontrolleri [gölge mod rehberindedir](docs/teknik.md#gölge-mod-tahmin-kaydı-p
 
 ## 📊 Güncel kapsam
 
-2 Kasım 2026 itibarıyla (katalog; diğer sonuçlar kendi tarihini taşır):
+9 Kasım 2026 itibarıyla (katalog; diğer sonuçlar kendi tarihini taşır):
 
 | Alan | Durum |
 |---|---|
 | Fiyat kaynakları | Trendyol ve Hepsiburada |
 | Keşif hedefleri | 25 (24 etkin): Apple 9, Samsung 8, Xiaomi 6, POCO 2 |
-| Katalog | 60 ürün, 376 bağlantı (373 etkin); Hepsiburada 237, Trendyol 139 |
+| Katalog | 60 ürün, 384 bağlantı (381 etkin); Hepsiburada 238, Trendyol 146 |
+| Katalog bağlantılarının markalara dağılımı | Apple 180, Samsung 123, Xiaomi 76, POCO 5; pasif bağlantılar dahil (9 Kasım) |
 | Toplama düzeni | Her gün 10:00 ve 22:00; haftalık keşif Pazar 14:00 (otomatik güvenli kabul) |
 | Cimri geçmişi | 4 Kasım salt okuma denetimi: 58 ürün, 22.595 tarihli kayıt (14 üründe 699 eksik fiyat), 9 Ekim 2025–2 Kasım 2026; ürünlerin kendi ilk–son kayıtları arasında kayıtsız gün yok. Galaxy S24 FE 128 GB 3 Kasım 2025'ten başlıyor; diğer 57 ürün 9 Ekim'den. Galaxy S25 512 GB ve Redmi Note 14 Pro 5G 256 GB eşleştirmesi yok; son alım 2 Kasım, düzenli alım yok. |
 | Kendi toplama geçmişi | 4 Kasım 13:48 salt okuma denetimi: 28 Eylül 2026 15:39–4 Kasım 2026 10:34 (İstanbul); 73 tamamlanmış tur (71 zamanlanmış, 2 elle). 58 ürün bu tarih aralığında; Galaxy S24 FE 128 GB 19 Ekim'den başlıyor, Galaxy S25 512 GB son kontrolü 16 Ekim (etkin sayfası yok; son fiyat 13 Ekim). |
@@ -141,18 +142,10 @@ kontrolleri [gölge mod rehberindedir](docs/teknik.md#gölge-mod-tahmin-kaydı-p
 | Gölge mod ilk otomatik çalışma | 6 Kasım 11:00 görevi; zamanlanmış log 11:00:02–11:00:29 (İstanbul), uygulama çıkışı ve görev sonucu 0. Son kapanmış gün 5 Kasım: 51 yeni ürün-gün kaydı, 50 olasılık, 49 gösterilebilir; yeni kayıtların tamamı ertesi gün kaydedildi. Önceki 448 kayıt dosyası değişmedi; toplam 499 tekil resmi anahtar. Görüntü/kayıt/model parmak izleri, kayıt sözleşmesi ve tekillik doğrulandı; model ve ekran değişmedi. |
 | Gölge mod ilk değerlendirme kapsamı | 5 Kasım 13:44 UTC görüntüsü, kullanıcı terminalinde çıkış 0: 448 kayıt doğrulandı; y_sabit etiketi 96 satırda 0/1, 352 satırda NULL. Asıl sonuç 27–28 Ekim'e ait 90 gösterilebilir satır, 10 olumlu (%11,11), 6 olumlu pencere kümesi. Eşleşmiş y_sabit/y_izlenen etiket farkı 2 satır. Bütün girdiler görüntüden ve iki etiket ham turlardan bağımsız doğrulandı; puanlar stdlib ile yeniden hesaplandı, ilk kayıt dosyaları değişmedi. |
 | Gölge mod ilk değerlendirme puanları | 5 Kasım asıl sonuç (erken ara rapor): R0 AP 0,1111 / Brier 0,0989 / log loss 0,3493; R2 + Platt AP 0,2951 / Brier 0,0984 / log loss 0,3482 / Brier skill 0,0045. Ortalama olasılık %21,04, gerçekleşme %11,11 (fark 9,93 yüzde puanı); destekli kovada en büyük fark 15,68 yüzde puanı. Kapı değerlendirilemedi: süre/dönem/olay desteği yetersiz; kalibrasyon koşulları da bu küçük örnekte sınır dışında. AP farkı aralığı kısa dönem nedeniyle NULL. Model ve eşikler değişmedi; bu rapor kesin başarı/başarısızlık kararı değildir. |
+| Haftalık işletim denetimi | 9 Kasım: 6–9 Kasım aralığında beklenen 7 fiyat turu ve 4 günlük gölge görevi tamamlandı; kalıcı tur hatası yok. 6 Kasım sabahı tek DNS hatası yeniden okumada düzeldi. Görevler Ready, kaçırılan tetikleme sayaçları 0. 8 Kasım keşfi çıkış 2/kısmi; 48 hedef-kaynak sonucunun 21'i tam, yeni 8 sayfa (HB 1/TY 7) otomatik eklendi ve sonraki iki turda fiyat üretti. |
+| Gölge mod ilk haftalık raporu | 9 Kasım 11:00 görüntüsü (son kapanmış gün 8 Kasım): 650 tekil resmi kayıt, 636 olasılık; eksik kayıt ve yarım klasör 0. Ertesi gün kaydedilen 252, ilk toplu geriye dönük 398; sonraki geç kayıt yok. Önceki kayıtlar ve model değişmedi. Asıl sonuç 27 Ekim–1 Kasım başlangıçlarından 271 satır, 40 olumlu (%14,76), 12 olumlu pencere kümesi. |
+| Gölge mod haftalık erken ölçümler | 9 Kasım ara raporu: R0 Brier 0,1279; R2 + Platt AP 0,2749 / Brier 0,1184 / log loss 0,3889 / Brier skill 0,0746. Ortalama olasılık %16,39, gerçekleşme %14,76 (fark 1,63 yüzde puanı); destekli kovada en büyük fark 7,83 yüzde puanı. AP/Brier/log loss standart Python ile bağımsız doğrulandı. Erken performans koşulları sağlandı; 6 günlük etiketli dönem ve olay desteği yetersiz olduğundan kapı Değerlendirilemedi. Model/gösterim kararı değişmedi. |
 | Gölge mod olasılık dağılımı | 4 Kasım deneme kaydı, yalnız bilgi: R2 + Platt ortalaması 0,168, medyan 0,158, en çok 0,404; eğitim olumlu oranı (R0) 0,102. 389 olasılığın 118'i ≥ 0,20, 12'si ≥ 0,30. Ortalamanın R0'ın üstünde olması [planda ölçülen girdi kaymasıyla](proje_plani.md#gölge-mod-kalan-sıra-6-4-kasım-planı) aynı yöndedir; nedenleri bu kayıttan ayrıştırılamaz ve kendi verimizde doğruluk veya kalibrasyon göstermez. |
-
-Katalogdaki **376 bağlantının markalara göre dağılımı** (üç pasif bağlantı dahil):
-
-```mermaid
-pie showData
-    title Katalogdaki bağlantılar — 2 Kasım 2026
-    "Apple" : 179
-    "Samsung" : 117
-    "Xiaomi" : 75
-    "POCO" : 5
-```
 
 Katalog pazaryerlerinin tamamını kapsamaz; Hepsiburada araması kısmi
 taranabiliyor. Kaynak ve işletim sınırları
@@ -167,9 +160,9 @@ canlı ağa çıkmaz; veritabanı testleri yalnız test veritabanını kullanır
 | FastAPI ve Streamlit ile verileri sunma ve görüntüleme | ✅ Tamamlandı |
 | ML öncesi bakım ve otomatik güvenli keşif kabulü | ✅ Tamamlandı |
 | Proje yapısının sadeleştirilmesi | ✅ Tamamlandı (26 Ekim) |
-| ML ile indirim olasılığı tahmini | 🔄 Model dondurma/saklı test ve gölge mod 6.0–6.4 tamamlandı; gönderimler ve CI doğrulandı. İlk otomatik günlük çalışma doğrulandı (6 Kasım). 6.5 izleme paralel sürüyor. 7.1–7.3 gösterim planı, kayıtlı tahmin API'si/onay komutu ve tek kart tamamlandı; gönderimler ve CI doğrulandı. 7.4 bütün akış testleri, kullanım rehberi ve kullanıcıyla görsel kabul tamamlandı; gönderim onaylandı; commit/push ve CI bekleniyor ([plan](proje_plani.md#gösterim-kalan-sıra-7-6-kasım-planı)) |
+| ML ile indirim olasılığı tahmini | 🔄 Model dondurma/saklı test ve gölge mod 6.0–6.4 tamamlandı; gönderimler ve CI doğrulandı. İlk otomatik günlük çalışma doğrulandı (6 Kasım). 6.5 izleme paralel sürüyor; ilk haftalık kontrol 9 Kasım'da doğrulandı. 7.1–7.3 gösterim planı, kayıtlı tahmin API'si/onay komutu ve tek kart tamamlandı; gönderimler ve CI doğrulandı. 7.4 bütün akış testleri, kullanım rehberi ve kullanıcıyla görsel kabul tamamlandı; kullanıcı onayıyla gönderildi; aynı SHA'nın CI'ı başarılı ([plan](proje_plani.md#gösterim-kalan-sıra-7-6-kasım-planı)) |
 | Sürekli çalışma ortamı | 🔄 Aşama 9.1: görevlerin düzenli çalışmasına ilişkin işletim doğrulaması ML işleriyle paralel sürüyor ([plan](proje_plani.md)) |
-| Docker | ⏳ Planda: aşama 9.2'de kapsam ve uygulama planı ele alınacak; Docker uygulaması henüz onaylanmadı |
+| Docker | ⏳ 9.2 teslim hedefi kabul edildi: yerel web uygulamasını tekrarlanabilir ortamda ve kolay başlatılabilir biçimde teslim etmek. Bileşen seçimi ve uygulama planı açık; geliştirme başlamadı ([hedef](proje_plani.md#docker-ve-teslim-hedefi-92)) |
 | Sunum ve teslim | ⏳ Planda: iş 8, hazırlık hedefi 21–31 Aralık; biçim ve içerik netleştirilecek |
 
 ## 📚 Belgeler
