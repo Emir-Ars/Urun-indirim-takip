@@ -21,8 +21,12 @@ RUN groupadd --gid 10001 app \
     && chown -R 10001:10001 /app
 
 WORKDIR /app
+COPY requirements-linux.lock requirements-linux.lock
 COPY --chown=10001:10001 app/ app/
 COPY --chown=10001:10001 tools/docker_entrypoint.py tools/docker_entrypoint.py
+COPY scripts/api_okuma_rolu.sql scripts/api_okuma_rolu.sql
+# Ön kayıt yalnız uyumluluk doğrulaması içindir; çalışma ayarları paketten gelir.
+COPY config/shadow.json /opt/delivery/shadow.json
 
 USER 10001:10001
 ENTRYPOINT ["python", "/app/tools/docker_entrypoint.py"]

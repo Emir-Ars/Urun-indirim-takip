@@ -46,7 +46,7 @@ Kullanıcı arayüzde arama yaptığında canlı scraping veya model eğitimi
 | ML öncesi ekran iyileştirmeleri 1–2 | ✅ Tamamlandı (28 Ekim) | `dd2e262`, `94045bd`, CI 40643349065 |
 | Proje mühendisliğini pekiştirme | ⏸️ Pasif (28 Ekim kararı): iş sırasında değil; kullanıcı istediğinde Oturum 2'den sürer | Program aşağıda; oturum ilerlemesi yerel devir notunda |
 | 8. ML (indirim tahmini) | 🔄 Hazırlık, model dondurma/saklı test ve gölge mod 6.0–6.4 tamamlandı; ilk otomatik günlük çalışma doğrulandı (6 Kasım). 7.1–7.3 tamamlandı, gönderildi ve CI doğrulandı. 6.5 izleme paralel; 7.4 uygulama, yerel testler ve kullanıcıyla görsel kabul tamam; gönderildi ve aynı SHA'nın CI'ı başarılı | Bölüm 9 ve kalan iş sırası |
-| 9. Sürekli işletim ve Docker | 🔄 Sürekli işletim izleniyor; 9.2 planı belgelendi, gönderildi ve CI doğrulandı. 9.3 imaj ve Compose temeli uygulandı, yerel doğrulama tamam. Sırada 9.4 paket ve veritabanı aktarımı; 9.5–9.7 henüz başlanmadı | Bölüm 9 |
+| 9. Sürekli işletim ve Docker | 🔄 Sürekli işletim izleniyor; 9.2–9.3 gönderildi ve CI doğrulandı. 9.4 paket/veritabanı aktarımı, yapay kontroller ve ilk gerçek kopya kabulü tamamlandı; gönderim/CI kayıtları geçmişte izlenir. Sırada 9.5 API/ekran/ML bağlantısı; 9.5–9.7 henüz başlanmadı | Bölüm 9 |
 
 Bugünkü işletim: fiyat turu her gün 10:00 ve 22:00'de, haftalık keşif her
 Pazar 14:00'te (otomatik güvenli kabul modunda) Windows Görev Zamanlayıcı ile
@@ -396,7 +396,7 @@ tamamlanıp kullanıcıya sunulur. Commit/push onayı ayrıca alınır.
 | Aşama 9 — Sürekli işletim ve Docker | 9.1 — Sürekli işletim kanıtı | Zamanında/geç/kayıp görevlerin nedenleri ve mevcut çalışma düzeninin doğrulanması | 6.5 ile paralel sürer. 6–9 Kasım denetiminde beklenen işler zamanında tamamlandı; görev ayarı değiştirilmedi. Önceki geç turların nedeni açık kalır; güç ayarlarına yeni müdahale ayrıca kararlaştırılır. |
 | Aşama 9 — Sürekli işletim ve Docker | 9.2 — Docker kapsam kararı ve planı | Teslim mimarisi, veri/model kalıcılığı, parola istisnası ve numaralı uygulama sırası | ✅ Plan belgelemesi tamamlandı (9 Kasım); [sözleşme](#docker-ve-teslim-hedefi-92). Gönderim/CI kayıtları [geçmiştedir](docs/gecmis.md); Docker kodu veya kurulum değişikliği yapılmadı. |
 | Aşama 9 — Sürekli işletim ve Docker | 9.3 — İmaj ve Compose temeli | Dockerfile, .dockerignore, compose.yaml; sabit sürümler, Linux bağımlılık kilidi, kullanıcı ve ağ düzeni | ✅ Yerel uygulama/doğrulama tamamlandı (9 Kasım); gönderim/CI kayıtları [geçmiştedir](docs/gecmis.md). İmaj kuruldu; ağsız sürüm/izin, hafif API içe aktarımı, geçici pgpass, yapay bağlam dışlama ve paylaşılan localhost/Streamlit sağlığı kontrolleri geçti. Tam test ve biçim doğrulaması yapıldı; Windows dosya erişimi nedeniyle tekrarlanan senaryolar README'de açıklanır. Gerçek veri aktarılmadı. |
-| Aşama 9 — Sürekli işletim ve Docker | 9.4 — Paket ve veritabanı aktarımı | Dışa aktarma, manifest doğrulama, ayrı kalıcı alanlara geri yükleme ve okuma rolü | Sıradaki geliştirme. Kaynak/kopya eşleşmesi, canlı sistemin korunması ve API hesabının yazamaması doğrulanacak. Henüz başlanmadı. |
+| Aşama 9 — Sürekli işletim ve Docker | 9.4 — Paket ve veritabanı aktarımı | Dışa aktarma, manifest doğrulama, ayrı kalıcı alanlara geri yükleme ve okuma rolü | ✅ Uygulama, yapay doğrulama ve ilk gerçek paket kabulü tamamlandı (9 Kasım). Kullanıcının dışa aktardığı paket bağımsız doğrulanıp ayrı Docker kopyasına yüklendi; veri/şema/dizi/dosya eşleşti, native kaynak değişmedi, NOLOGIN sahiplik ve API'nin SELECT/yazma yetkisi yokluğu doğrulandı. Aynı paket tekrar yüklenmedi; hazırlık kaydı ve konteyner korundu. Model/gösterim kapısı değişmedi. Test/biçim kanıtı son kodla eşleşiyor; Windows tekrar notu README'de. Kullanım [teknik rehberde](docs/teknik.md#docker-paket-ve-veritabanı-aktarımı); gönderim ve aynı SHA'nın CI kapanışı [geçmişte](docs/gecmis.md) izlenir. |
 | Aşama 9 — Sürekli işletim ve Docker | 9.5 — API, ekran ve ML bağlantısı | Servislerin bağlanması, salt okunur dosyalar, aktarım tarihi bildirimi ve bakım komutu | 9.4 sonrası. Fiyat/grafikler, gösterim kapısı ve hata ayrımı doğrulanacak. Henüz başlanmadı. |
 | Aşama 9 — Sürekli işletim ve Docker | 9.6 — Tek komutla kullanım | PowerShell ile hazırlama, başlatma, durdurma, durum, log ve geri dönüş | 9.5 sonrası. İlk hazırlıktan sonra tek komutla sağlıklı açılış ve Türkçe hata çıktısı doğrulanacak. Henüz başlanmadı. |
 | Aşama 9 — Sürekli işletim ve Docker | 9.7 — Bütün akış ve teslim kabulü | Docker CI kontrolü, temiz kurulum, kalıcılık/yenileme denemeleri ve kullanım rehberi | 9.6 sonrası. Yeni ortamda kurulum ve geri dönüş kanıtlanacak; belgeler tamamlanacak. Henüz başlanmadı. |
@@ -448,9 +448,11 @@ geliştirilecek; canlı Windows görevleri aynı düzende kalacak.
 parola istisnasının belgelenmesidir. Belgeleme tamamlandı; gönderim/CI
 kayıtları [geçmişte](docs/gecmis.md) tutulur. 9.3 imaj ve Compose temeli
 uygulandı; [bugünkü davranış teknik rehberdedir](docs/teknik.md#docker-imaj-ve-compose-temeli).
-Aşağıdaki sözleşmenin 9.4–9.7 veri aktarımı, veriyle servis bağlantısı,
-bakım ve tek komutla kullanım bölümleri **planlanmıştır, henüz
-uygulanmamıştır**. Her adım ayrı tamamlanıp kullanıcıya sunulur.
+9.4'ün paket ve DB hazırlığı, yapay doğrulama ve ilk gerçek paket kabulü
+tamamlandı; gönderim durumu aşama tablosundadır. Aşağıdaki sözleşmenin
+9.5–9.7 veriyle servis bağlantısı, bakım ve tek komutla kullanım bölümleri
+**planlanmıştır, henüz uygulanmamıştır**. Her adım ayrı tamamlanıp
+kullanıcıya sunulur.
 
 #### Teslim hedefi ve kapsam
 

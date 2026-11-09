@@ -30,6 +30,7 @@ API ve ekran sözleşmeleri, hata kodları ve bilinen sınırlar. Yalnız sistem
 - [ML veri denetimi](#ml-veri-denetimi)
 - [ML hazırlığı](#ml-hazırlığı)
 - [Docker: imaj ve Compose temeli](#docker-imaj-ve-compose-temeli)
+- [Docker: paket ve veritabanı aktarımı](#docker-paket-ve-veritabanı-aktarımı)
 - [Testler ne kanıtlar, ne kanıtlamaz](#testler-ne-kanıtlar-ne-kanıtlamaz)
 - [Bilinen sınırlar](#bilinen-sınırlar)
 
@@ -49,6 +50,8 @@ API ve ekran sözleşmeleri, hata kodları ve bilinen sınırlar. Yalnız sistem
 | `Dockerfile`, `.dockerignore` | Sabit Linux tabanı, hash'li paket kurulumu ve ayrı kullanıcı; imaja yalnız gerekli uygulama kaynaklarının alınması. |
 | `compose.yaml` | Ayrı teslim kopyası için DB/API/ekran servisleri, ağ, kalıcı alanlar ve gizli dosya bağlantıları. Veri hazırlamaz. |
 | `requirements-linux.lock` | Python 3.13.15 / Linux x86_64 için doğrudan ve dolaylı çalışma bağımlılıklarının sürüm ve wheel hash'leri. Windows'a kurulmaz. |
+| `app/delivery/` | Tutarlı salt okunur yedek, kapalı paket envanteri ve Docker kopyasının hazırlık/doğrulama komutları. |
+| `scripts/teslim_hazirla.ps1` | Paketi önceden doğrulayıp yalnız yerel Docker Desktop Linux motorunda pakete özel DB/kalıcı alan hazırlama. |
 
 Eski veritabanı, API, ML, arayüz ve Docker taslakları yerel
 `_eski_taslaklar/` klasöründedir. Git’e gönderilmez, güncel uygulamanın
@@ -3753,8 +3756,9 @@ anlamı ilgili komut bölümündedir. Geçerli bir raporun kapısı
 
 ## Docker: imaj ve Compose temeli
 
-9.3'te imaj ve servis tanımları hazırdır. Paket dışa/içe alma, DB şeması/rol
-hazırlığı, bakım komutu ve tek PowerShell girişi sonraki adımlardır;
+9.3'te imaj ve servis tanımları, 9.4'te paket/DB hazırlığı uygulanmıştır.
+Veriyle ekran bağlantısı, gösterim bakım komutu ve tek PowerShell girişi
+sonraki adımlardır;
 [uygulama sırası](../proje_plani.md#docker-ve-teslim-hedefi-92). Mevcut
 Windows görevleri ve veritabanı bu dosyalarla değiştirilmez.
 
@@ -3765,8 +3769,11 @@ Windows görevleri ve veritabanı bu dosyalarla değiştirilmez.
   Çalışma bağımlılıkları yalnız kilitteki wheel hash'leriyle kurulur;
   `pip check` imaj kurulurken çalışır. Yerel `.venv` kullanılmaz/değiştirilmez.
 - Uygulama `/app/app` içindedir; çalışma dizini `/app` olduğu için ML'nin
-  mevcut göreli yol çözümlemesi korunur. İmaj veri, model, rapor, ayar veya
-  parola içermez. `.dockerignore` yalnız gerekli kaynakları izin listesine
+  mevcut göreli yol çözümlemesi korunur. İmaj gerçek veri, model, rapor veya
+  parola içermez. Tek ayar istisnası `/opt/delivery/shadow.json` ön kayıt
+  referansıdır; model kimliği/yol sözleşmesini doğrular, çalışma ayarı yerine
+  geçmez. SQL okuma rolü betiği ve bağımlılık kilidi de imajdadır.
+  `.dockerignore` yalnız gerekli kaynakları izin listesine
   alır; Dockerfile da genel `COPY .` kullanmaz.
 - API ve UI `10001:10001` kullanıcısıyla, salt okunur dosya sistemi ve
   yazılabilir geçici `/tmp` alanıyla çalışır. Giriş komutu süreç devri yapar;
@@ -3788,11 +3795,13 @@ Windows görevleri ve veritabanı bu dosyalarla değiştirilmez.
 
 `DELIVERY_STATE_DIR` yalnız Docker'a ait durum klasörünü seçer; varsayılanı
 proje kökündeki `data/teslim` klasörüdür. Compose aşağıdaki **hazırlanmış**
-dosyaları bekler; bu adım dosyaları veya parolaları oluşturmaz:
+dosyaları bekler; `teslim_hazirla.ps1` bunları paket kimliğine ait klasörde
+ilk hazırlık sırasında üretir:
 
-- `secrets/admin_password`: yalnız DB'ye `/run/secrets/admin_password`
-  olarak verilir; PostgreSQL `POSTGRES_PASSWORD_FILE` kullanır.
-- `secrets/api_password`: yalnız API'ye verilir. `--api` giriş seçeneği
+- `secrets/admin_password`: DB'ye ve yalnız bakım profilindeki `transfer`
+  servisine verilir; PostgreSQL `POSTGRES_PASSWORD_FILE` kullanır.
+- `secrets/api_password`: API ve `transfer` servisine verilir. UI almaz.
+  `--api` giriş seçeneği
   içeriği `/tmp/api-pgpass-*` dosyasına `0600` izinle yazar ve `PGPASSFILE`
   yolunu yalnız başlatacağı sürece verir. Parola URL'ye veya çıktıya eklenmez.
 
@@ -3812,9 +3821,9 @@ docker build --platform linux/amd64 -t fiyat-takip-teslim:local .
 docker run --rm --network none --read-only --tmpfs /tmp:mode=1777 fiyat-takip-teslim:local python --version
 ```
 
-Bunlar veri kopyası oluşturmaz. `docker compose up` için gerekli veri,
-şema, rol ve gizli dosya hazırlığı henüz uygulanmadığından bu aşamada
-kullanıcıya hazır fiyat ekranı komutu olarak verilmez.
+Bunlar veri kopyası oluşturmaz. Paket/DB hazırlığı aşağıdadır. Ekranın
+teslim verisine bağlanması ve tek komutla başlatılması sonraki adımlar
+olduğu için `docker compose up` henüz hazır fiyat ekranı komutu değildir.
 
 Kilidi yenilemek gerektiğinde önce Linux'ta yeniden çözümleme yapılır;
 Windows `pip freeze` çıktısı kilit olarak kullanılmaz. Proje kökünde:
@@ -3834,6 +3843,119 @@ olmalı; doğrudan URL girdisi reddedilir. Doğrudan gereksinimler ve ek
 özellikler `pyproject.toml` ile karşılaştırılır. Kilitte bağımlılık girdisinin
 SHA'sı da bulunur. Çözümlemenin seçtiği sürümler incelenir; kilit değişince
 imaj kurulumu, testler ve biçim kontrolleri yeniden doğrulanır.
+
+## Docker: paket ve veritabanı aktarımı
+
+### Dışa aktarma ve paket sözleşmesi
+
+Kaynak sistemde, proje kökünden ve toplama/keşif/gölge kaydı yazımı yokken
+kullanıcı çalıştırır. `DATABASE_URL` mevcut şifresiz kaynak adresidir;
+parola standart Windows `pgpass.conf` dosyasından okunur.
+
+```powershell
+$teslimPaket = "data\teslim\paketler\paket_$(Get-Date -Format yyyyMMdd_HHmmss)"
+.venv\Scripts\python.exe -m app.delivery export --output $teslimPaket
+.venv\Scripts\python.exe -m app.delivery verify --bundle $teslimPaket
+```
+
+Varsayılan araç `C:\Program Files\PostgreSQL\17\bin\pg_dump.exe`;
+başka konum için `--pg-dump <DOSYA>` verilebilir. Araç sürümü 17 olmalıdır.
+Çıktı klasörü yeni olmalı ve resmi gölge kökünün içinde olmamalıdır.
+Kaynak URI'de parola, `passfile` veya `service`; ortamda `PGPASSWORD`,
+`PGPASSFILE` veya `PGSERVICE` varsa dışa aktarma reddedilir.
+
+- Ortak toplama/keşif kilidi ve `tahmin.lock` beklemeden alınır. Süren
+  (`running`) tur varsa işlem durur; geçmişte kapanmış `interrupted`
+  turlar veri olarak korunur.
+- Bağlantı varsayılan olarak salt okunurdur. `REPEATABLE READ READ ONLY`
+  işleminde tablo/görünüm satır sayıları, sıralı satır SHA'ları ve kimlik
+  dizisinin durumu okunur. `pg_export_snapshot()` ile aynı işlem görüntüsü
+  `pg_dump --format=custom --snapshot=…` sürecine verilir. Yedekleme süreci
+  de `default_transaction_read_only=on` kullanır; parola argümana taşınmaz.
+- Katalog/DB eşleşmesi, migration dosyası checksum'ları ve gerçek PostgreSQL
+  17 şema yapısı doğrulanır. Yapı denetimi tabloları, sütunları, indeksleri,
+  kısıtları, görünümü, fonksiyonları, tetikleyicileri ve dizi tanımını kapsar.
+  Sabit yapı parmak izi 001–005'e aittir; yeni migration eklenirse bu
+  sözleşme test veritabanından yeniden doğrulanarak güncellenmelidir.
+- `config/` altındaki katalog, keşif, runtime, Cimri eşleştirmesi ve gölge
+  ön kaydı; dondurulan modelin etiket/girdi/bölme/model kanıtları;
+  manifesti tamamlanmış resmi tahmin/değerlendirme klasörleri kopyalanır.
+  Bu kayıtların bağlı olduğu kaynak görüntüler SHA klasörüyle taşınır.
+  Eski raporların içindeki Windows yolları değiştirilmez; görüntüler
+  içerik SHA'sıyla eşleştirilir.
+- Eğitim, yeni tahmin ve pickle yükleme yapılmaz. Modelin ham eğitim
+  görüntüsü yerine mevcut etiket/girdi/bölme/model kanıt zinciri doğrulanır;
+  resmi kayıtların kaynak görüntüleri zorunludur. Yarım klasörler, kilitler,
+  sırlar, yerel devir dosyaları ve Windows gösterim onayı alınmaz.
+
+`manifest.json` en son yazılır. Biçim sürümü, UTC hazırlama zamanı, Git
+commit'i, çalışma ağacının değişmiş olup olmadığı, kod/bağımlılık içerik
+SHA'sı, DB/migration/yapı kanıtı, model manifest SHA'sı ve tüm dosya SHA'ları
+bulunur. Paket kimliği bu manifestin ham dosya SHA'sıdır. İçerik uyumluluğu
+kod hash'iyle bağlanır; yalnız aynı Git SHA'sı yeterli sayılmaz.
+Kod metinlerinin CRLF/LF farkı normalize edilir; kanıt dosyalarının ham
+baytları aynen korunur.
+
+`verify` eksik/fazla dosya, güvenli olmayan yol, sembolik bağlantı/Windows
+yeniden yönlendirmesi, bozuk hash, yabancı model, yinelenen ürün-gün,
+eksik/uyuşmayan kaynak görüntü ve uyumsuz kod/migration/şemayı reddeder.
+Cevap tek JSON satırıdır; parola veya olasılık dökmez. CLI çıkışları:
+başarı `0`, doğrulama/bağlantı/araç hatası `1`, argüman hatası `2`, ortak
+kilit dolu `3`. Başarısız dışa aktarmanın yarım klasörü korunur; yeni bir
+klasörle tekrar denenir, üzerine yazılmaz.
+
+### Docker kopyasını hazırlama
+
+İmaj kurulduktan sonra paket Windows veya başka desteklenen teslim
+bilgisayarında şu geçici hazırlık girişiyle yüklenir:
+
+```powershell
+.\scripts\teslim_hazirla.ps1 -Bundle <PAKET_KLASORU>
+```
+
+Bu komutun çalışması için bilgisayarda Python/PostgreSQL kurulumu gerekmez;
+Docker Desktop Linux motoru ve önceden kurulmuş imajlar gerekir. Birleşik
+`scripts/teslim.ps1 -Action …` girişi 9.6'da uygulanacaktır.
+
+1. Sabit yerel `desktop-linux` motoru kontrol edilir. Paket imaj içinde,
+   ağ kapalı ve dosyalar salt okunurken doğrulanır; PostgreSQL 17.11
+   imajıyla arşiv listesi de hedef DB oluşturulmadan okunur.
+2. Paket kimliğinin ilk 24 karakterinden ayrı Compose proje adı;
+   `data/teslim/<TAM_SHA>/` altında ayrı hazırlık durumu oluşturulur.
+   İki ayrı rastgele Docker parolası üretilir; Windows dosya ACL'si
+   yalnız mevcut kullanıcı ve SYSTEM erişimine açılır.
+3. Yalnız `db` başlatılır. Yeni boş hedefte giriş yapamayan
+   `fiyat_takip_owner` rolü oluşturulur. Arşiv, yalnız bu konteynerdeki
+   yerel PostgreSQL soketi üzerinden tek işlemde geri yüklenir;
+   kaynak bağlantı adresi hedefe aktarılmaz. DB'nin iç adı korunur.
+4. Kaynak/kopya satır, şema ve dizi kanıtları eşleştirilir. DB/şema/nesne
+   sahipliği ayrı NOLOGIN rolüne verilir. Mevcut `api_okuma_rolu.sql`
+   değiştirilmeden kullanılır; API rolünün SELECT izinleri ve yazma
+   yetkisinin yokluğu `validate_readiness` ile doğrulanır.
+5. Ayar/ML alanlarına doğrulanmış dosyalar kopyalanır. Kalıcı alanda
+   `.delivery_ready.json`, bilgisayarda `prepared.json` en son oluşturulur.
+   Gösterim kapalıdır; UI/API henüz başlatılmaz.
+
+`bootstrap`, `finalize`, `check` alt komutları bakım servisi içindir.
+Yazan bağlantı Linux Docker konteyneri dışında açılmaz; yalnız sabit
+`db:5432` hedefini kabul eder. CLI bunların hata ayrıntılarını gizler.
+`transfer` profilindeki servis yapılandırma ve gölge alanlarını yazabilir;
+normal API bağlantıları salt okunurdur. UI hiçbir DB sırrı almaz.
+
+Aynı paket tekrar hazırlanırsa DB geri yüklenmez: mevcut veri, dosya,
+sahiplik ve okuma rolü yeniden doğrulanır. Hazırlık kaydı ve veri değişmez.
+Başarısız/yarım alanın üzerine yazılmaz; alan otomatik silinmez.
+Başka paketlerin DB/kalıcı alanları kullanılmaz veya silinmez. Yeni pakete
+ekran geçişi ve geri dönüş 9.6'da uygulanacaktır.
+
+Yerel yapay aktarım kanıtları `artifacts/docker94/verification.json`, ilk
+gerçek paket kabulü `artifacts/docker94/acceptance.json` içindedir. Gerçek
+kabulde kaynak/kopya eşleşmesi, native kaynağın değişmemesi, dosyalar,
+sahiplik, API izinleri ve tekrar hazırlama doğrulanmıştır; kapsam sayıları
+[README Güncel kapsam](../README.md#-güncel-kapsam) tablosundadır. Gerçek
+kopyada yazma denemesi yapılmaz; yetkiler salt okunur SQL ile denetlenir.
+Yazmanın fiilen reddi yalnız yapay `_test` kopyasında sınanır. Başka
+bilgisayarda kurulum ve bütün ekran akışı kabulü sonraki adımlardadır.
 
 ## Testler ne kanıtlar, ne kanıtlamaz
 

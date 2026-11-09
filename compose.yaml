@@ -1,7 +1,7 @@
 name: fiyat-takip-teslim
 
 x-app: &app
-  image: fiyat-takip-teslim:local
+  image: ${DELIVERY_IMAGE:-fiyat-takip-teslim:local}
   build:
     context: .
     dockerfile: Dockerfile
@@ -21,14 +21,14 @@ services:
     platform: linux/amd64
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_DB: fiyat_takip
+      POSTGRES_DB: ${DELIVERY_DATABASE:-fiyat_takip}
       POSTGRES_PASSWORD_FILE: /run/secrets/admin_password
       POSTGRES_INITDB_ARGS: --encoding=UTF8 --locale-provider=builtin --builtin-locale=C.UTF-8
     secrets: [admin_password]
     volumes:
       - database:/var/lib/postgresql/data
     healthcheck:
-      test: [CMD, pg_isready, -U, postgres, -d, fiyat_takip]
+      test: [CMD-SHELL, 'pg_isready -U postgres -d "$${POSTGRES_DB}"']
       interval: 5s
       timeout: 3s
       retries: 12
@@ -39,7 +39,7 @@ services:
     <<: *app
     command: [--api, python, -m, uvicorn, "app.api.main:create_app", --factory, --host, 127.0.0.1, --port, "8000", --workers, "1"]
     environment:
-      API_DATABASE_URL: postgresql://fiyat_takip_api@db:5432/fiyat_takip
+      API_DATABASE_URL: postgresql://${DELIVERY_API_USER:-fiyat_takip_api}@db:5432/${DELIVERY_DATABASE:-fiyat_takip}
     secrets: [api_password]
     volumes:
       - configuration:/app/config:ro
@@ -70,6 +70,21 @@ services:
       timeout: 5s
       retries: 6
       start_period: 10s
+
+  transfer:
+    <<: *app
+    profiles: [maintenance]
+    command: [python, -m, app.delivery, verify, --bundle, /bundle]
+    secrets: [admin_password, api_password]
+    volumes:
+      - type: bind
+        source: ${DELIVERY_BUNDLE_DIR:-./data/teslim/paketler}
+        target: /bundle
+        read_only: true
+        bind:
+          create_host_path: false
+      - configuration:/app/config
+      - shadow:/app/data/ml/golge
 
 volumes:
   database:

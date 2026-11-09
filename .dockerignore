@@ -10,6 +10,12 @@ app/**
 !tools/
 tools/**
 !tools/docker_entrypoint.py
+!scripts/
+scripts/**
+!scripts/api_okuma_rolu.sql
+!config/
+config/**
+!config/shadow.json
 
 # Windows'ta erişimi kısıtlı eski çıktı klasörleri de dolaşılmamalı.
 .git/
@@ -18,7 +24,6 @@ tools/**
 .pytest_cache/
 artifacts/
 data/
-config/
 docs/
 tests/
 _eski_taslaklar/
