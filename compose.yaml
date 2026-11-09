@@ -1,0 +1,83 @@
+name: fiyat-takip-teslim
+
+x-app: &app
+  image: fiyat-takip-teslim:local
+  build:
+    context: .
+    dockerfile: Dockerfile
+  platform: linux/amd64
+  init: true
+  user: "10001:10001"
+  read_only: true
+  tmpfs:
+    - /tmp:mode=1777
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  restart: "no"
+
+services:
+  db:
+    image: postgres:17.11-bookworm@sha256:665dc7b37ac52a17e298511414c21d23ffa4e6a6ef6225b3e5d59c7afb35e994
+    platform: linux/amd64
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: fiyat_takip
+      POSTGRES_PASSWORD_FILE: /run/secrets/admin_password
+      POSTGRES_INITDB_ARGS: --encoding=UTF8 --locale-provider=builtin --builtin-locale=C.UTF-8
+    secrets: [admin_password]
+    volumes:
+      - database:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD, pg_isready, -U, postgres, -d, fiyat_takip]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
+    restart: "no"
+
+  api:
+    <<: *app
+    command: [--api, python, -m, uvicorn, "app.api.main:create_app", --factory, --host, 127.0.0.1, --port, "8000", --workers, "1"]
+    environment:
+      API_DATABASE_URL: postgresql://fiyat_takip_api@db:5432/fiyat_takip
+    secrets: [api_password]
+    volumes:
+      - configuration:/app/config:ro
+      - shadow:/app/data/ml/golge:ro
+    ports:
+      - "127.0.0.1:8503:8501"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, python, -c, "from app.ui.api_client import ApiClient; ApiClient().get_health()"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+
+  ui:
+    <<: *app
+    command: [python, -m, streamlit, run, app/ui/main.py, --server.address, 0.0.0.0, --server.port, "8501", --server.headless, "true", --browser.gatherUsageStats, "false"]
+    network_mode: service:api
+    depends_on:
+      api:
+        condition: service_healthy
+        restart: true
+    healthcheck:
+      test: [CMD, python, -c, "import http.client; c = http.client.HTTPConnection('127.0.0.1', 8501, timeout=3); c.request('GET', '/_stcore/health'); r = c.getresponse(); raise SystemExit(0 if r.status == 200 and r.read() == b'ok' else 1)"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+
+volumes:
+  database:
+  configuration:
+  shadow:
+
+secrets:
+  admin_password:
+    file: ${DELIVERY_STATE_DIR:-./data/teslim}/secrets/admin_password
+  api_password:
+    file: ${DELIVERY_STATE_DIR:-./data/teslim}/secrets/api_password

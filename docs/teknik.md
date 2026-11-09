@@ -29,6 +29,7 @@ API ve ekran sözleşmeleri, hata kodları ve bilinen sınırlar. Yalnız sistem
 - [SQL–API–Streamlit bağımsız denetimi](#sqlapistreamlit-bağımsız-denetimi)
 - [ML veri denetimi](#ml-veri-denetimi)
 - [ML hazırlığı](#ml-hazırlığı)
+- [Docker: imaj ve Compose temeli](#docker-imaj-ve-compose-temeli)
 - [Testler ne kanıtlar, ne kanıtlamaz](#testler-ne-kanıtlar-ne-kanıtlamaz)
 - [Bilinen sınırlar](#bilinen-sınırlar)
 
@@ -45,6 +46,9 @@ API ve ekran sözleşmeleri, hata kodları ve bilinen sınırlar. Yalnız sistem
 | `docs/gecmis.md` | Her plan adımı için kısa geçmiş satırı (tarih, ne yapıldı, commit, CI). |
 | `docs/arsiv/` | 20 Ekim 2026'da dondurulmuş eski plan ve rehber, Aşama 7 araştırma raporları. Değiştirilmez. |
 | `pyproject.toml` | Bağımlılıklar, Python sürümü, paketleme ve test/biçim araçlarının ayarları. |
+| `Dockerfile`, `.dockerignore` | Sabit Linux tabanı, hash'li paket kurulumu ve ayrı kullanıcı; imaja yalnız gerekli uygulama kaynaklarının alınması. |
+| `compose.yaml` | Ayrı teslim kopyası için DB/API/ekran servisleri, ağ, kalıcı alanlar ve gizli dosya bağlantıları. Veri hazırlamaz. |
+| `requirements-linux.lock` | Python 3.13.15 / Linux x86_64 için doğrudan ve dolaylı çalışma bağımlılıklarının sürüm ve wheel hash'leri. Windows'a kurulmaz. |
 
 Eski veritabanı, API, ML, arayüz ve Docker taslakları yerel
 `_eski_taslaklar/` klasöründedir. Git’e gönderilmez, güncel uygulamanın
@@ -219,6 +223,7 @@ Test sayıları burada tutulmaz; güncel sayı `pytest -q` çıktısındadır.
 | `tests/test_api_foundation.py` | API okuma rolünün izinleri (yazamaması, kalıcı nesne kuramaması) ve test ortamının ağ/adres korumaları. |
 | `tests/test_api.py` | FastAPI: dört adres ve OpenAPI, kuruş/UTC/NULL, fiyat yaşı, rol/şema hataları, dört bağlantı sınırı, kesinti ve yeniden bağlantı, 5 sn sorgu zaman aşımı, tutarlı cevap. |
 | `tests/test_api_client.py` | Yerel API istemcisi: katı girdi/JSON ve alan tamlığı, sabit hedef/proxy/yönlendirme sınırı, güvenli hatalar, tekrar/önbellek olmaması, kaynak bırakma. |
+| `tests/test_docker_entrypoint.py`, `tests/test_docker_lock.py` | Docker parolasının çıktıdan korunması, yalnız kopya DB hedefi, pgpass yazımı ve süreç devri; yanlış ortam, bozuk hash, eksik ek özellik ve pyproject/kilit uyuşmazlığının reddi. |
 | `tests/test_ui.py` | Streamlit ekranı (AppTest) ve grafik verisi. Yapay örnekler `tests/support/ui_samples.py`'dedir; AppTest ve önizleme ortak kullanır, gerçek fiyat değildir. |
 | `tests/test_api_ui_integration.py` | Gerçek test okuma hesabı → FastAPI → istemci → Streamlit zinciri; SQL ve hesaplama sahte değildir. |
 | `tests/test_api_ui_check.py`, `tests/test_ml_data_check.py`, `tests/test_live_discovery_check.py` | Aşağıdaki denetim/kontrol araçlarının kendileri. |
@@ -241,6 +246,8 @@ kullanıcı kendi terminalinden, tur ve keşif saatleri dışında çalıştır�
 | `tools/ml_data_check.py` | Yalnız okuma hesabıyla günlük 30+7 ML pencereleri, %5 hedefi, eksik/kapsam nedenleri ve zaman bölümlerini hesaplar. Kendi/Cimri ayrı; `--snapshot` ile ağsız tekrar. Model eğitmez, API/site çağırmaz. |
 | `tools/ml_label_check.py` | 4.1 görüntüsü ve 4.2 etiket klasörünü yalnız dosyadan okur; manifesti doğrular ve bütün sıkı pencereleri eski hesaplayıcıyla karşılaştırır. DB/site çağırmaz; dosya yazmaz. |
 | `tools/api_ui_check.py` | Yerel API'nin gerçek veritabanını doğru sunduğunu, üretim kodunu kullanmadan bağımsız SQL hesabıyla karşılaştırır ([bağımsız denetim](#sqlapistreamlit-bağımsız-denetimi)). |
+| `tools/docker_entrypoint.py` | İmajın girişidir; API için gizli dosyadan geçici pgpass hazırlar ve komutu `exec` ile devreder. UI parolayı okumaz; DB/site isteği yapmaz. |
+| `tools/docker_lock.py` | `input` ile pyproject çalışma gereksinimlerini yazar; `lock` ile Linux pip raporunu doğrulayıp hash'li kilidi üretir. Paket kurmaz, ağ/DB kullanmaz. |
 
 ## Komutlar
 
@@ -3744,6 +3751,90 @@ alanındadır; okunabilir tablolar `report.md` içindedir. Çıkış kodlarını
 anlamı ilgili komut bölümündedir. Geçerli bir raporun kapısı
 `not_evaluable` veya `not_met` olabilir; bu sonuçlar komut hatası değildir.
 
+## Docker: imaj ve Compose temeli
+
+9.3'te imaj ve servis tanımları hazırdır. Paket dışa/içe alma, DB şeması/rol
+hazırlığı, bakım komutu ve tek PowerShell girişi sonraki adımlardır;
+[uygulama sırası](../proje_plani.md#docker-ve-teslim-hedefi-92). Mevcut
+Windows görevleri ve veritabanı bu dosyalarla değiştirilmez.
+
+### İmaj ve servis tanımları
+
+- Python tabanı `3.13.15-slim-bookworm`, DB tabanı `17.11-bookworm`;
+  SHA-256 ile sabitlenmiştir. LightGBM için `libgomp1` de sürümüyle sabittir.
+  Çalışma bağımlılıkları yalnız kilitteki wheel hash'leriyle kurulur;
+  `pip check` imaj kurulurken çalışır. Yerel `.venv` kullanılmaz/değiştirilmez.
+- Uygulama `/app/app` içindedir; çalışma dizini `/app` olduğu için ML'nin
+  mevcut göreli yol çözümlemesi korunur. İmaj veri, model, rapor, ayar veya
+  parola içermez. `.dockerignore` yalnız gerekli kaynakları izin listesine
+  alır; Dockerfile da genel `COPY .` kullanmaz.
+- API ve UI `10001:10001` kullanıcısıyla, salt okunur dosya sistemi ve
+  yazılabilir geçici `/tmp` alanıyla çalışır. Giriş komutu süreç devri yapar;
+  Compose `init: true` kullanır. Varsayılan imaj komutu yalnız Python
+  sürümünü gösterir; DB veya uygulama servisi başlatmaz.
+- `db`, `api`, `ui` servislerinde `restart: "no"` vardır. DB portu ve API
+  portu bilgisayara açılmaz; yalnız API'nin ağ alanında
+  `127.0.0.1:8503 → 8501` yayımlanır. UI `network_mode: service:api`
+  kullanır; yerel istemcinin `127.0.0.1:8000` hedefi değişmez.
+- Başlangıç DB sağlığı → API `/health` → UI sağlığı sırasındadır.
+  API–UI yeniden oluşturulurken birlikte ele alınmalıdır; `depends_on`
+  içindeki `restart: true` otomatik bir servis gözetmeni değildir.
+- Projeye ait `database`, `configuration`, `shadow` isimli kalıcı alanlar
+  vardır. PostgreSQL 17 verisi `/var/lib/postgresql/data` içindedir. API'ye
+  `/app/config` ve `/app/data/ml/golge` salt okunur bağlanır. `-p` ile ayrı
+  Compose proje adları kullanıldığında kalıcı alanlar da ayrılır.
+
+### Gizli dosyalar
+
+`DELIVERY_STATE_DIR` yalnız Docker'a ait durum klasörünü seçer; varsayılanı
+proje kökündeki `data/teslim` klasörüdür. Compose aşağıdaki **hazırlanmış**
+dosyaları bekler; bu adım dosyaları veya parolaları oluşturmaz:
+
+- `secrets/admin_password`: yalnız DB'ye `/run/secrets/admin_password`
+  olarak verilir; PostgreSQL `POSTGRES_PASSWORD_FILE` kullanır.
+- `secrets/api_password`: yalnız API'ye verilir. `--api` giriş seçeneği
+  içeriği `/tmp/api-pgpass-*` dosyasına `0600` izinle yazar ve `PGPASSFILE`
+  yolunu yalnız başlatacağı sürece verir. Parola URL'ye veya çıktıya eklenmez.
+
+Giriş yardımcısı yalnız `db:5432` hedefini, `fiyat_takip` ve ona ait
+`fiyat_takip_api` rolünü kabul eder; testte `_test` DB ve
+`fiyat_takip_api_test` rolü kullanılabilir. URI içindeki parola, bağlantı
+parametresi ve başka hedefler reddedilir. Hazırlık hatası güvenli Türkçe
+mesajla 1, komut yokluğu 2 döner. UI bu hazırlık yolunu çalıştırmaz.
+
+### Temel doğrulama ve kilit yenileme
+
+Proje kökünde, Docker Desktop Linux motoru açıkken:
+
+```powershell
+docker compose config --quiet
+docker build --platform linux/amd64 -t fiyat-takip-teslim:local .
+docker run --rm --network none --read-only --tmpfs /tmp:mode=1777 fiyat-takip-teslim:local python --version
+```
+
+Bunlar veri kopyası oluşturmaz. `docker compose up` için gerekli veri,
+şema, rol ve gizli dosya hazırlığı henüz uygulanmadığından bu aşamada
+kullanıcıya hazır fiyat ekranı komutu olarak verilmez.
+
+Kilidi yenilemek gerektiğinde önce Linux'ta yeniden çözümleme yapılır;
+Windows `pip freeze` çıktısı kilit olarak kullanılmaz. Proje kökünde:
+
+```powershell
+New-Item -ItemType Directory -Force artifacts/docker93 | Out-Null
+.venv\Scripts\python.exe -m tools.docker_lock input --output artifacts/docker93/requirements.in
+$dockerPythonImage = (Get-Content Dockerfile -First 1).Substring(5)
+$dockerResolveMount = "type=bind,source=$((Resolve-Path artifacts/docker93).Path),target=/work"
+docker run --rm --platform linux/amd64 --mount $dockerResolveMount --workdir /work $dockerPythonImage python -m pip install --dry-run --ignore-installed --only-binary=:all: --disable-pip-version-check --report report.json -r requirements.in
+.venv\Scripts\python.exe -m tools.docker_lock lock --report artifacts/docker93/report.json --output requirements-linux.lock
+```
+
+`lock` yalnız pip raporu sürüm 1 ve Python 3.13.15 / CPython / Linux x86_64
+ortamını kabul eder. Her paket tekil, hash'li, yayımdan çekilmemiş wheel
+olmalı; doğrudan URL girdisi reddedilir. Doğrudan gereksinimler ve ek
+özellikler `pyproject.toml` ile karşılaştırılır. Kilitte bağımlılık girdisinin
+SHA'sı da bulunur. Çözümlemenin seçtiği sürümler incelenir; kilit değişince
+imaj kurulumu, testler ve biçim kontrolleri yeniden doğrulanır.
+
 ## Testler ne kanıtlar, ne kanıtlamaz
 
 - **Otomatik testler:** Kuralların doğru çalıştığını kayıtlı ve sahte
@@ -3769,6 +3860,14 @@ anlamı ilgili komut bölümündedir. Geçerli bir raporun kapısı
 - "Testler geçti" ile "bütün pazaryeri eksiksiz tarandı" aynı şey değildir.
 
 ## Bilinen sınırlar
+
+- **Docker ve Windows bağlamı:** genel `COPY .` denemesinde, dışlama
+  kurallarına rağmen eski bir çıktı klasörü dolaşılırken Windows erişim
+  hatası görüldü. Güncel Dockerfile yalnız gerekli kaynakları `COPY` ile
+  alır; klasör izinlerine müdahale edilmez. Dışlama denetimi aynı
+  `.dockerignore` ile yalnız yapay dosyalar içeren ayrı bağlamda yapılır.
+  [Docker temeli](#docker-imaj-ve-compose-temeli) gerçek veriyle hazırlanmış
+  teslim ortamı değildir; paket/DB hazırlığı henüz uygulanmadı.
 
 - **Hepsiburada arama API'si** uzun süre HTTP 403 ile engelledi; 1 ve 2 Kasım
   2026'da cevap verdi; 8 Kasım zamanlanmış keşifte de erişildi. O çalışmada

@@ -1,0 +1,26 @@
+# Yalnız imajın gerektirdiği kaynaklar gönderilir; veri ve yerel sırlar dışarıda kalır.
+**
+!Dockerfile
+!.dockerignore
+!requirements-linux.lock
+!app/
+app/**
+!app/**/*.py
+!app/database/migrations/*.sql
+!tools/
+tools/**
+!tools/docker_entrypoint.py
+
+# Windows'ta erişimi kısıtlı eski çıktı klasörleri de dolaşılmamalı.
+.git/
+.venv/
+.scratch/
+.pytest_cache/
+artifacts/
+data/
+config/
+docs/
+tests/
+_eski_taslaklar/
+**/__pycache__/
+**/*.py[cod]
