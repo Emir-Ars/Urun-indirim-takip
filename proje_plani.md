@@ -46,7 +46,7 @@ Kullanıcı arayüzde arama yaptığında canlı scraping veya model eğitimi
 | ML öncesi ekran iyileştirmeleri 1–2 | ✅ Tamamlandı (28 Ekim) | `dd2e262`, `94045bd`, CI 40643349065 |
 | Proje mühendisliğini pekiştirme | ⏸️ Pasif (28 Ekim kararı): iş sırasında değil; kullanıcı istediğinde Oturum 2'den sürer | Program aşağıda; oturum ilerlemesi yerel devir notunda |
 | 8. ML (indirim tahmini) | 🔄 Hazırlık, model dondurma/saklı test ve gölge mod 6.0–6.4 tamamlandı; ilk otomatik günlük çalışma doğrulandı (6 Kasım). 7.1–7.3 tamamlandı, gönderildi ve CI doğrulandı. 6.5 izleme paralel; 7.4 uygulama, yerel testler ve kullanıcıyla görsel kabul tamam; gönderildi ve aynı SHA'nın CI'ı başarılı | Bölüm 9 ve kalan iş sırası |
-| 9. Sürekli işletim ve Docker | 🔄 Sürekli işletim izleniyor; 9.2–9.5 tamamlandı, gönderim/CI kayıtları geçmişte. 9.6 tek komutla kullanım ve yerel kabul tamamlandı; gönderim/CI kapanışı geçmişte izlenir. Sırada 9.7 bütün teslim kabulü ve Docker CI; henüz başlanmadı | Bölüm 9 |
+| 9. Sürekli işletim ve Docker | 🔄 Sürekli işletim izleniyor; 9.2–9.5 tamamlandı, gönderim/CI kayıtları geçmişte. 9.6 tek komutla kullanım ve yerel kabul tamamlandı; gönderim/CI kapanışı geçmişte izlenir. 9.7 kodu, rehber ve yerel kabul tamam; yeni GitHub Docker işi ve ayrı Windows bilgisayarı kabulü bekliyor | Bölüm 9 |
 
 Bugünkü işletim: fiyat turu her gün 10:00 ve 22:00'de, haftalık keşif her
 Pazar 14:00'te (otomatik güvenli kabul modunda) Windows Görev Zamanlayıcı ile
@@ -307,6 +307,7 @@ Ayrıntı ve kanıtları: [teknik rehber, Bilinen sınırlar](docs/teknik.md#bil
 |---|---|
 | Sürekli işletimin doğrulanması | [Teknik rehberdeki işletim sınırı](docs/teknik.md#bilinen-sınırlar) kapanmadı; geciken turun nedeni açık. Güç ayarlarına yeni müdahale kararı verilmedi. Kullanıcı 4 Kasım'da bilgisayarı geceleri çoğu zaman kapattığını bildirdi (22 Ekim kararıyla örtüşmüyor); gölge mod görevi bu yüzden 11:00'e planlandı. |
 | Staj bitişi ve sunum | Staj Ocak 2027'nin ilk veya ikinci haftasında bitiyor; kesin tarih ve sunumun biçimi/içeriği açık. Temel işler için 31 Aralık, sunum hazırlığı için 21–31 Aralık hedefi korunuyor. Docker teslimi 9 Kasım'da onaylandı ve [9.2 sözleşmesine](#docker-ve-teslim-hedefi-92) göre ilerliyor; karar beklemiyor. Kesin gösterim değerlendirmesi 5 Ocak 2027'de. |
+| 9.7 fiziksel teslim kabulü | 10 Kasım: kullanıcıda yalnız mevcut bilgisayar var. Yerel boş kurulum klasörü ve yeni Docker alanları doğrulandı; ikinci Windows 11 x64 bilgisayarın ilk kurulum/çevrimdışı kabulü erişim sağlanınca yapılır. |
 
 ## 8. Proje yapısının sadeleştirilmesi (tamamlandı)
 
@@ -398,8 +399,8 @@ tamamlanıp kullanıcıya sunulur. Commit/push onayı ayrıca alınır.
 | Aşama 9 — Sürekli işletim ve Docker | 9.3 — İmaj ve Compose temeli | Dockerfile, .dockerignore, compose.yaml; sabit sürümler, Linux bağımlılık kilidi, kullanıcı ve ağ düzeni | ✅ Yerel uygulama/doğrulama tamamlandı (9 Kasım); gönderim/CI kayıtları [geçmiştedir](docs/gecmis.md). İmaj kuruldu; ağsız sürüm/izin, hafif API içe aktarımı, geçici pgpass, yapay bağlam dışlama ve paylaşılan localhost/Streamlit sağlığı kontrolleri geçti. Tam test ve biçim doğrulaması yapıldı; Windows dosya erişimi nedeniyle tekrarlanan senaryolar README'de açıklanır. Gerçek veri aktarılmadı. |
 | Aşama 9 — Sürekli işletim ve Docker | 9.4 — Paket ve veritabanı aktarımı | Dışa aktarma, manifest doğrulama, ayrı kalıcı alanlara geri yükleme ve okuma rolü | ✅ Uygulama, yapay doğrulama ve ilk gerçek paket kabulü tamamlandı (9 Kasım). Kullanıcının dışa aktardığı paket bağımsız doğrulanıp ayrı Docker kopyasına yüklendi; veri/şema/dizi/dosya eşleşti, native kaynak değişmedi, NOLOGIN sahiplik ve API'nin SELECT/yazma yetkisi yokluğu doğrulandı. Aynı paket tekrar yüklenmedi; hazırlık kaydı ve konteyner korundu. Model/gösterim kapısı değişmedi. Test/biçim kanıtı son kodla eşleşiyor; Windows tekrar notu README'de. Kullanım [teknik rehberde](docs/teknik.md#docker-paket-ve-veritabanı-aktarımı); gönderim ve aynı SHA'nın CI kapanışı [geçmişte](docs/gecmis.md) izlenir. |
 | Aşama 9 — Sürekli işletim ve Docker | 9.5 — API, ekran ve ML bağlantısı | Servislerin bağlanması, salt okunur dosyalar, aktarım tarihi bildirimi ve bakım komutu | ✅ Uygulama, yapay ve gerçek kopya kabulü tamamlandı (10 Kasım). Kullanıcının yeni paketi doğrulanıp ayrı Docker kopyasına alındı; API/UI/DB sağlıklı, gerçek HTTP ve ekran okumasında fiyat/grafikler, aralık/telefon değişimi, aktarım tarihi ve kapalı/olasılıksız tahmin doğrulandı. Native kaynak, model ve kapı korundu; RO/SELECT sınırları ve bakım sonrası tekrar hazırlama geçti. Linux'ta açma/kapatma ve güncellik yalnız yapay verilerle sınandı. Tam pytest/biçim kanıtı son kodla aynı. Kullanım [teknik rehberde](docs/teknik.md#docker-servis-bağlantısı-ve-gösterim-bakımı); gönderim ve aynı SHA'nın CI kapanışı [geçmişte](docs/gecmis.md) izlenir. |
-| Aşama 9 — Sürekli işletim ve Docker | 9.6 — Tek komutla kullanım | PowerShell ile hazırlama, başlatma, durdurma, durum, log ve geri dönüş | ✅ Uygulama ve yerel kabul tamamlandı (10 Kasım); gönderim/CI kapanışı [geçmişte](docs/gecmis.md) izlenir. Ortak giriş ve paket geçişi [teknik rehberde](docs/teknik.md#docker-tek-komutla-kullanım). Yapay hata/kurtarma ve gerçek kopyanın yeniden açılışı doğrulandı; tam pytest/biçim kontrolleri temiz, sayılar README'de. 9.7'ye başlanmadı. |
-| Aşama 9 — Sürekli işletim ve Docker | 9.7 — Bütün akış ve teslim kabulü | Docker CI kontrolü, temiz kurulum, kalıcılık/yenileme denemeleri ve kullanım rehberi | 9.6 sonrası. Yeni ortamda kurulum ve geri dönüş kanıtlanacak; belgeler tamamlanacak. Henüz başlanmadı. |
+| Aşama 9 — Sürekli işletim ve Docker | 9.6 — Tek komutla kullanım | PowerShell ile hazırlama, başlatma, durdurma, durum, log ve geri dönüş | ✅ Uygulama ve yerel kabul tamamlandı (10 Kasım); gönderim/CI kapanışı [geçmişte](docs/gecmis.md) izlenir. Ortak giriş ve paket geçişi [teknik rehberde](docs/teknik.md#docker-tek-komutla-kullanım). Yapay hata/kurtarma ve gerçek kopyanın yeniden açılışı doğrulandı; tam pytest/biçim kontrolleri temiz, sayılar README'de. |
+| Aşama 9 — Sürekli işletim ve Docker | 9.7 — Bütün akış ve teslim kabulü | Docker CI kontrolü, temiz kurulum, kalıcılık/yenileme denemeleri ve kullanım rehberi | 🔄 Kod ve yerel kabul tamamlandı (10 Kasım); tam kapanış bekliyor. Yapay Docker bütün akışı, boşluk içeren temiz klasörde PowerShell kurulum/geçiş/kurtarma, port/RO sınırları ve tam pytest/biçim kontrolleri doğrulandı; sayılar README'de. [Teslim rehberi](docs/teslim.md) hazır. Yeni GitHub Docker işi onaylı gönderimden sonra doğrulanacak; kullanıcıda ikinci Windows bilgisayarı olmadığı için fiziksel PC kabulü açık. |
 | Proje kapanışı | İş 8 — Sunum ve teslim hazırlığı | Sistemin akışı, örnek kullanım, sonuçlar ve sınırlar; onaylı kapsamın belgelerle teslimi | Planda kalır. Sunum iskeleti önceden hazırlanabilir; hazırlık hedefi 21–31 Aralık. Biçim ve içerik ayrıca netleştirilecek. |
 
 **Takvim:** 7.1–7.3 tamamlandı, gönderildi ve CI doğrulandı.
@@ -451,8 +452,8 @@ uygulandı; [bugünkü davranış teknik rehberdedir](docs/teknik.md#docker-imaj
 9.4'ün paket ve DB hazırlığı, yapay doğrulama ve ilk gerçek paket kabulü
 tamamlandı; gönderim durumu aşama tablosundadır. 9.5'in servis bağlantısı/bakımı, yapay doğrulama ve gerçek paket kabulü
 tamamlandı. 9.6 tek komutla kullanım ve yerel kabul de tamamlandı; gönderim
-durumları aşama tablosundadır. 9.7 bütün teslim kabulü ve Docker CI
-**planlanmıştır, henüz uygulanmamıştır**. Her adım ayrı tamamlanıp kullanıcıya sunulur.
+durumları aşama tablosundadır. 9.7 kodu, kullanım rehberi ve yerel kabul tamamlandı; yeni GitHub Docker işi
+ve fiziksel bilgisayar kabulü bekliyor. Ayrı durumlar aşama tablosunda izlenir. Her adım ayrı tamamlanıp kullanıcıya sunulur.
 
 #### Teslim hedefi ve kapsam
 
@@ -618,7 +619,7 @@ sonraki normal açılışlarda yeniden indirme veya kurulum gerekmeyecek.
 
 Her kod adımında tam pytest, Black ve Flake8 çalıştırılacak. Docker CI
 denemesi yalnız yapay veri ve `_test` DB kullanacak; gerçek teslim paketi
-CI'a gönderilmeyecek. Kullanım rehberi 9.7'de tamamlanacak.
+CI'a gönderilmeyecek. Kullanım rehberi [teslim belgesinde](docs/teslim.md) hazır; 9.7'nin bekleyen kabulü aşama tablosunda izlenir.
 
 Docker geliştirmeleri 6.5'in kapanmasını beklemez. 31 Aralık temel
 geliştirme, 21–31 Aralık sunum hedefi ve 5 Ocak 2027 kesin değerlendirme

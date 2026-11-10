@@ -3966,20 +3966,10 @@ bilgisayarda kurulum ve teslim kabulü 9.7 kapsamındadır.
 
 ### Docker: tek komutla kullanım
 
-Proje kökünden ortak giriş `scripts/teslim.ps1` dosyasıdır. Aşağıdaki
-komutlar betik çalıştırma izni olan oturumda kullanılabilir. İzin hatasında,
-yukarıdaki örnekteki `powershell.exe -NoProfile -ExecutionPolicy Bypass -File`
-önekini kullanın; kalıcı ilke değişikliği gerekmez.
-
-| İşlem | Komut |
-|---|---|
-| Canlı Windows kaynağından yeni paket | `.\scripts\teslim.ps1 -Action Export` |
-| İlk veya yeni paketi hazırlama | `.\scripts\teslim.ps1 -Action Prepare -Bundle <PAKET_KLASORU>` |
-| Ekranı açma | `.\scripts\teslim.ps1 -Action Start` |
-| Seçili/önceki paket ve servis sağlığı | `.\scripts\teslim.ps1 -Action Status` |
-| Son loglar | `.\scripts\teslim.ps1 -Action Logs -Lines 100` |
-| Veriyi koruyarak kapatma | `.\scripts\teslim.ps1 -Action Stop` |
-| Önceki pakete dönme | `.\scripts\teslim.ps1 -Action Rollback` |
+Proje kökünden ortak giriş `scripts/teslim.ps1` dosyasıdır. İlk kurulum,
+günlük açılış, kapatma, veri yenileme ve sorun giderme adımları
+[teslim kullanım rehberindedir](teslim.md). Aşağıda uygulanan teknik
+seçim, doğrulama ve kurtarma sözleşmesi açıklanır.
 
 Export yalnız canlı Windows ortamında `.venv`, PostgreSQL 17 araçları ve
 şifresiz `DATABASE_URL` ile çalışır; siteye istek göndermez. Kaynağın mevcut
@@ -4025,8 +4015,44 @@ bağlama hatasında PowerShell'in hata kodudur. Export, mevcut Python CLI'ın
 `0/1/2/3` çıkışını korur. `teslim_hazirla.ps1` artık aynı Prepare girişine
 yönlenir; çalışan ekran varsa paket geçişi de aynı kurala uyar.
 
-Yerel komut/geçiş kanıtları `artifacts/docker96/` altındadır. Yeni ortamda
-kurulum, Docker CI ve çevrimdışı bütün teslim kabulü 9.7 kapsamındadır.
+Yerel komut/geçiş kanıtları `artifacts/docker96/` altındadır. 9.7'nin tekrar
+çalıştırılabilir kabulü `tools/docker_check.py` ile yapılır. Araç yalnız
+`artifacts/` altında yeni çıktı klasörü ve yerel Docker motoru kabul eder;
+kullanıcıdan kaynak DB adresi veya gerçek paket almaz. Yapay kaynağı ayrı
+`teslim_kabul_test` DB'de oluşturur, PostgreSQL 17 arşivini üretir ve yeni
+hedefe yükler. Şema/veri/rol/dosya, gerçek HTTP ve grafikler, hata/kesinti,
+kalıcılık, Linux gösterim kapısı ve güncellik denetlenir. Canlı bağlantı
+ortamı Docker çağrılarına aktarılmaz; test parolaları hata kaydında maskelenir.
+
+`.github/workflows/ci.yml` içindeki ayrı Docker işi uygulama imajını kurup
+aynı aracı çalıştırır; yalnız yapay kabul raporu yüklenir. Ayrı ağsız kabul
+senaryosunda hedef ağı `internal: true` ile dışa kapatılır; normal Start adımlarında
+`--pull never` kullanılır. Ana bilgisayarın ağ ayarı değiştirilmez. Açılış
+sonrasında konteyner içindeki gerçek HTTP/grafik akışı çalışırken dış TCP
+bağlantısının kurulamadığı da sınanır. Host tarayıcı portu normal ağda ayrı
+denetlenir; internal ağın host port erişimiyle aynı kanıt sayılmaz. Fiziksel
+ikinci Windows bilgisayarı denemesi ayrı kabul kanıtıdır; mevcut durum [9.7 plan satırında](../proje_plani.md#kalan-iş-sırası-6-kasım-kararı).
+
+```powershell
+.venv\Scripts\python.exe tools/docker_check.py --context desktop-linux --output artifacts/docker-kabul-yeni
+```
+
+Yerel kabul 8503 portunu kullanır; başlamadan teslim kopyası Stop ile
+kapatılır, test sonrası Start ile yeniden açılır. Test aracı yalnız kendi
+projelerini kapatır; kalıcı alanları silmez. Aynı çıktı klasörü tekrar
+kullanılmaz. Başarıda `report.json`, hatada son başarılı adımlar ve
+maskelenmiş `failure.log` korunur. Bu geliştirici kabul aracı hedef
+bilgisayardaki normal Start için gereken Python bağımlılığı değildir.
+
+Son yerel kabul kanıtı `artifacts/docker97/verification.json` dosyasındadır:
+Docker raporu, tam pytest ve temiz Windows klasörü denemesi aynı kaynaklarla
+ilişkilendirilir. Boşluk içeren klasörde `.git`/`.venv` olmadan ilk hazırlık,
+tekrar açılış, paket geçişi/Rollback, değişen imaj etiketi, arızalı adaydan
+kurtarma, dolu port, API/UI yenileme ve RO/port/parola sınırları doğrulandı.
+Test sonrası gerçek teslim kopyası yeniden sağlıklı açıldı, orijinal seçim
+ve ilk hazırlık tarihi korundu. Bu deneme, host'ta Python/PG'nin kurulu
+olmadığını veya ikinci fiziksel Windows PC kabulünü kanıtlamaz. Yeni GitHub
+Docker işi de onaylı push sonrasında ayrıca doğrulanır.
 
 ### Docker servis bağlantısı ve gösterim bakımı
 

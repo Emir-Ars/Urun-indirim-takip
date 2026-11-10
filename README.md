@@ -120,7 +120,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\teslim.ps1 -Ac
 
 Sağlık kontrolleri tamamlanınca ekran `http://127.0.0.1:8503` adresindedir.
 Paket hazırlama, kapatma, durum/log ve önceki pakete dönüş
-[teslim kullanımında](docs/teknik.md#docker-tek-komutla-kullanım) açıklanır.
+[teslim kullanım rehberinde](docs/teslim.md) açıklanır.
 Teslim kopyası otomatik veri toplamaz; yeni veri paketle aktarılır.
 
 ## 📊 Güncel kapsam
@@ -137,7 +137,7 @@ Teslim kopyası otomatik veri toplamaz; yeni veri paketle aktarılır.
 | Cimri geçmişi | 4 Kasım salt okuma denetimi: 58 ürün, 22.595 tarihli kayıt (14 üründe 699 eksik fiyat), 9 Ekim 2025–2 Kasım 2026; ürünlerin kendi ilk–son kayıtları arasında kayıtsız gün yok. Galaxy S24 FE 128 GB 3 Kasım 2025'ten başlıyor; diğer 57 ürün 9 Ekim'den. Galaxy S25 512 GB ve Redmi Note 14 Pro 5G 256 GB eşleştirmesi yok; son alım 2 Kasım, düzenli alım yok. |
 | Kendi toplama geçmişi | 4 Kasım 13:48 salt okuma denetimi: 28 Eylül 2026 15:39–4 Kasım 2026 10:34 (İstanbul); 73 tamamlanmış tur (71 zamanlanmış, 2 elle). 58 ürün bu tarih aralığında; Galaxy S24 FE 128 GB 19 Ekim'den başlıyor, Galaxy S25 512 GB son kontrolü 16 Ekim (etkin sayfası yok; son fiyat 13 Ekim). |
 | Kendi geçmişimizdeki fiyat boşlukları | 4 Kasım denetimi; yalnız 3 Kasım sonuna kadar kapanmış günler: 2.199 ürün-günün 1.796'sında en az bir ham fiyat, 310'unda yalnız stoksuz sonuç, 16'sında fiyat yok ve hata var, 77'sinde hiç kontrol yok. ML için kullanılabilir 22:00 fiyatı 776 ürün-günde, günlük minimum 463 ürün-günde yok; bu iki sayı birbirine eklenmez ve ham fiyat yokluğuyla aynı ölçü değildir. |
-| Otomatik testler | 2651 başarılı, 0 atlanan (10 Kasım); tam pytest, Black ve Flake8 temiz. |
+| Otomatik testler | 2656 başarılı, 0 atlanan (10 Kasım); tam pytest, Black ve Flake8 temiz. |
 | Docker gerçek paket kabulü | 10 Kasım 11:14 paketi: 57 dosya; kopyada 60 ürün, 85 tur, 29.447 sayfa sonucu ve 22.595 Cimri satırı. Kaynak/kopya satır, şema, dizi ve dosya SHA'ları eşleşti; native kaynak değişmedi. API SELECT hesabında yazma yetkisi yok. API/UI/DB sağlıklı; bütün telefonlarda olasılık kapalı, gerçek API ile fiyatlar/iki grafik, aralık ve telefon seçimi, doğru aktarım bildirimi doğrulandı. Bakım/tekrar hazırlama veriyi veya hazırlık kaydını değiştirmedi; model ve kapı korundu. |
 | ML etiket denetimi | Son alımı içeren 2 Kasım görüntüsüyle (son kapanmış gün 1 Kasım) doğrulandı: kendi serimizde 0 kullanılabilir / 1.323 belirsiz (30 gün geçmişi dolan 27 Ekim–1 Kasım başlangıçlarının gelecek penceresi henüz kapanmadı); Cimri'de 19.561 kullanılabilir (2.086 olumlu, 17.475 olumsuz) / 2.231 belirsiz. Sıkı çapraz kontrolde 24.616 pencere kaydı eşleşti. |
 | ML girdi denetimi | Aynı görüntüyle 2 Kasım'da doğrulandı: kendi serimizde 1.323, Cimri'de 21.792 girdi satırı; toplam 23.115 başlangıç 4.2 ile birebir eşleşti, eksik/fazla/tekrarlı başlangıç ve tanınmayan model ailesi yok. |
@@ -175,7 +175,7 @@ canlı ağa çıkmaz; veritabanı testleri yalnız test veritabanını kullanır
 | Proje yapısının sadeleştirilmesi | ✅ Tamamlandı (26 Ekim) |
 | ML ile indirim olasılığı tahmini | 🔄 Model dondurma/saklı test ve gölge mod 6.0–6.4 tamamlandı; gönderimler ve CI doğrulandı. İlk otomatik günlük çalışma doğrulandı (6 Kasım). 6.5 izleme paralel sürüyor; ilk haftalık kontrol 9 Kasım'da doğrulandı. 7.1–7.3 gösterim planı, kayıtlı tahmin API'si/onay komutu ve tek kart tamamlandı; gönderimler ve CI doğrulandı. 7.4 bütün akış testleri, kullanım rehberi ve kullanıcıyla görsel kabul tamamlandı; kullanıcı onayıyla gönderildi; aynı SHA'nın CI'ı başarılı ([plan](proje_plani.md#gösterim-kalan-sıra-7-6-kasım-planı)) |
 | Sürekli çalışma ortamı | 🔄 Aşama 9.1: görevlerin düzenli çalışmasına ilişkin işletim doğrulaması ML işleriyle paralel sürüyor ([plan](proje_plani.md)) |
-| Docker | 🔄 9.3–9.5 tamamlandı; gönderim/CI kayıtları [geçmişte](docs/gecmis.md). 9.6 tek PowerShell girişi, sabit imaj/Compose seçimi, sağlık kontrolleri ve hata sonrası önceki pakete dönüş uygulandı; yerel kabul tamam, gönderim/CI kapanışı geçmişte izlenir. Sırada 9.7 bütün teslim kabulü ve Docker CI ([plan](proje_plani.md#docker-ve-teslim-hedefi-92), [kullanım](docs/teknik.md#docker-tek-komutla-kullanım)) |
+| Docker | 🔄 9.3–9.6 tamamlandı; gönderim/CI kayıtları [geçmişte](docs/gecmis.md). 9.7'nin yapay Docker kabul aracı, ayrı CI işi ve [teslim rehberi](docs/teslim.md) eklendi; Docker bütün akışı ve temiz klasörde PowerShell kabulü tamamlandı. GitHub Docker işi onaylı gönderimden sonra doğrulanacak; ikinci Windows bilgisayarı kabulü bekliyor ([plan](proje_plani.md#docker-ve-teslim-hedefi-92)). |
 | Sunum ve teslim | ⏳ Planda: iş 8, hazırlık hedefi 21–31 Aralık; biçim ve içerik netleştirilecek |
 
 ## 📚 Belgeler

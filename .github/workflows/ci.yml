@@ -54,3 +54,24 @@ jobs:
       - run: python -m black --check app tests tools
       - run: python -m flake8 app tests tools
       - run: python -m pytest
+
+  docker:
+    name: Docker teslim kabulü (yapay veri)
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Yapay paketle Docker bütün akış kabulü
+        run: python tools/docker_check.py --output artifacts/docker-ci
+      - name: Kabul raporu
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: docker-kabul-raporu
+          path: artifacts/docker-ci/report.json
+          if-no-files-found: warn
