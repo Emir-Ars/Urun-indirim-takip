@@ -51,7 +51,10 @@ API ve ekran sözleşmeleri, hata kodları ve bilinen sınırlar. Yalnız sistem
 | `compose.yaml` | Ayrı teslim kopyası için DB/API/ekran servisleri, ağ, kalıcı alanlar ve gizli dosya bağlantıları. Veri hazırlamaz. |
 | `requirements-linux.lock` | Python 3.13.15 / Linux x86_64 için doğrudan ve dolaylı çalışma bağımlılıklarının sürüm ve wheel hash'leri. Windows'a kurulmaz. |
 | `app/delivery/` | Tutarlı salt okunur yedek, kapalı paket envanteri ve Docker kopyasının hazırlık/doğrulama komutları. |
-| `scripts/teslim_hazirla.ps1` | Paketi önceden doğrulayıp yalnız yerel Docker Desktop Linux motorunda pakete özel DB/kalıcı alan hazırlama. |
+| `scripts/teslim.ps1` | Docker tesliminin Export, Prepare, Start, Status, Logs, Stop ve Rollback girişi. |
+| `scripts/teslim_ortak.ps1` | Sabit yerel motor, seçim/kilit, Compose çağrısı, sağlık ve geri dönüş işlemleri. |
+| `scripts/teslim_paket.ps1` | Paket/imaj doğrulama, ayrı kopyaya geri yükleme ve hazırlık kaydı. |
+| `scripts/teslim_hazirla.ps1` | Eski hazırlama komutunu aynı Prepare girişine yönlendiren uyumluluk dosyası. |
 
 Eski veritabanı, API, ML, arayüz ve Docker taslakları yerel
 `_eski_taslaklar/` klasöründedir. Git’e gönderilmez, güncel uygulamanın
@@ -3758,7 +3761,7 @@ anlamı ilgili komut bölümündedir. Geçerli bir raporun kapısı
 
 9.3'te imaj ve servis tanımları, 9.4'te paket/DB hazırlığı, 9.5'te API/ekran
 bağlantısı, aktarım bildirimi ve gösterim bakım komutu uygulanmıştır.
-Tek PowerShell girişi sonraki adımdır;
+9.6'da tek PowerShell girişi ve paket geçişi eklenmiştir;
 [uygulama sırası](../proje_plani.md#docker-ve-teslim-hedefi-92). Mevcut
 Windows görevleri ve veritabanı bu dosyalarla değiştirilmez.
 
@@ -3795,7 +3798,7 @@ Windows görevleri ve veritabanı bu dosyalarla değiştirilmez.
 
 `DELIVERY_STATE_DIR` yalnız Docker'a ait durum klasörünü seçer; varsayılanı
 proje kökündeki `data/teslim` klasörüdür. Compose aşağıdaki **hazırlanmış**
-dosyaları bekler; `teslim_hazirla.ps1` bunları paket kimliğine ait klasörde
+dosyaları bekler; `teslim.ps1 -Action Prepare` bunları paket kimliğine ait klasörde
 ilk hazırlık sırasında üretir:
 
 - `secrets/admin_password`: DB'ye ve yalnız bakım profilindeki `transfer`
@@ -3823,7 +3826,7 @@ docker run --rm --network none --read-only --tmpfs /tmp:mode=1777 fiyat-takip-te
 
 Bunlar veri kopyası oluşturmaz. Paket/DB hazırlığı aşağıdadır. Hazır kopyanın
 API/ekranını açma komutları [servis bağlantısı](#docker-servis-bağlantısı-ve-gösterim-bakımı)
-bölümündedir; tek PowerShell giriş noktası 9.6'da uygulanacaktır.
+bölümündedir; tek PowerShell giriş noktası aşağıda açıklanır.
 
 Kilidi yenilemek gerektiğinde önce Linux'ta yeniden çözümleme yapılır;
 Windows `pip freeze` çıktısı kilit olarak kullanılmaz. Proje kökünde:
@@ -3906,16 +3909,20 @@ klasörle tekrar denenir, üzerine yazılmaz.
 
 ### Docker kopyasını hazırlama
 
-İmaj kurulduktan sonra paket Windows veya başka desteklenen teslim
-bilgisayarında şu geçici hazırlık girişiyle yüklenir:
+Paket desteklenen Windows teslim bilgisayarında şu girişle hazırlanır:
 
 ```powershell
-.\scripts\teslim_hazirla.ps1 -Bundle <PAKET_KLASORU>
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\teslim.ps1 -Action Prepare -Bundle <PAKET_KLASORU>
 ```
 
-Bu komutun çalışması için bilgisayarda Python/PostgreSQL kurulumu gerekmez;
-Docker Desktop Linux motoru ve önceden kurulmuş imajlar gerekir. Birleşik
-`scripts/teslim.ps1 -Action …` girişi 9.6'da uygulanacaktır.
+`Bypass` yalnız bu PowerShell süreci içindir; bilgisayarın kalıcı çalışma
+ilkesi değiştirilmez. Prepare/Start/Rollback kapalı yerel Docker Desktop'ı
+gizli olarak açmayı dener, Linux motorunu en fazla iki dakika bekler.
+İlk Docker/WSL2 kurulumu kullanıcı tarafından tamamlanmış olmalıdır.
+Teslim bilgisayarında Python/PostgreSQL kurulumu gerekmez. İlk Prepare,
+varsayılan uygulama imajı yoksa veya paketin koduyla uyuşmuyorsa imajı
+oluşturur; gerekirse sabit PostgreSQL imajını indirir. Bu aşamada internet
+gerekebilir. Uygun olmayan özel imaj ve uyumsuz paket reddedilir.
 
 1. Sabit yerel `desktop-linux` motoru kontrol edilir. Paket imaj içinde,
    ağ kapalı ve dosyalar salt okunurken doğrulanır; PostgreSQL 17.11
@@ -3934,7 +3941,7 @@ Docker Desktop Linux motoru ve önceden kurulmuş imajlar gerekir. Birleşik
    yetkisinin yokluğu `validate_readiness` ile doğrulanır.
 5. Ayar/ML alanlarına doğrulanmış dosyalar kopyalanır. Kalıcı alanda
    `.delivery_ready.json`, bilgisayarda `prepared.json` en son oluşturulur.
-   Gösterim kapalıdır; UI/API henüz başlatılmaz.
+   Yeni kopya gösterim kapalı başlar. Ekrana geçiş aşağıdaki seçim kuralına bağlıdır.
 
 `bootstrap`, `finalize`, `check` alt komutları bakım servisi içindir.
 Yazan bağlantı Linux Docker konteyneri dışında açılmaz; yalnız sabit
@@ -3946,7 +3953,7 @@ Aynı paket tekrar hazırlanırsa DB geri yüklenmez: mevcut veri, dosya,
 sahiplik ve okuma rolü yeniden doğrulanır. Hazırlık kaydı ve veri değişmez.
 Başarısız/yarım alanın üzerine yazılmaz; alan otomatik silinmez.
 Başka paketlerin DB/kalıcı alanları kullanılmaz veya silinmez. Yeni pakete
-ekran geçişi ve geri dönüş 9.6'da uygulanacaktır.
+ekran geçişi ve geri dönüş aşağıdaki ortak girişten yapılır.
 
 Yerel yapay aktarım kanıtları `artifacts/docker94/verification.json`, ilk
 gerçek paket kabulü `artifacts/docker94/acceptance.json` içindedir. Gerçek
@@ -3956,6 +3963,70 @@ sahiplik, API izinleri ve tekrar hazırlama doğrulanmıştır; kapsam sayılar�
 kopyada yazma denemesi yapılmaz; yetkiler salt okunur SQL ile denetlenir.
 Yazmanın fiilen reddi yalnız yapay `_test` kopyasında sınanır. Başka
 bilgisayarda kurulum ve teslim kabulü 9.7 kapsamındadır.
+
+### Docker: tek komutla kullanım
+
+Proje kökünden ortak giriş `scripts/teslim.ps1` dosyasıdır. Aşağıdaki
+komutlar betik çalıştırma izni olan oturumda kullanılabilir. İzin hatasında,
+yukarıdaki örnekteki `powershell.exe -NoProfile -ExecutionPolicy Bypass -File`
+önekini kullanın; kalıcı ilke değişikliği gerekmez.
+
+| İşlem | Komut |
+|---|---|
+| Canlı Windows kaynağından yeni paket | `.\scripts\teslim.ps1 -Action Export` |
+| İlk veya yeni paketi hazırlama | `.\scripts\teslim.ps1 -Action Prepare -Bundle <PAKET_KLASORU>` |
+| Ekranı açma | `.\scripts\teslim.ps1 -Action Start` |
+| Seçili/önceki paket ve servis sağlığı | `.\scripts\teslim.ps1 -Action Status` |
+| Son loglar | `.\scripts\teslim.ps1 -Action Logs -Lines 100` |
+| Veriyi koruyarak kapatma | `.\scripts\teslim.ps1 -Action Stop` |
+| Önceki pakete dönme | `.\scripts\teslim.ps1 -Action Rollback` |
+
+Export yalnız canlı Windows ortamında `.venv`, PostgreSQL 17 araçları ve
+şifresiz `DATABASE_URL` ile çalışır; siteye istek göndermez. Kaynağın mevcut
+kilit/tutarlılık kurallarını kullanır. Varsayılan çıktı yeni zaman damgalı
+paket klasörüdür; `-Output <YENI_KLASOR>` ile değiştirilebilir. Teslim kopyası
+üzerinde Export yapılmaz. Diğer işlemler yerel Python/PostgreSQL kullanmaz.
+
+Prepare yeni kopyayı doğrular ve veritabanını hazırlar. Çalışan seçili bir
+ekran varsa yeni kopyaya geçer: önce eski API/UI durur, yeni API/UI birlikte
+açılır ve sağlık kontrolleri beklenir. Ancak başarıdan sonra seçim kaydı
+değişir; önceki DB servisi kapatılır. Başarısız açılışta aday servisler
+kapatılıp önceki ekran yeniden açılır, seçim korunur. Kurtarma da başarısızsa
+komut bunu açıkça bildirir; veriyi silmez. Ekran kapalıysa Prepare yalnız
+hazırlar ve seçer; açmak için Start gerekir. Rollback aynı geçiş kuralıyla
+seçili ve önceki paketi değiştirir. Aynı paketin Prepare işlemi seçim
+geçmişini değiştirmez ve DB'yi geri yüklemez.
+
+Seçim `data/teslim/selection.json` dosyasındadır. Her kopyanın `prepared.json`
+kaydında imajın tam SHA kimliği ve kopyaya ait `compose.yaml` SHA'sı saklanır.
+Eski hazırlık kayıtları, aynı paketin başarılı Prepare doğrulamasıyla bir
+kez bu bilgiye yükseltilir; veri yeniden yüklenmez. İmajın `local` etiketi
+sonradan değişse bile Start/Rollback kayıtlı kimliği kullanır. Eski imajları,
+paket klasörlerini veya kalıcı alanları elle silmek geri dönüşü engeller.
+
+Start paket/model/kod bütünlüğünü ve hazır DB/rol/dosya eşleşmesini yeniden
+doğrular. Sonra DB → API → UI sağlık kontrolleri tamamlanmadan hazır mesajı
+vermez. Sağlıklı servisler yeniden oluşturulmaz. Yenileme gerekirse API ve
+UI birlikte oluşturulur; UI eski ağ alanında bırakılmaz. Normal Start,
+Stop ve Rollback imaj oluşturmaz veya indirmez. Hazırlanmış imajlar, paket
+ve kalıcı alanlar bilgisayarda bulunmalıdır. Ekran yalnız
+`http://127.0.0.1:8503` adresindedir; başka uygulamanın kullandığı 8503 portu
+zorla alınmaz. API/DB portları yayımlanmaz.
+
+İşlemler ortak `.prepare.lock` ile birbirini dışlar; kilit doluysa beklemeden
+anlaşılır hata döner. Compose için verilen geçici ortam değişkenleri her
+çağrı sonunda geri alınır. Status/Logs/Stop kapalı motoru kendiliğinden açmaz.
+Logs sınırlı satır döndürür; Docker parolaları ve parolalı PostgreSQL
+adresleri maskelenir. Stop yalnız seçili kopyanın servislerini kapatır;
+kalıcı alan silme veya otomatik temizlik komutu yoktur.
+
+PowerShell çıkışı başarıda `0`, işlem/doğrulama hatasında `1`, parametre
+bağlama hatasında PowerShell'in hata kodudur. Export, mevcut Python CLI'ın
+`0/1/2/3` çıkışını korur. `teslim_hazirla.ps1` artık aynı Prepare girişine
+yönlenir; çalışan ekran varsa paket geçişi de aynı kurala uyar.
+
+Yerel komut/geçiş kanıtları `artifacts/docker96/` altındadır. Yeni ortamda
+kurulum, Docker CI ve çevrimdışı bütün teslim kabulü 9.7 kapsamındadır.
 
 ### Docker servis bağlantısı ve gösterim bakımı
 
@@ -3980,27 +4051,15 @@ korur. `prepared.json` bilgisayardaki seçim bilgisidir; UI, kalıcı alanın
 değişmeyen `.delivery_ready.json` dosyasını okur.
 
 İmajın kodu değişirse önce yeni imaj ve o kodla yeni Export/Prepare gerekir.
-Eski paketin kod SHA'sı değiştirilerek uyumluluk kontrolü atlatılmaz. Aşağıdaki
-ara komutlar proje kökünde, **yeni kodla hazırlanmış** kopya için kullanılır;
-9.6 birleşik girişine kadar ortam ve proje seçimi elle yapılır:
+Eski paketin kod SHA'sı değiştirilerek uyumluluk kontrolü atlatılmaz.
+Normal açılış için yukarıdaki Start kullanılır. Yalnız gösterim bakımı için
+aynı seçili kopyanın sabit Compose/imaj bilgileriyle ortak çağrı kullanılabilir:
 
 ```powershell
-$teslimHazirKayit = "data\teslim\<PAKET_SHA>\prepared.json"
-$teslimHazir = Get-Content -Raw -Encoding UTF8 $teslimHazirKayit | ConvertFrom-Json
-$env:DELIVERY_STATE_DIR = Split-Path -Parent (Resolve-Path $teslimHazirKayit).Path
-$env:DELIVERY_BUNDLE_DIR = $teslimHazir.bundle_path
-$env:DELIVERY_DATABASE = $teslimHazir.database
-$env:DELIVERY_API_USER = if ($teslimHazir.database -eq 'fiyat_takip') { 'fiyat_takip_api' } else { 'fiyat_takip_api_test' }
-$env:DELIVERY_IMAGE = $teslimHazir.image
-docker --context desktop-linux compose -p $teslimHazir.project_name run --rm --no-deps -T transfer python -m app.delivery check --bundle /bundle
-```
-
-Kontrol çıkışı `0` ise API ve UI birlikte açılır; üç servisin sağlık
-kontrolleri tamamlanır. API ve UI birlikte yeniden oluşturulur; tek başına
-API'yi yenileyip UI'yi eski ağ alanında bırakmak desteklenmez.
-
-```powershell
-docker --context desktop-linux compose -p $teslimHazir.project_name up -d --wait --wait-timeout 180 api ui
+. .\scripts\teslim_ortak.ps1
+$script:DeliveryRoot = (Get-Location).Path
+$teslimSecim = Get-DeliverySelection
+$teslimHazir = Read-DeliveryRecord $teslimSecim.current
 ```
 
 Gösterim bakımı, aynı paket/proje seçimiyle mevcut `shadow-display`
@@ -4009,8 +4068,8 @@ Windows onayı aktarılmaz veya değiştirilmez. `--evaluation` paketin içindek
 `degerlendirme_…` klasörünün **adı** olmalıdır; dış/Windows yol kabul edilmez.
 
 ```powershell
-docker --context desktop-linux compose -p $teslimHazir.project_name run --rm --no-deps -T transfer python -m app.delivery shadow-display --bundle /bundle --evaluation <DEGERLENDIRME_KLASOR_ADI>
-docker --context desktop-linux compose -p $teslimHazir.project_name run --rm --no-deps -T transfer python -m app.delivery shadow-display --bundle /bundle --disable
+Invoke-DeliveryCompose $teslimHazir @('run', '--rm', '--no-deps', '--pull', 'never', '-T', 'transfer', 'python', '-m', 'app.delivery', 'shadow-display', '--bundle', '/bundle', '--evaluation', '<DEGERLENDIRME_KLASOR_ADI>')
+Invoke-DeliveryCompose $teslimHazir @('run', '--rm', '--no-deps', '--pull', 'never', '-T', 'transfer', 'python', '-m', 'app.delivery', 'shadow-display', '--bundle', '/bundle', '--disable')
 ```
 
 Açılış; paket ve hazır kopya, veri/şema/rol/dosya eşleşmesi, ön kayıtlı model,
