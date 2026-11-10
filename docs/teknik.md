@@ -6,6 +6,7 @@ API ve ekran sözleşmeleri, hata kodları ve bilinen sınırlar. Yalnız sistem
 **bugünkü davranışını** anlatır; tarihli oturum kaydı tutmaz.
 
 - Kararlar, aşama durumu ve açık kararlar: [proje_plani.md](../proje_plani.md)
+- Teslim kullanıcısı: [teslim.md](teslim.md)
 - Adım adım geçmiş (tarih, commit, CI): [gecmis.md](gecmis.md)
 - 20 Ekim 2026'ya kadarki ayrıntılı oturum kayıtları: [arsiv/](arsiv/)
 
@@ -30,7 +31,13 @@ API ve ekran sözleşmeleri, hata kodları ve bilinen sınırlar. Yalnız sistem
 - [ML veri denetimi](#ml-veri-denetimi)
 - [ML hazırlığı](#ml-hazırlığı)
 - [Docker: imaj ve Compose temeli](#docker-imaj-ve-compose-temeli)
+- [Gölge mod tahmin kaydı](#gölge-mod-tahmin-kaydı-python--m-appml-shadow-predict)
+- [Günlük gölge görevi](#günlük-gölge-çalışması-python--m-appml-shadow-daily)
+- [Gölge değerlendirmesi](#gölge-değerlendirmesi-python--m-appml-shadow-evaluate)
+- [Tahmin gösterim onayı](#tahmin-gösterim-onayı-python--m-appml-shadow-display)
 - [Docker: paket ve veritabanı aktarımı](#docker-paket-ve-veritabanı-aktarımı)
+- [Docker: tek komutla kullanım ve kabul](#docker-tek-komutla-kullanım)
+- [Docker servis bağlantısı ve gösterim bakımı](#docker-servis-bağlantısı-ve-gösterim-bakımı)
 - [Testler ne kanıtlar, ne kanıtlamaz](#testler-ne-kanıtlar-ne-kanıtlamaz)
 - [Bilinen sınırlar](#bilinen-sınırlar)
 
@@ -44,6 +51,9 @@ API ve ekran sözleşmeleri, hata kodları ve bilinen sınırlar. Yalnız sistem
 | `proje_plani.md` | Kararların, aşama durumunun, açık kararların ve sıradaki işin tek kaynağı. |
 | `AGENTS.md` | Projede çalışan yapay zekâ araçlarının (Claude Code, Codex) ortak çalışma kuralları. |
 | `docs/teknik.md` | Bu rehber: bugünkü davranışın başvuru belgesi. |
+| `docs/teslim.md` | Teslim kullanıcısının ilk kurulum, günlük kullanım, veri yenileme ve geri dönüş rehberi. |
+| `DEVAM.md`, `ARAC_GECISI.md`, `CLAUDE.md` | Yerel devir notu, araç geçişi rehberi ve ortak kuralları içe alan Claude sarmalayıcısı; Git dışıdır. |
+| `docs/arastirma/` | Karar öncesi araştırma girdileri; güncel uygulama talimatı değildir. |
 | `docs/gecmis.md` | Her plan adımı için kısa geçmiş satırı (tarih, ne yapıldı, commit, CI). |
 | `docs/arsiv/` | 20 Ekim 2026'da dondurulmuş eski plan ve rehber, Aşama 7 araştırma raporları. Değiştirilmez. |
 | `pyproject.toml` | Bağımlılıklar, Python sürümü, paketleme ve test/biçim araçlarının ayarları. |
@@ -67,7 +77,7 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 | `discovery.json` | Takip edilecek telefonlar ve tarama sınırları | Kullanıcı |
 | `catalog.json` | Keşfin doğruladığı ürünler ve sayfalar | Keşif (elle yazılmaz) |
 | `runtime.json` | Zaman aşımı, tekrar deneme, istekler arası bekleme (3 sn) | Kullanıcı, nadiren |
-| `market_history.json` | Bir defalık Cimri alımı: `product_key`, URL ve beklenen Cimri kimliği. 58 eşleştirme: 57'si 8 Ekim alımında, Galaxy S24 FE 128 GB 2 Kasım son alımında doğrulandı; Galaxy S25 512 GB ve Redmi Note 14 Pro 5G 256 GB eşleştirmesiz ([ayrıntı](#eşleştirme-dosyası)). | Araştırma ve gerçek çıktı kontrolüyle |
+| `market_history.json` | Bir defalık Cimri alımı: `product_key`, URL ve beklenen Cimri kimliği. Güncel eşleştirme kapsamı README tablosunda; sözleşme [eşleştirme bölümündedir](#eşleştirme-dosyası). | Araştırma ve gerçek çıktı kontrolüyle |
 | `shadow.json` | Gölge mod: başlangıç günü (27 Ekim 2026), dondurulan modelin ön kayıtlı manifest SHA-256'sı, model ve 2 Kasım kanıtlarının kalıcı kopya yolları (`data/ml/golge/kanitlar/`, Git dışı) ve resmi kayıt klasörü (`data/ml/golge`). Ayrıntı: [Gölge mod tahmin kaydı](#gölge-mod-tahmin-kaydı-python--m-appml-shadow-predict). | Kullanıcı, nadiren; model değişmez |
 
 ### Ortak parçalar: `app/`
@@ -185,12 +195,14 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 
 ### Testler ve CI
 
-Test sayıları burada tutulmaz; güncel sayı `pytest -q` çıktısındadır.
+Son doğrulanmış test sayısı [README Güncel kapsam](../README.md#-güncel-kapsam)
+tablosunda tarihle tutulur. Her yeni koşunun geçme/atlama bilgisi ayrıca
+çıktısından doğrulanır.
 
 | Yer | Ne sınar |
 |---|---|
 | `tests/conftest.py` | Her testte gerçek curl_cffi ve HTTPX ağ transport'ları kesilir; ASGI/TestClient/MockTransport süreç içinde çalışır. Kalıcı `DATABASE_URL` ve `API_DATABASE_URL` silinir. `db` yalnız `TEST_DATABASE_URL`'deki `_test` DB'yi her testte boşaltır; ortak test kilidi en çok 30 sn bekler. `api_db` ayrıca `TEST_API_DATABASE_URL` ve `fiyat_takip_api_test` ister; iki bağlantının aynı `_test` DB olduğunu denetleyip test şemasında SELECT izinlerini yeniden kurar. `migrated`, `db`'ye bütün migration'ları uygular. `world`, `client` ve `stub` fixture'ları `tests/support/read_world.py` ile `tests/support/api.py`'dedir; burada `pytest_plugins` ile kaydedildikleri için testler onları içe aktarmadan kullanır. Eksik test adresleri yerelde atlama, CI'da hata üretir. |
-| `tests/support/` | Test değildir; birden fazla test dosyasının ortak yardımcılarıdır: sahte HTTP oturumu ve yanıtı (`fake_http.py`), `_test` DB'ye satır yazan `insert` (`database.py`), toplama turunun küçük sahte kataloğu ve sahte scraper'ları (`collection.py`), Cimri kayıtlı örnekleri ve sahte istemcisi (`market_history.py`), salt okunur sorgu ve API testlerinin küçük veritabanı dünyası ve satır ekleme yardımcıları (`read_world.py`), ML veri görüntüsünün küçük tablo örneği ve etiket, girdi, bölme, deney ile dondurulmuş model kanıtını üreten yardımcılar (`ml.py`), yerel API'nin sahte havuzu ve TestClient fixture'ları (`api.py`), istatistik testlerinin sentetik tur ve Cimri geçmişi (`price_statistics.py`), keşif testlerinin örnek dosyası okuyucusu, sabit katalog kopyası ve hedefleri (`discovery.py`), Streamlit ekranının yapay örnekleri, ekran yazılarını toplayan `messages` ve AppTest süre sınırı (`ui_samples.py`, 30 sn; varsayılan 3 sn yavaş makinede doğru ekranı da düşürebilir). Test dosyaları birbirinden içe aktarma yapmaz (`from test_…`, `import test_…`, `from tests.test_…`); bunu `tests/test_http.py` denetler. Yalnız tek dosyada kullanılan yardımcı o dosyada kalır. Buradaki `assert`'ler de pytest'in ayrıntılı hata mesajını verir (`conftest.py`'deki kayıt). |
+| `tests/support/` | Doğrudan pytest ile toplanan test modülleri değildir; ortak fixture ve Docker kabul yardımcılarıdır: sahte HTTP oturumu ve yanıtı (`fake_http.py`), `_test` DB'ye satır yazan `insert` (`database.py`), toplama turunun küçük sahte kataloğu ve sahte scraper'ları (`collection.py`), Cimri kayıtlı örnekleri ve sahte istemcisi (`market_history.py`), salt okunur sorgu ve API testlerinin küçük veritabanı dünyası ve satır ekleme yardımcıları (`read_world.py`), ML veri görüntüsünün küçük tablo örneği ve etiket, girdi, bölme, deney ile dondurulmuş model kanıtını üreten yardımcılar (`ml.py`), yerel API'nin sahte havuzu ve TestClient fixture'ları (`api.py`), istatistik testlerinin sentetik tur ve Cimri geçmişi (`price_statistics.py`), keşif testlerinin örnek dosyası okuyucusu, sabit katalog kopyası ve hedefleri (`discovery.py`), Streamlit ekranının yapay örnekleri, ekran yazılarını toplayan `messages` ve AppTest süre sınırı (`ui_samples.py`, 30 sn; varsayılan 3 sn yavaş makinede doğru ekranı da düşürebilir). Test dosyaları birbirinden içe aktarma yapmaz (`from test_…`, `import test_…`, `from tests.test_…`); bunu `tests/test_http.py` denetler. Yalnız tek dosyada kullanılan yardımcı o dosyada kalır. Buradaki `assert`'ler de pytest'in ayrıntılı hata mesajını verir (`conftest.py`'deki kayıt). |
 | `tests/test_http.py` | HTTP katmanı: hata kodları (`invalid_host` mesajı hedef alan adını yazar, sorgu metnini yazmaz), indirme sırasında 8 MB sınırı, büyük hata/yönlendirme yanıtları, yönlendirme kuralları, 5xx tekrarı ve bekleme süreleri, istekler arası bekleme, scraper factory. Mimari sınır da burada: pazaryeri HTTP'si yalnız `app/scraper/http.py` ve curl_cffi ile; HTTPX yalnız `app/ui/api_client.py` için; UI veritabanı/havuz/sunucu katmanını yüklemez; test ve araç dosyaları başka bir test dosyasından içe aktarma yapmaz. |
 | `tests/test_contracts.py` | Pydantic sözleşmeleri: satılabilir teklif fiyat ve satıcı taşır, puan ölçeği aşamaz, üstü çizili fiyat güncel fiyattan büyüktür, katalog kimlik/referans/alan adı kuralları, `money()` kuruş çevirimi. |
 | `tests/test_url_identity.py` | Ortak ürün adresi kimliği: ürün yolu, sorgu, son eğik çizgi, küçük harfli SKU, eksik/bozuk kimlik ve bütün tüketicilerin aynı kimliği okuması. |
@@ -227,25 +239,30 @@ Test sayıları burada tutulmaz; güncel sayı `pytest -q` çıktısındadır.
 | `tests/test_ml_shadow_evaluation_cli.py` | Gerçek komut akışı ve çıkış kodları, hatalı SHA/ayar/görüntü, mevcut çıktı koruması, kilit ve kesinti, boş kayıtta yetersiz rapor; DB/ağ bağlantısı, pickle açma, eğitim ve tahmin çağrılarının ayrı süreçte engellenmesi. |
 | `tests/test_price_statistics.py` | İstatistik hesabı: tam kapsam dönemi, 30 gün/14 geçiş/7 gün/18 saat eşikleri, İstanbul günü, NULL üzerinden geçmeme, değişkenlik, grafik aralığından bağımsızlık. Veritabanısız. |
 | `tests/test_api_foundation.py` | API okuma rolünün izinleri (yazamaması, kalıcı nesne kuramaması) ve test ortamının ağ/adres korumaları. |
-| `tests/test_api.py` | FastAPI: dört adres ve OpenAPI, kuruş/UTC/NULL, fiyat yaşı, rol/şema hataları, dört bağlantı sınırı, kesinti ve yeniden bağlantı, 5 sn sorgu zaman aşımı, tutarlı cevap. |
+| `tests/test_api.py` | FastAPI: adresler ve OpenAPI, kuruş/UTC/NULL, fiyat yaşı, rol/şema hataları, dört bağlantı sınırı, kesinti ve yeniden bağlantı, 5 sn sorgu zaman aşımı, tutarlı cevap. |
 | `tests/test_api_client.py` | Yerel API istemcisi: katı girdi/JSON ve alan tamlığı, sabit hedef/proxy/yönlendirme sınırı, güvenli hatalar, tekrar/önbellek olmaması, kaynak bırakma. |
 | `tests/test_docker_entrypoint.py`, `tests/test_docker_lock.py` | Docker parolasının çıktıdan korunması, yalnız kopya DB hedefi, pgpass yazımı ve süreç devri; yanlış ortam, bozuk hash, eksik ek özellik ve pyproject/kilit uyuşmazlığının reddi. |
+| `tests/test_delivery.py`, `tests/test_delivery_display.py`, `tests/test_delivery_cli.py` | Paket/kod/model/şema bütünlüğü, Docker kopyası ve gösterim onayı, PowerShell seçim/kilit/idempotence/kurtarma sözleşmesi. |
+| `tests/test_docker_check.py`, `tests/support/docker_fixture.py`, `tests/support/docker_probe.py` | Kabul aracının alan/env/sır sınırları; CI ve yerel Docker için yalnız yapay kaynak, HTTP/rol/grafik/kapı/ağsız kabul yardımcıları. |
 | `tests/test_ui.py` | Streamlit ekranı (AppTest) ve grafik verisi. Yapay örnekler `tests/support/ui_samples.py`'dedir; AppTest ve önizleme ortak kullanır, gerçek fiyat değildir. |
 | `tests/test_api_ui_integration.py` | Gerçek test okuma hesabı → FastAPI → istemci → Streamlit zinciri; SQL ve hesaplama sahte değildir. |
 | `tests/test_api_ui_check.py`, `tests/test_ml_data_check.py`, `tests/test_live_discovery_check.py` | Aşağıdaki denetim/kontrol araçlarının kendileri. |
 | `tests/test_market_history.py`, `tests/test_market_history_import.py` | Cimri alımı ve aktarımı: kimlik, tarih/fiyat/eksik veri, ham kanıt ve parmak izi, istek bütçesi, kilit, ilk/tekrar aktarım, çelişki, READ ONLY önizleme, kesinti. |
-| `tests/fixtures/` | Gerçek kaynaklardan küçültülmüş örnekler (kaynak yolu ve SHA-256 ile), kataloğun sabit kopyası (`discovery/catalog.json`) ve Cimri örneklerindeki 57 ürünün sabit kopyası (`cimri_catalog_products.json`). Testler `data/` veya ağa bağlı değildir; sonuçları canlı `config/catalog.json` içeriğine bağlı değildir. İstisna, gerçek dosyaları bilerek denetleyen üç test: `test_real_config_files_match_contracts` (keşif ayarı ve katalog sözleşmeye uyar), `test_config_mapping_uses_existing_catalog_and_recorded_source_ids` (Cimri eşleştirmesi gerçek katalogdaki etkin ürünlere bağlı) ve `test_existing_catalog_keys_can_use_client_validation` (her gerçek ürün anahtarı ekran istemcisinin anahtar kuralından geçer). ML veri denetimi testleri dosyayı yalnız SHA-256 parmak izi için okur. |
-| `.github/workflows/ci.yml` | Her push/pull request'te geçici PostgreSQL 17 (`C.UTF-8`) açar, `dev,web,ml` bağımlılıklarını kurar; yalnız `_test` DB'de API rolünü hazırlar ve Black/Flake8/tam testleri çalıştırır. `ci_only` şifresi yalnız o işte açılıp silinen sunucunundur. |
+| `tests/fixtures/` | Gerçek kaynaklardan küçültülmüş örnekler (kaynak yolu ve SHA-256 ile), kataloğun sabit kopyası (`discovery/catalog.json`) ve Cimri örneklerindeki 57 ürünün sabit kopyası (`cimri_catalog_products.json`). Testler `data/` veya ağa bağlı değildir; sonuçları canlı `config/catalog.json` içeriğine bağlı değildir. Gerçek dosyaların sözleşmesini bilerek denetleyen testlere örnekler: `test_real_config_files_match_contracts` (keşif ayarı ve katalog sözleşmeye uyar), `test_config_mapping_uses_existing_catalog_and_recorded_source_ids` (Cimri eşleştirmesi gerçek katalogdaki etkin ürünlere bağlı) ve `test_existing_catalog_keys_can_use_client_validation` (her gerçek ürün anahtarı ekran istemcisinin anahtar kuralından geçer). ML ve Docker denetimleri de ilgili ayar/kilit/kod dosyalarını kendi sözleşmeleri için okur; bu, canlı site veya fiyat doğrulaması değildir. |
+| `.github/workflows/ci.yml` | Her push/pull request'te geçici PostgreSQL 17 (`C.UTF-8`) açar, `dev,web,ml` bağımlılıklarını kurar; yalnız `_test` DB'de API rolünü hazırlar ve Black/Flake8/tam testleri çalıştırır. Ayrı Docker işi imajı ve yapay _test kaynağını sıfırdan hazırlar, bütün akış kabulünü çalıştırıp yalnız raporu yükler. `ci_only` şifresi yalnız test işinin geçici sunucunundur. |
 | `.github/workflows/bulut-deneme.yml` | Elle tetiklenen bulut erişim denemesi (zamanlama, veritabanı ve gizli anahtar yok): `tools/live_scraper_check.py samsung_galaxy_a55_128gb` ile 4 sayfayı GitHub'ın makinesinden okur; ardından iki Trendyol sayfası için gelen sayfanın kısa özetini (boyut, dil, başlık, veri blokları, koruma izleri, çerez adları) yazar. Sonuç "Bilinen sınırlar"dadır. Tur saatlerinde (10:00–10:40, 22:00–22:40) tetiklenmez: `data/scrape.lock` bu makineye özgüdür. |
 
 ### Canlı kontrol ve denetim araçları: `tools/`
 
 Otomatik test değildir; `pytest` bu klasörü toplamaz. Araçlar proje kökünden
-`.venv\Scripts\python.exe tools\<araç>.py` biçiminde çalıştırılır; siteye veya gerçek veritabanına giden araçları
-kullanıcı kendi terminalinden, tur ve keşif saatleri dışında çalıştırır.
+`.venv\Scripts\python.exe tools\<araç>.py` biçiminde çalıştırılır. Siteye giden
+araçları kullanıcı kendi terminalinden, tur/keşif saatleri dışında çalıştırır.
+Gerçek DB denetimi yalnız okuma hesabıyla yapılır; Docker kabulü ayrı yapay
+`_test` kaynağını kullanır. Yetki sınırının kaynağı [AGENTS.md](../AGENTS.md)'dir.
 
 | Araç | Ne işe yarar |
 |---|---|
+| `tools/docker_check.py` | Yalnız yapay _test verisiyle ayrı yerel Docker/CI kabulü; port/rol/dosya, HTTP/grafik, kalıcılık, kesinti, kapı ve ağsız çalışma. Ayrıntı [Docker kabulünde](#docker-tek-komutla-kullanım). |
 | `tools/live_scraper_check.py` | Katalogdaki sayfaları canlı okur; bütün satıcıları gösterir. İsteğe bağlı `product_key` ön eki (ör. `samsung_`) ile yalnız o ürünler; sayfa seçimi toplama turuyla aynı fonksiyondur. Başka bir tarama sürüyorsa (ortak kilit) çıkış kodu 3'tür. |
 | `tools/live_discovery_check.py` | Keşfi kataloğa yazmadan canlı çalıştırır; `--trace` ile her kararın nedenini gösterir. Normalde raporu `data/discovery_report.json` dosyasının üzerine yazar. `--save-responses KLASOR`, tek hedefin ham HTML/JSON yanıtlarını ve raporunu yeni klasöre kaydeder; karar izini de basar. |
 | `tools/ui_preview.py` | Aynı Streamlit ekranını ağsız test istemcisiyle gösterir; kalıcı test verisi uyarısı vardır. API/DB veya canlı site gerekmez; kullanıcı görünüm/yenileme kontrolünü burada yapar. |
@@ -2650,7 +2667,7 @@ reddedilir. Kategori kodlama, ölçekleme veya eksik değer doldurma yoktur.
 
 | Çekirdek alan | Hesap ve eksik davranışı |
 |---|---|
-| `log_return_1d/7d/14d/30d` | `ln(p(d)/p(d−k))`. Tam lag tarihinde fiyat yoksa NULL; yakın tarihe geçilmez. |
+| `log_return_1d`, `log_return_7d`, `log_return_14d`, `log_return_30d` | `ln(p(d)/p(d−k))`. Tam lag tarihinde fiyat yoksa NULL; yakın tarihe geçilmez. |
 | `ratio_min_7d` | `p(d)/min(p(d−6…d))`; mevcut fiyatlarla, başlangıç dahil. |
 | `ratio_min_30d` | `p(d)/min(p(d−29…d))`; mevcut fiyatlarla. |
 | `ratio_mean_30d` | `p(d)/ortalama(p(d−29…d))`; mevcut fiyatlarla. |
@@ -2969,7 +2986,7 @@ puanlanmadığı ve modelin dondurulmadığı denetlenir. Manifesti olmayan yar�
 yazım tamamlanmış deney değildir; yeni klasörle tekrarlanır. Aynı
 girdi/kod/ortam aynı dosya baytlarını üretir.
 
-#### İlk gerçek deneyin değerlendirmesi
+#### Gerçek deneyin ilk değerlendirmesi
 
 İlk deneyin kapsam ve puanları [README Güncel kapsam](../README.md#-güncel-kapsam)
 tablosundadır; ayrıntılı kat, güvenilirlik ve kırılım tabloları yukarıdaki
@@ -3432,9 +3449,8 @@ Denetim kanıtı: `artifacts/golge_yinelenmeme_20261105.json`.
 Görev kullanıcı terminalinde kuruldu; eylem, çalışma klasörü, tetikleyici,
 telafi, süreç/süre ve oturum ayarları kullanıcı tarafından okunan görev
 çıktısıyla doğrulandı. Kanıt: `artifacts/golge_gorev_kurulum_20261105.json`.
-Bir sonraki çalışma 6 Kasım 2026 11:00 (İstanbul); ilk zamanlanmış çalışmanın
-sonucu henüz gözlenmedi. Kurulum ile zamanlanmış çalışma başarısı aynı kanıt
-değildir.
+Kurulum kanıtı ile zamanlanmış çalışmanın başarı kanıtı ayrıdır; ilk
+otomatik çalışma aşağıda, sonraki haftalık izleme planda kayıtlıdır.
 
 Adımın gönderim ve kapanış durumu
 [planda](../proje_plani.md#gölge-mod-kalan-sıra-6-4-kasım-planı) tutulur.
@@ -4051,8 +4067,10 @@ tekrar açılış, paket geçişi/Rollback, değişen imaj etiketi, arızalı ad
 kurtarma, dolu port, API/UI yenileme ve RO/port/parola sınırları doğrulandı.
 Test sonrası gerçek teslim kopyası yeniden sağlıklı açıldı, orijinal seçim
 ve ilk hazırlık tarihi korundu. Bu deneme, host'ta Python/PG'nin kurulu
-olmadığını veya ikinci fiziksel Windows PC kabulünü kanıtlamaz. Yeni GitHub
-Docker işi de onaylı push sonrasında ayrıca doğrulanır.
+olmadığını veya ikinci fiziksel Windows PC kabulünü kanıtlamaz. Kullanıcı onaylı
+gönderim sonrasında aynı SHA'nın normal test/biçim ve yeni Docker kabul/rapor
+işleri GitHub'da başarılı doğrulandı; kimlikler [geçmiştedir](gecmis.md).
+İkinci fiziksel Windows bilgisayarı kabulü açık kalır.
 
 ### Docker servis bağlantısı ve gösterim bakımı
 
@@ -4166,8 +4184,10 @@ kanıtlarıyla hash üzerinden eşleştirilmiştir.
   hatası görüldü. Güncel Dockerfile yalnız gerekli kaynakları `COPY` ile
   alır; klasör izinlerine müdahale edilmez. Dışlama denetimi aynı
   `.dockerignore` ile yalnız yapay dosyalar içeren ayrı bağlamda yapılır.
-  [Docker temeli](#docker-imaj-ve-compose-temeli) gerçek veriyle hazırlanmış
-  teslim ortamı değildir; paket/DB hazırlığı henüz uygulanmadı.
+  Gerçek paket/kopya ve Docker CI kabulü tamamlandı; [teslim rehberi](teslim.md)
+  bugünkü kullanımı açıklar. İkinci fiziksel Windows bilgisayarındaki ilk
+  kurulum ve host interneti kapalı kullanım kabulü erişim bekler; yerel
+  temiz klasör/yalıtılmış ağ denemesi bu maddeyi kapatmaz.
 
 - **Hepsiburada arama API'si** uzun süre HTTP 403 ile engelledi; 1 ve 2 Kasım
   2026'da cevap verdi; 8 Kasım zamanlanmış keşifte de erişildi. O çalışmada
@@ -4231,7 +4251,7 @@ kanıtlarıyla hash üzerinden eşleştirilmiştir.
   `__cflb`, `_cfuvid`) görüldü; ret, sayfa biçiminden değil erişim engelinden.
   Aynı iki sayfa 22 Ekim sabahki turda evden sorunsuz okunmuştu; bilgisayardaki
   turlarda Trendyol hiç engellenmedi.
-  Engel aşılmaz (vekil sunucu, adres döndürme, tarayıcı taklidi yok); toplama
+  Engel aşılmaz (vekil sunucu, adres döndürme veya engel aşmak için tarayıcı otomasyonu yok); toplama
   GitHub'ın makinelerine taşınmaz. Karar: [proje_plani.md](../proje_plani.md).
 - Arka arkaya çok tarama Trendyol'da geçici engele yol açabilir (25 Eylül'de
   yarım saatte 7 tarama sonrası 10 dakika engel). Günlük fiyat toplama bu
@@ -4277,7 +4297,7 @@ kanıtlarıyla hash üzerinden eşleştirilmiştir.
   Akakçe'nin ilk örneği HTTP 403 verdi; engel aşılmaz.
 - **ML sonuçlarının kapsamı:** ilk deneyde ay/marka üstünlüğü değişiyor;
   ürün bazında değerlendirme ve yüksek olasılık kalibrasyonu çoğu hücrede
-  sınırlı desteğe sahip. Ayrıntı [ilk gerçek deneyin değerlendirmesinde](#ilk-gerçek-deneyin-değerlendirmesi),
+  sınırlı desteğe sahip. Ayrıntı [ilk gerçek deneyin değerlendirmesinde](#gerçek-deneyin-ilk-değerlendirmesi),
   son testin sınırları [saklı test sonucunda](#4-kasım-2026-saklı-test-sonucu),
   güncel kapsam sayıları README'dedir. Cimri sonucu kendi kaynağımızda veya
   ekranda tahmin göstermeye yeterlilik kanıtı değildir.

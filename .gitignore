@@ -12,7 +12,7 @@ dist/
 # Program çıktıları: loglar, kilit, keşif raporu, canlı kontrol çıktıları.
 data/*
 !data/.gitkeep
-# Yerel araç ve test çıktıları; bugün kod kullanmıyor, ileride model dosyaları için.
+# Yerel test/denetim kanıtları ve geçici araç çıktıları; Git dışındadır.
 artifacts/*
 !artifacts/.gitkeep
 # Claude Code'un makineye özel izin ayarları.

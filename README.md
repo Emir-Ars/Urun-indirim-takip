@@ -9,14 +9,11 @@ sayfalardan son toplanan teklifleri karşılaştırır ve fiyat geçmişi oluşt
 Dondurulmuş indirim olasılığı modeli kendi verimizde gölge modda sınanır;
 tahminler dosyalara kaydedilir ve gerçek sonuçlarla karşılaştırılır.
 
-> ✅ Keşif, fiyat toplama, veritabanı, yerel API ve Streamlit ekranı tamamlandı
-> ve gerçek verilerle doğrulandı. R2 + Platt modeli donduruldu; Cimri saklı
-> testi çalıştırılıp doğrulandı. Gölge tahmin kaydı, günlük komut ve görev
-> kurulumu tamamlandı; elle yapılan ilk resmi çalışma, yinelenmeme kontrolü ve ilk
-> gerçek değerlendirme raporu bağımsız doğrulandı. İlk otomatik günlük
-> çalışma da 6 Kasım'da doğrulandı. Kayıtlı tahmin API'si ve gösterim onayı komutu
-> hazır; tek tahmin kartı eklendi, gerçek olasılık gösterimi kapalı. Kesin gösterim değerlendirmesi
-> [plana göre](proje_plani.md#gölge-mod-kalan-sıra-6-4-kasım-planı) 5 Ocak 2027'de yapılacak.
+> Ana özelliklerin yazılımı, yerel kabulü ve GitHub CI kontrolleri tamamlandı.
+> Canlı Windows sistemi veri toplamayı ve günlük gölge tahmin kaydını sürdürür;
+> Docker teslim kopyası hazırlanmış veriyi tarayıcıdan sunar.
+> Gerçek olasılık gösterimi kapalıdır; karar [5 Ocak 2027 kesin değerlendirmesine](proje_plani.md#gölge-mod-kalan-sıra-6-4-kasım-planı)
+> bağlıdır. İzleme, ikinci bilgisayar kabulü ve sunum/teslim hazırlığı sürer.
 
 ## ✨ Özellikler
 
@@ -43,6 +40,9 @@ tahminler dosyalara kaydedilir ve gerçek sonuçlarla karşılaştırılır.
   fiyat düşüşü olasılığını bir kez kaydeder. Sonraki görüntüyle kayıtlı
   tahminlerin gerçek sonuçları, veri yeterliliği ve kapı koşulları raporlanır;
   gerçek olasılık gösterimi kesin rapora bağlı onay açılana kadar kapalıdır.
+- 📦 **Docker teslim kopyası:** PostgreSQL, FastAPI ve Streamlit hazırlanmış
+  veriyle ayrı ortamda çalışır. İlk Prepare sonrasında tek Start komutuyla
+  açılır; yeni veri paketle aktarılır ve önceki pakete geri dönülebilir.
 
 ## 🔄 Çalışma akışı
 
@@ -62,6 +62,9 @@ flowchart LR
     K --> L
     K -->|Onaylı güncel kayıt| F
     L --> M["Kapı ve sağlık raporu"]
+    E --> N["Export: veri, model ve kayıt paketi"]
+    K --> N
+    N --> O["Prepare: Docker DB, API ve Streamlit"]
     classDef targets fill:#fff3bf,stroke:#b08900,color:#1b4332
     classDef processing fill:#d8f3dc,stroke:#2d6a4f,color:#1b4332
     classDef records fill:#dbeafe,stroke:#2563eb,color:#172554
@@ -69,7 +72,8 @@ flowchart LR
     class A targets
     class B,D,F,G,J,L processing
     class C,E,I,K records
-    class H,M preview
+    class H,M,O preview
+    class N records
 ```
 
 Telefonlar marka, model ve kapasite düzeyinde takip edilir. Keşif hangi
@@ -97,7 +101,23 @@ eksik/yetersiz veride gerekçeyi gösterir. Tahmin hatası fiyat ekranını kapa
 
 ## 🚀 Hızlı başlangıç
 
-Windows ve PowerShell, proje klasöründe:
+### Teslim kopyasını kullanma
+
+İlk kurulum için Windows 11 x64, Docker Desktop/WSL2, uygun proje sürümü ve
+ayrı verilen veri paketi gerekir. [Teslim rehberindeki](docs/teslim.md)
+Prepare işlemi tamamlandıktan sonra proje klasöründe:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\teslim.ps1 -Action Start
+```
+
+Hazır mesajından sonra ekran **http://127.0.0.1:8503** adresindedir. Docker
+kopyası otomatik veri toplamaz; kaynak bilgisayardan yeni paketle güncellenir.
+
+### Kaynak sistemi geliştirme ve veri toplama
+
+Canlı toplama/gölge görevlerinin bulunduğu Windows ortamında geliştirme
+kurulumu ayrı yapılır. Proje klasöründe:
 
 ```powershell
 python -m venv .venv
@@ -105,23 +125,13 @@ python -m venv .venv
 .venv\Scripts\python.exe -m pytest -q
 ```
 
-Veritabanı kurulumu, zamanlanmış görevler, keşif, fiyat turu, API ve ekranın
-başlatılması [teknik rehberde](docs/teknik.md#komutlar) anlatılır.
-Veritabanı testleri ayrı `_test` bağlantıları ister; tanımlı değillerse ilgili
-testler atlanır ([test ortamı](docs/teknik.md#testler-ve-ci)). Gölge modun
-yerel model ve kanıt dosyaları Git dışındadır; gerekli yollar ve sürüm
-kontrolleri [gölge mod rehberindedir](docs/teknik.md#gölge-mod-tahmin-kaydı-python--m-appml-shadow-predict).
-
-Docker teslim kopyası bir kez hazırlandıktan sonra tek komutla açılır:
-
-```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\teslim.ps1 -Action Start
-```
-
-Sağlık kontrolleri tamamlanınca ekran `http://127.0.0.1:8503` adresindedir.
-Paket hazırlama, kapatma, durum/log ve önceki pakete dönüş
-[teslim kullanım rehberinde](docs/teslim.md) açıklanır.
-Teslim kopyası otomatik veri toplamaz; yeni veri paketle aktarılır.
+Veritabanı, zamanlanmış görevler, yerel API ve ekran kurulumu
+[teknik rehberdedir](docs/teknik.md#komutlar). Veritabanı testleri iki ayrı
+`_test` bağlantı ayarı ister; eksik ayarlarda ilgili testler atlanır
+([test ortamı](docs/teknik.md#test-ortamı-ve-sınırı)).
+Yerel model ve kanıt dosyaları Git dışındadır;
+[gölge mod rehberi](docs/teknik.md#gölge-mod-tahmin-kaydı-python--m-appml-shadow-predict)
+gerekli yolları açıklar.
 
 ## 📊 Güncel kapsam
 
@@ -139,6 +149,12 @@ Teslim kopyası otomatik veri toplamaz; yeni veri paketle aktarılır.
 | Kendi geçmişimizdeki fiyat boşlukları | 4 Kasım denetimi; yalnız 3 Kasım sonuna kadar kapanmış günler: 2.199 ürün-günün 1.796'sında en az bir ham fiyat, 310'unda yalnız stoksuz sonuç, 16'sında fiyat yok ve hata var, 77'sinde hiç kontrol yok. ML için kullanılabilir 22:00 fiyatı 776 ürün-günde, günlük minimum 463 ürün-günde yok; bu iki sayı birbirine eklenmez ve ham fiyat yokluğuyla aynı ölçü değildir. |
 | Otomatik testler | 2656 başarılı, 0 atlanan (10 Kasım); tam pytest, Black ve Flake8 temiz. |
 | Docker gerçek paket kabulü | 10 Kasım 11:14 paketi: 57 dosya; kopyada 60 ürün, 85 tur, 29.447 sayfa sonucu ve 22.595 Cimri satırı. Kaynak/kopya satır, şema, dizi ve dosya SHA'ları eşleşti; native kaynak değişmedi. API SELECT hesabında yazma yetkisi yok. API/UI/DB sağlıklı; bütün telefonlarda olasılık kapalı, gerçek API ile fiyatlar/iki grafik, aralık ve telefon seçimi, doğru aktarım bildirimi doğrulandı. Bakım/tekrar hazırlama veriyi veya hazırlık kaydını değiştirmedi; model ve kapı korundu. |
+
+<details>
+<summary>ML veri, model ve gölge mod ölçümleri (tarihli denetimler)</summary>
+
+| Alan | Durum |
+|---|---|
 | ML etiket denetimi | Son alımı içeren 2 Kasım görüntüsüyle (son kapanmış gün 1 Kasım) doğrulandı: kendi serimizde 0 kullanılabilir / 1.323 belirsiz (30 gün geçmişi dolan 27 Ekim–1 Kasım başlangıçlarının gelecek penceresi henüz kapanmadı); Cimri'de 19.561 kullanılabilir (2.086 olumlu, 17.475 olumsuz) / 2.231 belirsiz. Sıkı çapraz kontrolde 24.616 pencere kaydı eşleşti. |
 | ML girdi denetimi | Aynı görüntüyle 2 Kasım'da doğrulandı: kendi serimizde 1.323, Cimri'de 21.792 girdi satırı; toplam 23.115 başlangıç 4.2 ile birebir eşleşti, eksik/fazla/tekrarlı başlangıç ve tanınmayan model ailesi yok. |
 | ML bölme denetimi | Aynı görüntüyle 2 Kasım'da doğrulandı: eğitim 13.647, doğrulama 2.531, saklı test 2.632 kayıt (3 Eylül–25 Ekim 2026); purge 751 kayıt. Dört kat Nisan–Temmuz 2026; bütün eğitim/kalibrasyon/doğrulama dilimleri iki sınıflı. Bu bölme adımında test sınıf dağılımı veya puanı açılmadı; sonraki son test aşağıda. |
@@ -160,6 +176,8 @@ Teslim kopyası otomatik veri toplamaz; yeni veri paketle aktarılır.
 | Gölge mod haftalık erken ölçümler | 9 Kasım ara raporu: R0 Brier 0,1279; R2 + Platt AP 0,2749 / Brier 0,1184 / log loss 0,3889 / Brier skill 0,0746. Ortalama olasılık %16,39, gerçekleşme %14,76 (fark 1,63 yüzde puanı); destekli kovada en büyük fark 7,83 yüzde puanı. AP/Brier/log loss standart Python ile bağımsız doğrulandı. Erken performans koşulları sağlandı; 6 günlük etiketli dönem ve olay desteği yetersiz olduğundan kapı Değerlendirilemedi. Model/gösterim kararı değişmedi. |
 | Gölge mod olasılık dağılımı | 4 Kasım deneme kaydı, yalnız bilgi: R2 + Platt ortalaması 0,168, medyan 0,158, en çok 0,404; eğitim olumlu oranı (R0) 0,102. 389 olasılığın 118'i ≥ 0,20, 12'si ≥ 0,30. Ortalamanın R0'ın üstünde olması [planda ölçülen girdi kaymasıyla](proje_plani.md#gölge-mod-kalan-sıra-6-4-kasım-planı) aynı yöndedir; nedenleri bu kayıttan ayrıştırılamaz ve kendi verimizde doğruluk veya kalibrasyon göstermez. |
 
+</details>
+
 Katalog pazaryerlerinin tamamını kapsamaz; Hepsiburada araması kısmi
 taranabiliyor. Kaynak ve işletim sınırları
 [teknik rehberde](docs/teknik.md#bilinen-sınırlar) açıklanır. Otomatik testler
@@ -173,14 +191,24 @@ canlı ağa çıkmaz; veritabanı testleri yalnız test veritabanını kullanır
 | FastAPI ve Streamlit ile verileri sunma ve görüntüleme | ✅ Tamamlandı |
 | ML öncesi bakım ve otomatik güvenli keşif kabulü | ✅ Tamamlandı |
 | Proje yapısının sadeleştirilmesi | ✅ Tamamlandı (26 Ekim) |
-| ML ile indirim olasılığı tahmini | 🔄 Model dondurma/saklı test ve gölge mod 6.0–6.4 tamamlandı; gönderimler ve CI doğrulandı. İlk otomatik günlük çalışma doğrulandı (6 Kasım). 6.5 izleme paralel sürüyor; ilk haftalık kontrol 9 Kasım'da doğrulandı. 7.1–7.3 gösterim planı, kayıtlı tahmin API'si/onay komutu ve tek kart tamamlandı; gönderimler ve CI doğrulandı. 7.4 bütün akış testleri, kullanım rehberi ve kullanıcıyla görsel kabul tamamlandı; kullanıcı onayıyla gönderildi; aynı SHA'nın CI'ı başarılı ([plan](proje_plani.md#gösterim-kalan-sıra-7-6-kasım-planı)) |
+| ML ile indirim olasılığı tahmini | 🔄 Model, gölge kayıt/değerlendirme ve tahmin kartı tamam. 6.5 izleme sürüyor; kesin gösterim kararı 5 Ocak 2027'de ([plan](proje_plani.md#gölge-mod-kalan-sıra-6-4-kasım-planı)). |
 | Sürekli çalışma ortamı | 🔄 Aşama 9.1: görevlerin düzenli çalışmasına ilişkin işletim doğrulaması ML işleriyle paralel sürüyor ([plan](proje_plani.md)) |
-| Docker | 🔄 9.3–9.6 tamamlandı; gönderim/CI kayıtları [geçmişte](docs/gecmis.md). 9.7'nin yapay Docker kabul aracı, ayrı CI işi ve [teslim rehberi](docs/teslim.md) eklendi; Docker bütün akışı ve temiz klasörde PowerShell kabulü tamamlandı. GitHub Docker işi onaylı gönderimden sonra doğrulanacak; ikinci Windows bilgisayarı kabulü bekliyor ([plan](proje_plani.md#docker-ve-teslim-hedefi-92)). |
+| Docker teslimi | 🔄 Kod, yerel kabul ve GitHub Docker CI tamam. 9.7'de yalnız ikinci Windows bilgisayarındaki kurulum/çevrimdışı kabulü açık ([rehber](docs/teslim.md), [kayıt](docs/gecmis.md)). |
 | Sunum ve teslim | ⏳ Planda: iş 8, hazırlık hedefi 21–31 Aralık; biçim ve içerik netleştirilecek |
+
+### Kalan işlerin sırası
+
+Yeni bir özellik geliştirme adımı şu anda onaylı iş listesinde yok.
+[Numaralı kalan işler](proje_plani.md#bugünkü-kalan-işler-10-kasım) şunlardır:
+6.5 model/veri izlemesi, 9.1 görevlerin işletim kontrolü, 9.7 fiziksel teslim
+kabulü ve iş 8 sunum/final teslim hazırlığı. İzleme sırasında görülen
+sorunlar değerlendirilir; gerekiyorsa bakım veya ayrı model planı hazırlanır.
 
 ## 📚 Belgeler
 
 - [Proje planı](proje_plani.md): kararlar, aşama durumu, açık kararlar ve sıradaki iş.
+- [Teslim kullanım rehberi](docs/teslim.md): ilk kurulum, günlük açılış, veri yenileme ve geri dönüş.
+- [Ortak AI çalışma kuralları](AGENTS.md): Claude Code ve Codex için proje talimatları.
 - [Teknik rehber](docs/teknik.md): kurulum, komutlar, veri kuralları ve bilinen sınırlar.
 - [Geliştirme geçmişi](docs/gecmis.md): her adımın tarihi, commit'i ve CI sonucu.
 - [Arşiv](docs/arsiv/): 20 Ekim 2026'ya kadarki ayrıntılı plan ve rehber.

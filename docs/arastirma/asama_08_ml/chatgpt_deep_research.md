@@ -1,4 +1,10 @@
 # 1) Mevcut Sistem Değerlendirmesi ve Önerilen İlk Yaklaşım  
+
+> **Karar öncesi araştırma notu.** Aşağıdaki öneriler güncel uygulama
+> talimatı veya tamamlanmış özellik değildir. Yürürlükteki karar ve sıra
+> [proje planında](../../../proje_plani.md), uygulanan davranış
+> [teknik rehberde](../../teknik.md) tutulur.
+
 Mevcut sistemde 60 ürün için günlük iki turda (10:00, 22:00) fiyat/stok verisi toplanmakta, en düşük uygun teklif saklanmaktadır. Etiketler 7 günlük *en düşük fiyat %5’in altına inme* olayı şeklinde tanımlıdır. Veri sayısı az (toplam ~17.668 pencere, %10 olumlu) ve birçok üründe etiket çok az. Başlangıç için öneri, tüm ürünleri kapsayan tek bir **global model** kurmaktır. Her ürünün geçmiş özellikleri ayrı hesaplanıp (“ürün kimliği” özellik olarak eklenebilir) ortak veri seti oluşturulur. Böylece tüm ürünlerin verisini kullanan bir model (ör. LightGBM veya CatBoost) eğiterek ortak desenler öğrenilebilir. CatBoost’un sayısal ve kategorik değişkenleri direkt işleyebilmesi avantajdır. Varsayım: Farklı ürünlerin fiyat hareketlerinde ortak kalıplar vardır ve az verili ürünler için global model yardımı olasıdır. Deney: Global model ile her ürün için ayrı küçük modeller karşılaştırılarak (örn. doğrulama veri seti performansı) en iyi yaklaşım seçilir.  
 
 # 2) Ortak/Ürün/Grup Model Karşılaştırması  

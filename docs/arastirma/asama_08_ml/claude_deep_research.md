@@ -1,5 +1,11 @@
 # Akıllı Telefon Fiyat Takibi için ML Araştırması: Veri Seti, Hedef, Model ve Değerlendirme Tasarımı
 
+> **Karar öncesi araştırma notu.** Aşağıdaki öneriler güncel uygulama
+> talimatı veya tamamlanmış özellik değildir. Yürürlükteki karar ve sıra
+> [proje planında](../../../proje_plani.md), uygulanan davranış
+> [teknik rehberde](../../teknik.md) tutulur.
+
+
 Bugün yapılabilecek doğru iş model seçmek değil. Önce hedefi gözlem kapsamına ve sansürlemeye (censoring) dayanıklı biçimde yeniden tanımlamak gerekiyor. Ardından Cimri verisinde, tarihe göre ileri yürüyen ve 7 günlük etiketleri temizleyen (purging) bir değerlendirmeyle üç basit referansı ve tek bir ortak (global) gradient boosting modelini karşılaştırmak gerekiyor. Kendi verimizde olasılık göstermek ise ayrı bir kanıt eşiğine bağlanmalı.
 
 ## TL;DR

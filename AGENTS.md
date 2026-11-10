@@ -3,7 +3,8 @@
 Bu dosya projede çalışan her yapay zekâ aracının ortak talimatıdır. Codex bu
 dosyayı doğrudan okur; Claude Code yerel `CLAUDE.md` üzerinden içe aktarır.
 Çalışma kuralları yalnız burada değiştirilir. Araçların kendi hafızasına
-güvenilmez; diğer araç onu göremez. Kalıcı bilgi repodaki dosyalarda durur.
+güvenilmez; diğer araç onu göremez. Kalıcı kararlar ve kurallar Git'teki
+proje belgelerinde, geçici oturum devri yerel `DEVAM.md` dosyasında durur.
 
 ## Oturum başında
 
@@ -39,7 +40,7 @@ beklenmez. Güncellenen belgeyi mesajda bir cümleyle söyle.
 | Ne olduğunda | Hangi belge |
 |---|---|
 | Kullanıcı bir karar verdi; plan veya sıra değişti | `proje_plani.md`: kararlar tablosuna tarih + tek satır gerekçe, ya da açık kararlar / sıradaki işler |
-| Kodun davranışı, komutu, çıkış kodu veya kuralı değişti | `docs/teknik.md` ilgili bölüm (yalnız bugünkü davranış) |
+| Kodun davranışı, komutu, çıkış kodu veya kuralı değişti | `docs/teknik.md` ilgili bölüm; teslim kullanıcısının adımları değiştiyse `docs/teslim.md` |
 | Canlıda yeni bir sınır veya hata görüldü | `docs/teknik.md` "Bilinen sınırlar"; karar gerekiyorsa plandaki açık kararlar |
 | Bir plan adımı bitti, commit/push yapıldı ve CI sonucu görüldü | `docs/gecmis.md`'ye tek satır; plandaki durum satırı |
 | Kapsam sayıları değişti (katalog, test, Cimri) | `README.md` "Güncel kapsam" tablosu (tarihli) |
@@ -51,6 +52,9 @@ Belge kuralları (20 Ekim kullanıcı kararı):
 - Oturum günlüğü yazılmaz. Süren işin ayrıntısı yalnız `DEVAM.md`'de, biten
   adım `docs/gecmis.md`'de tek satırda, kalıcı karar planda tek satır
   gerekçeyle durur.
+- `docs/arastirma/` içindeki raporlar karar öncesi kaynaklardır; önerileri
+  uygulanmış özellik veya onaylı iş sayılmaz. Güncel karar için plan,
+  bugünkü davranış için teknik/teslim rehberi kullanılır.
 - Aynı bilgi birden fazla belgeye kopyalanmaz; diğer belge bağlantı verir.
   Commit SHA'sı ve CI kimliği `docs/gecmis.md`'ye yazılır (planın aşama
   tablosu yalnız aşamayı kapatan commit'i anar). Güncel kapsam sayıları
@@ -79,6 +83,11 @@ Belge kuralları (20 Ekim kullanıcı kararı):
 - Yeni mimari seçimleri kullanıcıyla netleştir. Kullanıcının güncel kararı eski
   bir belgeyle çelişirse çelişkiyi söyle ve belgeyi karara uydur.
 - Planlanan, uygulanmış ve karar bekleyen işleri birbirine karıştırma.
+- Numaralı işlerin anlamı ve açık işler için plandaki güncel kalan iş
+  tablosunu kullan. Bir adımın kodu/yerel testi/CI'ı ile fiziksel kabulünü
+  ayrı izle; bekleyen koşulu erişim olmadığı için tamamlandı sayma.
+- ML değişiklikleri plandaki dondurma ve gösterim kapısı kararlarına tabidir;
+  araştırma önerisi veya bir ara rapor yeni eğitim/erken gösterim onayı değildir.
 - Dosyaları sorumluluğa göre ayır; gereksiz iskelet ve dosya çoğaltma.
 - Yeni keşif bağlantılarını kullanıcıya tek tek tarayıcıda doğrulatmak rutin iş
   değildir: haftalık keşif yeterli kimlik kanıtlı adayları otomatik kabul eder,
@@ -101,6 +110,10 @@ Belge kuralları (20 Ekim kullanıcı kararı):
   (`\FiyatTakip\HaftalikKesif`, otomatik kabul modunda; loglar
   `data/logs/kesif_*.log`, raporlar `data/discovery/`). O sırada canlı komut
   çalıştırma; `app/discovery/` ve ortak dosyaları yarım bırakma.
+- Günlük gölge görevi 11:00'de çalışır (`\FiyatTakip\GolgeTahmin`, loglar
+  `data/logs/golge_*.log`). Görev sürerken ML ve ortak doğrulama kodunu yarım
+  bırakma; elle ikinci bir günlük çalışma başlatma. Bekleme/telafi ve kilit
+  sözleşmesi teknik rehberdeki günlük gölge çalışması bölümündedir.
 - Gerçek kaynakta bulunmayan fiyat, stok, kimlik veya kapsam bilgisini uydurma.
 - Gerçek veritabanına (`fiyat_takip`) yalnız okuma sorgusuyla bak. Testler
   yalnız adı `_test` ile biten veritabanını kullanır. Canlı ve yerel test
@@ -161,10 +174,13 @@ Belge kuralları (20 Ekim kullanıcı kararı):
   1. Testler ve biçim denetimleri geçer.
   2. Dosya listesi, Türkçe commit mesajı ve doğrulama sonucu kullanıcıya gösterilir.
   3. Kullanıcı **bu gönderimi** açıkça onaylarsa commit ve push yapılır.
-  4. Push sonrası aynı SHA'nın CI'ı (GitHub Actions) yeşil olmalıdır.
+  4. Push sonrası aynı SHA'nın CI'ı (GitHub Actions) yeşil olmalıdır; pytest,
+     Black ve Flake8 yanında ayrı yapay Docker kabul/rapor işi de doğrulanır.
 - Her commit/push için ayrı açık onay gerekir. Planın onaylanması veya adımın
   tamamlanması gönderim yetkisi sayılmaz; uygulama planı ve katalog kabulü de
   ayrıca onaylanır.
+- Push/CI sonrası geçmiş ve durum belgelerine eklenen kapanış notları
+  sonraki onaylı gönderime kalır; bunlar için ikinci otomatik commit/push yapılmaz.
 - Commit'lerde ve PR'larda yazar yalnız kullanıcıdır (Emir-Ars).
   `Co-Authored-By` satırı veya herhangi bir yapay zekâ imzası (Claude, Codex…)
   eklenmez.
