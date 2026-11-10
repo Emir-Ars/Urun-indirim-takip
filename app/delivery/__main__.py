@@ -34,6 +34,13 @@ def main(argv=None):
     for name in ("verify", "bootstrap", "finalize", "check"):
         command = sub.add_parser(name)
         command.add_argument("--bundle", type=Path, required=True)
+    display = sub.add_parser(
+        "shadow-display", help="Yalnız teslim kopyasının gösterim onayı"
+    )
+    display.add_argument("--bundle", type=Path, required=True)
+    action = display.add_mutually_exclusive_group(required=True)
+    action.add_argument("--evaluation", metavar="DEGERLENDIRME_KLASOR_ADI")
+    action.add_argument("--disable", action="store_true")
     args = parser.parse_args(argv)
     try:
         if args.command == "export":
@@ -65,6 +72,14 @@ def main(argv=None):
                         files=len(manifest.files),
                     ),
                     ensure_ascii=False,
+                )
+            )
+        elif args.command == "shadow-display":
+            from app.delivery.display import set_delivery_display
+
+            print(
+                json.dumps(
+                    set_delivery_display(args.bundle, args.evaluation, args.disable)
                 )
             )
         else:

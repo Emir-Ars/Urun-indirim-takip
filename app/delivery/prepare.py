@@ -1,6 +1,5 @@
 """Yalnız Docker ağı ve yeni teslim alanlarında geri yükleme sonrası hazırlık."""
 
-import json
 import os
 import shutil
 from pathlib import Path
@@ -11,9 +10,10 @@ from psycopg import sql
 from app.api.database import validate_readiness
 from app.contracts import utc_now
 from app.delivery import bundle, database
+from app.delivery.state import DeliveryState, READY_FILE, load_state
 from app.ml.reporting import json_bytes
 
-READY = ".delivery_ready.json"
+READY = READY_FILE
 
 
 def check_database(conn, expected):
@@ -24,7 +24,10 @@ def check_database(conn, expected):
         raise bundle.DeliveryError("Kaynak/kopya veritabanı parmak izleri uyuşmuyor.")
 
 
-def check_files(manifest, root=bundle.ROOT):
+def check_files(manifest, root=None):
+    from app.delivery.display import CONTROL_FILES, validate_control
+
+    root = Path(root or bundle.ROOT)
     prefixes = ("config/", bundle.SHADOW + "/")
     expected = {
         name: digest
@@ -35,13 +38,16 @@ def check_files(manifest, root=bundle.ROOT):
         f"config/{p}" for p in bundle.inventory(Path(root) / "config") if p != READY
     }
     actual |= {
-        f"{bundle.SHADOW}/{p}" for p in bundle.inventory(Path(root) / bundle.SHADOW)
+        f"{bundle.SHADOW}/{p}"
+        for p in bundle.inventory(root / bundle.SHADOW)
+        if p not in CONTROL_FILES
     }
     if actual != set(expected):
         raise bundle.DeliveryError("Hazırlanmış dosya kapsamı değişmiş.")
     for name, digest in expected.items():
         if bundle.sha(bundle.safe_path(root, name)) != digest:
             raise bundle.DeliveryError("Hazırlanmış dosya SHA'sı değişmiş.")
+    validate_control(manifest, root)
 
 
 def api_connection(name):
@@ -81,8 +87,8 @@ def check_owner(conn):
         raise bundle.DeliveryError("Hedef nesnelerin sahipliği uygun değil.")
 
 
-def prepare_target(package, mode):
-    manifest, digest = bundle.verify_bundle(package)
+def prepare_target(package, mode, *, verified=None):
+    manifest, digest = verified or bundle.verify_bundle(package)
     root = bundle.ROOT
     ready_path = root / "config" / READY
     with database.target_connection(
@@ -94,7 +100,7 @@ def prepare_target(package, mode):
         check_database(conn, manifest.database)
         check_owner(conn)
         if mode == "check":
-            ready = json.loads(ready_path.read_bytes())
+            ready = load_state(ready_path).model_dump(mode="json")
             if (
                 ready["bundle_sha256"] != digest
                 or ready["code_sha256"] != manifest.code_sha256
@@ -137,17 +143,17 @@ def prepare_target(package, mode):
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(bundle.safe_path(package, name), target)
         check_files(manifest)
-        ready = dict(
+        ready = DeliveryState(
             format_version=1,
             status="complete",
             bundle_sha256=digest,
             code_sha256=manifest.code_sha256,
             code_commit=manifest.code_commit,
             database=manifest.database.name,
-            captured_at=manifest.created_at.isoformat(),
-            prepared_at=utc_now().isoformat(),
+            captured_at=manifest.created_at,
+            prepared_at=utc_now(),
             display_enabled=False,
-        )
+        ).model_dump(mode="json")
         temporary = ready_path.with_suffix(".tmp")
         with temporary.open("xb") as stream:
             stream.write(json_bytes(ready) + b"\n")

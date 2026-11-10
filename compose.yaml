@@ -60,6 +60,10 @@ services:
     <<: *app
     command: [python, -m, streamlit, run, app/ui/main.py, --server.address, 0.0.0.0, --server.port, "8501", --server.headless, "true", --browser.gatherUsageStats, "false"]
     network_mode: service:api
+    environment:
+      DELIVERY_MANIFEST_PATH: /app/config/.delivery_ready.json
+    volumes:
+      - configuration:/app/config:ro
     depends_on:
       api:
         condition: service_healthy

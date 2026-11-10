@@ -2,13 +2,98 @@
 
 import json
 import shutil
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from app.delivery import bundle
 from app.delivery.export import copy_assets
 from app.ml import shadow_records
 from app.ml.reporting import json_bytes
-from tests.support.ml import write_evaluation_evidence
+from tests.support.ml import feature_values, label_snapshot, write_evaluation_evidence
+
+
+def add_final_evaluation(source):
+    """Kapı hesabı gerçekten met çıkan yapay rapor; model başarısı kanıtı değildir."""
+    from app.ml import shadow_evaluation as evaluation
+    from app.ml.dataset import write_snapshot
+    from app.ml.__main__ import main
+
+    config = bundle.relocated_config(
+        source, shadow_records.load_config(source / "config/shadow.json")
+    )
+    snapshot = label_snapshot(count=369)
+    directory = source / bundle.SHADOW / "goruntuler/veri_final"
+    digest = write_snapshot(snapshot, directory)
+    model = evaluation.load_evaluation_model(config)
+    report = evaluation.build_evaluation(
+        snapshot, digest, config, model, [], [], []
+    ).report
+    rows = []
+    for offset in range(60):
+        day = date(2026, 10, 15) + timedelta(days=offset)
+        for label in (0, 1):
+            pid = 2 * offset + label + 1
+            anchor = datetime.combine(day, datetime.min.time(), timezone.utc).replace(
+                hour=19, minute=30
+            )
+            target = dict(label=label, reasons=[])
+            rows.append(
+                dict(
+                    product_id=pid,
+                    product_key=f"phone_{pid}",
+                    source="own",
+                    anchor_day=day.isoformat(),
+                    anchor_at=anchor.isoformat(),
+                    recorded_after_days=1,
+                    features=feature_values(history_days=100).model_dump(mode="json"),
+                    missing_days_14=0,
+                    reasons=[],
+                    showable=True,
+                    probabilities={
+                        "r0": model.reference_rate,
+                        model.choice: 0.9 if label else 0.1,
+                    },
+                    role="own_evaluation",
+                    record_folder=f"tahmin_{offset}",
+                    recorded_at=(anchor + timedelta(hours=13)).isoformat(),
+                    timing="on_time",
+                    target_end=(day + timedelta(days=7)).isoformat(),
+                    primary=target,
+                    tracked=target,
+                )
+            )
+    groups = evaluation._selections(rows)
+    report["scores"] = {
+        name: evaluation._score_rows(group, target, model.choice)
+        for name, (group, target) in groups.items()
+    }
+    targets, _, _ = evaluation._vectors(rows, "primary", model.choice)
+    report["summary"] = evaluation._summary(rows)
+    report["gate"] = evaluation.evaluate_gate(
+        targets, report["scores"]["main"][model.choice]
+    )
+    assert report["gate"]["status"] == "met"
+    folder = source / bundle.SHADOW / "degerlendirme_final"
+    evaluation.write_outputs(
+        folder, evaluation.EvaluationResult(json.loads(json_bytes(report)), rows)
+    )
+    evaluation.read_outputs(folder)
+    path = source.parent / "final_test_config.json"
+    path.write_bytes(config.model_dump_json().encode())
+    assert (
+        main(
+            [
+                "shadow-predict",
+                "--snapshot",
+                str(directory),
+                "--config",
+                str(path),
+                "--output-dir",
+                str(source / bundle.SHADOW / "tahmin_final"),
+            ]
+        )
+        == 0
+    )
+    return folder
 
 
 def write_source(root):

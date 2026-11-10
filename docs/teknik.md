@@ -3756,9 +3756,9 @@ anlamı ilgili komut bölümündedir. Geçerli bir raporun kapısı
 
 ## Docker: imaj ve Compose temeli
 
-9.3'te imaj ve servis tanımları, 9.4'te paket/DB hazırlığı uygulanmıştır.
-Veriyle ekran bağlantısı, gösterim bakım komutu ve tek PowerShell girişi
-sonraki adımlardır;
+9.3'te imaj ve servis tanımları, 9.4'te paket/DB hazırlığı, 9.5'te API/ekran
+bağlantısı, aktarım bildirimi ve gösterim bakım komutu uygulanmıştır.
+Tek PowerShell girişi sonraki adımdır;
 [uygulama sırası](../proje_plani.md#docker-ve-teslim-hedefi-92). Mevcut
 Windows görevleri ve veritabanı bu dosyalarla değiştirilmez.
 
@@ -3821,9 +3821,9 @@ docker build --platform linux/amd64 -t fiyat-takip-teslim:local .
 docker run --rm --network none --read-only --tmpfs /tmp:mode=1777 fiyat-takip-teslim:local python --version
 ```
 
-Bunlar veri kopyası oluşturmaz. Paket/DB hazırlığı aşağıdadır. Ekranın
-teslim verisine bağlanması ve tek komutla başlatılması sonraki adımlar
-olduğu için `docker compose up` henüz hazır fiyat ekranı komutu değildir.
+Bunlar veri kopyası oluşturmaz. Paket/DB hazırlığı aşağıdadır. Hazır kopyanın
+API/ekranını açma komutları [servis bağlantısı](#docker-servis-bağlantısı-ve-gösterim-bakımı)
+bölümündedir; tek PowerShell giriş noktası 9.6'da uygulanacaktır.
 
 Kilidi yenilemek gerektiğinde önce Linux'ta yeniden çözümleme yapılır;
 Windows `pip freeze` çıktısı kilit olarak kullanılmaz. Proje kökünde:
@@ -3955,7 +3955,100 @@ sahiplik, API izinleri ve tekrar hazırlama doğrulanmıştır; kapsam sayılar�
 [README Güncel kapsam](../README.md#-güncel-kapsam) tablosundadır. Gerçek
 kopyada yazma denemesi yapılmaz; yetkiler salt okunur SQL ile denetlenir.
 Yazmanın fiilen reddi yalnız yapay `_test` kopyasında sınanır. Başka
-bilgisayarda kurulum ve bütün ekran akışı kabulü sonraki adımlardadır.
+bilgisayarda kurulum ve teslim kabulü 9.7 kapsamındadır.
+
+### Docker servis bağlantısı ve gösterim bakımı
+
+Hazır paketin API'si SELECT hesabıyla Docker DB'sini, yapılandırma ve gölge
+alanlarını salt okunur açar. UI API'nin ağ alanını paylaşır; mevcut
+`http://127.0.0.1:8000` istemci sözleşmesi ve bütün HTTP uç/cevapları korunur.
+Yalnız ekran `http://127.0.0.1:8503` üzerinden sunulur. UI'ye DB adresi veya
+parolası verilmez; yalnız yapılandırma alanı salt okunur bağlanır.
+
+UI'de `DELIVERY_MANIFEST_PATH=/app/config/.delivery_ready.json` ayarı vardır.
+Kopyanın hazırlık kaydı `DeliveryState` sözleşmesiyle okunur; paket/model
+hesaplaması veya DB bağlantısı yapılmaz. Ekranda şu bilgi gösterilir:
+
+> Teslim kopyası · Veri aktarımı: … · İstanbul · Otomatik veri toplama yapılmaz.
+
+Tarih paketin UTC hazırlanma zamanından İstanbul saatine çevrilir; ekranın
+açıldığı saatle değiştirilmez. `_test` kopyasında ayrıca gerçek fiyat
+olmadığını söyleyen test verisi uyarısı görünür. Dosya eksik, okunamaz veya
+geçersizse aktarım tarihi uyarısı gösterilir; fiyat/grafik istekleri sürer.
+Ayar verilmezse normal Windows ekranı bu dosyayı okumaz ve mevcut görünümünü
+korur. `prepared.json` bilgisayardaki seçim bilgisidir; UI, kalıcı alanın
+değişmeyen `.delivery_ready.json` dosyasını okur.
+
+İmajın kodu değişirse önce yeni imaj ve o kodla yeni Export/Prepare gerekir.
+Eski paketin kod SHA'sı değiştirilerek uyumluluk kontrolü atlatılmaz. Aşağıdaki
+ara komutlar proje kökünde, **yeni kodla hazırlanmış** kopya için kullanılır;
+9.6 birleşik girişine kadar ortam ve proje seçimi elle yapılır:
+
+```powershell
+$teslimHazirKayit = "data\teslim\<PAKET_SHA>\prepared.json"
+$teslimHazir = Get-Content -Raw -Encoding UTF8 $teslimHazirKayit | ConvertFrom-Json
+$env:DELIVERY_STATE_DIR = Split-Path -Parent (Resolve-Path $teslimHazirKayit).Path
+$env:DELIVERY_BUNDLE_DIR = $teslimHazir.bundle_path
+$env:DELIVERY_DATABASE = $teslimHazir.database
+$env:DELIVERY_API_USER = if ($teslimHazir.database -eq 'fiyat_takip') { 'fiyat_takip_api' } else { 'fiyat_takip_api_test' }
+$env:DELIVERY_IMAGE = $teslimHazir.image
+docker --context desktop-linux compose -p $teslimHazir.project_name run --rm --no-deps -T transfer python -m app.delivery check --bundle /bundle
+```
+
+Kontrol çıkışı `0` ise API ve UI birlikte açılır; üç servisin sağlık
+kontrolleri tamamlanır. API ve UI birlikte yeniden oluşturulur; tek başına
+API'yi yenileyip UI'yi eski ağ alanında bırakmak desteklenmez.
+
+```powershell
+docker --context desktop-linux compose -p $teslimHazir.project_name up -d --wait --wait-timeout 180 api ui
+```
+
+Gösterim bakımı, aynı paket/proje seçimiyle mevcut `shadow-display`
+doğrulamasını çağırır. Komut yalnız hazır Docker kopyasında çalışır; native
+Windows onayı aktarılmaz veya değiştirilmez. `--evaluation` paketin içindeki
+`degerlendirme_…` klasörünün **adı** olmalıdır; dış/Windows yol kabul edilmez.
+
+```powershell
+docker --context desktop-linux compose -p $teslimHazir.project_name run --rm --no-deps -T transfer python -m app.delivery shadow-display --bundle /bundle --evaluation <DEGERLENDIRME_KLASOR_ADI>
+docker --context desktop-linux compose -p $teslimHazir.project_name run --rm --no-deps -T transfer python -m app.delivery shadow-display --bundle /bundle --disable
+```
+
+Açılış; paket ve hazır kopya, veri/şema/rol/dosya eşleşmesi, ön kayıtlı model,
+5 Ocak 2027 kesin görüntüsü, `met` sonucu ve mevcut tarih koşullarını doğrular.
+Erken açma veya tarih değiştirme CLI seçeneği yoktur. Başarısız doğrulama
+onayı açmaz; başarı JSON'unda `enabled` ve paket SHA'sı döner. CLI çıkışları
+mevcut teslim komutuyla aynıdır. Eğitim, yeni tahmin ve pickle yüklemesi
+yapılmaz; resmi kayıtlar/model/raporlar değiştirilmez.
+
+Hazırlık kaydındaki `display_enabled: false`, ilk hazırlık durumudur ve
+değişmez. Güncel onay yalnız gölge alanındaki `gosterim_onayi.json` içindedir;
+Linux kopyasının mutlak rapor yoluna bağlanır. `check` resmi dosya kapsamını
+aynen doğrular; yalnız bu onay ile `gosterim_onayi.lock` dosyasını ayrı
+kontrol dosyaları olarak ele alır. Açık veya kapalı onayın model, aileler,
+tarih ve paket içindeki rapor bağı doğrulanır; yabancı/bozuk onay reddedilir.
+Ek dosyalara veya sembolik bağlantılara genel bir istisna verilmez.
+
+API onayı istek sırasında okur; gösterim değişikliği için model yüklemez veya
+servis yeniden başlatmaz. Açık gösterimde İstanbul'da dünün kaydı aranır;
+yeni günün kaydı yoksa eski olasılığa dönülmez. Tahmin hatası fiyat/grafik
+cevabından ayrı kalır. Yeni her teslim paketi gösterim kapalı başlar.
+
+9.5 yerel kanıtları `artifacts/docker95/` altındadır: yapay `_test` DB ile
+servis sağlığı, UI içinden gerçek loopback HTTP, AppTest ile iki grafik ve
+bildirim; yalnız geçici yapay Linux kopyasında sabit tarihli açma/kapatma,
+güncellik ve resmi dosyaların korunması denemeleri. Bunlar gerçek modelin
+performans veya erken gösterim onayı değildir.
+
+İlk gerçek 9.5 kabulü `artifacts/docker95/acceptance.json` ile kanıtlanmıştır.
+Kullanıcının yeni paketi ayrı kopyaya alındı; native kaynak değişmeden
+satır/şema/dosya eşleşmesi, salt okunur API hesabı ve sağlıklı servisler
+doğrulandı. Gerçek API üzerinden fiyatlar ve iki grafik, telefon/aralık
+değişimi, doğru yerel aktarım tarihi ve kapalı tahmin okundu. Kapsam sayıları
+[README Güncel kapsam](../README.md#-güncel-kapsam) tablosundadır. Gerçek
+kopyada yalnız kapatma bakımı uygulandı; açılış yapılmadı veya yazma
+denemesiyle yetki sınanmadı. Bakım sonrası tekrar hazırlama veriyi/hazır
+kaydını değiştirmedi. Gerçek kabulün uygulama/test kodu, tam test ve biçim
+kanıtlarıyla hash üzerinden eşleştirilmiştir.
 
 ## Testler ne kanıtlar, ne kanıtlamaz
 

@@ -1,6 +1,7 @@
 """Yerel API'nin doğrulanmış verilerini gösteren Streamlit ekranı."""
 
 from collections.abc import Callable
+import os
 
 import streamlit as st
 
@@ -11,6 +12,7 @@ from app.api.schemas import (
     StatusResponse,
 )
 from app.ui.api_client import ApiClient, ApiClientError
+from app.delivery.state import load_state
 from app.ui.presentation import (
     PREDICTION_REASONS,
     format_day,
@@ -25,6 +27,27 @@ from app.ui.presentation import (
 )
 
 DAYS = (7, 30, 90, 366)
+
+
+def _delivery_notice():
+    path = os.getenv("DELIVERY_MANIFEST_PATH")
+    if not path:
+        return
+    try:
+        state = load_state(path)
+    except (OSError, ValueError):
+        st.warning(
+            "Teslim kopyası · Veri aktarım tarihi doğrulanamıyor. "
+            "Otomatik veri toplama yapılmaz."
+        )
+        return
+    st.info(
+        f"Teslim kopyası · Veri aktarımı: {format_time(state.captured_at)} "
+        "· İstanbul · "
+        "Otomatik veri toplama yapılmaz."
+    )
+    if state.database.endswith("_test"):
+        st.warning("Test verisi — gerçek fiyatlar değildir.")
 
 
 def _run_status(status: StatusResponse) -> None:
@@ -296,6 +319,7 @@ def _histories(snapshot: ProductResponse, history_days: int, cimri_days: int) ->
 def render_app(client_factory: Callable[[], ApiClient] = ApiClient) -> None:
     st.set_page_config(page_title="Telefon Fiyat Takibi", page_icon="📱", layout="wide")
     st.title("📱 Telefon Fiyat Takibi")
+    _delivery_notice()
     st.caption("Kayıtlı sonuçlar · Oturum açıkken 30 saniyede bir yenilenir")
 
     @st.fragment(run_every=30)

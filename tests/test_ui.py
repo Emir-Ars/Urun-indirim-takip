@@ -768,3 +768,78 @@ def test_preview_second_product_and_range_use_validated_client():
         assert snapshot.product == products[1]
         assert all(p.product_id == products[1].product_id for p in snapshot.history)
         assert len(snapshot.cimri_history) == 7
+
+
+@pytest.fixture
+def delivery_notice(screen, tmp_path, monkeypatch):
+    app, client = screen
+    data = dict(
+        format_version=1,
+        status="complete",
+        bundle_sha256="a" * 64,
+        code_sha256="b" * 64,
+        code_commit="c" * 40,
+        database="fiyat_takip",
+        captured_at="2026-11-09T13:55:00Z",
+        prepared_at="2026-11-09T14:00:00Z",
+        display_enabled=False,
+    )
+    path = tmp_path / "ready.json"
+    path.write_text(json.dumps(data), encoding="utf-8")
+    monkeypatch.setenv("DELIVERY_MANIFEST_PATH", str(path))
+    return app, client, path, data
+
+
+def test_native_screen_without_delivery_setting_never_reads_metadata(
+    screen, monkeypatch
+):
+    from app.delivery import state
+
+    monkeypatch.delenv("DELIVERY_MANIFEST_PATH", raising=False)
+
+    def forbidden(*args):
+        pytest.fail("Normal Windows ekranı teslim dosyası okumamalı")
+
+    monkeypatch.setattr(state, "load_state", forbidden)
+    app, _ = screen
+    app.run()
+    assert not app.exception and not any("Teslim kopyası" in x.value for x in app.info)
+
+
+def test_delivery_banner_uses_package_time_in_istanbul_and_keeps_prices(
+    delivery_notice,
+):
+    app, client, _, _ = delivery_notice
+    app.run()
+    assert not app.exception and not app.error and app.metric and chart_specs(app)
+    assert any(
+        "Teslim kopyası · Veri aktarımı: 09.11.2026 16:55:00" in x.value
+        and "Otomatik veri toplama yapılmaz" in x.value
+        for x in app.info
+    )
+    assert not any("Test verisi" in x.value for x in app.warning)
+    assert any(call[0] == "product" for call in client.calls)
+
+
+@pytest.mark.parametrize("failure", ["missing", "broken", "wrong_time"])
+def test_bad_delivery_metadata_keeps_api_prices_and_charts(delivery_notice, failure):
+    app, _, path, data = delivery_notice
+    if failure == "missing":
+        path.unlink()
+    elif failure == "broken":
+        path.write_bytes(b"{broken")
+    else:
+        data["captured_at"] = "2026-11-09T16:55:00+03:00"
+        path.write_text(json.dumps(data), encoding="utf-8")
+    app.run()
+    assert not app.exception and not app.error and app.metric and chart_specs(app)
+    assert any("Veri aktarım tarihi doğrulanamıyor" in x.value for x in app.warning)
+
+
+def test_synthetic_delivery_is_clearly_marked_as_test_data(delivery_notice):
+    app, _, path, data = delivery_notice
+    data["database"] = "delivery_test"
+    path.write_text(json.dumps(data), encoding="utf-8")
+    app.run()
+    assert not app.exception
+    assert any("Test verisi — gerçek fiyatlar değildir" in x.value for x in app.warning)
