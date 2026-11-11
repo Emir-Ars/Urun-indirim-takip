@@ -137,5 +137,5 @@ Ayrı bir Windows bilgisayarı mevcut olduğunda son kullanıcı kabulü:
 
 Bu fiziksel bilgisayar denemesi, bu bilgisayardaki boş kurulum klasörü ve
 yalıtılmış Docker ağ denemesiyle aynı kanıt değildir. Güncel tamamlanma ve
-bekleyen kabul durumu [9.7 plan satırında](../proje_plani.md#kalan-iş-sırası-6-kasım-kararı)
+bekleyen kabul durumu [güncel takip tablosunun 9.7 satırında](../proje_plani.md#güncel-takip-tablosu)
 izlenir.

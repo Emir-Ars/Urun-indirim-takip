@@ -13,7 +13,8 @@ tahminler dosyalara kaydedilir ve gerçek sonuçlarla karşılaştırılır.
 > Canlı Windows sistemi veri toplamayı ve günlük gölge tahmin kaydını sürdürür;
 > Docker teslim kopyası hazırlanmış veriyi tarayıcıdan sunar.
 > Gerçek olasılık gösterimi kapalıdır; karar [5 Ocak 2027 kesin değerlendirmesine](proje_plani.md#gölge-mod-kalan-sıra-6-4-kasım-planı)
-> bağlıdır. İzleme, ikinci bilgisayar kabulü ve sunum/teslim hazırlığı sürer.
+> bağlıdır. Düzenli takip ve bekleyen kabuller [güncel takip tablosundadır](proje_plani.md#güncel-takip-tablosu).
+> Eski ML kararlarındaki bazı ek rapor ve karşılaştırmaların [kapsamı netleştirilecektir](proje_plani.md#ml-ikincil-hedeflerinin-kapsamı).
 
 ## ✨ Özellikler
 
@@ -185,24 +186,27 @@ canlı ağa çıkmaz; veritabanı testleri yalnız test veritabanını kullanır
 
 ## 🗺️ Yol haritası
 
-| Aşama | Durum |
+Bu tablo tamamlanan uygulamayı özetler. Düzenli takip ile bekleyen kabul ve
+teslim işleri [proje planında](proje_plani.md#güncel-takip-tablosu) ayrı izlenir.
+
+| Alan | Uygulama durumu |
 |---|---|
 | Fiyat okuma, keşif, katalog, veritabanı ve zamanlanmış toplama | ✅ Tamamlandı |
 | FastAPI ve Streamlit ile verileri sunma ve görüntüleme | ✅ Tamamlandı |
 | ML öncesi bakım ve otomatik güvenli keşif kabulü | ✅ Tamamlandı |
 | Proje yapısının sadeleştirilmesi | ✅ Tamamlandı (26 Ekim) |
-| ML ile indirim olasılığı tahmini | 🔄 Model, gölge kayıt/değerlendirme ve tahmin kartı tamam. 6.5 izleme sürüyor; kesin gösterim kararı 5 Ocak 2027'de ([plan](proje_plani.md#gölge-mod-kalan-sıra-6-4-kasım-planı)). |
-| Sürekli çalışma ortamı | 🔄 Aşama 9.1: görevlerin düzenli çalışmasına ilişkin işletim doğrulaması ML işleriyle paralel sürüyor ([plan](proje_plani.md)) |
-| Docker teslimi | 🔄 Kod, yerel kabul ve GitHub Docker CI tamam. 9.7'de yalnız ikinci Windows bilgisayarındaki kurulum/çevrimdışı kabulü açık ([rehber](docs/teslim.md), [kayıt](docs/gecmis.md)). |
-| Sunum ve teslim | ⏳ Planda: iş 8, hazırlık hedefi 21–31 Aralık; biçim ve içerik netleştirilecek |
+| ML ile indirim olasılığı tahmininin yazılımı | ✅ Model, gölge kayıt/değerlendirme ve tahmin kartı tamam. Kendi verimizde kesin değerlendirme [güncel takip tablosunda](proje_plani.md#güncel-takip-tablosu), eski ikincil hedefler [açık kapsam bölümünde](proje_plani.md#ml-ikincil-hedeflerinin-kapsamı). |
+| Zamanlanmış görevlerin kurulumu | ✅ Toplama, keşif ve günlük gölge görevleri kurulu; ilk işletim kontrolleri doğrulandı. Düzenli takip ve gecikme incelemesi [planda](proje_plani.md#güncel-takip-tablosu). |
+| Docker teslim yazılımı | ✅ Kod, rehber, yerel kontroller ve GitHub Docker CI tamam. Fiziksel kabul ayrı izlenir ([rehber](docs/teslim.md), [kayıt](docs/gecmis.md)). |
 
-### Kalan işlerin sırası
+### Düzenli takip ve bekleyen işler
 
-Yeni bir özellik geliştirme adımı şu anda onaylı iş listesinde yok.
-[Numaralı kalan işler](proje_plani.md#bugünkü-kalan-işler-10-kasım) şunlardır:
-6.5 model/veri izlemesi, 9.1 görevlerin işletim kontrolü, 9.7 fiziksel teslim
-kabulü ve iş 8 sunum/final teslim hazırlığı. İzleme sırasında görülen
-sorunlar değerlendirilir; gerekiyorsa bakım veya ayrı model planı hazırlanır.
+Haftalık sistem/model kontrolü düzenli işletim işidir. Kesin model
+değerlendirmesi, geçmiş tur gecikmelerinin incelenmesi, fiziksel teslim
+kabulü ve sunum/final teslim için [tek güncel takip tablosu](proje_plani.md#güncel-takip-tablosu)
+kullanılır; iş numaraları, sonraki adımlar ve tamamlanma koşulları oradadır.
+Eski ikincil ML hedeflerinin kapsamı ayrıca netleştirilecektir; bunlar
+tamamlandı sayılmaz. Yeni geliştirme/model çalışması ayrı plan ve onay ister.
 
 ## 📚 Belgeler
 

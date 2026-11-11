@@ -30,11 +30,11 @@ API ve ekran sözleşmeleri, hata kodları ve bilinen sınırlar. Yalnız sistem
 - [SQL–API–Streamlit bağımsız denetimi](#sqlapistreamlit-bağımsız-denetimi)
 - [ML veri denetimi](#ml-veri-denetimi)
 - [ML hazırlığı](#ml-hazırlığı)
-- [Docker: imaj ve Compose temeli](#docker-imaj-ve-compose-temeli)
 - [Gölge mod tahmin kaydı](#gölge-mod-tahmin-kaydı-python--m-appml-shadow-predict)
 - [Günlük gölge görevi](#günlük-gölge-çalışması-python--m-appml-shadow-daily)
 - [Gölge değerlendirmesi](#gölge-değerlendirmesi-python--m-appml-shadow-evaluate)
 - [Tahmin gösterim onayı](#tahmin-gösterim-onayı-python--m-appml-shadow-display)
+- [Docker: imaj ve Compose temeli](#docker-imaj-ve-compose-temeli)
 - [Docker: paket ve veritabanı aktarımı](#docker-paket-ve-veritabanı-aktarımı)
 - [Docker: tek komutla kullanım ve kabul](#docker-tek-komutla-kullanım)
 - [Docker servis bağlantısı ve gösterim bakımı](#docker-servis-bağlantısı-ve-gösterim-bakımı)
@@ -2313,7 +2313,7 @@ izlenir. Test verisi uyarısı her durumda görünmelidir.
 AppTest ekranın ürettiği değerleri ve durum geçişlerini denetler; tarayıcı
 yerleşimini, dar ekrandaki taşmayı veya gerçek zamanlı otomatik yenilemeyi
 görsel olarak doğrulamaz. Bu kontrollerin tamamlanma durumu
-[7.4 satırında](../proje_plani.md#kalan-iş-sırası-6-kasım-kararı) tutulur.
+[tamamlanan uygulama adımlarının 7.4 satırında](../proje_plani.md#tamamlanan-uygulama-adımları) tutulur.
 
 ## SQL–API–Streamlit bağımsız denetimi
 
@@ -3150,8 +3150,9 @@ hata verirse model kullanılmaz:
 5. Kalibrasyon dilimi kanıttan yeniden kurulur; yüklenen model, kayıtlı
    anahtar, etiket ve olasılıkları birebir üretmelidir.
 
-Kütüphane sürümü değişirse model kullanılamaz; aynı kanıt klasörleriyle yeniden
-dondurmak gerekir ve yeni bir manifest SHA-256 üretir.
+Kütüphane sürümü değişirse model kullanılamaz. Yeniden dondurma yeni bir
+model ve manifest SHA-256 üretir; ayrı plan ve kullanıcı kararı gerektirir.
+Mevcut gölge değerlendirmesinde dondurulan model ve kütüphane sürümleri korunur.
 
 #### `final-test`
 
@@ -4047,7 +4048,7 @@ senaryosunda hedef ağı `internal: true` ile dışa kapatılır; normal Start a
 sonrasında konteyner içindeki gerçek HTTP/grafik akışı çalışırken dış TCP
 bağlantısının kurulamadığı da sınanır. Host tarayıcı portu normal ağda ayrı
 denetlenir; internal ağın host port erişimiyle aynı kanıt sayılmaz. Fiziksel
-ikinci Windows bilgisayarı denemesi ayrı kabul kanıtıdır; mevcut durum [9.7 plan satırında](../proje_plani.md#kalan-iş-sırası-6-kasım-kararı).
+ikinci Windows bilgisayarı denemesi ayrı kabul kanıtıdır; mevcut durum [güncel takip tablosunun 9.7 satırında](../proje_plani.md#güncel-takip-tablosu).
 
 ```powershell
 .venv\Scripts\python.exe tools/docker_check.py --context desktop-linux --output artifacts/docker-kabul-yeni
