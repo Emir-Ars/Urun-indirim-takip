@@ -285,7 +285,7 @@ rehberde, o günkü tartışması arşivdedir.
 | 6 Kasım | Yol haritası öncelikleri onaylandı: R2 + Platt sabitken 6.5 haftalık performans/işletim izlemesi sürer (ilk kontrol 8 Kasım keşfi sonrası); sıradaki plan 7.1, ardından 7.2–7.4 gösterim işleri. 9.1 işletim paralel; 9.2 Docker kapsam/uygulama planı ve iş 8 sunum planda kalır. Model iyileştirmesi kalıcı sorun görülürse ayrı planlanır; 5 Ocak tarihi değişmez. | Kullanıcı önerilen sırayı kabul etti; kısa dönem sonucu nedeniyle yeni eğitime öncelik verilmedi. Bu karar ayrıntılı kod uygulaması veya commit/push onayı değildir. |
 | 6 Kasım | 7.1 gösterim planı onaylandı: tek tahmin kartı; İstanbul takvimine göre yalnız dünün kaydı, eski orana dönüş yok; ayrı API ucu ve mevcut kayıttan okuma; 5 Ocak kesin raporuna bağlı komutla açılış ve kapatma. 7.1'in uygulaması yalnız kararların belgelenmesidir; API/CLI/ekran 7.2–7.4'te geliştirilir. | Kullanıcı planın uygulanmasını istedi. Seçili ürünün hangi fiyat/döneme göre değerlendirildiği açık kalır; geçersiz veya onaysız olasılık kullanıcıya çıkmaz. Commit/push onayı verilmedi. |
 | 9 Kasım | [9.2 ayrıntılı Docker teslim planı](#docker-ve-teslim-hedefi-92) onaylandı: ayrı gerçek veri kopyası, tek PowerShell girişi, Docker'a özel gizli parola dosyaları ve ilk kurulumda internet; 9.3–9.7 sırası belirlendi. 9.2 yalnız planı ve çalışma kuralı istisnasını belgeler; geliştirmeler adım adım ilerler, gönderim ayrıca onaylanır. | Kullanıcı planın uygulanmasını istedi; canlı veri toplama ve dondurulan ML düzeni korunarak başka bilgisayarda tekrarlanabilir yerel web uygulaması teslim edilecek. |
-| 11 Kasım | Belge düzenleme planı onaylandı: tamamlanan geliştirmeler, 6.5/9.1 düzenli takibi ve bekleyen kabul/teslim ayrı gösterilir; güncel işler tek tabloda tutulur. Eski ikincil ML hedefleri kapsamı netleştirilecek olarak açık kalır. Mevcut iş numaraları, dondurulan model ve kabul koşulları korunur. | Yazılımın bitmesi ile işletim/kabulün sürmesi ayırt edilsin; uygulanmamış hedefler tamamlandı sayılmasın. Bu karar yeni ML geliştirmesi veya commit/push onayı değildir. |
+| 11 Kasım | Belge düzenleme planı onaylandı: tamamlanan geliştirmeler, 6.5/9.1 düzenli takibi ve bekleyen kabul/teslim ayrı gösterilir; güncel işler tek tabloda tutulur. Eski ikincil ML hedefleri kapsamı netleştirilecek olarak açık kalır. Mevcut iş numaraları, dondurulan model ve kabul koşulları korunur. Adım 2 tamamlandı; gönderim/CI kaydı [geçmiştedir](docs/gecmis.md). | Yazılımın bitmesi ile işletim/kabulün sürmesi ayırt edilsin; uygulanmamış hedefler tamamlandı sayılmasın. Bu plan kararı yeni ML geliştirmesi veya commit/push onayı değildir. |
 
 **ML kararlarının güncelliği:** 28 Ekim ve 2 Kasım satırlarındaki yeniden
 kalibrasyon seçeneği, mevcut dondurulan model için 4 Kasım kararıyla
@@ -431,45 +431,87 @@ beklenen davranışı ve sonuca güvenmek için gereken kanıtlar açıklanır.
 
 ## Tamamlanan uygulama adımları
 
-Bu bölüm, tamamlanan gösterim ve Docker uygulamasının doğrulamasını tutar.
-Düzenli takip, bekleyen kabul ve kapsam kararları
-[tek güncel tabloda](#güncel-takip-tablosu) izlenir. Mevcut R2 + Platt sabit
-tutulur; yeni model çalışması ayrı plan ve karar gerektirir.
+Bu bölüm biten uygulamaların kısa dizinidir. Commit ve aynı SHA'nın CI
+kanıtları [geçmiştedir](docs/gecmis.md); bugünkü komutlar ve davranışlar
+[teknik rehberdedir](docs/teknik.md). Düzenli takip, bekleyen kabul ve kapsam
+kararları [tek güncel tabloda](#güncel-takip-tablosu) izlenir.
 
 **Numaraları okuma:** ana aşama **8 = ML**, ana aşama **9 = sürekli işletim ve
 Docker**. ML içindeki iş 6 gölge mod, **6.0–6.5** onun alt adımlarıdır;
-**6.6 yoktur**. ML'deki iş 7 Gösterim ve **7.1–7.4** alt adımları tamamlandı. **İş 8 — Sunum**, proje kapanışıdır; ana aşama 8 değildir.
-ML hazırlığı, dondurma ve gölge modun tamamlanan adımları Bölüm 9'da;
-gönderim/kapanış kanıtları [geçmiştedir](docs/gecmis.md).
+**6.6 yoktur**. ML'deki iş 7 Gösterim ve **7.1–7.4** alt adımları tamamlandı.
+**İş 8 — Sunum**, proje kapanışıdır; ana aşama 8 değildir.
 
-Aşağıda tamamlanan uygulama çıktıları ve yerel/CI kontrolleri listelenir;
-9.7'nin fiziksel kabulü bu tabloyla kapanmaz. Gösterim ve Docker kabul
-sözleşmeleri Bölüm 9'dadır. Yeni işlerde adımın amacı,
-dosyaları ve doğrulaması başlamadan açıklanır; her adım sonunda durulur.
-Commit/push onayı ayrıca alınır.
+### ML hazırlığı ve ilk deney (4.0–4.6)
 
-| Ana başlık | İş / adım | Somut çıktı | Uygulama ve doğrulama |
-|---|---|---|---|
-| Aşama 8 — ML | 7.1 — Gösterim kapsamı ve veri akışı planı | Bir ürün örneği üzerinden kayıt → API → ekran akışı; gösterilecek tarih/kapsam, kapalı gösterim ve yetersiz veri durumları; [onaylı sözleşme aşağıda](#gösterim-kalan-sıra-7-6-kasım-planı) | ✅ Tamamlandı (6 Kasım); plan onaylandı, belgelendi, gönderildi ve aynı SHA'nın CI'ı başarılı. 7.1 kod içermedi; API 7.2, ekran 7.3 kapsamındadır. |
-| Aşama 8 — ML | 7.2 — API'den tahmin okuma | Kayıtlı tahmin ve yeterlilik bilgisinin doğrulanarak sunulması; eksik/bozuk kayıt ve kapalı gösterim davranışı | ✅ Tamamlandı (6 Kasım); ortak okuyucu, gösterim onayı, API ve yerel istemci uygulandı; yerel kontroller geçti. Kullanıcı onayıyla gönderildi, aynı SHA’nın CI’ı başarılı ([kayıt](docs/gecmis.md)). |
-| Aşama 8 — ML | 7.3 — Ekranda tahmin durumları | Onaylı API sözleşmesine bağlı ekran; tarih/kapsam açıklamaları, yeterli/yetersiz veri ve kapalı gösterim durumları | ✅ Tamamlandı (6 Kasım); tek kart ve durum/hata açıklamaları uygulandı. Kullanıcı onayıyla gönderildi; aynı SHA'nın CI'ı başarılı ([kayıt](docs/gecmis.md)). Görsel kabul 7.4'te kullanıcıyla tamamlandı. |
-| Aşama 8 — ML | 7.4 — Gösterim akışının bütün olarak doğrulanması | API/istemci/ekran uyumu, uygun ve yetersiz veri senaryoları, kapı durumları, güncel kullanım belgeleri | ✅ Tamamlandı (9 Kasım): kayıt dosyası → API → istemci → ekran testleri ve kullanım rehberi hazır; yerel tam test ve biçim kontrolleri başarılı. Yapay önizlemenin geniş/dar görünümü ve senaryo kartları kullanıcı görüntüleriyle, aralık/yenileme ve fiyat-grafik korunması kullanıcı teyidiyle doğrulandı. Kullanıcı onayıyla gönderildi; aynı SHA'nın CI tam test paketi, Black ve Flake8 kontrolleri başarılı ([kayıt](docs/gecmis.md)). |
-| Aşama 9 — Sürekli işletim ve Docker | 9.2 — Docker kapsam kararı ve planı | Teslim mimarisi, veri/model kalıcılığı, parola istisnası ve numaralı uygulama sırası | ✅ Plan belgelemesi tamamlandı (9 Kasım); [sözleşme](#docker-ve-teslim-hedefi-92). Gönderim/CI kayıtları [geçmiştedir](docs/gecmis.md); Docker kodu veya kurulum değişikliği yapılmadı. |
-| Aşama 9 — Sürekli işletim ve Docker | 9.3 — İmaj ve Compose temeli | Dockerfile, .dockerignore, compose.yaml; sabit sürümler, Linux bağımlılık kilidi, kullanıcı ve ağ düzeni | ✅ Yerel uygulama/doğrulama tamamlandı (9 Kasım); gönderim/CI kayıtları [geçmiştedir](docs/gecmis.md). İmaj kuruldu; ağsız sürüm/izin, hafif API içe aktarımı, geçici pgpass, yapay bağlam dışlama ve paylaşılan localhost/Streamlit sağlığı kontrolleri geçti. Tam test ve biçim doğrulaması yapıldı; Windows dosya erişimi nedeniyle tekrarlanan senaryolar README'de açıklanır. Gerçek veri aktarılmadı. |
-| Aşama 9 — Sürekli işletim ve Docker | 9.4 — Paket ve veritabanı aktarımı | Dışa aktarma, manifest doğrulama, ayrı kalıcı alanlara geri yükleme ve okuma rolü | ✅ Uygulama, yapay doğrulama ve ilk gerçek paket kabulü tamamlandı (9 Kasım). Kullanıcının dışa aktardığı paket bağımsız doğrulanıp ayrı Docker kopyasına yüklendi; veri/şema/dizi/dosya eşleşti, native kaynak değişmedi, NOLOGIN sahiplik ve API'nin SELECT/yazma yetkisi yokluğu doğrulandı. Aynı paket tekrar yüklenmedi; hazırlık kaydı ve konteyner korundu. Model/gösterim kapısı değişmedi. Test/biçim kanıtı son kodla eşleşiyor; Windows tekrar notu README'de. Kullanım [teknik rehberde](docs/teknik.md#docker-paket-ve-veritabanı-aktarımı); gönderim ve aynı SHA'nın CI kapanışı [geçmişte](docs/gecmis.md) izlenir. |
-| Aşama 9 — Sürekli işletim ve Docker | 9.5 — API, ekran ve ML bağlantısı | Servislerin bağlanması, salt okunur dosyalar, aktarım tarihi bildirimi ve bakım komutu | ✅ Uygulama, yapay ve gerçek kopya kabulü tamamlandı (10 Kasım). Kullanıcının yeni paketi doğrulanıp ayrı Docker kopyasına alındı; API/UI/DB sağlıklı, gerçek HTTP ve ekran okumasında fiyat/grafikler, aralık/telefon değişimi, aktarım tarihi ve kapalı/olasılıksız tahmin doğrulandı. Native kaynak, model ve kapı korundu; RO/SELECT sınırları ve bakım sonrası tekrar hazırlama geçti. Linux'ta açma/kapatma ve güncellik yalnız yapay verilerle sınandı. Tam pytest/biçim kanıtı son kodla aynı. Kullanım [teknik rehberde](docs/teknik.md#docker-servis-bağlantısı-ve-gösterim-bakımı); gönderim ve aynı SHA'nın CI kapanışı [geçmişte](docs/gecmis.md) izlenir. |
-| Aşama 9 — Sürekli işletim ve Docker | 9.6 — Tek komutla kullanım | PowerShell ile hazırlama, başlatma, durdurma, durum, log ve geri dönüş | ✅ Uygulama ve yerel kabul tamamlandı (10 Kasım); gönderim/CI kapanışı [geçmişte](docs/gecmis.md) izlenir. Ortak giriş ve paket geçişi [teknik rehberde](docs/teknik.md#docker-tek-komutla-kullanım). Yapay hata/kurtarma ve gerçek kopyanın yeniden açılışı doğrulandı; tam pytest/biçim kontrolleri temiz, sayılar README'de. |
-| Aşama 9 — Sürekli işletim ve Docker | 9.7 — Bütün akış ve teslim kabulü | Docker CI kontrolü, temiz kurulum, kalıcılık/yenileme denemeleri ve kullanım rehberi | ✅ Kod, rehber ve yerel/CI kontrolleri tamamlandı (10 Kasım). Yapay Docker bütün akışı, boşluk içeren temiz klasörde PowerShell kurulum/geçiş/kurtarma, port/RO sınırları ve tam pytest/biçim kontrolleri doğrulandı; sayılar README'de. [Teslim rehberi](docs/teslim.md) hazır. Kullanıcı onaylı gönderim ve aynı SHA'nın pytest/biçim/Docker kabul işi başarılı ([kayıt](docs/gecmis.md)). Fiziksel kabulün ayrı durumu [güncel takip tablosundadır](#güncel-takip-tablosu). |
+| Adım | İş | Durum |
+|---|---|---|
+| 4.0 | Bekleyen belge değişiklikleri | ✅ Tamamlandı (28 Ekim) |
+| 4.1 | `ml` bağımlılık grubu, CI, salt okunur veri görüntüsü (`python -m app.ml snapshot`) | ✅ Tamamlandı (30 Ekim) |
+| 4.2 | Günlük seriler ve etiketler; etiket raporu; sıkı varyantın eski araçla çapraz kontrolü | ✅ Tamamlandı (2 Kasım); gerçek görüntü, gönderim ve CI doğrulandı |
+| 4.3 | Girdiler ve sızıntı testi | ✅ Tamamlandı (2 Kasım); gerçek görüntüde başlangıç eşleşmesi, gönderim ve CI doğrulandı |
+| 4.4 | Zaman bölmesi (purge, ileri yürüyen katlar) ve ölçütler | ✅ Tamamlandı (2 Kasım); gerçek bölme/kat, gönderim ve CI doğrulandı |
+| 4.5 | R0–R2, LightGBM, kalibrasyon ve deney raporu | ✅ Tamamlandı (3 Kasım); kod, belgeler, gönderim ve CI doğrulandı; gerçek deney 4.6'da |
+| 4.6 | Son alımla uzatılmış Cimri verisiyle ilk deney; son %15 test açılmaz | ✅ Tamamlandı (3 Kasım); gerçek deney, doğrulama, yorum, belgeler, gönderim ve CI doğrulandı; kesin seçim yapılmadı |
 
-**Takvim:** 7.1–7.3 tamamlandı, gönderildi ve CI doğrulandı.
-7.4'ün uygulaması ve yerel/görsel doğrulaması tamamlandı; gönderildi ve aynı SHA'nın CI'ı başarılı.
-[Görsel kabul adımları teknik rehberdedir](docs/teknik.md#tahmin-kartının-görsel-kabul-kontrolü).
-Docker geliştirmeleri 6.5 kapanmadan tamamlandı. Temel işler için
-**31 Aralık hedefi** korunur; tamamlanan uygulamalar yeniden açık geliştirme
-işi sayılmaz. Güncel takip ve kabul takvimi [tablodadır](#güncel-takip-tablosu).
-Docker bileşenleri ve başlatma/veri taşıma düzeni 9.2'de kararlaştırıldı.
-Öğrenme turu iş sırasının dışında, pasif kalır (28 Ekim kararı); 7.1'de
-örnek ürünle akışın açıklanması bu adımın kapsamındadır.
+4.1–4.4, son Cimri alımını içeren 2 Kasım görüntüsüyle yeniden doğrulandı.
+İlk deney kesin model seçimi değildi; seçim ve saklı test sonraki aşamada
+yapıldı. [Veri ve deney sözleşmesi](docs/teknik.md#ml-hazırlığı).
+
+### Dondurma ve saklı test (5.1–5.3)
+
+| Adım | İş | Durum |
+|---|---|---|
+| 5.1 | `freeze` ve `final-test` komutları, saklı test için ayrı puanlama girişleri, güvenli model yükleme, testler ve belgeler | ✅ Tamamlandı (3 Kasım); kod, testler, belgeler, gönderim ve CI doğrulandı |
+| 5.2 | Dondurma (ön kayıt): kullanıcı `freeze` komutunu çalıştırır, model SHA-256'sı ve özeti belgeye işlenir, commit/push, CI | ✅ Tamamlandı (4 Kasım); R2 + Platt donduruldu ve doğrulandı, [ön kayıt](docs/teknik.md#4-kasım-2026-dondurma-ön-kaydı) gönderildi ve CI doğrulandı; bu adımda saklı test açılmadı |
+| 5.3 | Saklı testin tek kez açılması: kullanıcı `final-test` komutunu ön kayıtlı SHA ile çalıştırır; sonuç doğrulanır, belgelenir, commit/push, CI | ✅ Tamamlandı (4 Kasım); bir kez açıldı, kayıtlı tahminlerden puanlar ve güven aralığı doğrulandı, [sonuç](docs/teknik.md#4-kasım-2026-saklı-test-sonucu) belgelendi ve gönderildi, CI doğrulandı; model değişmedi |
+
+### Gölge kayıt ve değerlendirme yazılımı (6.0–6.4)
+
+| Adım | Tamamlanan çıktı | Uygulama ve doğrulama |
+|---|---|---|
+| 6.0 | Gölge mod planı ve ön kayıtlı değerlendirme kuralları | ✅ 4 Kasım; yalnız belge |
+| 6.1 | Kendi verimizin salt okunur ön ölçümü | ✅ 4 Kasım; [tarihli bulgular ve riskler](docs/teknik.md#gölge-mod-ön-ölçümünün-riskleri-4-kasım-2026) |
+| 6.2 | Değişmez günlük tahmin kaydı (`shadow-predict`) | ✅ 4 Kasım; yapay testler ve gerçek görüntüyle bağımsız deneme; resmi kayıt 6.3'te |
+| 6.3 | Günlük görüntü/tahmin akışı ve 11:00 Windows görevi | ✅ 5 Kasım; ilk resmi kayıt, yinelenmeme ve görev kurulumu; ilk otomatik çalışma 6 Kasım'da doğrulandı |
+| 6.4 | Kayıtlı tahminleri sonraki gerçek etiketlerle değerlendirme (`shadow-evaluate`) | ✅ 5 Kasım; ilk gerçek raporun girdi/etiket/puan/kapı denetimi; kesin karar verilmedi |
+
+Komut, dosya, kilit ve çıkış kuralları [gölge mod rehberindedir](docs/teknik.md#gölge-mod-tahmin-kaydı-python--m-appml-shadow-predict).
+6.5'in düzenli takibi ve kesin değerlendirmesi bu yazılım tablosuyla kapanmaz.
+
+### Gösterim yazılımı (7.1–7.4)
+
+| Adım | Tamamlanan çıktı | Uygulama ve doğrulama |
+|---|---|---|
+| 7.1 | Tek kart, kayıt → API → ekran akışı ve gösterim onayı planı | ✅ 6 Kasım; yalnız belge |
+| 7.2 | Ortak kayıt okuyucu, gösterim onayı, tahmin API'si ve yerel istemci | ✅ 6 Kasım; yerel testler |
+| 7.3 | Tek tahmin kartı, tarih/kapsam ve kapalı/yetersiz veri/hata durumları | ✅ 6 Kasım; otomatik testler; görsel kabul 7.4'te |
+| 7.4 | Bütün akış testleri, kullanım rehberi ve görsel kabul | ✅ 9 Kasım; yapay önizlemenin geniş/dar görünümü ve senaryo kartları kullanıcı görüntüleriyle, aralık/yenileme ve fiyat-grafik korunması kullanıcı teyidiyle doğrulandı |
+
+Gerçek olasılık gösterimi kapalıdır; yazılımın bitmesi gösterim onayı değildir.
+[Kartın davranışı ve görsel kabul](docs/teknik.md#tek-tahmin-kartı).
+
+### Docker yazılımı ve yerel kabul (9.2–9.7)
+
+| Adım | Tamamlanan çıktı | Uygulama ve doğrulama |
+|---|---|---|
+| 9.2 | Docker kapsamı, mimari/parola istisnası ve uygulama planı | ✅ 9 Kasım; yalnız belge; [kapsam ve hedef](#docker-ve-teslim-hedefi-92) |
+| 9.3 | İmaj, Compose, sabit sürüm/kilit, kullanıcı ve ağ düzeni | ✅ 9 Kasım; imaj, ağsız sürüm/izin, veri dışlama ve servis sağlığı; gerçek veri aktarılmadı |
+| 9.4 | Manifestli dışa aktarma, ayrı kopyaya DB/dosya aktarımı ve okuma rolü | ✅ 9 Kasım; yapay doğrulama ve ilk gerçek paket kabulü; kaynak/kopya eşleşmesi, yetki ve tekrar hazırlama |
+| 9.5 | API/ekran bağlantısı, aktarım bildirimi ve kopyaya özel gösterim bakımı | ✅ 10 Kasım; yapay/gerçek kopya kabulü; Linux gösterim açma/kapatma yalnız yapay verilerle sınandı |
+| 9.6 | Tek PowerShell girişi ve paket seçimi/geçişi/geri dönüş | ✅ 10 Kasım; yapay hata/kurtarma ve gerçek kopyanın yeniden açılışı |
+| 9.7 | Bütün akış aracı, ayrı yapay Docker CI işi ve teslim rehberi | ✅ 10 Kasım; kod, yerel temiz klasör ve aynı SHA'nın CI test/biçim/Docker kabulü tamamlandı. **İkinci fiziksel PC kabulü açık**; [güncel durum](#güncel-takip-tablosu) |
+
+Yerel kontrol, gerçek kopya ve yapay testin kanıt sınırları
+[teknik rehberde](docs/teknik.md#docker-kabul-senaryoları), alıcının kullanımı
+[teslim rehberindedir](docs/teslim.md). Mevcut model, Windows görevleri ve
+native kaynak korunmuştur; Windows dosya erişimi nedeniyle tekrarlanan
+yerel denemeler README'nin test notlarında açıklanır.
+
+**Takvim:** Gösterim ve Docker geliştirmeleri 6.5 kapanmadan tamamlandı.
+Temel işler için **31 Aralık hedefi** korunur; tamamlanan uygulamalar yeniden
+açık geliştirme işi sayılmaz. Öğrenme turu pasiftir (28 Ekim kararı).
+Yeni işin amacı, dosyaları ve doğrulaması önceden açıklanır; her adım sonunda
+durulur, commit/push onayı ayrıca alınır.
 
 **Model performansına göre hareket:** günlük otomatik görev tahmin kaydeder;
 performans değerlendirmesi ayrıca alınır. Haftalık raporda veri desteği,
@@ -486,7 +528,7 @@ Girdi gruplarının tek tek katkısını çıkararak karşılaştıran deney hen
 yapılmadı. Kesin koşullar karşılanmazsa olasılık kapalı kalır; sonuç ve
 sınırlar belgelenir.
 
-## 9. Sonraki aşamalar
+## 9. Kapsam ve kabul koşulları
 
 ### Sürekli işletim (Aşama 9'un ilk bölümü)
 
@@ -495,314 +537,86 @@ izlemektir. 22–23 Ekim'de güç ayarları uygulanıp bir kapak kapalı turla
 sınandı; kullanıcı 4 Kasım'da bilgisayarı geceleri çoğu zaman kapattığını
 bildirdi. Önceki ayarlar, her gece açık kalındığı kanıtı sayılmaz.
 Geç/kaçan turların nedeni ayrı incelenir; güç ayarına yeni müdahale kararı yok.
-Görevler ve 10:00/22:00 toplama, Pazar 14:00 keşif, 11:00 gölge düzeni sürer.
-Kaynak işletim ile ayrı Docker teslim kopyasının kabulü birbirinden ayrıdır.
-Kurallar ve sınırlar [teknik rehberdedir](docs/teknik.md#bilinen-sınırlar).
+Görev saatleri ve kaynak sınırları [teknik rehberdedir](docs/teknik.md#bilinen-sınırlar),
+izlenecek açık işler [güncel tablodadır](#güncel-takip-tablosu).
 
 ### Docker ve teslim hedefi (9.2)
 
-**9 Kasım'da onaylanan sözleşme.** 9.2'nin çıktısı bu planın ve Docker
-parola istisnasının belgelenmesidir. Belgeleme tamamlandı; gönderim/CI
-kayıtları [geçmişte](docs/gecmis.md) tutulur. 9.3 imaj ve Compose temeli
-uygulandı; [bugünkü davranış teknik rehberdedir](docs/teknik.md#docker-imaj-ve-compose-temeli).
-9.4'ün paket ve DB hazırlığı, yapay doğrulama ve ilk gerçek paket kabulü
-tamamlandı; gönderim durumu aşama tablosundadır. 9.5'in servis bağlantısı/bakımı, yapay doğrulama ve gerçek paket kabulü
-tamamlandı. 9.6 tek komutla kullanım ve yerel kabul de tamamlandı; gönderim
-durumları aşama tablosundadır. 9.7 kodu, kullanım rehberi, yerel kabul ve GitHub Docker CI tamamlandı;
-fiziksel bilgisayar kabulü bekliyor. Ayrı durumlar aşama tablosunda izlenir. Her adım ayrı tamamlanıp kullanıcıya sunulur.
-
-#### Teslim hedefi ve kapsam
-
-Kullanıcı, gerekli ilk veri/ayar hazırlığından sonra sistemi tek PowerShell
-komutuyla başlatıp tarayıcıdan kullanacak. Streamlit, FastAPI ve PostgreSQL
-Docker içinde çalışacak. Teslim; kod, veri paketi ve kullanım rehberidir.
+**9 Kasım'da onaylanan kapsam:** canlı sistemden ayrı gerçek veri kopyasıyla
+yerel web uygulaması teslimi. Teslim; kod, veri paketi ve kullanım rehberidir.
 İnternette herkese açık yayın veya `.exe` dağıtımı kapsamda değildir.
 
 | Konu | Seçilen düzen |
 |---|---|
-| Ortam | Canlı sistemden ayrı Docker teslim ortamı |
-| Veri | Gerçek fiyat geçmişi, dondurulan model, kanıtlar ve doğrulanmış kayıtların kopyası |
-| Güncelleme | Canlı sistemden yeni paket hazırlama ve teslim ortamına kontrollü aktarma |
-| Başlatma | İlk hazırlıktan sonra tek PowerShell komutu |
+| Ortam | Windows 11 x64, Docker Desktop/WSL2 Linux konteynerleri; canlı sistemden ayrı kopya |
+| Veri | Gerçek fiyat geçmişi, dondurulan model ve doğrulanmış kanıt/kayıtların kopyası |
+| Güncelleme | Kaynak bilgisayardan yeni paket hazırlama ve kontrollü aktarma |
+| Kullanım | İlk hazırlıktan sonra tek PowerShell komutuyla başlatıp tarayıcıdan kullanma |
 | İnternet | İlk kurulumda gerekli; hazırlanmış sistem sonraki açılışlarda çevrimdışı çalışabilir |
-| İlk destek | Windows 11, x64, Docker Desktop ve WSL2 üzerinden Linux konteynerleri |
 
-Windows'taki toplama, keşif ve 11:00 gölge görevleri kendi düzeninde
-çalışmayı sürdürecek. Docker teslim ortamı veri toplamayacak ve günlük
-tahmin üretmeyecek. Başka bilgisayarda uygulamayı açmak için Docker
-hazırlığından sonra ayrıca Python/PostgreSQL kurulması gerekmeyecek;
-kaynak bilgisayardaki dışa aktarma mevcut yerel araçları kullanacak.
+Docker kopyası veri toplamaz veya günlük tahmin üretmez; Windows'taki
+toplama/keşif/gölge görevleri kendi düzeninde sürer. Teslim bilgisayarında
+ayrıca Python/PostgreSQL kurulumu gerekmez; Export kaynak bilgisayarın
+yerel araçlarını kullanır. Docker'a özel parola istisnasının tek kaynağı
+[AGENTS.md](AGENTS.md#canlı-işler-ve-veri) dosyasıdır.
 
-#### Servisler, bağlantılar ve sağlık
+9.2–9.7 yazılımı, yerel kabul ve CI tamamlandı. Servis/ağ, sabit sürümler,
+kalıcılık, paket bütünlüğü, parolalar ve geri dönüşün bugünkü sözleşmesi
+[teknik rehberdedir](docs/teknik.md#docker-imaj-ve-compose-temeli);
+[zorunlu kabul senaryoları](docs/teknik.md#docker-kabul-senaryoları) orada tutulur.
+Alıcının kurulum/kullanımı ve **ikinci fiziksel Windows bilgisayarında**
+bekleyen ilk kurulum/host interneti kapalı kabulü [teslim rehberindedir](docs/teslim.md#kabulün-kapsamı).
+Yapay/yerel/CI başarısı bu fiziksel kabulü kapatmaz; durum güncel tabloda izlenir.
 
-**Tarayıcı → Streamlit → FastAPI → Docker PostgreSQL'i ve doğrulanmış
-tahmin dosyaları.** Üç sürekli servis bulunacak:
-
-| Servis | Görev ve erişim |
-|---|---|
-| `db` | Teslim kopyasının PostgreSQL verisini Docker ağı içinde saklar |
-| `api` | Veritabanına yalnız SELECT hesabıyla bağlanır; kayıtlı fiyat ve tahmin durumunu okur |
-| `ui` | Streamlit ekranını sunar; API'ye mevcut yerel istemci üzerinden erişir, veritabanı parolası almaz |
-
-Ekran **`http://127.0.0.1:8503`** üzerinden açılacak; mevcut 8501 ekranı ve
-8502 test önizlemesiyle çakışmayacak. API'nin 8000 ve veritabanının 5432
-portları bilgisayara yayımlanmayacak.
-
-Sabit `127.0.0.1:8000` istemci sözleşmesi korunacak: `ui`,
-`network_mode: service:api` ile `api` servisinin ağ alanını paylaşacak.
-Ekranın konteyner içindeki 8501 portunun dış eşlemesi ağ alanını sağlayan
-`api` servisinde tanımlanacak. API ve ekran yeniden oluşturulurken birlikte
-ele alınacak; ekran eski ağ alanında bırakılmayacak.
-[Compose ağ düzeni](https://docs.docker.com/compose/how-tos/networking/).
-
-Başlangıç sırası: DB bağlantı kabul eder → API `/health` ile şemayı,
-migration durumunu ve okuma rolünü doğrular → Streamlit başlar ve kendi
-sağlık ucu kontrol edilir. Kontroller bitmeden "uygulama hazır" denmeyecek.
-Servisler kullanıcı komutuyla açılacak; Docker Desktop açılışına otomatik
-çalışma eklenmeyecek. Sağlıklı sistemde tekrar `Start` veri aktarımını veya
-servisleri gereksiz yere tekrarlamayacak.
-[Compose başlangıç sırası](https://docs.docker.com/compose/how-tos/startup-order/).
-
-#### Ortam, kalıcılık ve parolalar
-
-- Python **3.13.15** (`python:3.13.15-slim-bookworm`) ve PostgreSQL **17.11**
-  (`postgres:17.11-bookworm`) kullanılacak. Taban imajları SHA-256 özetiyle
-  sabitlenecek. Linux'taki doğrudan ve dolaylı Python bağımlılıkları sürüm ve
-  dosya hash'leriyle kilitlenecek; mevcut web/ML sürümleri korunacak.
-  Linux kilidi Windows ortamından bağımsız hazırlanacak.
-- PostgreSQL verisi, yapılandırma kopyası ve ML dosyaları ayrı, isimli kalıcı
-  alanlarda tutulacak. Normal API çalışmasında yapılandırma ve ML alanları
-  salt okunur bağlanacak. Durdurma ve konteyner yenileme veriyi koruyacak;
-  kalıcı alanlar otomatik silinmeyecek.
-  [Docker kalıcı alanları](https://docs.docker.com/engine/storage/volumes/).
-- Yalnız ayrı Docker kopyası için üretilen yönetici/API parolalarının yerel
-  gizli dosyalarda tutulmasına kullanıcı istisnası verildi. Compose secrets,
-  geçici `PGPASSFILE`, canlı parola dosyasının taşınmaması ve çıktılarda
-  parolaların bulunmaması kurallarının tek kaynağı
-  [AGENTS.md — Canlı işler ve veri](AGENTS.md#canlı-işler-ve-veri) bölümüdür.
-  [Compose secrets](https://docs.docker.com/compose/how-tos/use-secrets/),
-  [PostgreSQL parola dosyası](https://www.postgresql.org/docs/17/libpq-pgpass.html).
-
-#### Paket hazırlama, içe alma ve yenileme
-
-`Export` kullanıcı tarafından çalıştırılacak:
-
-1. Mevcut ortak kilitler kontrol edilecek; toplama, keşif veya tahmin kaydı
-   yazımı sürüyorsa beklemeden durulacak. Veritabanında yarım tur bulunmadığı
-   da doğrulanacak.
-2. PostgreSQL 17 araçlarıyla canlı veritabanından salt okunur, tutarlı
-   `pg_dump` özel arşivi alınacak.
-   [PostgreSQL yedekleme sözleşmesi](https://www.postgresql.org/docs/17/app-pgdump.html).
-3. İlgili yapılandırmalar, dondurulan modelin kanıt zinciri, tamamlanmış
-   resmi tahmin/değerlendirme klasörleri ve bağlı kaynak görüntüleri
-   kopyalanacak. Resmi dosyaların içerikleri değiştirilmeyecek.
-4. Bütün kontrollerden sonra paket manifesti yazılacak: biçim sürümü,
-   hazırlanma zamanı, kod commit'i, şema/migration bilgileri, model manifest
-   SHA'sı ve taşınan dosyaların SHA-256 değerleri. Paket kimliği tamamlanmış
-   manifestin hash'i olacak.
-
-Parolalar, kilitler, geçici/yarım klasörler, yerel sanal ortam ve kişisel
-devir dosyaları pakete alınmayacak. Paketler ve gerçek veriler Git dışında
-kalacak.
-
-İçe alma ve yenileme kuralları:
-
-- Paket bütünlüğü ve kod uyumluluğu geri yüklemeden önce doğrulanacak.
-  Her farklı paket için ayrı Docker proje/kalıcı alan grubu oluşturulacak.
-- Geri yükleme yalnız Docker ağı içindeki sabit `db` adresine yapılacak;
-  canlı bağlantı adresleri aktarılmayacak. İç DB adı mevcut API rolü
-  sözleşmesi gereği `fiyat_takip` kalacak; ayrılık Docker ortamıyla
-  sağlanacak. Şema ayrı, giriş yapamayan role ait olacak; API hesabı mevcut
-  SELECT kurallarıyla kurulacak.
-- Uygulanmış migration dosyaları değiştirilmeyecek; uyumsuz şema reddedilecek.
-  Aynı paketin tekrar hazırlanması mevcut DB'nin üzerine yazmayacak.
-- Yeni paket doğrulandıktan sonra ekran ona geçirilecek. Açılış başarısızsa
-  önceki çalışan paket yeniden başlatılacak. Önceki paket ve kalıcı alanlar
-  geri dönüş için korunacak.
-
-#### Ekran ve gösterim onayı
-
-Docker ekranında "Teslim kopyası · Veri aktarımı: … · Otomatik veri toplama
-yapılmaz." bildirimi bulunacak. Yerel sunum bilgisini
-`DELIVERY_MANIFEST_PATH` ayarı sağlayacak. Mevcut HTTP uçları ve cevap
-şemaları değişmeyecek; normal Windows ekranı mevcut davranışını sürdürecek.
-
-R2 + Platt, girdiler, eşikler ve resmi dosyalar korunacak. Aktarım ve API
-istekleri eğitim, yeni tahmin veya pickle yüklemesi yapmayacak.
-Windows'taki gösterim onayı tam Windows yolu içerdiği için pakete
-alınmayacak; her yeni teslim kopyası gösterim kapalı başlayacak.
-
-5 Ocak 2027 veya sonrasında uygun kesin rapor mevcutsa kullanıcı bakım
-komutuyla mevcut `shadow-display` doğrulamasını Docker içinde
-çalıştırabilecek. Onay Linux yoluyla yalnız teslim kopyasında oluşturulacak;
-tarih, model ve `met` koşulları aynen uygulanacak. Erken açma seçeneği
-eklenmeyecek. Açma/kapatma resmi tahmin veya değerlendirmeyi değiştirmeyecek.
-
-#### Planlanan kullanım ve kabul kontrolleri
-
-Tek giriş `scripts/teslim.ps1` olarak 9.6'da uygulandı. Aşağıdaki onaylı
-komutların bugünkü davranışı ve ilk hazırlık koşulları
-[teknik rehberdedir](docs/teknik.md#docker-tek-komutla-kullanım).
-
-| İşlem | Planlanan komut |
-|---|---|
-| Canlı sistemden paket hazırlama | `.\scripts\teslim.ps1 -Action Export` |
-| İlk veya yeni paketi hazırlama | `.\scripts\teslim.ps1 -Action Prepare -Bundle <PAKET_KLASORU>` |
-| Uygulamayı açma | `.\scripts\teslim.ps1 -Action Start` |
-| Durumu görme | `.\scripts\teslim.ps1 -Action Status` |
-| Logları görme | `.\scripts\teslim.ps1 -Action Logs` |
-| Veriyi koruyarak kapatma | `.\scripts\teslim.ps1 -Action Stop` |
-| Önceki pakete dönme | `.\scripts\teslim.ps1 -Action Rollback` |
-
-Başlatma; Docker motorunu, hazırlanan paketi, portu ve servis sağlığını
-kontrol edip ekran adresini gösterecek. İmaj ilk hazırlıkta oluşturulacak;
-sonraki normal açılışlarda yeniden indirme veya kurulum gerekmeyecek.
-
-9.7'nin zorunlu kabul senaryoları:
-
-- Boş Docker ortamına kurulum ve aynı paketi tekrar hazırlama.
-- Eksik/bozuk dosya, yanlış model veya uyumsuz şemada aktarımın reddi.
-- Kaynak/kopya veri karşılaştırması; migration ve resmi dosya hash eşleşmesi.
-- API hesabıyla yazmanın reddi; ekranın DB bağlantısı/parolası almaması.
-- Yalnız `127.0.0.1:8503` ekran erişimi ve mevcut yerel uygulamayla birlikte
-  çalışma; API/DB kesintisi, yeniden başlatma ve API–ekranın birlikte
-  yeniden oluşturulması.
-- Durdur/aç ve konteyner yenilemesinde verinin korunması; yeni paket
-  geçişinin başarısızlığında önceki pakete dönüş.
-- Kapalı gösterimde olasılık çıkmaması, gün değişince eski tahminin
-  gösterilmemesi; açma/kapatma koşullarının yapay testlerle Linux'ta doğrulanması.
-- Hazırlanmış sistemin internet kapalıyken açılması.
-
-Her kod adımında tam pytest, Black ve Flake8 çalıştırılacak. Docker CI
-denemesi yalnız yapay veri ve `_test` DB kullanacak; gerçek teslim paketi
-CI'a gönderilmeyecek. Kullanım rehberi [teslim belgesinde](docs/teslim.md) hazır; 9.7'nin bekleyen kabulü aşama tablosunda izlenir.
-
-Docker geliştirmeleri 6.5 kapanmadan tamamlandı; fiziksel teslim kabulü açık. 31 Aralık temel
-geliştirme, 21–31 Aralık sunum hedefi ve 5 Ocak 2027 kesin değerlendirme
-tarihi korunur. Aralık sunumunda fiyat ve grafikler çalışacak; gerçek
-olasılık gösterimi kesin değerlendirmeye bağlı kalacak.
+Aralık sunumunda fiyat ve grafikler çalışır; gerçek olasılık gösterimi
+kesin değerlendirmeye bağlıdır. 31 Aralık temel geliştirme, 21–31 Aralık
+sunum hedefi ve 5 Ocak 2027 kesin değerlendirme tarihi korunur.
 
 ### ML
 
-- Ortak sınıflandırma modeli; önce basit referanslar, LightGBM aday; ürün
-  kimliği sayı olarak verilmez (Bölüm 5, 28 Ekim).
-- Eğitim ve model seçimi Cimri'de, iki kaynakta ortak girdilerle; kendi
-  verimiz dondurulan R2 + Platt'ın gölge değerlendirmesi için kullanılır.
-  4 Kasım kararı gereği mevcut model yeniden kalibre edilmez veya eğitilmez;
-  yeni model çalışması ayrı plan ve kullanıcı kararı gerektirir (Bölüm 5).
-- Hedef: başlangıç fiyatına göre sonraki 7 günde gözlenen minimumlardan biri
-  %5 veya daha fazla düşükse 1 (kesin kural Bölüm 5, 19 Ekim). Gelecek 7
-  günün en az 6'sı gözlenmeli; gelecek minimumu başlangıçta takip edilen
-  sayfalardan alınır (`y_sabit`; Bölüm 5, 28 Ekim).
-- İlk girdiler: ölçeksiz fiyat oranları, oynaklık ve değişim sayısı, son
-  düşüşten geçen gün, haftanın günü, marka/aile/segment/kapasite, veri durumu
-  (Bölüm 5, 28 Ekim). Değerlendirme: zaman sıralı %70/%15/%15, purge, ilk
-  %85'te ileri yürüyen katlar, son test tek kez (Bölüm 5, 28 Ekim).
-- Başarı: LightGBM ancak R0–R2 referanslarından R2'yi geçerse seçilir.
-  Gösterim: Cimri deneyi → gölge mod → kapı (60–90 gün, ≥30 farklı olay,
-  Brier skill > 0); ürün bazında "yetersiz veri" kuralları (Bölüm 5, 28 Ekim).
-  Kapının sayımı 27 Ekim'den geriye dönük tahminlerle başlar (Bölüm 5, 2 Kasım).
-- Veri durumu (23 Ekim denetimi, `tools/ml_data_check.py`; araç bugün hâlâ
-  eski sıkı kuralla sayar): kendi serimizde kullanılabilir 30+7 pencere yok.
-  Bütün ürünleri etkileyen kusurlu günler (17 Ekim: tur gece yarısını 5 dk
-  geçti; 22 Ekim: tur 48 ertesi sabah bitti; 23 Ekim: 22:00 dilimi 24 Ekim
-  02:50'de başladı) ve keşfin eklediği sayfalar sıkı sayacı sıfırlıyor; sıkı
-  kuralla en erken 30 Kasım, o da yeni kusur olmazsa. 2 Kasım görüntüsünde
-  de (son kapanmış gün 1 Kasım) kendi serimizde etiketli pencere yok: 30 gün
-  geçmişi dolan ilk başlangıç 27 Ekim, gelecek penceresi 3 Kasım'da kapanır;
-  ilk etiketler 4 Kasım veya sonrasında alınan görüntüde çıkar. Güncel
-  denetim sayıları README Güncel kapsam tablosundadır.
-  6 eski iPhone 16 günün hiçbirinde, 4'ü yarısından fazlasında fiyatsız (stok
-  yok). Cimri, 23 Ekim kararıyla eğitimde kullanılacak. 2 Kasım son
-  alımından sonra 58 ürünü ve 9 Ekim 2025–2 Kasım 2026 aralığını kapsar
-  (sayılar README'de). Pencere sayıları 2 Kasım görüntüsüyle yeniden
-  ölçüldü (README); olumlu oran yine ~%10. 8 Ekim ve 2 Kasım satırları yarım
-  gündür; ML'de gözlenmemiş sayılır (Bölüm 5, 28 Ekim).
+Model Cimri'de, iki kaynakta ortak hesaplanabilen girdilerle eğitilip seçildi;
+kendi verimiz dondurulan R2 + Platt'ın gölge değerlendirmesinde kullanılır.
+Hedef, başlangıçta izlenen sayfalarda sonraki 7 günde en az %5 düşüştür
+(`y_sabit`, en az 6/7 gelecek gün gözlenmeli); `y_izlenen` ikincil rapordur.
+Girdi, zaman bölmesi, ölçüt ve model seçiminin kesin kuralları
+[teknik rehberde](docs/teknik.md#ml-hazırlığı), kalıcı kararları Bölüm 5'tedir.
 
-ML hazırlığının adımları (kalan sıra 4; yapı kararı Bölüm 5, 28 Ekim):
-
-| Adım | İş | Durum |
-|---|---|---|
-| 4.0 | Bekleyen belge değişiklikleri | ✅ Tamamlandı (28 Ekim) |
-| 4.1 | `ml` bağımlılık grubu, CI, salt okunur veri görüntüsü (`python -m app.ml snapshot`) | ✅ Tamamlandı (30 Ekim) |
-| 4.2 | Günlük seriler ve etiketler; etiket raporu; sıkı varyantın eski araçla çapraz kontrolü | ✅ Tamamlandı (2 Kasım); gerçek görüntü, gönderim ve CI doğrulandı |
-| 4.3 | Girdiler ve sızıntı testi | ✅ Tamamlandı (2 Kasım); gerçek görüntüde başlangıç eşleşmesi, gönderim ve CI doğrulandı |
-| 4.4 | Zaman bölmesi (purge, ileri yürüyen katlar) ve ölçütler | ✅ Tamamlandı (2 Kasım); gerçek bölme/kat, gönderim ve CI doğrulandı |
-| 4.5 | R0–R2, LightGBM, kalibrasyon ve deney raporu | ✅ Tamamlandı (3 Kasım); kod, belgeler, gönderim ve CI doğrulandı; gerçek deney 4.6'da |
-| 4.6 | Son alımla uzatılmış Cimri verisiyle ilk deney; son %15 test açılmaz | ✅ Tamamlandı (3 Kasım); gerçek deney, doğrulama, yorum, belgeler, gönderim ve CI doğrulandı; kesin seçim yapılmadı |
-
-Bu aşamada tahmin gösterilmez, gölge mod kurulmaz ve DB'ye yazılmaz; bunlar
-ayrı planlardır. Son Cimri alımından sonra 4.1–4.4 komutları uzatılmış
-veriyle yeniden çalıştırıldı (2 Kasım); 4.5 ve 4.6 bu veriyle yapılır
-(2 Kasım kararı).
-
-Model seçiminin dondurulması ve son testin tek kez açılması (kalan sıra 5,
-3 Kasım planı); her adım ayrı commit ve onaydır:
-
-| Adım | İş | Durum |
-|---|---|---|
-| 5.1 | `freeze` ve `final-test` komutları, saklı test için ayrı puanlama girişleri, güvenli model yükleme, testler ve belgeler | ✅ Tamamlandı (3 Kasım); kod, testler, belgeler, gönderim ve CI doğrulandı |
-| 5.2 | Dondurma (ön kayıt): kullanıcı `freeze` komutunu çalıştırır, model SHA-256'sı ve özeti belgeye işlenir, commit/push, CI | ✅ Tamamlandı (4 Kasım); R2 + Platt donduruldu ve doğrulandı, [ön kayıt](docs/teknik.md#4-kasım-2026-dondurma-ön-kaydı) gönderildi ve CI doğrulandı; bu adımda saklı test açılmadı |
-| 5.3 | Saklı testin tek kez açılması: kullanıcı `final-test` komutunu ön kayıtlı SHA ile çalıştırır; sonuç doğrulanır, belgelenir, commit/push, CI | ✅ Tamamlandı (4 Kasım); bir kez açıldı, kayıtlı tahminlerden puanlar ve güven aralığı doğrulandı, [sonuç](docs/teknik.md#4-kasım-2026-saklı-test-sonucu) belgelendi ve gönderildi, CI doğrulandı; model değişmedi |
+4 Kasım'da model donduruldu ve saklı test bir kez açıldı;
+[ön kayıt ve sonuç](docs/teknik.md#4-kasım-2026-dondurma-ön-kaydı) korunur.
+Mevcut model yeniden eğitilmez veya kalibre edilmez; yeni model ayrı plan
+ve kullanıcı kararı gerektirir. Eski kararlardaki uygulanmamış ek hedefler
+[açık kapsam kararıdır](#ml-ikincil-hedeflerinin-kapsamı).
+Güncel veri sayıları [README Güncel kapsam](README.md#-güncel-kapsam) tablosundadır.
 
 ### Gölge mod (kalan sıra 6, 4 Kasım planı)
 
-Amaç: dondurulan R2 + Platt, kendi verimizdeki her gün için "önümüzdeki 7
-günde ≥ %5 düşer mi" olasılığını üretir ve kaydeder; 7 gün sonra gerçek
-sonuçla karşılaştırılır. Olasılık ekranda gösterilmez. Kararlar ve ön kayıtlı
-değerlendirme kuralları Bölüm 5'te (4 Kasım). 6.0–6.4 tamamlandı; günlük
-kayıt/görev kurulumu ve değerlendirme komutu uygulandı, ilk gerçek kayıt
-ve rapor bağımsız doğrulandı, gönderildi ve ilgili commit'lerin CI'ı
-başarılı oldu. İlk otomatik günlük çalışma da doğrulandı (6 Kasım).
-6.5'in kontrol takvimi 6 Kasım kararıyla onaylandı; ilk haftalık kontrol
-9 Kasım'da tamamlandı. Güncel takip ve kabul durumu
-[tek tabloda](#güncel-takip-tablosu), tamamlanan geliştirme adımları aşağıdadır.
+Dondurulan R2 + Platt her ürün/gün için "önümüzdeki 7 günde ≥ %5 düşer mi"
+olasılığını değişmez kayda alır; sonuç penceresi kapandıktan sonra gerçek
+etiketle karşılaştırılır. 6.0–6.4 yazılımı tamamlandı; 6.5 izleme ve kesin
+değerlendirme olarak sürer. Olasılık gösterimi kapalıdır.
 
-Günlük akış: her gün 11:00 (bilgisayar kapalıysa açılınca) → tur sürüyorsa
-5 dakikada bir, en çok 90 dakika bekle → okuma hesabıyla veri görüntüsü →
-dondurulan modeli ön kayıtlı SHA-256 ve kalibrasyon yeniden üretimiyle
-doğrula → kendi verimizin girdilerini hesapla → kaydı olmayan her (ürün, gün)
-için olasılık yaz → manifest en son. Girdi kodu yalnız `d−30…d` günlerini ve
-`d` gününün 22:00 turunu okur; 11:00'de veritabanında bulunan sabah turu
-girdiye girmez. Bir (ürün, gün) bir kez tahmin edilir; manifestli klasöre
-yeniden yazılmaz, manifestsiz yarım klasör sayılmaz. Kayıt "kaç gün sonra
-kaydedildi" bilgisini taşır (1 zamanında, daha fazlası geç; ilk toplu
-doldurma geriye dönük).
-
-Her alt adım ayrı commit ve ayrı onaydır:
-
-| Adım | İş | Hedef | Durum |
-|---|---|---|---|
-| 6.0 | Kararların belgelenmesi (yalnız belge): bu bölüm ve Bölüm 5'teki 4 Kasım satırları | 5 Kasım | ✅ Tamamlandı (4 Kasım); belgeler gönderildi, CI başarılı ([kayıt](docs/gecmis.md)) |
-| 6.1 | Kendi verimizin ön ölçümü (kod yok): kullanıcı `snapshot` → `labels` → `features` komutlarını tur dışında çalıştırır; 27 Ekim'den beri geçerli başlangıç sayısı, eksik/NULL gerekçeleri, "son 14 günde eksik > %30" ve eğitimde görülmemiş aileler, `history_days`/`missing_ratio_30d` dağılımının Cimri'ye göre farkı salt okunur incelenir. Model yüklenmez, tahmin üretilmez | 6 Kasım | ✅ Tamamlandı (4 Kasım); bulgular aşağıdaki risklerde ve [teknik rehberde](docs/teknik.md#bilinen-sınırlar), gönderildi, CI başarılı ([kayıt](docs/gecmis.md)) |
-| 6.2 | `python -m app.ml shadow-predict`: `app/ml/shadow.py` (DB/ağ yüklemez; mevcut `load_frozen_model`, `analyze_features`, `predict_frozen` yeniden kullanılır), `config/shadow.json` (başlangıç günü 2026-10-27, ön kayıtlı model SHA-256, kanıt klasörleri), çıktı `data/ml/golge/tahmin_<zaman>/` (`predictions.jsonl`, `report.md`, `manifest.json`); yapay görüntülü testler (gelecek verisi sızmaz, yanlış SHA'da tahmin yok, 30 günden kısa geçmişe olasılık yok, mevcut anahtar yeniden tahmin edilmez, belirlenimci çıktı, DB/ağ yüklenmez); teknik rehberde "Gölge mod" bölümü | 12 Kasım | ✅ Tamamlandı (4 Kasım); kod, testler, belgeler ve gerçek görüntüyle deneme bağımsız denetimle doğrulandı, gönderildi, CI başarılı ([kayıt](docs/gecmis.md)) |
-| 6.3 | `python -m app.ml shadow-daily [--scheduled]` (görüntü + tahmin, tur bekleme, `run_logged` ile `data/logs/golge_*.log`), `scripts/golge_zamanlayici_kur.ps1` (görev `\FiyatTakip\GolgeTahmin`, her gün 11:00, `StartWhenAvailable`, `-Kaldir`; `API_DATABASE_URL` yoksa kurmaz; UTF-8 BOM'lu). Kullanıcı bir kez `API_DATABASE_URL` tanımlar, ilk elle çalıştırma 27 Ekim'den dünü kadar geriye dönük doldurur, çıktı birlikte doğrulanır, görev kurulur | 16 Kasım | ✅ Tamamlandı (5 Kasım); günlük akış, ilk resmi kayıt ve bağımsız denetim, yinelenmeme ve gerçek görev kurulumu doğrulandı; gönderildi, aynı SHA için CI başarılı ([kayıt](docs/gecmis.md)) |
-| 6.4 | `python -m app.ml shadow-evaluate`: yeni görüntüden etiketler, kayıtla anahtar eşleşmesi, **kayıttaki girdilerin sonraki görüntüden yeniden hesaplananlarla birebir aynı olduğu denetimi** (gerçek veride sızıntı kanıtı), `own_evaluation` rolüyle puanlar, güvenilirlik kovaları, Bölüm 5'teki kapı koşulları ve üç durumlu sonuç, Kasım/diğer günler kırılımı, `y_izlenen` ikincil rapor, işletim sağlığı (zamanında/geç/geriye dönük, eksik günler). AP farkı aralığı için `reserved_test_bootstrap` benzeri ayrı giriş eklenir; mevcut ölçüt işlevleri ve `METRIC_RULES` değişmez. Rapora yalnız bilgi amaçlı kırılım da girer: `missing_ratio_30d` dilimleri (≤ 0,10 ve üstü) ve 22 Kasım öncesi/sonrası; kapı kuralı bunlara bakmaz | 25 Kasım | ✅ Tamamlandı (5 Kasım); kod/test/belgeler, kullanıcı terminalindeki ilk rapor ve bağımsız girdi/etiket/puan/kapı denetimi doğrulandı; model/kayıtlar değişmedi, gönderildi ve aynı SHA için CI başarılı ([kayıt](docs/gecmis.md)) |
-
-6.5'in haftalık rutini ve kesin değerlendirmesi
-[güncel takip tablosunda](#güncel-takip-tablosu) ayrı izlenir. Aşağıdaki
-kontrol planı bu işlerin yöntemini ve kabul koşullarını tanımlar.
+Günlük akışın 11:00 zamanı, bekleme/telafi, geçmişle sınırlı girdiler,
+tekillik ve değişmez manifest kuralları [gölge mod rehberindedir](docs/teknik.md#gölge-mod-tahmin-kaydı-python--m-appml-shadow-predict).
+4 Kasım ön ölçümünün veri desteği, eksik gün, stok ve kaynak/girdi kayması
+riskleri [tarihli sınır kaydıdır](docs/teknik.md#gölge-mod-ön-ölçümünün-riskleri-4-kasım-2026).
+Gösterim kapısı için süre/olay desteği ve ön kayıtlı performans koşulları
+birlikte sağlanmalıdır; erken iyi puan yeterli değildir.
 
 #### 6.5 kontrol planı
 
-**Amaç ve sınır:** 6.3'te kurulan görevin gerçekten çalıştığını, değişmez
-tahminlerin eksiksiz biriktiğini ve 6.4 raporunun düzenli alınabildiğini
+**Amaç ve sınır:** mevcut günlük görevin gerçekten çalıştığını, değişmez
+tahminlerin eksiksiz biriktiğini ve değerlendirme raporunun alınabildiğini
 kanıtlamak. Yeni kod, görev veya model ayarı yoktur. R2 + Platt, kapı
-eşikleri ve kesin değerlendirme tarihi değişmez; ML kütüphaneleri Ocak'taki
-kesin değerlendirmeye kadar güncellenmez. Kurulu günlük görev mevcut
-düzeninde çalışmaya devam eder; haftalık kontrol takvimi 6 Kasım
-kararıyla onaylanmıştır.
+eşikleri ve kesin tarih değişmez; ML kütüphaneleri Ocak'taki kesin
+değerlendirmeye kadar güncellenmez. 6 Kasım'da onaylanan haftalık kontrol
+takvimi sürer; ilk haftalık kontrol 9 Kasım'da tamamlandı.
 
-**Durum ve takvim:** ilk otomatik günlük çalışma 6 Kasım'da doğrulandı.
-İlk haftalık kontrol 9 Kasım'da tamamlandı: 8 Kasım keşfi, dönemin görev/logları
-ve 9 Kasım 11:00 görevinin salt okunur görüntüsü incelendi. Yeni yerel
-`shadow-evaluate` raporunda kayıt eksikliği veya yarım klasör yok; eski kayıtlar
-değişmemiş. Erken performans koşulları sağlansa da veri desteği yetersizdir;
-gösterim kapalı kalır. Sonuç sayıları README Güncel kapsam tablosundadır.
-Haftalık kontrol 6 Kasım kararıyla 8 Kasım keşfi sonrasından itibaren her
-Pazar yapılır. Aşağıdaki tarihler İstanbul saatidir; canlı komutları kullanıcı
-çalıştırır, oluşan kanıtları ve salt okunur görev durumunu birlikte inceleriz.
-Görev/log okuma ve rapor komutları [teknik rehberdedir](docs/teknik.md#gölge-işletiminde-kontrol-komutları).
+9 Kasım raporunda kayıt eksikliği/yarım klasör yoktu ve eski kayıtlar
+değişmemişti. Erken performans koşulları sağlansa da veri desteği yetersizdi;
+gösterim kapalı kaldı. Sonuç sayıları README'dedir. Görev/log/manifest
+doğrulamasının yöntemi, haftalık kontrol listesi ve sorunlarda izlenecek
+sıra [teknik rehberdedir](docs/teknik.md#gölge-işletiminde-kontrol-komutları).
+Aşağıdaki tarihler İstanbul saatidir; canlı komutları kullanıcı çalıştırır.
 
 | Ne zaman | Kontrol ve kanıt | Beklenen sonuç / doğrulama |
 |---|---|---|
@@ -811,49 +625,6 @@ Görev/log okuma ve rapor komutları [teknik rehberdedir](docs/teknik.md#gölge-
 | 8 Kasım Pazar'dan itibaren her Pazar, 14:00 keşfi gerçekten bittikten sonra | Keşif logu/raporu, haftanın gölge logları ve yeni salt okunur görüntüyle `shadow-evaluate` raporu | Kaynak sorunları ve gölge kayıt sağlığı ayrı incelenir. Hepsiburada arama düzeltmesi 8 Kasım keşfinde doğrulandı; kısmi kapsam sınırı izlenir |
 | 21 Aralık haftası | Aynı komutlarla yeni ara rapor; sunum için veri yeterliliği, ölçümler ve sınırlar | Bilgi amaçlı sonuç; erken kapı kararı veya model ayarı yapılmaz |
 | 5 Ocak 2027 Salı, çalışan işler tamamlandıktan sonra | **O gün alınmış tek kesin görüntüyle** kesin değerlendirme ve kanıt dosyalarının korunması | Ön kayıtlı üç durumlu kapı sonucu belgelenir; komut ekranı kendiliğinden açmaz |
-
-**İlk otomatik çalışma kontrolü:** kurulum çıktısı veya eski bir `LastTaskResult = 0`
-yeterli değildir; son çalışma zamanı, log tarihi ve `(zamanlanmış)` başlığı
-aynı çalışmayı göstermelidir. Görev hâlâ çalışıyorsa tur/keşif bekleme
-satırlarına bakılır, tamamlanmadan sonuç verilmez. Yeni tahmin yoksa bu tek
-başına hata değildir; görüntüdeki uygun başlangıçların önceden kayıtlı olup
-olmadığı kontrol edilir. İlk tetikleme sorununu örtecek elle çalıştırmadan
-önce görev ve log kanıtı korunur. 22:00 ve 10:00 fiyat turları için bilgisayar
-açık, uyanık ve oturum açık tutulur; kilit ekranı uygundur. Sonradan çalışan
-gölge görevi, kaçmış bir turun geçmiş fiyatlarını geri getiremez.
-
-**Haftalık raporda bakılacaklar:**
-
-- Haftadaki her günün zamanlanmış logu ve son çıkışı kontrol edilir; eksik
-  log, kapanmamış log veya hata ayrıca araştırılır. Keşfin yaklaşık bitiş
-  saati yeterli kanıt değildir; bitiş logu/görev durumu görülür. Yeterli
-  kimlik kanıtıyla otomatik kabul edilen bağlantılar tek tek elle doğrulanmaz.
-- `health.missing_records` boş olmalıdır: başlangıcı bulunup resmi tahmini
-  olmayan ürün-günler araştırılır. `no_start_price`, `not_yet_observed` ve
-  NULL etiketler ayrı okunur; sabit günlük ürün/kayıt sayısı beklenmez.
-- Yarım klasörler ile zamanında, ilk toplu doldurma ve geç kayıt sayıları
-  incelenir. Önceki rapordaki kayıt manifest SHA-256'ları yeni raporun
-  `input.records` envanteriyle karşılaştırılır; eski kayıtlar aynı kalmalı,
-  yeni klasörler ayrıca görünmelidir. Bütünlük uyuşmazlığı normal kabul edilmez.
-- Asıl topluluğun veri desteği, kapı sonucu ve ölçümleri okunur; ikincil
-  etiketler ve kırılımlar yalnız açıklamadır. Kısa dönemde NULL güven aralığı
-  veya `Değerlendirilemedi` geçerli rapor sonucu olabilir; çıkış 0 modelin
-  gösterim koşullarını karşıladığını söylemez. Erken iyi/kötü puana göre
-  model, eşik veya kesin tarih değiştirilmez.
-
-**Sorun çıkarsa izlenecek sıra:**
-
-| Belirti | Yapılacak kontrol / sonraki adım |
-|---|---|
-| Log yok veya son çıkış satırı yok | Önce görev zamanı, durumu, sonucu ve varsa log korunur; çalışan iş ile hiç başlayamayan/kesilen iş ayrılır. Eylem, çalışma klasörü ve ortam değişkeninin varlığı incelenir; parola yazdırılmaz. |
-| Çıkış 1 | Logdaki somut girdi, izin, bağlantı, sürüm veya SHA hatası incelenir. Eski tahmin/kanıt dosyaları değiştirilmez; yeniden dondurma veya kalibrasyon çözüm sayılmaz. |
-| Çıkış 2 | Komut argümanları ve görev eylemi belgelenen komutla karşılaştırılır. |
-| Çıkış 3 | Günlük komutta 90 dakikalık tur/DB beklemesi ile kayıt kilidi ayrılır; değerlendirmede kayıt kilidi beklenmeden hata verir. Diğer iş bittikten sonra kullanıcı kontrollü yeniden dener. Kilit dosyasının varlığı tek başına etkin kilit değildir; dosya silinmez. |
-| Çıkış 130 veya yarım klasör | Kesinti kanıtı korunur; manifesti olmayan çıktı tamamlanmış sayılmaz. Gerekirse yeni çıktı klasörüyle yeniden denenir; resmi kayıtların üzerine yazılmaz. |
-| Eksik tahmin, değişmiş manifest veya girdi uyuşmazlığı | Kaynak görüntü ve loglarla neden araştırılır; hatalı/eksik çıktıyla kapı kararı verilmez. Veri uydurulmaz, eski kayıt değiştirilmez. |
-
-Bu çıkışlar uygulamanındır; Windows görev sonucu ayrıca yorumlanır. Sorun
-nedeni bulunmadan tekrar tekrar çalıştırmak kontrolün yerine geçmez.
 
 **İlerleme ve kapanış:** ilk otomatik çalışma ile ilk haftalık kontrolün
 kanıtları doğrulanınca durum "izleme sürüyor" olur; planın hazırlanması
@@ -867,128 +638,23 @@ Kanıtlar `data/` ve `artifacts/` altında kalır; yeni sınır teknik rehbere,
 karar ana plana, süren iş yerel devir notuna yazılır. Her gönderim ayrıca
 açık onay ister.
 
-Bilinen riskler (6.1 ölçümü, 4 Kasım 2026 12:57 UTC görüntüsü):
-
-- 27 Ekim–28 Aralık 63 gündür; 60 gün sınırda (üç gün pay). ≥ 30 farklı olay
-  için kaba öngörü 29–39 (eşik 30): kendi serimizde 28 Eylül–27 Ekim arası
-  1.050 örnekte %7,6 olumlu ve 22 küme; Cimri oranıyla 29. Öngörü 8 kusurlu
-  günü de içerir, yani sınırdadır; sağlanmazsa olasılık ekrana çıkmaz.
-- Kapsam: 60 üründen 11'i 22:00'de hep stoksuz (iPhone 15 Pro 128/256/1024,
-  15 Pro Max 512/1024, iPhone 16 256/512, 16 Pro 256/512/1024, Galaxy S25
-  512 GB); başlangıçları olmadığından tahmin almazlar, en çok 49 ürün. Günlük
-  "gösterilebilir" ürün 44–48; S24 FE 128 GB geçmişi yaklaşık 17 Kasım'a kadar
-  30 günden azdır. 13 aile de eğitimde görülmüştür.
-- Kendi başlangıçlarımız yok olan 8 gün: 30 Eylül; 2, 3, 4, 6, 17, 22, 23
-  Ekim. 24 Ekim'den beri her gün 48–50 ürünün başlangıcı var.
-- Girdi kayması: kendi satırlarında `missing_ratio_30d` ortalaması 0,24
-  (eğitimde 0,005; 14.923 satırın 14.649'unda sıfır, sapma 0,048, yani yaklaşık
-  5 sapma uzaklık) ve `history_days` 30–37 (eğitim medyanı 159, satırların %3'ü
-  30–37). Dondurulan R2'nin katsayılarıyla tahmini ortalama lojit kayması
-  yaklaşık +0,9, Platt sonrası yaklaşık +0,3. Bu doğrusal bir yaklaşımdır;
-  gerçek etki gölge modda görülür. Kaynak yukarıdaki 8 kusurlu gündür: 22
-  Kasım'dan itibaren 30 günlük pencereler bu günleri içermez (yeni kusurlu gün
-  çıkmazsa). Yeniden kalibrasyon yoktur; sapma kapıda görünür. 6.4 raporu
-  nedeni ayırmak için bilgi amaçlı kırılım taşır.
-- Model Cimri'nin günlük en düşük fiyatıyla eğitildi, kendi serimiz 22:00
-  turudur; olasılık ölçeği ayrıca bu yüzden kayabilir.
-- 11:00 tahmini, tahmin penceresinin ilk sabah turundan sonra kaydedilir. Kod
-  o veriyi okumaz (test ve 6.4 denetimi), ama "gelecek veri oluşmadan
-  kaydedildi" denmez.
-- Kayıt yerel ve imzasızdır; parmak izi yalnız bütünlük kontrolüdür.
-- Python, NumPy, scikit-learn veya LightGBM sürümü değişirse dondurulan model
-  yüklenmez (bilinçli güvenlik); yeniden dondurma yeni bir model sayılır.
-
 ### Gösterim (kalan sıra 7, 6 Kasım planı)
 
-**7.1'in onaylı çıktısı bu sözleşmenin belgelenmesidir.** Aşağıdaki API,
-okuyucu, komut ve istemci 7.2'de tamamlandı, gönderildi ve CI doğrulandı. Kart
-7.3'te tamamlandı, gönderildi ve CI doğrulandı. 7.4'te kayıt dosyasından
-ekrana kadar otomatik doğrulama, kullanım rehberi ve kullanıcıyla görsel
-kabul tamamlandı; gönderildi ve aynı SHA'nın CI'ı başarılı.
-R2 + Platt, girdiler ve değerlendirme eşikleri değişmez. İlk sürümde seçili
+7.1–7.4 yazılımı ve yerel/görsel kabulü tamamlandı. İlk sürümde seçili
 telefon için tek tahmin kartı vardır; tahmin geçmişi listesi/grafiği yoktur.
+Resmi kayıt ve kaynak görüntü doğrulanarak API'den karta taşınır; istek
+sırasında model yükleme, eğitim veya yeni tahmin yapılmaz. Tahmin hatası
+fiyat/grafik akışından ayrıdır. Tarih, kapsam, durumlar ve güncelliğin
+bugünkü sözleşmesi [teknik rehberdedir](docs/teknik.md#tek-tahmin-kartı).
 
-#### Veri akışı ve API sözleşmesi
-
-**Günlük resmi kayıt → kayıt ve kaynak görüntü doğrulaması → API → kart.**
-Uç `GET /api/v1/products/{product_key}/prediction` olarak uygulandı. Mevcut
-ürün cevabı değişmez; tahmin hatası fiyat ekranını kapatmaz. API kayıtlı
-tahmini okur; model yüklemez, eğitim veya yeni tahmin çalıştırmaz.
-
-Gölge kayıt doğrulayıcıları NumPy/scikit-learn bağımlılığı olmayan
-`app/ml/shadow_records.py` modülüne ayrıldı. Mevcut CLI sözleşmeleri ve
-resmi dosya biçimi korunur. Yalnız manifesti tamamlanmış resmi klasörler
-kullanılır; hash, model kimliği ve ürün-gün tekilliği doğrulanır. Yarım
-klasörler kullanılmaz. Başlangıç fiyatı ve sayfa kapsamı, manifestteki SHA
-ile eşleşen kaynak görüntüden mevcut günlük seri kurallarıyla çıkarılır;
-güncel fiyat başlangıç fiyatının yerine geçmez.
-
-Cevap `state`, `reasons`, `forecast`, `generated_at` alanlarını taşır:
-
-| `state` | Anlamı | `forecast` |
-|---|---|---|
-| `closed` | Gösterim onayı yok veya kapatılmış | `null` |
-| `unavailable` | Beklenen gün için kayıt yok | `null` |
-| `insufficient_data` | Mevcut veri yeterliliği kuralları sağlanmıyor | `null` |
-| `available` | Onaylı, güncel ve yeterli kayıt var | Tahmin bilgileri |
-
-`forecast`; olasılık, model adı, başlangıç günü/saati, başlangıç fiyatı,
-tahmin dönemi, kayıt zamanı ve başlangıç kapsamındaki sayfa sayısını taşır.
-Para ve zamanlar mevcut API sözleşmesindeki birimlerle aktarılır.
-
-**Güncellik:** İstanbul takvimine göre dünün başlangıç günü aranır. Daha
-eski kayda dönülmez; 11:00 çalışması tamamlanmadan güncel kayıt bulunmadığı
-açıklanabilir. Bozuk kayıt, kaynak uyuşmazlığı veya okunamayan dosya güvenli
-`503` cevabı üretir; istemci hatayı yalnız tahmin kartında gösterir.
-
-#### Kart ve gösterim onayı
-
-Kart, **Güncel sonuç** bölümünden sonra ve fiyat istatistiklerinden önce
-yer alır. Gösterim açıkken olasılık bir ondalık basamakla yüzde olarak
-sunulur. Başlangıç fiyatı, gerçek akşam turu zamanı ve tahmin dönemi açıkça
-yazılır; "Takip edilen başlangıç sayfaları kapsamında en az %5 düşüş"
-açıklaması bulunur. Grafik aralığı seçimi tahmin dönemini değiştirmez.
-
-Gerçek örnek: iPhone 15 128 GB'ın 5 Kasım kaydı, o akşamki **56.649 TL**
-başlangıç fiyatına ve **6–12 Kasım** dönemine aittir. Kaynak görüntü
-`data/ml/golge/goruntuler/veri_20261106_110023_673048/`, kayıt
-`data/ml/golge/tahmin_20261106_110023_673048/predictions.jsonl` içindedir.
-Gösterim kapalıyken bu kaydın olasılığı API'ye veya karta çıkarılmaz.
-
-Gösterim varsayılan kapalıdır. Açılış komutu
-`python -m app.ml shadow-display --evaluation <KESIN_RAPOR_KLASORU>`:
-
-- Rapor bütünlüğünü, ön kayıtlı modeli, görüntünün İstanbul tarihinin
-  **5 Ocak 2027** olmasını ve kapı sonucunun `met` olmasını doğrular.
-  Çalıştırma tarihi de 5 Ocak veya sonrası olmalıdır.
-- Başarılı doğrulama kayıt kökünde `gosterim_onayi.json` oluşturur; onay
-  kesin rapor ve model SHA değerlerine bağlanır. Başka raporla sessizce
-  değiştirilmez; başarısız komut onay oluşturmaz.
-- `shadow-display --disable` gösterimi tekrar kapatır. Bu işlemler resmi
-  tahmin veya değerlendirme dosyalarını değiştirmez.
-
-Komutlar 7.2'de uygulandı; bugünkü tarih açılışa izin vermez. Gerçek
-gösterim kapalıdır. Güncel alanlar, çıkış kodları ve kullanım
-[teknik rehberdedir](docs/teknik.md#tahmin-gösterim-onayı-python--m-appml-shadow-display).
-
-#### Uygulama sırası ve kabul kontrolleri
-
-- **7.2:** ortak okuyucu, gösterim onayı komutu, API ve yerel istemci
-  sözleşmesi. **7.3:** kart, durum açıklamaları ve tahmin hatasının fiyat
-  ekranından ayrılması. **7.4:** bütün akış ve kullanım belgeleri.
-- Her kod adımında tam test ve biçim kontrolleri yapılır. Gösterim kapalıyken
-  cevapta olasılık bulunmaması; yeni günde eski oranın kaybolması ve yeni
-  kayıtla yenilenmesi sınanır.
-- Kısa geçmiş, fazla eksik gün, eğitimde görülmemiş aile; bozuk hash,
-  yabancı model, yinelenen anahtar ve eksik kaynak görüntü sınanır.
-- Uygun olmayan raporla açılışın reddi ve kapatmanın etkisi; telefon
-  değişiminde/API hatasında önceki olasılığın kalmaması sınanır.
-- İstek sırasında eğitim, tahmin, pickle yükleme veya dış ağ erişimi
-  yapılmadığı denetlenir.
-
-7.2–7.4 ve Docker yazılımı 6.5 kapanmadan tamamlandı. Düzenli takip ve
-bekleyen kabul/teslim işleri [güncel tablodadır](#güncel-takip-tablosu).
-Kesin gösterim kararı **5 Ocak 2027** değerlendirmesine bağlıdır.
+Gerçek gösterim **varsayılan kapalıdır**. Açılış; 5 Ocak 2027 günü alınmış
+kesin görüntünün raporunu, ön kayıtlı modeli ve `met` sonucunu doğrulayan
+mevcut `shadow-display` komutuyla, 5 Ocak veya sonrasında yapılabilir.
+Değerlendirme komutu ekranı kendiliğinden açmaz. Yeni Docker kopyası kendi
+onayıyla kapalı başlar; Windows onayı taşınmaz. Model, girdiler ve eşikler
+korunur; koşullar karşılanmazsa olasılık kapalı kalır.
+[Açma/kapatma sözleşmesi](docs/teknik.md#tahmin-gösterim-onayı-python--m-appml-shadow-display),
+[Docker kopyasında bakım](docs/teknik.md#docker-servis-bağlantısı-ve-gösterim-bakımı).
 
 ## 10. Çalışma ve Git disiplini
 

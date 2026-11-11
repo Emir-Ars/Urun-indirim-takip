@@ -91,7 +91,7 @@ Bu dosyanın kendi güncellemesi bir sonraki adımın commit'ine girer.
 | 19.10 | `f600bc8` | ML veri yeterliliği denetimini ve kaynak değerlendirmesini ekle | [39237984848](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/39237984848) |
 | 20.10 | `7c0988b` | Haftalık keşfe kanıta dayalı otomatik katalog kabulünü ekle | [39393708497](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/39393708497) |
 
-## Proje yapısının sadeleştirilmesi (20 Ekim'den itibaren)
+## Proje yapısının sadeleştirilmesi (20–26 Ekim)
 
 | Tarih (2026) | Commit | Ne yapıldı | CI |
 |---|---|---|---|
@@ -107,13 +107,31 @@ Bu dosyanın kendi güncellemesi bir sonraki adımın commit'ine girer.
 | 22.10 | `7a5ff8f` | Adım 4.3: Cimri kodunun kullanılmayan eski yolları (`cimri_page_data`, sıfırı ret eden TL modu) ve 3 eski test kaldırıldı; 151 kayıtlı/bozuk örneğin dönüşümü birebir aynı | [39762305991](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/39762305991) |
 | 22.10 | `cc3ec2d` | Adım 3.4 düzeltmesi: zaman aşımı testi havuzun ilk bağlantısını bekliyor (havuz büyüyüp bağlantıları sırayla verince test aralıklı düşüyordu) | [39768770708](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/39768770708) |
 | 22.10 | `7ca9be1` | Adım 5.1: otomatik kabulde Trendyol rengi renk seçicisindeki ad; 19 Ekim raporundaki 44 yanlış `color_mismatch` kalktı, diğer 451 karar değişmedi; 7 gerçek örnekle regresyon testi | [39769099983](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/39769099983) |
+| 26.10 | `75d4732` | Adım 5.2: atıl aday üretimini kaldır; kabul, ret ve HB seçenek taramasını koru; sadeleştirmeyi tamamla | [40291234833](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/40291234833) |
+
+## Sürekli işletim, keşif ve kaynak bakımı (22 Ekim'den itibaren)
+
+| Tarih (2026) | Commit | Ne yapıldı | CI |
+|---|---|---|---|
 | 22.10 | `b5bbb99` | Sürekli işletim: bulut denemesine Trendyol sayfa teşhisi; sonuç Trendyol'dan HTTP 403 ve Cloudflare çerezleri (GitHub yolu kapandı); karar: dizüstü sürekli açık, prizde kapak kapanınca uyumaz | [39779121760](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/39779121760) |
 | 22.10 | `1d82c9c` | Sürekli işletim kararını belgeledi: dizüstü sürekli açık, toplama evdeki bilgisayarda; buluta taşıma yolu kapandı | [39784217016](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/39784217016) |
 | 26.10 | `6dcef3b` | Sürekli işletim, Cimri/ML hazırlığı ve iş sırası belgelerini güncelle | [40282132834](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/40282132834) |
 | 26.10 | `8b933c2` | Haftalık keşif eklemelerini kaydet; kapasitesi doğrulanamayan S25 bağlantısını pasife al ve kapsam belgelerini güncelle | [40282854404](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/40282854404) |
-| 26.10 | `75d4732` | Adım 5.2: atıl aday üretimini kaldır; kabul, ret ve HB seçenek taramasını koru; sadeleştirmeyi tamamla | [40291234833](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/40291234833) |
+| 02.11 | `63b2c30` | 1 Kasım keşfinin 7 bağlantısını (Trendyol 4, Hepsiburada 3) kaydet; 4.4 kapanış belgeleri ve 2 Kasım sıra kararı; 2206 test, 0 atlanan, Black ve Flake8 temiz | [41446593601](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/41446593601) |
+| 02.11 | `253c831` | Hepsiburada arama API'si: iPhone kategorisi tanım alanıyla tanınır, hedefe uyan yeni sonuç bitince uyarısız durulur; canlı yanıttan regresyon testi; canlı iPhone 15 kontrolünde 7 API varyantı, `repeated_page` yok, adaylar ve istek sayısı aynı; 2207 test, 0 atlanan, Black ve Flake8 temiz | [41451043542](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/41451043542) |
+| 09.11 | `7cf023a` | Haftalık ara kayıt: 8 Kasım otomatik keşfinin katalog eklemeleri ve güncel kapsam, 6.5/9.1 işletim denetimi ve erken değerlendirme sonuçları, önceki 7.4 kapanışı ve kabul edilen yerel web uygulaması/Docker teslim hedefi belgelendi. Docker uygulaması, görev veya model ayarı değişmedi; kullanıcı onayıyla gönderildi, aynı SHA için CI test paketi, Black ve Flake8 başarılı | [42587778055](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/42587778055) |
+
+## Ekran iyileştirmeleri (26–28 Ekim)
+
+| Tarih (2026) | Commit | Ne yapıldı | CI |
+|---|---|---|---|
 | 26.10 | `dd2e262` | Ekran 1–2 kodu ve yerel geçiş: sıfır fiyat farkı gri/oksuz, seçilen satıcının offer_url akışı ve 005 migration; gerçek düğme kontrolü ilk yeni tur sonrası | [40310082371](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/40310082371) |
 | 28.10 | `94045bd` | Trendyol ana satıcı adresi kaydındaki satıcı kimliğinden (`?merchantId=`); tur 58'de Trendyol 107/107, Hepsiburada 144/144 adres; tarayıcı örneklemesi ve iki pazaryerinin ekran düğmeleri doğrulandı; ekran 1–2 kapandı | [40643349065](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/40643349065) |
+
+## Aşama 8: ML, gölge mod ve tahmin gösterimi
+
+| Tarih (2026) | Commit | Ne yapıldı | CI |
+|---|---|---|---|
 | 28.10 | `ddca8ae` | Kalan sıra 2: GPT ve Claude ML araştırma raporları eklendi; kaynakları ve gerçek veriyle uyumu denetlendi; K1–K8 ML kararları plana yazıldı; son Cimri alımı için aktarım çakışması ve 57/60 eşleştirme açık karar oldu | [40653290005](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/40653290005) |
 | 28.10 | `a2e124f` | Kalan sıra 3.1: Cimri aktarımında alım günü yarım gün sayılır; yarım gün farkı çelişki değil, ilk satır korunur ve fark raporlanır; 9 regresyon testi; arşivdeki 13:51 alımının önizlemesi eski kodla çıkış 2, yeni kodla 1 yarım gün farkı ve çıkış 0 | [40659279633](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/40659279633) |
 | 28.10 | `d292db1` | Kalan sıra 3.2: Galaxy S24 FE 128 GB Cimri ana sayfasıyla eşleştirildi (58/60; kimliği son alımda doğrulanacak); S25 512 GB ve Redmi Note 14 Pro 5G 256 GB eşleştirmesiz kaldı | [40662966101](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/40662966101) |
@@ -122,8 +140,6 @@ Bu dosyanın kendi güncellemesi bir sonraki adımın commit'ine girer.
 | 02.11 | `179215a` | Kalan sıra 4.2: günlük seriler, simetrik 6/7 etiketi, sabit/izlenen kapsam, parmak izli rapor ve eski hesaplayıcıyla sıkı çapraz kontrol; gerçek görüntü ve yerel test/biçim denetimleri doğrulandı | [41413845126](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/41413845126) |
 | 02.11 | `c6ecea7` | Kalan sıra 4.3: geçmişe dayalı tipli model girdileri, aile/segment, girdi şeması ve raporu; gelecek veriye karşı değişmezlik testleri, gerçek görüntüde 4.2 başlangıç eşleşmesi ve dosya bütünlüğü doğrulandı | [41429382111](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/41429382111) |
 | 02.11 | `ad01bcb` | Kalan sıra 4.4: ortak tarih bölmesi, purge, ayrı kalibrasyonlu ileri yürüyen katlar, ölçütler ve tarih bloklu güven aralığı; gerçek bölme/kat, dosya bütünlüğü ve saklı test koruması doğrulandı | [41440395101](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/41440395101) |
-| 02.11 | `63b2c30` | 1 Kasım keşfinin 7 bağlantısını (Trendyol 4, Hepsiburada 3) kaydet; 4.4 kapanış belgeleri ve 2 Kasım sıra kararı; 2206 test, 0 atlanan, Black ve Flake8 temiz | [41446593601](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/41446593601) |
-| 02.11 | `253c831` | Hepsiburada arama API'si: iPhone kategorisi tanım alanıyla tanınır, hedefe uyan yeni sonuç bitince uyarısız durulur; canlı yanıttan regresyon testi; canlı iPhone 15 kontrolünde 7 API varyantı, `repeated_page` yok, adaylar ve istek sayısı aynı; 2207 test, 0 atlanan, Black ve Flake8 temiz | [41451043542](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/41451043542) |
 | 02.11 | `e144bf9` | Kalan sıra 3: son Cimri alımı ve aktarımı (kullanıcı terminali); 58 ürün, 1.790 yeni gün, çelişki yok; salt okunur doğrulama 22.595 kayıt/58 ürün/699 eksik fiyat, 9 Ekim 2025–2 Kasım 2026 | [41462109583](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/41462109583) |
 | 02.11 | `e46ca61` | Kalan sıra 4: 4.1–4.4 komutları son alımı içeren 2 Kasım görüntüsüyle yeniden çalıştırıldı (kod değişmedi); Cimri 19.561 kullanılabilir pencere, 23.115 girdi başlangıcı 4.2 ile birebir, bölme yeterli, dört kat Nisan–Temmuz 2026, saklı test açılmadı; sabah turu ölçümü plana yazıldı; 2207 test, 0 atlanan, Black ve Flake8 temiz | [41493302145](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/41493302145) |
 | 03.11 | `49b937e` | ML 4.5: R0–R2, LightGBM, ayrı dilimde Platt kalibrasyonu ve ağsız deney komutu; yeniden üretilen bölmeyle kanıt zinciri, yalnız kat doğrulama tahminleri, üç durumlu seçim önerisi ve raporlar; sızıntı testleri, tam test paketi, Black ve Flake8 başarılı; gerçek deney 4.6'da, saklı test açılmadı | [41620388192](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/41620388192) |
@@ -140,101 +156,33 @@ Bu dosyanın kendi güncellemesi bir sonraki adımın commit'ine girer.
 | 06.11 | `0f3ebdd` | ML 7.2: ortak kayıt okuyucu, kesin rapor/model SHA’sına bağlı gösterim onayı ve kapatma komutu, ayrı tahmin API ucu ve yerel istemci sözleşmesi; günlük güncellik, kaynak görüntü ve yeterlilik denetimi, güvenli hata cevapları; model/resmi kayıtlar değişmedi, gösterim kapalı. Kullanıcı onayıyla gönderildi; aynı SHA için CI tam test paketi, Black ve Flake8 başarılı | [42223187541](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/42223187541) |
 | 06.11 | `c2dd26e` | ML 7.3: tek tahmin kartı, tarih/fiyat/kapsam açıklamaları, kapalı/eksik/yetersiz veri durumları; tahmin hatası fiyat ekranından ayrıldı, telefon ve durum değişiminde eski oran kaldırılır. Gerçek gösterim kapalı; otomatik ekran/API testleri ve aynı SHA'nın CI tam test/biçim kontrolleri başarılı. Görsel tarayıcı denetimi 7.4'te açık | [42228410084](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/42228410084) |
 | 09.11 | `07ec7cf` | ML 7.4: kayıt ve kaynak görüntü → API → istemci → ekran zinciri, gün değişimi/yeni kayıt, yeterlilik, kanıt hatası ve CLI kapatma testleri; kullanım rehberi tamamlandı. Yapay önizlemenin geniş/dar görünümü ve senaryo kartları kullanıcı görüntüleriyle, yenileme/seçim/fiyat-grafik korunması kullanıcı teyidiyle doğrulandı. Gerçek gösterim kapalı, model değişmedi; onaylı dosyalar gönderildi, aynı SHA için CI tam test paketi, Black ve Flake8 başarılı | [42578742631](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/42578742631) |
-| 09.11 | `7cf023a` | Haftalık ara kayıt: 8 Kasım otomatik keşfinin katalog eklemeleri ve güncel kapsam, 6.5/9.1 işletim denetimi ve erken değerlendirme sonuçları, önceki 7.4 kapanışı ve kabul edilen yerel web uygulaması/Docker teslim hedefi belgelendi. Docker uygulaması, görev veya model ayarı değişmedi; kullanıcı onayıyla gönderildi, aynı SHA için CI test paketi, Black ve Flake8 başarılı | [42587778055](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/42587778055) |
+
+## Aşama 9: Docker teslim yazılımı ve yerel kabul
+
+| Tarih (2026) | Commit | Ne yapıldı | CI |
+|---|---|---|---|
 | 09.11 | `3ef75a4` | Docker 9.2: ayrı gerçek veri kopyasıyla yerel web uygulaması teslimi, ağ/sürüm/kalıcılık ve paket/geri dönüş sözleşmesi, Docker parola istisnası ve 9.3–9.7 geliştirme sırası belgelendi; README yol haritası güncellendi. Docker uygulaması, canlı görevler ve model değişmedi; kullanıcı onayıyla gönderildi, aynı SHA için CI pytest, Black ve Flake8 adımları başarılı | [42601311403](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/42601311403) |
 | 09.11 | `5368c39` | Docker 9.3: SHA ile sabit tabanlar, hash'li Linux bağımlılık kilidi, ayrı kullanıcı ve salt okunur uygulama, veri/sır dışlaması, DB/API/UI Compose ağı, gizli dosya girişi ve kilit yardımcıları/testleri eklendi; belgeler güncellendi. İmaj, sürüm/izin, ağ ve bağlam kontrolleri yerelde doğrulandı. Gerçek veri, model ve Windows görevleri değişmedi; kullanıcı onayıyla gönderildi, aynı SHA için CI pytest, Black ve Flake8 adımları başarılı | [42617392260](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/42617392260) |
 | 09.11 | `d3fc0fd` | Docker 9.4: tutarlı salt okunur yedek, SHA/kod/model/şema doğrulamalı paket ve ayrı Docker kopyasına hazırlama eklendi; NOLOGIN sahiplik, SELECT API hesabı ve tekrar hazırlama yapay ve ilk gerçek paketle doğrulandı. Native kaynak, model ve gösterim kapısı korundu; belgeler tamamlandı, kullanıcı onayıyla gönderildi, aynı SHA için CI pytest, Black ve Flake8 başarılı | [42632732129](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/42632732129) |
 | 10.11 | `f2a4e57` | Docker 9.5: API/UI bağlantısı, yerel aktarım bildirimi, türlenmiş hazırlık kaydı ve kopyaya özel gösterim bakımı eklendi; aynı tarih/kapı, kontrol dosyaları, RO/yetki sınırları ve fiyat/grafik akışı yapay ve gerçek kopyada doğrulandı. Native kaynak, model ve kapalı gösterim korundu; kullanıcı onayıyla gönderildi, aynı SHA için CI pytest, Black ve Flake8 başarılı | [42785773532](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/42785773532) |
 | 10.11 | `4a06202` | Docker 9.6: tek PowerShell girişi, paket başına sabit imaj/Compose, seçim ve işlem kilidi, sağlık kontrolleri, durum/log ve geri dönüş eklendi; tekrar hazırlama/açılış, paket geçişi, bozuk paket reddi ve başarısız API açılışından kurtarma yapay kopyalarda doğrulandı. Gerçek teslim kopyası yeniden sağlıklı açıldı; native kaynak, görevler ve ML kapısı korundu. Kullanıcı onayıyla tek commit/push yapıldı, aynı SHA için CI pytest, Black ve Flake8 başarılı | [42800500575](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/42800500575) |
 | 10.11 | `952b454` | Docker 9.7 kodu ve yerel kabul: tekrarlanabilir yapay _test paket/aktarım, gerçek HTTP/grafikler, yetki/kesinti/kalıcılık, Linux gösterim kapısı ve ağsız akış aracı; ayrı Docker CI işi ve teslim rehberi eklendi. Temiz Windows klasöründe kurulum/geçiş/kurtarma ve sınırlar doğrulandı; kullanıcı onayıyla tek commit/push yapıldı. Aynı SHA için pytest, Black, Flake8 ve yeni Docker kabul/rapor işi başarılı; ikinci fiziksel Windows PC kabulü açık | [42815832301](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/42815832301) |
+
+## Belge düzeni (10 Kasım'dan itibaren)
+
+| Tarih (2026) | Commit | Ne yapıldı | CI |
+|---|---|---|---|
 | 10.11 | `7d95864` | Belge denetimi: README'de kaynak/teslim kullanımı ve kalan işler ayrıldı; plan, teknik rehber, ortak AI kuralları ve araştırma notlarının konumu güncellendi, eski durum/bağlantı bilgileri düzeltildi. Kod, model, görevler ve ölçümler değişmedi. Kullanıcı onayıyla tek commit/push yapıldı; aynı SHA için CI pytest, Black, Flake8 ve yapay Docker kabul/rapor işi başarılı | [42823077732](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/42823077732) |
+| 11.11 | `7de68d7` | Belge düzeni Adım 2: tamamlanan uygulama, 6.5/9.1 düzenli takibi, bekleyen kabul/teslim ve ikincil ML kapsamı ayrıldı; tek güncel takip tablosu, README özeti ve rehber bağlantıları düzenlendi. Ölçümler, eski kararlar, model ve kabul koşulları korundu. Kullanıcı onayıyla beş belge tek commit/push ile gönderildi; aynı SHA için CI pytest, Black, Flake8 ve yapay Docker kabul/rapor işi başarılı | [42986337605](https://github.com/Emir-Ars/Urun-indirim-takip/actions/runs/42986337605) |
 
 ## Eylül 2026 ayrıntıları
 
-Kabul kontrolü ve katalog kurulumu sırasında bulunup düzeltilen sorunlar
-(eski teknik rehberden aynen alınmıştır).
+Eylül'deki kabul kontrolü ve katalog kurulumu anlatıları dondurulmuş
+teknik rehberle karşılaştırıldı; ayrı kopyaları burada tutulmaz:
 
-### Kabul kontrolü (24–25 Eylül 2026)
+- [24–25 Eylül kabul kontrolü](arsiv/teknik_2026-10-20.md#kabul-kontrolü-eylül-2026).
+- [25–27 Eylül katalog kurulumu ve kapanış denetimi](arsiv/teknik_2026-10-20.md#katalog-kurulumu-2527-eylül-2026).
 
-Veritabanına geçmeden önce scraper ve discovery 6 adımda, canlı veri ve tarayıcı
-karşılaştırmasıyla denetlendi. Sonuç: o günkü katalogdaki 44 sayfanın tamamı hatasız
-sınıflandı (16 Stokta Var, 5 Kritik Stok, 23 Tükendi); satıcı listeleri, fiyatlar
-ve üstü çizili fiyatlar tarayıcıda görülenle eşleşti. Bulunup düzeltilenler:
-
-| Sorun | Çözüm |
-|---|---|
-| Keşfin sessiz eleme kararları görünmüyordu | `--trace` tanılama izi |
-| Keşif ve scraper modeli farklı kurallarla kontrol ediyordu; başlığında "GB" yazmayan Hepsiburada sayfaları hiç okunamıyordu | Tek ortak kimlik kuralı (`identify`) |
-| Hepsiburada `-pm-` grup kartları görülmüyordu (bir iPhone 15 ailesi eksikti) | Grup sayfaları gerçek SKU'ya çözülüyor; eksik sayfa kataloğa eklendi |
-| Stoksuz Hepsiburada sayfaları "Tükendi" yerine hata veriyordu | Satıcı listesi boşsa doğrudan `Tükendi` |
-| Çelişkili Hepsiburada yanıtı "Tükendi" sayılıyordu | `api_error` |
-| "Yenilenmiş Cep Telefonu" telefon kategorisi sayılabiliyordu | Hariç tutuluyor |
-| Boş SKU'lu bir varyant kaydı bütün keşfi raporsuz durduruyordu | Kayıt atlanıyor, hata raporlanıyor |
-| Xiaomi'de marka filtresi bulunamıyor, arama 71.450 ürünle (çoğu kılıf) doluyordu | Marka filtre listesinden de okunuyor (129 ürün, tam tarama) |
-| Redmi Note 14 ile Note 14 5G aynı ürün sanılıyordu | `exclude_terms` |
-| Trendyol'da satıcının koşulsuz indirimi atlanıyordu | Sayfadaki indirimli fiyat kaydediliyor |
-| Tek bir tutarsız aday bütün keşif çalışmasını raporsuz durduruyordu | Yalnızca o aday atlanıyor (`catalog_conflict`) |
-| Arama aşamasındaki bozuk yanıt bütün keşfi çökertebiliyordu | Ortak kurtarılabilir hata listesi; uyarı olarak raporlanıyor |
-| Hepsiburada'nın bildirdiği sayfa adresi alan adı kontrolsüz kullanılıyordu | Yalnızca `https://www.hepsiburada.com/` kabul ediliyor |
-| Keşif, hiç kullanmadığı API paketine (`slowapi`/`limits`) bağımlıydı; ölü kod ve gelecek aşama tanımları vardı | Temizlendi; bağımlılıklar yalnızca biten aşamanınkiler |
-
-Trendyol model filtresinin (ör. "Cep Telefonu Modeli: iPhone 16") kullanılması
-değerlendirildi ve **reddedildi**: satıcıların girdiği bu özellik güvenilir
-değil (iPhone 16e sayfaları "iPhone 16" olarak etiketli) ve hiçbir marka 20
-sayfa sınırına yaklaşmadı (Apple 3–4, Samsung 6, Xiaomi 4 sayfa).
-
-### Katalog kurulumu (25–27 Eylül 2026)
-
-Kabul kontrolünden sonra katalog **sıfırdan** kuruldu: eski 6 ürün / 45
-bağlantılık katalog boşaltıldı (elle verilmiş 3 Trendyol bağlantısı ve
-stoksuz sayfalar bilinçli olarak bırakıldı; testler artık kataloğun sabit
-kopyasını okur) ve kullanıcının seçtiği 25 hedef marka marka eklendi. Her
-markada aynı döngü uygulandı: keşif → rapor incelemesi → canlı fiyat kontrolü →
-kullanıcının tarayıcı karşılaştırması. Bütün keşif ve kontrol komutlarını
-kullanıcı kendi terminalinden çalıştırdı.
-
-| Marka | Ürün | Sayfa (HB / TY) | Kullanıcının tarayıcıda kontrol ettiği |
-|---|---|---|---|
-| Apple (9 model) | 29 | 118 / 46 | 5 sayfada fiyat, satıcı, çizili fiyat, Tükendi; 2 sayfada renk seçicisi |
-| Samsung (8 model) | 17 | 56 / 41 | 4 sayfada fiyat, satıcı, stok; S25 256 GB'ın Ultra olmadığı |
-| Xiaomi (6 model) + POCO (1) | 11 | 25 / 20 | 2 sayfada "Mobil Bağlantı Hızı" alanı; satıştaki POCO X6 Pro sayfası |
-
-Kurulum sonunda 57 ürün ve 306 bağlantı; bunlardan biri (yurt dışı sürüm) pasif.
-28 Eylül'deki kapanış taraması (sıfır çakışma, sıfır ağ hatası) 21 bağlantı ve
-2 ürün daha ekledi: güncel katalog **59 ürün, 327 bağlantı** (Apple 29 ürün
-118/50, Samsung 18 ürün 62/41, Xiaomi 11 ürün 30/22, POCO 1 ürün 3/1;
-Hepsiburada/Trendyol). 5 Ekim'de ilk haftalık keşif raporu 7 sayfa ekledi (Apple
-121/50, Samsung 62/42, Xiaomi 31/24, POCO 3/1; Hepsiburada/Trendyol): katalog
-**59 ürün, 334 bağlantı**. Kurulumdaki son
-toplu fiyat kontrolünde (27 Eylül) 306 bağlantının 304'ü okundu: 163 Stokta Var,
-70 Kritik Stok, 71 Tükendi. Kalan 2 Galaxy S25 128 GB sayfası "12 GB Ram"
-başlığı yüzünden doğrulanamadı; kural düzeltildi (aşağıda).
-
-Kurulum sırasında bulunup düzeltilenler (her biri canlı örneğe dayanan testle):
-
-| Sorun | Çözüm |
-|---|---|
-| Trendyol HTML arama sayfası (`/sr`) HTTP 403 ile engelleniyordu; 9 modelin 6'sı taranamadı | Sayfa açılmıyor, API'ye yalnız `Referer` gönderiliyor; aynı komut beklemesiz 9/9 geçti |
-| Engel raporunda yalnız "blocked" yazıyordu; 429 (hız) ile 403 (erişim) ayırt edilemiyordu | Rapora HTTP kodu ve engellenen adres yazılıyor |
-| "Galaxy S25 Edge" S25, "iPhone 17 Air" iPhone 17 sayılıyordu | `edge` ve `air` ayrı model eki |
-| "Galaxy S25 Ultra_12GB_256GB" adı hem S25 hem Ultra sayıldı (`catalog_conflict`) | `_` boşluk gibi okunuyor |
-| Trendyol renkleri satıcı özelliğinden geliyordu: "Çok Renkli", genel "Mavi" | Renk, sayfanın renk seçicisindeki ad (varyant listesi) |
-| POCO `brand: "Xiaomi"` ile bulunamıyordu | Marka sitedeki etiket: `POCO` |
-| Redmi Note 14/13 Pro 4G başlıkta "4G" yazmadığı için hiç bulunamıyordu | `network` alanı: yapısal "Mobil Bağlantı Hızı" ile doğrulama |
-| `exclude_terms: ["5G"]`, 4G telefonların "4.5G" başlığını da dışlıyordu | Ondalık sayının parçası olan ifade eşleşmiyor |
-| "Galaxy S25 128 GB 12 GB Ram" başlığında hafıza belirlenemiyordu | "RAM" etiketli değer hafıza sayılmıyor |
-| Bir iPhone 16 yurt dışı sürümü ("International Version") karşılaştırmaya giriyordu; satıcı garanti alanına "Apple Türkiye Garantili" yazmıştı | Yurt dışı sürümler kapsam dışı; o bağlantı pasife alındı |
-
-Son denetimde (kodu baştan okuyan inceleme) bulunup düzeltilenler:
-
-| Sorun | Çözüm |
-|---|---|
-| Hepsiburada'da satıcı listesinde stok alanı olmayan sayfa "Tükendi" sayılıyordu | Alan yoksa `parse` hatası; Tükendi yalnız açık sinyalle |
-| 3 sn bekleme her bağlantıda yeni istemci açıldığı için uygulanmıyordu | Son istek zamanı alan adı başına, bütün istemciler arasında ortak |
-| `curl_cffi` çerez çakışması hatası bütün çalışmayı durdurabilirdi | Çerez yokmuş gibi devam ediliyor |
-| "5G+", "5G NR" ağ değerleri tanınmıyordu; 4G hedefine girebilirdi | 5G desteği söyleyen her değer 5G |
-| Katalog Windows'ta CRLF satır sonuyla yazılabiliyordu | Her zaman LF |
-
-Kararlar: RAM ve garanti türü ürün kimliğine katılmadı (gerekçe: [proje_plani.md](../proje_plani.md),
-Bölüm 5); yurt dışı sürümler kapsam dışı; POCO X5 Pro satılmadığı
-için kapatıldı.
+Arşivdeki dönem sayıları bugünkü kapsam değildir. Kararların güncel yeri
+[planın kararlar tablosudur](../proje_plani.md#5-kararlar); teknik davranış
+güncel rehberden okunur. Arşivin eski bölüm numaraları değiştirilmemiştir.

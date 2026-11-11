@@ -34,9 +34,12 @@ API ve ekran sözleşmeleri, hata kodları ve bilinen sınırlar. Yalnız sistem
 - [Günlük gölge görevi](#günlük-gölge-çalışması-python--m-appml-shadow-daily)
 - [Gölge değerlendirmesi](#gölge-değerlendirmesi-python--m-appml-shadow-evaluate)
 - [Tahmin gösterim onayı](#tahmin-gösterim-onayı-python--m-appml-shadow-display)
+- [Gölge işletiminde kontrol komutları](#gölge-işletiminde-kontrol-komutları)
+- [Gölge kayıtlarının kontrol sırası](#gölge-kayıtlarının-kontrol-sırası)
 - [Docker: imaj ve Compose temeli](#docker-imaj-ve-compose-temeli)
 - [Docker: paket ve veritabanı aktarımı](#docker-paket-ve-veritabanı-aktarımı)
 - [Docker: tek komutla kullanım ve kabul](#docker-tek-komutla-kullanım)
+- [Docker kabul senaryoları](#docker-kabul-senaryoları)
 - [Docker servis bağlantısı ve gösterim bakımı](#docker-servis-bağlantısı-ve-gösterim-bakımı)
 - [Testler ne kanıtlar, ne kanıtlamaz](#testler-ne-kanıtlar-ne-kanıtlamaz)
 - [Bilinen sınırlar](#bilinen-sınırlar)
@@ -87,7 +90,7 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 | `contracts.py` | Verinin şekilleri ve doğrulaması (Pydantic V2 strict): `Product`, `Listing`, `Catalog`, `PriceObservation`, keşif hedefleri ve raporu. Hatalı veri içeri giremez (ör. fiyat alanına "Tükendi"). Yalnızca biten aşamanın kullandığı tanımları içerir. |
 | `settings.py` | Ayar dosyalarını okur. `CATALOG_PATH`, `DISCOVERY_PATH`, `RUNTIME_PATH`, `SCRAPE_LOCK_PATH`, `LOG_DIR`, `DISCOVERY_REPORT_DIR` ortam değişkenleriyle başka dosya veya klasör gösterilebilir. |
 | `scrape_lock.py` | Siteye giden bütün girişlerin paylaştığı kilit (`data/scrape.lock`). Fiyat turu, keşif, Cimri yerel alımı/ağsız aktarımı ve iki canlı kontrol aracı (`live_scraper_check`, `live_discovery_check`) alır; biri sürerken diğeri beklemeden "sürüyor" deyip çıkar. Süreç çökse bile işletim sistemi kilidi bırakır. |
-| `console.py` | Komut satırı araçlarının ortak çıktı yardımcıları: UTF-8 çıktı (`utf8_output`; fiyat turu, keşif, `app.database`, `app.ml` ve canlı kontrol araçları kullanır), `<ön ek>_<tarih-saat>.log` dosyası açma, stdout/stderr'i log dosyasına da yazan `tee_output` ve ikisini birleştiren `run_logged` (yalnız zamanlanmış tur ve keşif: log açılamazsa iş başlamaz ve 1 döner; başlık satırı, beklenmeyen hatanın ayrıntısı ve "Çıkış kodu" satırı log'a yazılır). pythonw.exe altında ekran akışları yoktur (`None`); hepsi buna dayanır. |
+| `console.py` | Komut satırı araçlarının ortak çıktı yardımcıları: UTF-8 çıktı (`utf8_output`; fiyat turu, keşif, `app.database`, `app.ml` ve canlı kontrol araçları kullanır), `<ön ek>_<tarih-saat>.log` dosyası açma, stdout/stderr'i log dosyasına da yazan `tee_output` ve ikisini birleştiren `run_logged` (zamanlanmış tur/keşif ile elle veya zamanlanmış günlük gölge çalışması: log açılamazsa iş başlamaz ve 1 döner; başlık satırı, beklenmeyen hatanın ayrıntısı ve "Çıkış kodu" satırı log'a yazılır). pythonw.exe altında ekran akışları yoktur (`None`); hepsi buna dayanır. |
 | `price_statistics.py` | `ProductSnapshot.all_history` verisinden mevcut tam kapsam dönemini, 30 günlük gözlenen dibi, dönem zirvesini ve değişkenliği hesaplar; eksiklik gerekçeleri ve gözlem sayıları döndürür. Bağlantı/HTTP/dosya işlemi yapmaz; Cimri verisini kullanmaz. |
 
 ### Cimri geçmişi: `app/market_history/`
@@ -293,7 +296,7 @@ python -m venv .venv
 .venv\Scripts\python.exe -m app.database sync-catalog
 
 # Fiyat toplama turu: sitelere istek atar ve sonuçları veritabanına yazar
-.venv\Scripts\python.exe -m app.collection --prefix poco_   # yalnız POCO (4 sayfa)
+.venv\Scripts\python.exe -m app.collection --prefix poco_   # yalnız POCO bağlantıları
 .venv\Scripts\python.exe -m app.collection                  # bütün etkin sayfalar (~31 dk)
 
 # Zamanlanmış tur: görevi kur (tekrar çalıştırmak yeniden kurar), hemen bir kez
@@ -428,11 +431,9 @@ tur kendi ortamında çalıştığı için etkilenmez.
   kullanılır: başlıkta veya özellikte 5G yazan sayfa dışlanır, gerisi 4G
   sayılır. Karar 27 Eylül 2026'da kullanıcıyla verildi; bilinen sınırı
   aşağıdadır.
-- Bugün gerçek dosyada 25 hedef vardır: Apple 9 (iPhone 15/16/17, her birinin
-  Pro ve Pro Max'i), Samsung 8 (S25, S25 Ultra, S24, S24 Ultra, S24 FE, S23 FE,
-  A55, A54), Xiaomi 6 (14T Pro, 13T Pro, Redmi Note 14 Pro 4G/5G, Redmi Note
-  13 Pro 4G/5G) ve POCO 2 (X6 Pro; X5 Pro iki sitede de satılmadığı için
-  `active: false`).
+- Hedeflerin güncel listesi `config/discovery.json` içindedir; tarihli kapsam
+  sayıları [README Güncel kapsam](../README.md#-güncel-kapsam) tablosundadır.
+  POCO X5 Pro iki sitede de satılmadığı için `active: false` bırakılmıştır.
 
 ## Eklenti yükleyicilerinin sözleşmesi
 
@@ -461,6 +462,10 @@ yazılmaz. Scraper factory de Ctrl+C'yi `plugin` olarak sarmaz.
 ## Keşif nasıl çalışır
 
 ### Örnek: iPhone 15 128 GB baştan sona
+
+Bu tarihsel örnek keşif ile fiyat okumasının bağlantısını anlatır; sayfa,
+satıcı ve fiyat değerleri bugünkü durum değildir. Kaynak notunda doğrulama
+tarihi bulunmadığından örnek güncel fiyat kanıtı olarak kullanılmaz.
 
 1. `discovery.json` içinde `Apple / iPhone 15` hedefi var.
 2. Keşif Trendyol aramasında yaklaşık 120 iPhone kartı görür. 5'i gerçekten
@@ -591,7 +596,7 @@ Komut seçenekleri:
 ```powershell
 # Tek seferlik toplu önizleme; katalog yazmaz.
 .venv\Scripts\python.exe -m app.discovery --scheduled --dry-run
-# Yalnız ayrıca kabul edilip devreye alındıktan sonra otomatik ekleme.
+# Kurulu haftalık görevin otomatik kabul modu.
 .venv\Scripts\python.exe -m app.discovery --scheduled --auto-accept
 ```
 
@@ -1418,8 +1423,8 @@ Katalogdaki telefonların Cimri'de görünen bir yıllık fiyat geçmişi ayrı
 (`data/market_history/katalog_20261102_162033_694/`): 58 ürün kaydedildi,
 iki eşleştirmesiz ürün atlandı. Önizleme ve aktarım 1.790 yeni gün ekledi,
 19.360 gün aynı çıktı; çelişki yoktu. 8 Ekim satırlarındaki 20 yarım gün
-farkında eski kayıt korundu. Tabloda bugün 58 ürün, 22.595 tarihli kayıt
-(699'u eksik fiyat) var. Kayıtlar 9 Ekim 2025–2 Kasım 2026 aralığındadır;
+farkında eski kayıt korundu. Güncel ürün/kayıt/eksik fiyat sayıları ve tarih
+aralığı [README Güncel kapsam](../README.md#-güncel-kapsam) tablosundadır;
 Galaxy S24 FE 128 GB 3 Kasım 2025'ten başlar. Her ürünün 8 Ekim ve 2 Kasım
 satırları [yarım gündür](#ağsız-aktarım-import). Düzenli Cimri toplaması
 yapılmaz; Cimri serisi kendi toplama serimizle birleştirilmez ve aynı ölçüm
@@ -1676,9 +1681,14 @@ kullanımı sınırlıyor; [kullanıcı sözleşmesi](https://www.cimri.com/kull
 | ML eğitiminde kullanma | Belirsiz | Hayır |
 
 Bu, kesin hukuki izin kararı değildir; eğitim/staj amacı tek başına izin
-kanıtı sayılmadı. Bu yüzden yeni alım/aktarım yapılmadı; mevcut veri ve
-gösterim korunuyor. [Akakçe kullanım sözleşmesi](https://www.akakce.com/kullanim-sozlesmesi/)
-de benzer kısıtlar içerir.
+kanıtı sayılmadı. Bu nedenle **19 Ekim'de** yeni alım/aktarım yapılmadı.
+Kullanıcı **23 Ekim'de** son bir defalık alımı ve ML eğitiminde kullanımı
+onayladı; son alım/aktarım **2 Kasım'da** tamamlandı
+([kararlar](../proje_plani.md#5-kararlar), [alım kaydı](#cimri-geçmişi-bir-defalık-alım-ve-aktarım)).
+Bu kullanıcı kararı kullanım uygunluğunun resmen doğrulandığı anlamına
+gelmez; yukarıdaki sınır sürer. Düzenli Cimri toplaması yoktur, yeni alım
+ayrı karar ister. Akakçe'ye ilişkin o tarihli değerlendirme de
+[arşivdeki kullanım incelemesindedir](arsiv/teknik_2026-10-20.md#cimri-kullanım-değerlendirmesi-bakım-41-19-ekim).
 
 Galaxy S25 512 GB ve Redmi Note 14 Pro 5G 256 GB için doğru Cimri ana
 sayfası bulunamadı (incelenen adaylar Plus 512 GB, normal S25 256 GB,
@@ -1761,7 +1771,7 @@ dönüş yoktur.
 
 ### Test ortamı ve sınırı
 
-Tam testler `dev,web` kurulumu, `TEST_DATABASE_URL` ve rol testleri için
+Tam testler `dev,web,ml` kurulumu, `TEST_DATABASE_URL` ve rol testleri için
 `TEST_API_DATABASE_URL` ister. Her iki bağlantı aynı `_test` DB olmalı;
 okuma bağlantısının kullanıcısı `fiyat_takip_api_test` olmalı. `db` test başında
 şemayı boşalttığı için `api_db`, mevcut test rolüne yeni şemanın SELECT
@@ -2221,6 +2231,12 @@ alınamazsa önceki fiyatlarla birlikte eski tahmin de ekranda tutulmaz.
 Kartın bulunması gösterim onayı değildir. Gerçek gösterim
 [kesin rapor ve açılış komutuna](#tahmin-gösterim-onayı-python--m-appml-shadow-display)
 bağlıdır; varsayılan kapalıdır.
+
+Gerçek örnek: iPhone 15 128 GB'ın 5 Kasım kaydı, o akşamki **56.649 TL**
+başlangıç fiyatına ve **6–12 Kasım** dönemine aittir. Kaynak görüntü
+`data/ml/golge/goruntuler/veri_20261106_110023_673048/`, kayıt
+`data/ml/golge/tahmin_20261106_110023_673048/predictions.jsonl` içindedir.
+Gösterim kapalıyken bu kaydın olasılığı API'ye veya karta çıkarılmaz.
 
 ### Grafikler ve yenileme
 
@@ -3774,6 +3790,54 @@ alanındadır; okunabilir tablolar `report.md` içindedir. Çıkış kodlarını
 anlamı ilgili komut bölümündedir. Geçerli bir raporun kapısı
 `not_evaluable` veya `not_met` olabilir; bu sonuçlar komut hatası değildir.
 
+### Gölge kayıtlarının kontrol sırası
+
+Kontrolün takvimi ve kapanış koşulları [6.5 planındadır](../proje_plani.md#65-kontrol-planı).
+Aşağıdaki sıra mevcut görev ve raporların doğrulanması içindir.
+
+**İlk otomatik çalışma kontrolü:** kurulum çıktısı veya eski bir `LastTaskResult = 0`
+yeterli değildir; son çalışma zamanı, log tarihi ve `(zamanlanmış)` başlığı
+aynı çalışmayı göstermelidir. Görev hâlâ çalışıyorsa tur/keşif bekleme
+satırlarına bakılır, tamamlanmadan sonuç verilmez. Yeni tahmin yoksa bu tek
+başına hata değildir; görüntüdeki uygun başlangıçların önceden kayıtlı olup
+olmadığı kontrol edilir. İlk tetikleme sorununu örtecek elle çalıştırmadan
+önce görev ve log kanıtı korunur. 22:00 ve 10:00 fiyat turları için bilgisayar
+açık, uyanık ve oturum açık tutulur; kilit ekranı uygundur. Sonradan çalışan
+gölge görevi, kaçmış bir turun geçmiş fiyatlarını geri getiremez.
+
+**Haftalık raporda bakılacaklar:**
+
+- Haftadaki her günün zamanlanmış logu ve son çıkışı kontrol edilir; eksik
+  log, kapanmamış log veya hata ayrıca araştırılır. Keşfin yaklaşık bitiş
+  saati yeterli kanıt değildir; bitiş logu/görev durumu görülür. Yeterli
+  kimlik kanıtıyla otomatik kabul edilen bağlantılar tek tek elle doğrulanmaz.
+- `health.missing_records` boş olmalıdır: başlangıcı bulunup resmi tahmini
+  olmayan ürün-günler araştırılır. `no_start_price`, `not_yet_observed` ve
+  NULL etiketler ayrı okunur; sabit günlük ürün/kayıt sayısı beklenmez.
+- Yarım klasörler ile zamanında, ilk toplu doldurma ve geç kayıt sayıları
+  incelenir. Önceki rapordaki kayıt manifest SHA-256'ları yeni raporun
+  `input.records` envanteriyle karşılaştırılır; eski kayıtlar aynı kalmalı,
+  yeni klasörler ayrıca görünmelidir. Bütünlük uyuşmazlığı normal kabul edilmez.
+- Asıl topluluğun veri desteği, kapı sonucu ve ölçümleri okunur; ikincil
+  etiketler ve kırılımlar yalnız açıklamadır. Kısa dönemde NULL güven aralığı
+  veya `Değerlendirilemedi` geçerli rapor sonucu olabilir; çıkış 0 modelin
+  gösterim koşullarını karşıladığını söylemez. Erken iyi/kötü puana göre
+  model, eşik veya kesin tarih değiştirilmez.
+
+**Sorun çıkarsa izlenecek sıra:**
+
+| Belirti | Yapılacak kontrol / sonraki adım |
+|---|---|
+| Log yok veya son çıkış satırı yok | Önce görev zamanı, durumu, sonucu ve varsa log korunur; çalışan iş ile hiç başlayamayan/kesilen iş ayrılır. Eylem, çalışma klasörü ve ortam değişkeninin varlığı incelenir; parola yazdırılmaz. |
+| Çıkış 1 | Logdaki somut girdi, izin, bağlantı, sürüm veya SHA hatası incelenir. Eski tahmin/kanıt dosyaları değiştirilmez; yeniden dondurma veya kalibrasyon çözüm sayılmaz. |
+| Çıkış 2 | Komut argümanları ve görev eylemi belgelenen komutla karşılaştırılır. |
+| Çıkış 3 | Günlük komutta 90 dakikalık tur/DB beklemesi ile kayıt kilidi ayrılır; değerlendirmede kayıt kilidi beklenmeden hata verir. Diğer iş bittikten sonra kullanıcı kontrollü yeniden dener. Kilit dosyasının varlığı tek başına etkin kilit değildir; dosya silinmez. |
+| Çıkış 130 veya yarım klasör | Kesinti kanıtı korunur; manifesti olmayan çıktı tamamlanmış sayılmaz. Gerekirse yeni çıktı klasörüyle yeniden denenir; resmi kayıtların üzerine yazılmaz. |
+| Eksik tahmin, değişmiş manifest veya girdi uyuşmazlığı | Kaynak görüntü ve loglarla neden araştırılır; hatalı/eksik çıktıyla kapı kararı verilmez. Veri uydurulmaz, eski kayıt değiştirilmez. |
+
+Bu çıkışlar uygulamanındır; Windows görev sonucu ayrıca yorumlanır. Sorun
+nedeni bulunmadan tekrar tekrar çalıştırmak kontrolün yerine geçmez.
+
 ## Docker: imaj ve Compose temeli
 
 9.3'te imaj ve servis tanımları, 9.4'te paket/DB hazırlığı, 9.5'te API/ekran
@@ -4073,6 +4137,26 @@ gönderim sonrasında aynı SHA'nın normal test/biçim ve yeni Docker kabul/rap
 işleri GitHub'da başarılı doğrulandı; kimlikler [geçmiştedir](gecmis.md).
 İkinci fiziksel Windows bilgisayarı kabulü açık kalır.
 
+### Docker kabul senaryoları
+
+9.7 için onaylanan kontroller aşağıdadır. Yerel/yapay CI kanıtı ile
+ikinci fiziksel Windows bilgisayarındaki kullanıcı kabulü ayrı izlenir;
+güncel durum [takip tablosundadır](../proje_plani.md#güncel-takip-tablosu),
+hedef bilgisayarın adımları [teslim rehberindedir](teslim.md#kabulün-kapsamı).
+
+- Boş Docker ortamına kurulum ve aynı paketi tekrar hazırlama.
+- Eksik/bozuk dosya, yanlış model veya uyumsuz şemada aktarımın reddi.
+- Kaynak/kopya veri karşılaştırması; migration ve resmi dosya hash eşleşmesi.
+- API hesabıyla yazmanın reddi; ekranın DB bağlantısı/parolası almaması.
+- Yalnız `127.0.0.1:8503` ekran erişimi ve mevcut yerel uygulamayla birlikte
+  çalışma; API/DB kesintisi, yeniden başlatma ve API–ekranın birlikte
+  yeniden oluşturulması.
+- Durdur/aç ve konteyner yenilemesinde verinin korunması; yeni paket
+  geçişinin başarısızlığında önceki pakete dönüş.
+- Kapalı gösterimde olasılık çıkmaması, gün değişince eski tahminin
+  gösterilmemesi; açma/kapatma koşullarının yapay testlerle Linux'ta doğrulanması.
+- Hazırlanmış sistemin internet kapalıyken açılması.
+
 ### Docker servis bağlantısı ve gösterim bakımı
 
 Hazır paketin API'si SELECT hesabıyla Docker DB'sini, yapılandırma ve gölge
@@ -4319,4 +4403,40 @@ kanıtlarıyla hash üzerinden eşleştirilmiştir.
   Model dondurulduğu ve saklı test o modelle yapıldığı için değiştirilmedi;
   ileride yeni bir model sürümü kurulursa bu satırlar önce ele alınmalıdır.
   Kendi girdilerimizin eğitimden kayması
-  [planın gölge mod bölümündedir](../proje_plani.md#gölge-mod-kalan-sıra-6-4-kasım-planı).
+  [aşağıdaki tarihli ön ölçümdedir](#gölge-mod-ön-ölçümünün-riskleri-4-kasım-2026).
+
+### Gölge mod ön ölçümünün riskleri (4 Kasım 2026)
+
+Bu bölüm, 6.1'in **4 Kasım 2026 12:57 UTC görüntüsüne** ait tarihsel
+ölçüm ve öngörüleridir; bugünkü kapsam veya garanti edilen sonuç değildir.
+Güncel sayılar [README Güncel kapsam](../README.md#-güncel-kapsam) tablosunda,
+izleme ve kesin değerlendirme koşulları [6.5 planındadır](../proje_plani.md#65-kontrol-planı).
+
+- 27 Ekim–28 Aralık 63 gündür; 60 gün sınırda (üç gün pay). ≥ 30 farklı olay
+  için kaba öngörü 29–39 (eşik 30): kendi serimizde 28 Eylül–27 Ekim arası
+  1.050 örnekte %7,6 olumlu ve 22 küme; Cimri oranıyla 29. Öngörü 8 kusurlu
+  günü de içerir, yani sınırdadır; sağlanmazsa olasılık ekrana çıkmaz.
+- Kapsam: 60 üründen 11'i 22:00'de hep stoksuz (iPhone 15 Pro 128/256/1024,
+  15 Pro Max 512/1024, iPhone 16 256/512, 16 Pro 256/512/1024, Galaxy S25
+  512 GB); başlangıçları olmadığından tahmin almazlar, en çok 49 ürün. Günlük
+  "gösterilebilir" ürün 44–48; S24 FE 128 GB geçmişi yaklaşık 17 Kasım'a kadar
+  30 günden azdır. 13 aile de eğitimde görülmüştür.
+- Kendi başlangıçlarımız yok olan 8 gün: 30 Eylül; 2, 3, 4, 6, 17, 22, 23
+  Ekim. 24 Ekim'den beri her gün 48–50 ürünün başlangıcı var.
+- Girdi kayması: kendi satırlarında `missing_ratio_30d` ortalaması 0,24
+  (eğitimde 0,005; 14.923 satırın 14.649'unda sıfır, sapma 0,048, yani yaklaşık
+  5 sapma uzaklık) ve `history_days` 30–37 (eğitim medyanı 159, satırların %3'ü
+  30–37). Dondurulan R2'nin katsayılarıyla tahmini ortalama lojit kayması
+  yaklaşık +0,9, Platt sonrası yaklaşık +0,3. Bu doğrusal bir yaklaşımdır;
+  gerçek etki gölge modda görülür. Kaynak yukarıdaki 8 kusurlu gündür: 22
+  Kasım'dan itibaren 30 günlük pencereler bu günleri içermez (yeni kusurlu gün
+  çıkmazsa). Yeniden kalibrasyon yoktur; sapma kapıda görünür. 6.4 raporu
+  nedeni ayırmak için bilgi amaçlı kırılım taşır.
+- Model Cimri'nin günlük en düşük fiyatıyla eğitildi, kendi serimiz 22:00
+  turudur; olasılık ölçeği ayrıca bu yüzden kayabilir.
+- 11:00 tahmini, tahmin penceresinin ilk sabah turundan sonra kaydedilir. Kod
+  o veriyi okumaz (test ve 6.4 denetimi), ama "gelecek veri oluşmadan
+  kaydedildi" denmez.
+- Kayıt yerel ve imzasızdır; parmak izi yalnız bütünlük kontrolüdür.
+- Python, NumPy, scikit-learn veya LightGBM sürümü değişirse dondurulan model
+  yüklenmez (bilinçli güvenlik); yeniden dondurma yeni bir model sayılır.
