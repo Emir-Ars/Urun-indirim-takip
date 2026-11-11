@@ -1339,8 +1339,12 @@ bir uyarı), uygunsa
 ile uygulanır.
 
 Otomatik ekleme, kaynakların eksiksiz tarandığı veya ML verisinin hazır olduğu
-anlamına gelmez. Yeni sayfa ilgili ürünün kapsamını değiştirebilir ve 30+7
-günlük karşılaştırılabilir dönem başlangıcını etkileyebilir; eski fiyatlar silinmez.
+anlamına gelmez. Yeni sayfa ürünün izlenen kapsamını değiştirir; eski fiyatlar
+silinmez. Güncel ML hesabında `y_sabit`, başlangıç akşamının sayfa kümesini
+korur; sonradan eklenen sayfa önceki başlangıcın gelecek minimumuna girmez.
+Yalnız kapsam değişmesi bu başlangıcın geçmiş süresini sıfırlamaz veya
+etiketini geçersiz kılmaz. Eski sıkı 30+7 denetiminde ise kapsam değişen
+pencere elenir; iki hesabın farkı [etiket rehberindedir](#günlük-seri-ve-etiketler-python--m-appml-labels).
 
 Görev Zamanlayıcı "Son çalıştırma sonucu"
 (`Get-ScheduledTaskInfo -TaskPath '\FiyatTakip\' -TaskName 'HaftalikKesif'`):
@@ -2460,8 +2464,9 @@ Mevcut Cimri serisinin eski kalması ve ML kullanım belirsizliği ayrıca göst
 
 ## ML hazırlığı
 
-ML hazırlığının kodu `app/ml` paketindedir; adımlar ve kararlar
-[planın ML bölümündedir](../proje_plani.md#ml). Gerçek veritabanı okuma
+ML hazırlığının kodu `app/ml` paketindedir; tamamlanan adımlar
+[planın uygulama dizininde](../proje_plani.md#ml-hazırlığı-ve-ilk-deney-4046),
+kalıcı kararlar [kararlar tablosundadır](../proje_plani.md#5-kararlar). Gerçek veritabanı okuma
 hesabıyla bir kez okunup bir **veri görüntüsü** dosyasına yazılır; etiket ve
 deney adımları bu dosyadan ağsız ve veritabanısız çalışır. Böylece aynı
 görüntü/kod/ortam aynı sonucu verir; etiket, girdi, bölme ve deney testleri
@@ -3470,7 +3475,8 @@ Kurulum kanıtı ile zamanlanmış çalışmanın başarı kanıtı ayrıdır; i
 otomatik çalışma aşağıda, sonraki haftalık izleme planda kayıtlıdır.
 
 Adımın gönderim ve kapanış durumu
-[planda](../proje_plani.md#gölge-mod-kalan-sıra-6-4-kasım-planı) tutulur.
+[tamamlanan gölge adımlarında](../proje_plani.md#gölge-kayıt-ve-değerlendirme-yazılımı-6064),
+commit/CI kaydı [geçmişte](gecmis.md) tutulur.
 Test sonucu bu işletim doğrulamasının yerine geçmez.
 
 İlk otomatik günlük çalışma 6 Kasım'da doğrulandı. Görevin son çalışma
@@ -3611,7 +3617,8 @@ kalibrasyon koşulları da bu küçük örnekte sınır dışındadır. Model ve
 eşikler değiştirilmedi; bu ara sonuçtan kesin karar verilmez.
 
 Gönderim durumu
-[planda](../proje_plani.md#gölge-mod-kalan-sıra-6-4-kasım-planı) tutulur.
+[tamamlanan gölge adımlarında](../proje_plani.md#gölge-kayıt-ve-değerlendirme-yazılımı-6064),
+commit/CI kaydı [geçmişte](gecmis.md) tutulur.
 
 ### Tahmin gösterim onayı (`python -m app.ml shadow-display`)
 
@@ -3843,7 +3850,7 @@ nedeni bulunmadan tekrar tekrar çalıştırmak kontrolün yerine geçmez.
 9.3'te imaj ve servis tanımları, 9.4'te paket/DB hazırlığı, 9.5'te API/ekran
 bağlantısı, aktarım bildirimi ve gösterim bakım komutu uygulanmıştır.
 9.6'da tek PowerShell girişi ve paket geçişi eklenmiştir;
-[uygulama sırası](../proje_plani.md#docker-ve-teslim-hedefi-92). Mevcut
+[tamamlanan Docker adımları](../proje_plani.md#docker-yazılımı-ve-yerel-kabul-9297). Mevcut
 Windows görevleri ve veritabanı bu dosyalarla değiştirilmez.
 
 ### İmaj ve servis tanımları

@@ -83,8 +83,9 @@ Belge kuralları (20 Ekim kullanıcı kararı):
 - Yeni mimari seçimleri kullanıcıyla netleştir. Kullanıcının güncel kararı eski
   bir belgeyle çelişirse çelişkiyi söyle ve belgeyi karara uydur.
 - Planlanan, uygulanmış ve karar bekleyen işleri birbirine karıştırma.
-- Numaralı işlerin anlamı ve açık işler için plandaki güncel kalan iş
-  tablosunu kullan. Bir adımın kodu/yerel testi/CI'ı ile fiziksel kabulünü
+- Numaralı işlerin anlamı ve açık işler için plandaki
+  [Güncel takip tablosunu](proje_plani.md#güncel-takip-tablosu) kullan.
+  Bir adımın kodu/yerel testi/CI'ı ile fiziksel kabulünü
   ayrı izle; bekleyen koşulu erişim olmadığı için tamamlandı sayma.
 - ML değişiklikleri plandaki dondurma ve gösterim kapısı kararlarına tabidir;
   araştırma önerisi veya bir ara rapor yeni eğitim/erken gösterim onayı değildir.
@@ -127,8 +128,9 @@ Belge kuralları (20 Ekim kullanıcı kararı):
   Parolalar komut çıktısına, bağlantı adresine, belgeye veya paket manifestine
   yazılmaz. Geri yükleme yalnız ayrı Docker kopyasına yapılır; canlı
   `fiyat_takip` veritabanına yazma yasağı sürer. Docker CI denemeleri de yalnız
-  yapay veri ve `_test` veritabanı kullanır. Ayrıntılı teslim sözleşmesi
-  `proje_plani.md` içindeki 9.2 bölümündedir.
+  yapay veri ve `_test` veritabanı kullanır. Onaylı kapsam
+  [planın 9.2 bölümünde](proje_plani.md#docker-ve-teslim-hedefi-92), ayrıntılı
+  teslim sözleşmesi [teknik rehberdedir](docs/teknik.md#docker-imaj-ve-compose-temeli).
 - Uygulanmış bir migration dosyası (ör. `001_initial.sql`) tek bir bayt bile
   değiştirilmez; şema değişikliği yeni numaralı dosyayla yapılır.
 

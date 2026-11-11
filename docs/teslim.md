@@ -39,8 +39,9 @@ PostgreSQL uygulama imajında çalışır; teslim bilgisayarına ayrıca kurulma
 
 Proje sürümü ile paket eşleşmelidir. Uyumsuzlukta manifest veya model
 dosyalarını değiştirmeyin; pakete uygun kodu ya da yeni kodla hazırlanmış
-paketi kullanın. İlk desteklenen ortam ve paket sözleşmesi
-[proje planındadır](../proje_plani.md#docker-ve-teslim-hedefi-92).
+paketi kullanın. Desteklenen ortam ve teslim kapsamı
+[proje planında](../proje_plani.md#docker-ve-teslim-hedefi-92), paket bütünlüğü
+ve uyumunun ayrıntıları [teknik rehberdedir](teknik.md#dışa-aktarma-ve-paket-sözleşmesi).
 
 ## Sonraki açılışlar ve kapatma
 

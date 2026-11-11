@@ -12,7 +12,7 @@ tahminler dosyalara kaydedilir ve gerçek sonuçlarla karşılaştırılır.
 > Ana özelliklerin yazılımı, yerel kabulü ve GitHub CI kontrolleri tamamlandı.
 > Canlı Windows sistemi veri toplamayı ve günlük gölge tahmin kaydını sürdürür;
 > Docker teslim kopyası hazırlanmış veriyi tarayıcıdan sunar.
-> Gerçek olasılık gösterimi kapalıdır; karar [5 Ocak 2027 kesin değerlendirmesine](proje_plani.md#gölge-mod-kalan-sıra-6-4-kasım-planı)
+> Gerçek olasılık gösterimi kapalıdır; karar [5 Ocak 2027 kesin değerlendirmesine](proje_plani.md#65-kontrol-planı)
 > bağlıdır. Düzenli takip ve bekleyen kabuller [güncel takip tablosundadır](proje_plani.md#güncel-takip-tablosu).
 > Eski ML kararlarındaki bazı ek rapor ve karşılaştırmaların [kapsamı netleştirilecektir](proje_plani.md#ml-ikincil-hedeflerinin-kapsamı).
 
@@ -127,8 +127,8 @@ python -m venv .venv
 ```
 
 Veritabanı, zamanlanmış görevler, yerel API ve ekran kurulumu
-[teknik rehberdedir](docs/teknik.md#komutlar). Veritabanı testleri iki ayrı
-`_test` bağlantı ayarı ister; eksik ayarlarda ilgili testler atlanır
+[teknik rehberdedir](docs/teknik.md#komutlar). Veritabanı testleri aynı
+`_test` veritabanına giden iki bağlantı ayarı ister; eksik ayarlarda ilgili testler atlanır
 ([test ortamı](docs/teknik.md#test-ortamı-ve-sınırı)).
 Yerel model ve kanıt dosyaları Git dışındadır;
 [gölge mod rehberi](docs/teknik.md#gölge-mod-tahmin-kaydı-python--m-appml-shadow-predict)
@@ -175,7 +175,7 @@ gerekli yolları açıklar.
 | Haftalık işletim denetimi | 9 Kasım: 6–9 Kasım aralığında beklenen 7 fiyat turu ve 4 günlük gölge görevi tamamlandı; kalıcı tur hatası yok. 6 Kasım sabahı tek DNS hatası yeniden okumada düzeldi. Görevler Ready, kaçırılan tetikleme sayaçları 0. 8 Kasım keşfi çıkış 2/kısmi; 48 hedef-kaynak sonucunun 21'i tam, yeni 8 sayfa (HB 1/TY 7) otomatik eklendi ve sonraki iki turda fiyat üretti. |
 | Gölge mod ilk haftalık raporu | 9 Kasım 11:00 görüntüsü (son kapanmış gün 8 Kasım): 650 tekil resmi kayıt, 636 olasılık; eksik kayıt ve yarım klasör 0. Ertesi gün kaydedilen 252, ilk toplu geriye dönük 398; sonraki geç kayıt yok. Önceki kayıtlar ve model değişmedi. Asıl sonuç 27 Ekim–1 Kasım başlangıçlarından 271 satır, 40 olumlu (%14,76), 12 olumlu pencere kümesi. |
 | Gölge mod haftalık erken ölçümler | 9 Kasım ara raporu: R0 Brier 0,1279; R2 + Platt AP 0,2749 / Brier 0,1184 / log loss 0,3889 / Brier skill 0,0746. Ortalama olasılık %16,39, gerçekleşme %14,76 (fark 1,63 yüzde puanı); destekli kovada en büyük fark 7,83 yüzde puanı. AP/Brier/log loss standart Python ile bağımsız doğrulandı. Erken performans koşulları sağlandı; 6 günlük etiketli dönem ve olay desteği yetersiz olduğundan kapı Değerlendirilemedi. Model/gösterim kararı değişmedi. |
-| Gölge mod olasılık dağılımı | 4 Kasım deneme kaydı, yalnız bilgi: R2 + Platt ortalaması 0,168, medyan 0,158, en çok 0,404; eğitim olumlu oranı (R0) 0,102. 389 olasılığın 118'i ≥ 0,20, 12'si ≥ 0,30. Ortalamanın R0'ın üstünde olması [planda ölçülen girdi kaymasıyla](proje_plani.md#gölge-mod-kalan-sıra-6-4-kasım-planı) aynı yöndedir; nedenleri bu kayıttan ayrıştırılamaz ve kendi verimizde doğruluk veya kalibrasyon göstermez. |
+| Gölge mod olasılık dağılımı | 4 Kasım deneme kaydı, yalnız bilgi: R2 + Platt ortalaması 0,168, medyan 0,158, en çok 0,404; eğitim olumlu oranı (R0) 0,102. 389 olasılığın 118'i ≥ 0,20, 12'si ≥ 0,30. Ortalamanın R0'ın üstünde olması [teknik rehberdeki tarihli girdi kaymasıyla](docs/teknik.md#gölge-mod-ön-ölçümünün-riskleri-4-kasım-2026) aynı yöndedir; nedenleri bu kayıttan ayrıştırılamaz ve kendi verimizde doğruluk veya kalibrasyon göstermez. |
 
 </details>
 
