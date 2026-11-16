@@ -497,6 +497,14 @@
       "model": "Galaxy S24 FE",
       "storage_gb": 128,
       "active": true
+    },
+    {
+      "product_id": 61,
+      "product_key": "xiaomi_14t_pro_1024gb",
+      "brand": "Xiaomi",
+      "model": "14T Pro",
+      "storage_gb": 1024,
+      "active": true
     }
   ],
   "listings": [
@@ -3570,6 +3578,62 @@
       "platform": "hepsiburada",
       "url": "https://www.hepsiburada.com/xiaomi-redmi-note-14-pro-5g-256gb-8gb-ram-turkiye-garantili-p-HBCV0000PIJ1GV",
       "color": "Siyah",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_1135932836",
+      "product_id": 25,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/apple/iphone-17-pro-1-tb-akilli-telefon-kozmik-turuncu-mg8q4tu-a-p-1135932836",
+      "color": "Turuncu",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_679425554",
+      "product_id": 45,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-a54-5g-128-gb-beyaz-cep-telefonu-samsung-turkiye-garantili-p-679425554",
+      "color": "Beyaz",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_792557584",
+      "product_id": 37,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s24-ultra-256-gb-titanyum-sari-samsung-turkiye-garantili-p-792557584",
+      "color": "Sarı",
+      "active": true
+    },
+    {
+      "listing_id": "trendyol_892326442",
+      "product_id": 30,
+      "platform": "trendyol",
+      "url": "https://www.trendyol.com/samsung/galaxy-s25-128-gb-mint-yesili-samsung-turkiye-garantili-p-892326442",
+      "color": "Mint Yeşili",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv0000q9v59p",
+      "product_id": 61,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/xiaomi-14t-pro-titan-blue-12gb-ram-1024gb-rom-xiaomi-turkiye-garantili-p-HBCV0000Q9V59P",
+      "color": "Mavi",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv0000q9vfhe",
+      "product_id": 61,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/xiaomi-14t-pro-titan-gray-12gb-ram-1024gb-rom-xiaomi-turkiye-garantili-p-HBCV0000Q9VFHE",
+      "color": "Titanyum Gri",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv0000q9vkk4",
+      "product_id": 61,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/xiaomi-14t-pro-titan-black-12gb-ram-1024gb-rom-xiaomi-turkiye-garantili-p-HBCV0000Q9VKK4",
+      "color": "Black",
       "active": true
     }
   ]
