@@ -14,7 +14,8 @@ tahminler dosyalara kaydedilir ve gerçek sonuçlarla karşılaştırılır.
 > Docker teslim kopyası hazırlanmış veriyi tarayıcıdan sunar.
 > Gerçek olasılık gösterimi kapalıdır; karar [5 Ocak 2027 kesin değerlendirmesine](proje_plani.md#65-kontrol-planı)
 > bağlıdır. Düzenli takip ve bekleyen kabuller [güncel takip tablosundadır](proje_plani.md#güncel-takip-tablosu).
-> Eski ML kararlarındaki bazı ek rapor ve karşılaştırmaların [kapsamı netleştirilecektir](proje_plani.md#ml-ikincil-hedeflerinin-kapsamı).
+> Eski ML kararlarındaki ek rapor ve karşılaştırmaların kapsamı 16 Kasım'da [karara bağlandı](proje_plani.md#ml-ikincil-hedeflerinin-kapsamı):
+> güvenilirlik grafiği eklendi, diğer ikisi bu teslimin kapsamı dışında.
 
 ## ✨ Özellikler
 
@@ -41,6 +42,8 @@ tahminler dosyalara kaydedilir ve gerçek sonuçlarla karşılaştırılır.
   fiyat düşüşü olasılığını bir kez kaydeder. Sonraki görüntüyle kayıtlı
   tahminlerin gerçek sonuçları, veri yeterliliği ve kapı koşulları raporlanır;
   gerçek olasılık gösterimi kesin rapora bağlı onay açılana kadar kapalıdır.
+  Saklı test ve gölge değerlendirme raporlarının güvenilirlik kovaları ayrıca
+  SVG güvenilirlik grafiğine çevrilebilir (`python -m app.ml reliability-chart`).
 - 📦 **Docker teslim kopyası:** PostgreSQL, FastAPI ve Streamlit hazırlanmış
   veriyle ayrı ortamda çalışır. İlk Prepare sonrasında tek Start komutuyla
   açılır; yeni veri paketle aktarılır ve önceki pakete geri dönülebilir.
@@ -148,7 +151,7 @@ gerekli yolları açıklar.
 | Cimri geçmişi | 4 Kasım salt okuma denetimi: 58 ürün, 22.595 tarihli kayıt (14 üründe 699 eksik fiyat), 9 Ekim 2025–2 Kasım 2026; ürünlerin kendi ilk–son kayıtları arasında kayıtsız gün yok. Galaxy S24 FE 128 GB 3 Kasım 2025'ten başlıyor; diğer 57 ürün 9 Ekim'den. Galaxy S25 512 GB ve Redmi Note 14 Pro 5G 256 GB eşleştirmesi yok; son alım 2 Kasım, düzenli alım yok. |
 | Kendi toplama geçmişi | 4 Kasım 13:48 salt okuma denetimi: 28 Eylül 2026 15:39–4 Kasım 2026 10:34 (İstanbul); 73 tamamlanmış tur (71 zamanlanmış, 2 elle). 58 ürün bu tarih aralığında; Galaxy S24 FE 128 GB 19 Ekim'den başlıyor, Galaxy S25 512 GB son kontrolü 16 Ekim (etkin sayfası yok; son fiyat 13 Ekim). |
 | Kendi geçmişimizdeki fiyat boşlukları | 4 Kasım denetimi; yalnız 3 Kasım sonuna kadar kapanmış günler: 2.199 ürün-günün 1.796'sında en az bir ham fiyat, 310'unda yalnız stoksuz sonuç, 16'sında fiyat yok ve hata var, 77'sinde hiç kontrol yok. ML için kullanılabilir 22:00 fiyatı 776 ürün-günde, günlük minimum 463 ürün-günde yok; bu iki sayı birbirine eklenmez ve ham fiyat yokluğuyla aynı ölçü değildir. |
-| Otomatik testler | 2656 başarılı, 0 atlanan (16 Kasım); tam pytest, Black ve Flake8 temiz. |
+| Otomatik testler | 2677 başarılı, 0 atlanan (16 Kasım); tam pytest, Black ve Flake8 temiz. |
 | Docker gerçek paket kabulü | 10 Kasım 11:14 paketi: 57 dosya; kopyada 60 ürün, 85 tur, 29.447 sayfa sonucu ve 22.595 Cimri satırı. Kaynak/kopya satır, şema, dizi ve dosya SHA'ları eşleşti; native kaynak değişmedi. API SELECT hesabında yazma yetkisi yok. API/UI/DB sağlıklı; bütün telefonlarda olasılık kapalı, gerçek API ile fiyatlar/iki grafik, aralık ve telefon seçimi, doğru aktarım bildirimi doğrulandı. Bakım/tekrar hazırlama veriyi veya hazırlık kaydını değiştirmedi; model ve kapı korundu. |
 
 <details>
@@ -196,7 +199,7 @@ teslim işleri [proje planında](proje_plani.md#güncel-takip-tablosu) ayrı izl
 | FastAPI ve Streamlit ile verileri sunma ve görüntüleme | ✅ Tamamlandı |
 | ML öncesi bakım ve otomatik güvenli keşif kabulü | ✅ Tamamlandı |
 | Proje yapısının sadeleştirilmesi | ✅ Tamamlandı (26 Ekim) |
-| ML ile indirim olasılığı tahmininin yazılımı | ✅ Model, gölge kayıt/değerlendirme ve tahmin kartı tamam. Kendi verimizde kesin değerlendirme [güncel takip tablosunda](proje_plani.md#güncel-takip-tablosu), eski ikincil hedefler [açık kapsam bölümünde](proje_plani.md#ml-ikincil-hedeflerinin-kapsamı). |
+| ML ile indirim olasılığı tahmininin yazılımı | ✅ Model, gölge kayıt/değerlendirme ve tahmin kartı tamam. Kendi verimizde kesin değerlendirme [güncel takip tablosunda](proje_plani.md#güncel-takip-tablosu), eski ikincil hedeflerin [16 Kasım kapsam kararı](proje_plani.md#ml-ikincil-hedeflerinin-kapsamı) planda; güvenilirlik grafiği eklendi ([komut](docs/teknik.md#güvenilirlik-grafiği-python--m-appml-reliability-chart)). |
 | Zamanlanmış görevlerin kurulumu | ✅ Toplama, keşif ve günlük gölge görevleri kurulu; ilk işletim kontrolleri doğrulandı. Düzenli takip [planda](proje_plani.md#güncel-takip-tablosu); geçmiş tur gecikmelerinin nedeni 16 Kasım'da doğrulandı ([bilinen sınırlar](docs/teknik.md#bilinen-sınırlar)). |
 | Docker teslim yazılımı | ✅ Kod, rehber, yerel kontroller ve GitHub Docker CI tamam. Fiziksel kabul ayrı izlenir ([rehber](docs/teslim.md), [kayıt](docs/gecmis.md)). |
 
@@ -206,8 +209,8 @@ Haftalık sistem/model kontrolü düzenli işletim işidir. Kesin model
 değerlendirmesi, fiziksel teslim kabulü ve sunum/final teslim için
 [tek güncel takip tablosu](proje_plani.md#güncel-takip-tablosu)
 kullanılır; iş numaraları, sonraki adımlar ve tamamlanma koşulları oradadır.
-Eski ikincil ML hedeflerinin kapsamı ayrıca netleştirilecektir; bunlar
-tamamlandı sayılmaz. Yeni geliştirme/model çalışması ayrı plan ve onay ister.
+Eski ikincil ML hedeflerinden güvenilirlik grafiği eklendi; ablasyon ve TL
+kaybı raporu bu teslimin kapsamı dışındadır ve tamamlandı sayılmaz. Yeni geliştirme/model çalışması ayrı plan ve onay ister.
 
 ## 📚 Belgeler
 

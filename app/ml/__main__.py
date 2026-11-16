@@ -140,6 +140,16 @@ def main(argv=None) -> int:
     )
     display_action.add_argument("--disable", action="store_true")
     shadow_display.add_argument("--config", type=Path, metavar="AYAR_DOSYASI")
+    reliability_chart = commands.add_parser(
+        "reliability-chart",
+        help="Saklı test veya gölge değerlendirme raporundan güvenilirlik grafiği çiz",
+    )
+    reliability_chart.add_argument(
+        "--report", type=Path, required=True, metavar="RAPOR_KLASORU"
+    )
+    reliability_chart.add_argument(
+        "--output", type=Path, required=True, metavar="YENI_DOSYA_SVG"
+    )
     args = parser.parse_args(argv)
     utf8_output()
     if args.command == "labels":
@@ -181,6 +191,8 @@ def main(argv=None) -> int:
         return run_shadow_evaluate(args.snapshot, args.output_dir, args.config)
     if args.command == "shadow-display":
         return run_shadow_display(args.evaluation, args.disable, args.config)
+    if args.command == "reliability-chart":
+        return run_reliability_chart(args.report, args.output)
     return run_snapshot(args.output_dir)
 
 
@@ -687,6 +699,69 @@ def run_shadow_display(evaluation_dir, disable, config_path) -> int:
     print("Tahmin gösterimi açık." if enabled else "Tahmin gösterimi kapalı.")
     print("Resmi tahminler, model ve değerlendirme raporları değiştirilmedi.")
     return 0
+
+
+def run_reliability_chart(report_dir: Path, output: Path) -> int:
+    from xml.etree.ElementTree import ParseError
+
+    from app.ml import reliability
+
+    if output.suffix.lower() != ".svg":
+        print("Grafik yazılmadı: dosya uzantısı .svg olmalı.", file=sys.stderr)
+        return 1
+    if output.exists():
+        print(
+            "Grafik yazılmadı: dosya zaten var; yeni bir dosya adı seç.",
+            file=sys.stderr,
+        )
+        return 1
+    # Manifest rapor klasöründeki dosyaları tek tek sayar; araya dosya eklenmez.
+    if output.resolve().is_relative_to(report_dir.resolve()):
+        print(
+            "Grafik yazılmadı: rapor klasörünün içine yazılmaz; başka bir yer seç.",
+            file=sys.stderr,
+        )
+        return 1
+    written = False
+    try:
+        source = reliability.load_source(report_dir)
+        digest = reliability.write_chart(output, reliability.render_svg(source))
+        written = True
+        reliability.verify_chart(output, source)
+    except FileExistsError:
+        print(
+            "Grafik yazılmadı: dosya zaten var; yeni bir dosya adı seç.",
+            file=sys.stderr,
+        )
+        return 1
+    except KeyboardInterrupt:
+        _remove_unverified(output, written)
+        print("Grafik çizimi kullanıcı tarafından durduruldu.", file=sys.stderr)
+        return 130
+    except (ValueError, OSError, ParseError) as exc:
+        _remove_unverified(output, written)
+        print(f"Grafik yazılmadı: {exc}", file=sys.stderr)
+        return 1
+    filled = [item for item in source.bins if item["count"]]
+    low = sum(item["low_support"] for item in filled)
+    print(f"Grafik: {output}")
+    print(f"SHA-256: {digest}")
+    print(f"Kaynak rapor: {report_dir / 'report.json'}")
+    print(f"Rapor SHA-256 (manifestle eşleşti): {source.report_sha256}")
+    print(
+        f"Satır: {source.rows} · çizilen kova: {len(filled)} " f"(düşük destekli {low})"
+    )
+    print(
+        "Dosya yeniden okunup her kova rapordakiyle karşılaştırıldı. "
+        "Rapor ve model değişmedi; DB/ağ kullanılmadı."
+    )
+    return 0
+
+
+def _remove_unverified(path: Path, written: bool) -> None:
+    # Yalnız bu komutun yazdığı, doğrulanamamış grafik silinir.
+    if written:
+        path.unlink(missing_ok=True)
 
 
 def _print_summary(snapshot: MlSnapshot) -> None:

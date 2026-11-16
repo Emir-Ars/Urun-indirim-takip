@@ -35,8 +35,8 @@ Kullanıcı arayüzde arama yaptığında canlı scraping veya model eğitimi
 Ana uygulamanın geliştirmeleri ve ilgili yerel/CI kontrolleri tamamlandı.
 Aşağıdaki tamamlanma durumu yazılımı anlatır; düzenli işletim, modelin kendi
 verimizde kesin değerlendirmesi ve fiziksel teslim kabulü ayrı izlenir.
-Eski ML kararlarındaki uygulanmamış ikincil hedeflerin kapsamı da açık
-karardır; [ilgili bölümde](#ml-ikincil-hedeflerinin-kapsamı) açıklanır.
+Eski ML kararlarındaki ikincil hedeflerin kapsamı 16 Kasım'da karara
+bağlandı; [ilgili bölümde](#ml-ikincil-hedeflerinin-kapsamı) açıklanır.
 
 ### Tamamlanan geliştirmeler
 
@@ -76,8 +76,8 @@ Düzenli kontroller ve henüz tamamlanmamış işler yalnız bu tabloda izlenir.
 Diğer bölümler kontrol yöntemini veya tamamlanmış uygulamanın kanıtını
 açıklar. 6.5 ve 9.1'in rutin kontrolleri tek haftalık incelemede birlikte
 yapılır; 6.5'in bekleyen kesin değerlendirmesi ayrı satırdır. 9.1'in geçmiş
-tur gecikmeleri incelemesi 16 Kasım'da kanıtla kapandı. Yeni bir geliştirme
-adımı açılmamıştır.
+tur gecikmeleri incelemesi 16 Kasım'da kanıtla kapandı. 16 Kasım kararıyla
+tek küçük geliştirme işi açıldı: ML güvenilirlik grafiği.
 
 | Tür | İş / durum | Sonraki adım | Tamamlanma koşulu | Kanıt / ayrıntı |
 |---|---|---|---|---|
@@ -85,7 +85,7 @@ adımı açılmamıştır.
 | Kesin değerlendirme | **6.5 — Modelin kendi verimizde kabulü.** Bekliyor; gerçek olasılık gösterimi kapalı | 21 Aralık haftası bilgi amaçlı ara rapor; 5 Ocak 2027'de o gün alınmış tek kesin görüntüyle değerlendirme | Ön kayıtlı üç durumlu sonuç belgelenir; gösterim yalnız koşullar karşılanırsa mevcut doğrulama komutuyla açılabilir | [6.5 kapanış koşulu](#65-kontrol-planı), [gösterim onayı](docs/teknik.md#tahmin-gösterim-onayı-python--m-appml-shadow-display) |
 | Fiziksel kabul | **9.7 — İkinci bilgisayarda teslim kabulü.** Erişim bekliyor; 10 Kasım kullanıcı bildirimine göre yalnız mevcut bilgisayar var | Ayrı Windows 11 x64 bilgisayarda ilk kurulum ve ilk hazırlıktan sonra internet kapalı kullanım | [Teslim rehberindeki](docs/teslim.md#kabulün-kapsamı) fiziksel kabul adımları o bilgisayarda doğrulanır | Yerel/CI kabulünün kaydı [geçmişte](docs/gecmis.md); fiziksel kabul bununla kapanmaz |
 | Sunum ve teslim | **İş 8 — Sunum ve final teslim.** Hazırlık bekliyor | Sunum biçimi/içeriği ve kesin staj bitişini netleştirme; 21–31 Aralık hazırlık hedefi. Bildirilen bitiş Ocak 2027'nin ilk veya ikinci haftası | Sunum, son veri paketi ve rehberle teslim tamamlanır | Kullanım [teslim rehberinde](docs/teslim.md); biçim/içerik kararı bekliyor |
-| Kapsam kararı | **ML ikincil hedefleri.** Mevcut sürümde uygulanmadı; kapsamı netleştirilecek | Eski kararlardaki ek karşılaştırma/raporların mevcut uygulamayla ilişkisini karara bağlama | Uygulama, erteleme veya kapsamdan çıkarma için açık kullanıcı kararı gerekir; belge düzenlemesi bu kararın yerine geçmez | [Kapsam maddeleri](#ml-ikincil-hedeflerinin-kapsamı) |
+| Planlanan iş | **ML güvenilirlik grafiği.** 16 Kasım'da uygulandı (`reliability-chart`); yerel testler, iki gerçek rapordan bağımsız değer kontrolü ve kullanıcının görsel kabulü tamam; gönderim bekliyor | Onaylı commit/push ve aynı SHA'nın CI'ı | Grafikteki değerler kaynak rapordakilerle birebir doğrulanır; model, resmi raporlar ve eşikler değişmez; testler ve CI geçer | [Kapsam kararı](#ml-ikincil-hedeflerinin-kapsamı), [komut](docs/teknik.md#güvenilirlik-grafiği-python--m-appml-reliability-chart) |
 
 5 Ocak raporunun koşulları sağlanırsa mevcut doğrulama komutuyla gösterim
 ayrıca açılabilir. Koşullar sağlanmazsa kapalı kalır; yeni model/özellik
@@ -291,12 +291,14 @@ açık işler [güncel takip tablosundadır](#güncel-takip-tablosu).
 | 9 Kasım | [9.2 ayrıntılı Docker teslim planı](#docker-ve-teslim-hedefi-92) onaylandı: ayrı gerçek veri kopyası, tek PowerShell girişi, Docker'a özel gizli parola dosyaları ve ilk kurulumda internet; 9.3–9.7 sırası belirlendi. 9.2 yalnız planı ve çalışma kuralı istisnasını belgeler; geliştirmeler adım adım ilerler, gönderim ayrıca onaylanır. | Kullanıcı planın uygulanmasını istedi; canlı veri toplama ve dondurulan ML düzeni korunarak başka bilgisayarda tekrarlanabilir yerel web uygulaması teslim edilecek. |
 | 11 Kasım | Belge düzenleme planı onaylandı: tamamlanan geliştirmeler, 6.5/9.1 düzenli takibi ve bekleyen kabul/teslim ayrı gösterilir; güncel işler tek tabloda tutulur. Eski ikincil ML hedefleri kapsamı netleştirilecek olarak açık kalır. Mevcut iş numaraları, dondurulan model ve kabul koşulları korunur. Adım 2, 3 ve 4 tamamlandı; gönderim/CI kaydı [geçmiştedir](docs/gecmis.md). | Yazılımın bitmesi ile işletim/kabulün sürmesi ayırt edilsin; uygulanmamış hedefler tamamlandı sayılmasın. Bu plan kararı yeni ML geliştirmesi veya commit/push onayı değildir. |
 | 16 Kasım | 9.1 geçmiş tur gecikmeleri incelemesi kapatıldı. Windows Update'ten sonra otomatik oturum açma ve etkin saat ayarı önerildi; kullanıcı gerek görmedi, güç ve Windows ayarlarına müdahale yok. Yeni gecikme haftalık kontrolde aynı yöntemle incelenir. | 28 Eylül 22:00–16 Kasım 10:00 arasındaki 98 tur zamanının zamanında başlamayan 21'inin hepsi tur logları ve Windows olay günlüğüyle açıklandı: 15 uyku, 2 kapalı bilgisayar, 1 modern bekleme, 1 tur saatinden hemen önce açılış, 1 Windows Update sonrası kapalı oturum, 1 süren önceki tur (`IgnoreNew`). Kod veya görev ayarı kaynaklı gecikme yok; ayrıntı [teknik rehberde](docs/teknik.md#bilinen-sınırlar). |
+| 16 Kasım | ML ikincil hedefleri: ay/ürün kimliği ablasyonu ve "yanlış bekle" TL kaybı raporu bu teslimin kapsamından çıkarıldı (gelecek çalışma); güvenilirlik diyagramı eklenecek. Grafik mevcut raporların kalibrasyon kovalarından ayrı görsel olarak üretilir; uygulama planı ayrıca onaylanır. | Model 4 Kasım'da dondu; ablasyon yeni eğitim ister ve 5 Ocak'a kadar modeli değiştiremez. TL kaybı için tanımlı satın alma kuralı ve maliyet yok; parasal fayda/kayıp iddiası kurulmaz. Grafik kalibrasyonu sunumda ve 5 Ocak raporunda anlaşılır gösterir; verisi raporlarda zaten var. |
+| 16 Kasım | Güvenilirlik grafiği uygulama planı onaylandı: yalnız standart kütüphaneyle SVG dosyası; kaynak, manifestle doğrulanmış saklı test ve gölge değerlendirme (asıl sonuç) raporlarının kovaları; yeni `reliability-chart` komutu, yeni dosyaya yazar, rapor klasörüne yazmaz ve yazılanı kovalarla doğrular. Ekrana eklenmez. | Kullanıcı seçimi. Yeni paket gerekmez, internetsiz açılır, aynı rapordan aynı dosya çıkar. Gösterim kapısı kapalıyken ekranda model başarısı göstermek kafa karıştırırdı. |
 
 **ML kararlarının güncelliği:** 28 Ekim ve 2 Kasım satırlarındaki yeniden
 kalibrasyon seçeneği, mevcut dondurulan model için 4 Kasım kararıyla
 kapatılmıştır. Güncel uygulama [gölge mod bölümündedir](#gölge-mod-kalan-sıra-6-4-kasım-planı).
-Eski ikincil rapor/karşılaştırma hedefleri ise
-[kapsamı netleştirilecek maddelerdir](#ml-ikincil-hedeflerinin-kapsamı).
+Eski ikincil rapor/karşılaştırma hedeflerinin kapsamı 16 Kasım'da
+[karara bağlandı](#ml-ikincil-hedeflerinin-kapsamı).
 
 ### Bilerek değiştirilmeyen davranışlar
 
@@ -358,23 +360,27 @@ Ayrıntı ve kanıtları: [teknik rehber, Bilinen sınırlar](docs/teknik.md#bil
 
 ### ML ikincil hedeflerinin kapsamı
 
-28 Ekim kararlarında anılan aşağıdaki ikincil hedeflerin bugünkü kapsamı
-netleştirilecektir. Sonraki uygulama kararlarıyla kurulan mevcut sürümün
-çıktıları [teknik rehberde](docs/teknik.md#modeller-ve-deney-python--m-appml-experiment)
+28 Ekim kararlarında anılan üç ikincil hedefin kapsamı 16 Kasım'da kullanıcı
+kararıyla belirlendi. Mevcut sürümün çıktıları
+[teknik rehberde](docs/teknik.md#modeller-ve-deney-python--m-appml-experiment)
 açıklanır:
 
-- **Ay ve ürün kimliği karşılaştırması (ablasyon):** Bu alanların modele
-  katkısını ölçen karşılaştırma uygulanmadı; mevcut çekirdek modele ay ve
-  ürün kimliği girmez.
-- **Güvenilirlik diyagramı:** Güvenilirlik kovaları tablo olarak raporlanır;
-  grafik üretilmez.
-- **“Yanlış bekle” TL kaybı raporu:** Mevcut deney çıktısında bulunmaz.
+- **Ay ve ürün kimliği karşılaştırması (ablasyon): kapsam dışı.** Uygulanmadı;
+  mevcut çekirdek modele ay ve ürün kimliği girmez. Yeni model çalışması
+  ayrıca planlanırsa gelecek çalışma olarak ele alınabilir.
+- **Güvenilirlik diyagramı: eklendi.** Güvenilirlik kovaları raporlarda tablo
+  olarak kalır; `python -m app.ml reliability-chart` saklı test ve gölge
+  değerlendirme raporlarındaki aynı kovalardan ayrı bir SVG grafik üretir
+  ([komut ve korumalar](docs/teknik.md#güvenilirlik-grafiği-python--m-appml-reliability-chart),
+  durum [takip tablosunda](#güncel-takip-tablosu)).
+- **“Yanlış bekle” TL kaybı raporu: kapsam dışı.** Tanımlı bir satın alma
+  kuralı ve maliyet tanımı olmadığı için parasal fayda/kayıp iddiası kurulmaz;
+  gelecek çalışma olarak anılabilir.
 
-Bu maddeler tamamlandı veya kapsamdan çıkarıldı sayılmaz. Uygulama,
-erteleme ya da kapsamdan çıkarma ayrıca kararlaştırılacaktır. Bu kapsam
-belirsizliğinin kaydı yeni bir geliştirme, eğitim veya model değişikliği
-onayı değildir. Mevcut R2 + Platt, girdiler, eşikler ve 5 Ocak 2027 kesin
-değerlendirmesi korunur.
+Kapsam dışı maddeler tamamlandı sayılmaz. Bu karar yeni eğitim veya model
+değişikliği onayı değildir; grafik de modeli ve resmi raporları değiştirmez.
+Mevcut R2 + Platt, girdiler, eşikler ve 5 Ocak 2027 kesin değerlendirmesi
+korunur.
 
 ## 8. Proje yapısının sadeleştirilmesi (tamamlandı)
 
@@ -592,8 +598,8 @@ Girdi, zaman bölmesi, ölçüt ve model seçiminin kesin kuralları
 4 Kasım'da model donduruldu ve saklı test bir kez açıldı;
 [ön kayıt ve sonuç](docs/teknik.md#4-kasım-2026-dondurma-ön-kaydı) korunur.
 Mevcut model yeniden eğitilmez veya kalibre edilmez; yeni model ayrı plan
-ve kullanıcı kararı gerektirir. Eski kararlardaki uygulanmamış ek hedefler
-[açık kapsam kararıdır](#ml-ikincil-hedeflerinin-kapsamı).
+ve kullanıcı kararı gerektirir. Eski kararlardaki ek hedeflerin
+[16 Kasım kapsam kararı](#ml-ikincil-hedeflerinin-kapsamı) ayrı bölümdedir.
 Güncel veri sayıları [README Güncel kapsam](README.md#-güncel-kapsam) tablosundadır.
 
 ### Gölge mod (kalan sıra 6, 4 Kasım planı)

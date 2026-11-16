@@ -33,6 +33,7 @@ API ve ekran sözleşmeleri, hata kodları ve bilinen sınırlar. Yalnız sistem
 - [Gölge mod tahmin kaydı](#gölge-mod-tahmin-kaydı-python--m-appml-shadow-predict)
 - [Günlük gölge görevi](#günlük-gölge-çalışması-python--m-appml-shadow-daily)
 - [Gölge değerlendirmesi](#gölge-değerlendirmesi-python--m-appml-shadow-evaluate)
+- [Güvenilirlik grafiği](#güvenilirlik-grafiği-python--m-appml-reliability-chart)
 - [Tahmin gösterim onayı](#tahmin-gösterim-onayı-python--m-appml-shadow-display)
 - [Gölge işletiminde kontrol komutları](#gölge-işletiminde-kontrol-komutları)
 - [Gölge kayıtlarının kontrol sırası](#gölge-kayıtlarının-kontrol-sırası)
@@ -184,8 +185,9 @@ parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak kor
 | `shadow.py` | Gölge mod: ön kayıtlı SHA-256'sı ve kanıt zinciri doğrulanmış dondurulan modeli açar, veri görüntüsünden kendi serimizin girdilerini bellekte hesaplar, kayıtsız her (ürün, gün) için olasılık ve gerekçe üretir, değişmeyen tahmin klasörünü yazar/yeniden doğrular ve resmi kayıtlardaki anahtarları çıkarır. Veritabanı, ağ ve pazaryeri katmanı yüklemez. |
 | `daily.py` | Günlük gölge akışı: kısa ortak tarama kilidi altında salt okunur görüntü, sınırlı tur/DB bekleme ve ardından mevcut gölge tahmin komutu; her çalışmada tarihli log. Kayıtlı ürün-günleri yeniden yazmaz. |
 | `shadow_evaluation.py` | Kayıtlı olasılıkları yeni görüntünün gerçek sonuçlarıyla eşleştirir; kayıt girdilerini yeniden hesaplayıp doğrular, puan/kapı/sağlık raporunu yeni klasöre yazar ve yeniden okur. DB/ağ, pickle, eğitim veya yeni tahmin kullanmaz. |
+| `reliability.py` | Manifestle doğrulanmış saklı test veya gölge değerlendirme raporunun kalibrasyon kovalarından güvenilirlik diyagramı (SVG) çizer; yazılan dosyayı yeniden okuyup her kovayı raporla karşılaştırır. Yeni ölçüm hesaplamaz; numpy/scikit-learn, DB ve ağ katmanı yüklemez. |
 | `reporting.py` | Etiket, girdi, bölme, deney, dondurulan model ve saklı test için belirlenimci JSON/JSONL, Türkçe Markdown ve en son yazılan parmak izli başarı manifesti; çıktıların yeniden doğrulanması. `split_plan_files` bölme yazımıyla deneyin bayt karşılaştırmasına ortak dosya içeriği üretir. |
-| `__main__.py` | `snapshot` yalnız `API_DATABASE_URL` okuma hesabıyla görüntü alır; `labels`/`features` görüntüden, `split` etiket/girdiden, `experiment` etiket/girdi/bölme klasörlerinden, `freeze` ve `final-test` ayrıca deney/model klasöründen çalışır. `shadow-predict` görüntü ve model/kanıt klasörlerinden tahmin üretir; `shadow-evaluate` kayıtları yeni görüntüyle değerlendirir; `shadow-display` kesin rapora bağlı ayrı gösterim onayını yönetir. Dosyadan çalışan bu komutlar DB katmanını yüklemez. `shadow-daily` görüntü + tahmin akışını ve loglamayı yürütür; yalnız görüntü aşaması okuma bağlantısı kullanır. Çıkış kodları ilgili [ML hazırlığı](#ml-hazırlığı) alt bölümündedir. |
+| `__main__.py` | `snapshot` yalnız `API_DATABASE_URL` okuma hesabıyla görüntü alır; `labels`/`features` görüntüden, `split` etiket/girdiden, `experiment` etiket/girdi/bölme klasörlerinden, `freeze` ve `final-test` ayrıca deney/model klasöründen çalışır. `shadow-predict` görüntü ve model/kanıt klasörlerinden tahmin üretir; `shadow-evaluate` kayıtları yeni görüntüyle değerlendirir; `shadow-display` kesin rapora bağlı ayrı gösterim onayını yönetir; `reliability-chart` saklı test veya gölge değerlendirme raporundan grafik çizer. Dosyadan çalışan bu komutlar DB katmanını yüklemez. `shadow-daily` görüntü + tahmin akışını ve loglamayı yürütür; yalnız görüntü aşaması okuma bağlantısı kullanır. Çıkış kodları ilgili [ML hazırlığı](#ml-hazırlığı) alt bölümündedir. |
 
 ### Kurulum ve zamanlayıcı: `scripts/`
 
@@ -240,6 +242,7 @@ tablosunda tarihle tutulur. Her yeni koşunun geçme/atlama bilgisi ayrıca
 | `tests/test_ml_shadow_daily.py` | Günlük görüntü + gerçek tahmin akışı, tekrar çalışmada kayıtların değişmemesi, tur/keşif ve DB `running` kaydı için 5 dakika / 90 dakika bekleme, kayıt kilidi çakışması, eksik/hatalı kanıt ve adres, penceresiz log, çıkış kodları, gerçek `_test` okuma rolü ve yazan hesabın reddi; görev betiğinin BOM ve çalışma sözleşmesi. |
 | `tests/test_ml_shadow_evaluation.py` | Kaydedilmiş olasılıktan puan, yeni görüntüde girdi eşleşmesi, geleceğin etiketi değiştirip eski girdiyi değiştirmemesi ve geçmiş değişiminin reddi, yeni sayfanın yalnız y_izlenen etkisi; NULL/kısa geçmiş/showable ayrımı, kapı eşikleri ve takvim sayımı, yarım/bozuk/yinelenen kayıt, kısa kilit, değişmez/aynı bayt çıktısı ve rapor doğrulaması. |
 | `tests/test_ml_shadow_evaluation_cli.py` | Gerçek komut akışı ve çıkış kodları, hatalı SHA/ayar/görüntü, mevcut çıktı koruması, kilit ve kesinti, boş kayıtta yetersiz rapor; DB/ağ bağlantısı, pickle açma, eğitim ve tahmin çağrılarının ayrı süreçte engellenmesi. |
+| `tests/test_ml_reliability.py` | `reliability-chart` (yapay raporlar): her dolu kovanın değer, konum ve destek işaretiyle aynen çizilmesi, iki rapor türünün başlıkları, kesin görüntü adı, aynı bayt; var olan dosya, `.svg` dışı uzantı, rapor klasörüne yazma, manifestten sonra değişmiş/tamamlanmamış/desteklenmeyen rapor, tutarsız kovalar ve satırsız rapor reddi; doğrulanamayan grafiğin silinmesi; numpy/scikit-learn/LightGBM, DB ve ağ katmanının ayrı süreçte yüklenmemesi. |
 | `tests/test_price_statistics.py` | İstatistik hesabı: tam kapsam dönemi, 30 gün/14 geçiş/7 gün/18 saat eşikleri, İstanbul günü, NULL üzerinden geçmeme, değişkenlik, grafik aralığından bağımsızlık. Veritabanısız. |
 | `tests/test_api_foundation.py` | API okuma rolünün izinleri (yazamaması, kalıcı nesne kuramaması) ve test ortamının ağ/adres korumaları. |
 | `tests/test_api.py` | FastAPI: adresler ve OpenAPI, kuruş/UTC/NULL, fiyat yaşı, rol/şema hataları, dört bağlantı sınırı, kesinti ve yeniden bağlantı, 5 sn sorgu zaman aşımı, tutarlı cevap. |
@@ -3660,6 +3663,57 @@ eşikler değiştirilmedi; bu ara sonuçtan kesin karar verilmez.
 Gönderim durumu
 [tamamlanan gölge adımlarında](../proje_plani.md#gölge-kayıt-ve-değerlendirme-yazılımı-6064),
 commit/CI kaydı [geçmişte](gecmis.md) tutulur.
+
+### Güvenilirlik grafiği (`python -m app.ml reliability-chart`)
+
+`app/ml/reliability.py`, raporlardaki güvenilirlik kovalarını (tablo) aynı
+değerlerle bir grafiğe çevirir. Yeni ölçüm hesaplamaz; model, rapor ve resmi
+kayıtlar değişmez. Sunum, 21 Aralık ara raporu ve 5 Ocak kesin raporu içindir;
+ekranda gösterilmez.
+
+```powershell
+.venv\Scripts\python.exe -m app.ml reliability-chart --report <RAPOR_KLASORU> --output "artifacts\ml_grafik_<tarih>\<ad>.svg"
+```
+
+| Rapor klasörü | Çizilen kovalar |
+|---|---|
+| Saklı test (`final-test` çıktısı; manifestte `test_opened`) | Dondurulan modelin saklı test kovaları |
+| Gölge değerlendirme (`shadow-evaluate` çıktısı; manifestte `kind: shadow_evaluation`) | Dondurulan modelin asıl sonuç (gösterilebilir, etiketli) kovaları; kapı da bu kovaları kullanır |
+
+**Ne gösterir:** yatay eksen kovadaki ortalama olasılık, dikey eksen o
+kovada gerçekleşen ≥ %5 düşüş oranıdır; kesik köşegen mükemmel
+kalibrasyondur. Nokta köşegenin üstündeyse model düşüş olasılığını düşük,
+altındaysa yüksek tahmin etmiştir. En az 20 satırlı kova dolu, daha az
+satırlı kova boş daireyle çizilir (kapının "destekli kova" sınırı); yalnız
+destekli kovalar çizgiyle birleştirilir. Alttaki çubuklar ve üstlerindeki
+sayılar kovadaki satır sayısıdır. Başlık rapor türünü, başlangıç aralığını,
+satır sayısını ve gölge raporunda ara/kesin görüntü ayrımını
+(`final_date_matches`) yazar.
+
+**Korumalar:** manifest `complete` olmalı ve `report.json` manifestteki
+SHA-256 ile eşleşmelidir. Kovalar 10 olmalı; sınırlar, sayılar, destek
+işareti, 0–1 aralığı, ortalamanın kendi kovasında olması ve sayıların
+toplamının satır sayısına eşitliği denetlenir. Çıktı yeni bir `.svg` dosyası
+olmalıdır; var olan dosyanın üzerine yazılmaz ve rapor klasörünün içine
+yazılmaz (manifest klasördeki dosyaları sayar). Yazılan dosya yeniden okunur,
+her nokta ve çubuğun `data-*` değerleri rapordaki kovayla karşılaştırılır;
+doğrulanamayan grafik silinir. Aynı rapor her zaman aynı baytları verir.
+numpy/scikit-learn/LightGBM, DB ve ağ katmanı yüklenmez.
+
+| Çıkış | Anlamı |
+|---|---|
+| 0 | Grafik yazıldı ve rapordaki kovalarla doğrulandı. |
+| 1 | Dosya var, uzantı `.svg` değil, rapor klasörüne yazma, eksik/değişmiş/desteklenmeyen rapor veya tutarsız kova. |
+| 2 | Argüman hatası. |
+| 130 | Kullanıcı durdurdu; yazılmış ama doğrulanmamış grafik silinir. |
+
+İlk gerçek grafikler 16 Kasım'da `artifacts/ml_grafik_20261116/` altına
+üretildi: saklı test (`sakli_test_r2_platt.svg`, 7 dolu kova, 3'ü düşük
+destekli) ve 16 Kasım gölge ara raporu (`golge_20261116_asil_sonuc.svg`,
+5 dolu kova, 2'si düşük destekli). Her noktanın değeri ve konumu komuttan
+bağımsız bir betikle kaynak raporla karşılaştırıldı; kaynak rapor klasörleri
+değişmedi. Kullanıcı iki grafiği aynı gün tarayıcıda açıp görsel olarak
+kabul etti.
 
 ### Tahmin gösterim onayı (`python -m app.ml shadow-display`)
 
