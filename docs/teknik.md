@@ -1263,8 +1263,15 @@ Sınırlar:
 - Telafi turu bir sonraki tur saatine sarkarsa o tetikleme `IgnoreNew` ile
   atılır: ayrı log, `collection_runs` satırı ve çıkış kodu oluşmaz ve sonradan
   telafi edilmez (1 Ekim 10:00: tur 7 hâlâ sürüyordu). `LastRunTime` tetikleme
-  saatini, `LastTaskResult` ise çalışmakta olan turun sonucunu gösterir. Atılma
-  olayını Görev Zamanlayıcı geçmişi kayıt eder; geçmiş kapalıysa doğrulanamaz.
+  saatini, `LastTaskResult` ise çalışmakta olan turun sonucunu gösterir. Görev
+  Zamanlayıcı geçmişi bu bilgisayarda kapalıdır; atılma, önceki turun logunun
+  son yazılma saatinden doğrulanır (tur 7'nin logu 10:03:38'de kapandı).
+- Görev yalnız oturum açıkken çalışır. Windows Update bilgisayarı kendiliğinden
+  yeniden başlatırsa oturum kapanır ve kullanıcı oturum açana kadar tur
+  başlamaz; oturum açılınca kaçan tur bir kez telafi edilir. 12 Kasım'da
+  güncelleme 05:48–05:51'de yeniden başlattı, oturum 16:41'de açıldı ve 10:00
+  turu 16:51'de yapıldı. Güncellemeden sonra otomatik oturum açma ayarı
+  kullanıcı kararıyla açılmadı.
 - Tur ortasında bilgisayar uyursa (1 Ekim 09:29, kritik pil, yaklaşık 6,5 dk)
   uyanma anındaki sayfalar `network` hatası alabilir (tur 7: 1 sayfa, DNS
   çözülemedi); tur tamamlanır. Tur sonu ikinci okuma bu sayfaları yeniden dener;
@@ -1286,6 +1293,40 @@ Sınırlar:
   başlayıp gece uykuda bekledi ve ertesi sabah 09:32'de bitti; üç plan
   düzeltildikten sonra tur 49 kapak kapalıyken 10:00'da başladı ve sayfalar
   arasında en uzun ara 42 sn oldu.
+
+#### Geç veya kaçan turun nedeni
+
+Görev Zamanlayıcı geçmişi kapalı olduğu için neden, Windows System olay
+günlüğündeki güç ve oturum kayıtlarından okunur. Komut yalnız okur; tarih
+aralığı incelenen tur zamanının birkaç saat öncesinden tur logunun
+başlangıcına kadar seçilir:
+
+```powershell
+Get-WinEvent -FilterHashtable @{ LogName = 'System'
+    StartTime = (Get-Date '2026-11-12 04:00'); EndTime = (Get-Date '2026-11-12 17:00') } |
+    Where-Object {
+        ($_.ProviderName -eq 'Microsoft-Windows-Kernel-General' -and $_.Id -in 12, 13) -or
+        ($_.ProviderName -eq 'Microsoft-Windows-Kernel-Power' -and $_.Id -in 41, 42, 506, 507) -or
+        ($_.ProviderName -eq 'Microsoft-Windows-Power-Troubleshooter' -and $_.Id -eq 1) -or
+        ($_.ProviderName -eq 'User32' -and $_.Id -eq 1074) -or
+        ($_.ProviderName -eq 'Microsoft-Windows-Winlogon' -and $_.Id -in 7001, 7002) } |
+    Sort-Object TimeCreated | Select-Object TimeCreated, ProviderName, Id
+```
+
+| Kayıt | Anlamı |
+|---|---|
+| Kernel-General 12 / 13 | Açılış / kapanış |
+| Kernel-Power 42 | Uykuya giriş |
+| Power-Troubleshooter 1 | Uykudan uyanma (kaydın zamanı uyanma anıdır) |
+| Kernel-Power 506 / 507 | Modern bekleme girişi / çıkışı |
+| Kernel-Power 41 | Düzgün kapanmamış sistemin yeniden açılışı |
+| User32 1074 | Kapatma/yeniden başlatma isteği; ayrıntıda isteyen süreç (ör. `Explorer.EXE` kullanıcı, `MoUsoCoreWorker.exe` Windows Update) |
+| Winlogon 7001 / 7002 | Oturum açıldı / kapandı (kilit ekranı bu kaydı üretmez) |
+
+Kernel-Power 107 (uykudan dönüş) zamanı uykuya giriş anını gösterebildiği için
+uyanma zamanı olarak kullanılmaz. Tur saatinde son kayıt uyku, kapanış,
+modern bekleme girişi veya oturum kapanmasıysa tur o anda başlayamazdı; telafi
+turu sonraki uyanma/açılış ve oturum açılmasından birkaç dakika sonra başlar.
 
 ### Zamanlanmış keşif (Görev Zamanlayıcı)
 
@@ -4325,15 +4366,21 @@ kanıtlarıyla hash üzerinden eşleştirilmiştir.
   renk kaynağı gibi bir kural değişirse katalog yeniden kurulur.
 - `exclude_terms` ve `network` keşif anında uygulanır; hedefe sonradan
   eklenirse daha önce kataloğa girmiş sayfalar kendiliğinden çıkarılmaz.
-- **Sürekli işletim:** 6–9 Kasım görev/log/görüntü denetiminde beklenen işler
-  zamanında tamamlandı; düzenli izleme sürer. 26 Ekim kontrolünde geciken
-  tur ve ayrı bir turda DNS/zaman aşımı hataları görüldü. Görev Zamanlayıcı
-  geçmişi kapalı olduğundan gecikmenin nedeni doğrulanamadı; yalnız geç
-  başlangıçtan uyku veya güç ayarı arızası sonucu çıkarılmaz. 31 Ekim sabah
-  turu 13:23'te, 1 Kasım sabah turu 12:44'te başladı
-  (`data/logs/tur_2026-10-31_13-23-30.log`,
-  `data/logs/tur_2026-11-01_12-44-17.log`); gecikmenin nedeni hâlâ açık.
-  Güç ayarları ve
+- **Sürekli işletim:** Turlar yalnız bilgisayar açık, uyanık ve oturum
+  açıkken zamanında başlar. 16 Kasım incelemesinde 28 Eylül 22:00–16 Kasım
+  10:00 arasındaki 98 tur zamanı, tur loglarıyla ve Windows olay günlüğündeki
+  güç/oturum kayıtlarıyla karşılaştırıldı: 77'si zamanında başladı, 12'si aynı
+  gün geç başladı, 6'sı ertesi gün telafi edildi, 3'ü telafi edilmedi.
+  Zamanında başlamayan 21 turun hepsinin nedeni bulundu: 15'inde bilgisayar
+  uykudaydı, 2'sinde kapalıydı, 1'inde modern beklemedeydi (22 Ekim 22:00,
+  tur 22:52), 1'inde tur saatinden bir dakika önce açılmıştı (28 Ekim, tur
+  22:04), 1'inde Windows Update yeniden başlatmasından sonra oturum kapalıydı
+  (12 Kasım 10:00, tur 16:51), 1'inde önceki telafi turu sürüyordu (1 Ekim
+  10:00, `IgnoreNew`). 31 Ekim ve 1 Kasım sabah gecikmelerinde bilgisayar
+  04:18–13:17 ve 09:21–12:38 arasında uykudaydı. Kod veya görev ayarı
+  kaynaklı gecikme bulunmadı; 9.1 incelemesi kapatıldı. Yeni gecikme haftalık
+  kontrolde [aynı yöntemle](#geç-veya-kaçan-turun-nedeni) incelenir. Kanıt:
+  `artifacts/isletim_9_1_tur_zamanlari_20261116.json`. Güç ayarları ve
   pilde çalışma riski için [zamanlanmış tur](#zamanlanmış-tur-görev-zamanlayıcı).
 - **Bulutta çalıştırma:** GitHub'ın bulut makinelerinden Hepsiburada bilgisayardakiyle
   aynı okundu, ama Trendyol üç denemede de okunamadı: 6 Ekim'de HTTP 403, 22

@@ -1,6 +1,6 @@
 # Akıllı Telefon İndirim Takip ve Tahmin Sistemi — Proje Planı
 
-Son güncelleme: 11 Kasım 2026.
+Son güncelleme: 16 Kasım 2026.
 
 Bu belge **kararların, aşama durumunun ve sıradaki işin** tek kaynağıdır ve
 kısa tutulur. Diğer bilgiler şuralardadır:
@@ -75,14 +75,14 @@ Git dışındadır, projeye bağlı değildir ve tamamlanmış iş sayılmaz.
 Düzenli kontroller ve henüz tamamlanmamış işler yalnız bu tabloda izlenir.
 Diğer bölümler kontrol yöntemini veya tamamlanmış uygulamanın kanıtını
 açıklar. 6.5 ve 9.1'in rutin kontrolleri tek haftalık incelemede birlikte
-yapılır; aynı numaraların bekleyen kesin değerlendirme ve inceleme koşulları
-ayrı satırlardır. Yeni bir geliştirme adımı açılmamıştır.
+yapılır; 6.5'in bekleyen kesin değerlendirmesi ayrı satırdır. 9.1'in geçmiş
+tur gecikmeleri incelemesi 16 Kasım'da kanıtla kapandı. Yeni bir geliştirme
+adımı açılmamıştır.
 
 | Tür | İş / durum | Sonraki adım | Tamamlanma koşulu | Kanıt / ayrıntı |
 |---|---|---|---|---|
 | Düzenli takip | **6.5 / 9.1 — Haftalık sistem ve model kontrolü.** İşletimde; ilk otomatik ve ilk haftalık kontrol doğrulandı | Her Pazar 14:00 keşfi gerçekten bittikten sonra görev/logları, veri/kayıt bütünlüğünü ve model ara raporunu inceleme | Her kontrolde sonuç ve sorunlar doğrulanır; bu satır tekrarlanan işletim rutinidir | [Kontrol takvimi](#65-kontrol-planı); tarihli sonuçlar [README'de](README.md#-güncel-kapsam) |
 | Kesin değerlendirme | **6.5 — Modelin kendi verimizde kabulü.** Bekliyor; gerçek olasılık gösterimi kapalı | 21 Aralık haftası bilgi amaçlı ara rapor; 5 Ocak 2027'de o gün alınmış tek kesin görüntüyle değerlendirme | Ön kayıtlı üç durumlu sonuç belgelenir; gösterim yalnız koşullar karşılanırsa mevcut doğrulama komutuyla açılabilir | [6.5 kapanış koşulu](#65-kontrol-planı), [gösterim onayı](docs/teknik.md#tahmin-gösterim-onayı-python--m-appml-shadow-display) |
-| Açık inceleme | **9.1 — Geçmiş tur gecikmeleri.** Neden doğrulanmadı | Mevcut görev/log kanıtlarıyla nedeni araştırma; yeni gecikmede kanıtı koruma. Güç ayarlarına yeni müdahale ayrıca kararlaştırılır | Neden ancak yeterli kanıtla doğrulanır; kanıt yokken bu inceleme kapanmış sayılmaz | [Bilinen işletim sınırı](docs/teknik.md#bilinen-sınırlar) |
 | Fiziksel kabul | **9.7 — İkinci bilgisayarda teslim kabulü.** Erişim bekliyor; 10 Kasım kullanıcı bildirimine göre yalnız mevcut bilgisayar var | Ayrı Windows 11 x64 bilgisayarda ilk kurulum ve ilk hazırlıktan sonra internet kapalı kullanım | [Teslim rehberindeki](docs/teslim.md#kabulün-kapsamı) fiziksel kabul adımları o bilgisayarda doğrulanır | Yerel/CI kabulünün kaydı [geçmişte](docs/gecmis.md); fiziksel kabul bununla kapanmaz |
 | Sunum ve teslim | **İş 8 — Sunum ve final teslim.** Hazırlık bekliyor | Sunum biçimi/içeriği ve kesin staj bitişini netleştirme; 21–31 Aralık hazırlık hedefi. Bildirilen bitiş Ocak 2027'nin ilk veya ikinci haftası | Sunum, son veri paketi ve rehberle teslim tamamlanır | Kullanım [teslim rehberinde](docs/teslim.md); biçim/içerik kararı bekliyor |
 | Kapsam kararı | **ML ikincil hedefleri.** Mevcut sürümde uygulanmadı; kapsamı netleştirilecek | Eski kararlardaki ek karşılaştırma/raporların mevcut uygulamayla ilişkisini karara bağlama | Uygulama, erteleme veya kapsamdan çıkarma için açık kullanıcı kararı gerekir; belge düzenlemesi bu kararın yerine geçmez | [Kapsam maddeleri](#ml-ikincil-hedeflerinin-kapsamı) |
@@ -290,6 +290,7 @@ açık işler [güncel takip tablosundadır](#güncel-takip-tablosu).
 | 6 Kasım | 7.1 gösterim planı onaylandı: tek tahmin kartı; İstanbul takvimine göre yalnız dünün kaydı, eski orana dönüş yok; ayrı API ucu ve mevcut kayıttan okuma; 5 Ocak kesin raporuna bağlı komutla açılış ve kapatma. 7.1'in uygulaması yalnız kararların belgelenmesidir; API/CLI/ekran 7.2–7.4'te geliştirilir. | Kullanıcı planın uygulanmasını istedi. Seçili ürünün hangi fiyat/döneme göre değerlendirildiği açık kalır; geçersiz veya onaysız olasılık kullanıcıya çıkmaz. Commit/push onayı verilmedi. |
 | 9 Kasım | [9.2 ayrıntılı Docker teslim planı](#docker-ve-teslim-hedefi-92) onaylandı: ayrı gerçek veri kopyası, tek PowerShell girişi, Docker'a özel gizli parola dosyaları ve ilk kurulumda internet; 9.3–9.7 sırası belirlendi. 9.2 yalnız planı ve çalışma kuralı istisnasını belgeler; geliştirmeler adım adım ilerler, gönderim ayrıca onaylanır. | Kullanıcı planın uygulanmasını istedi; canlı veri toplama ve dondurulan ML düzeni korunarak başka bilgisayarda tekrarlanabilir yerel web uygulaması teslim edilecek. |
 | 11 Kasım | Belge düzenleme planı onaylandı: tamamlanan geliştirmeler, 6.5/9.1 düzenli takibi ve bekleyen kabul/teslim ayrı gösterilir; güncel işler tek tabloda tutulur. Eski ikincil ML hedefleri kapsamı netleştirilecek olarak açık kalır. Mevcut iş numaraları, dondurulan model ve kabul koşulları korunur. Adım 2, 3 ve 4 tamamlandı; gönderim/CI kaydı [geçmiştedir](docs/gecmis.md). | Yazılımın bitmesi ile işletim/kabulün sürmesi ayırt edilsin; uygulanmamış hedefler tamamlandı sayılmasın. Bu plan kararı yeni ML geliştirmesi veya commit/push onayı değildir. |
+| 16 Kasım | 9.1 geçmiş tur gecikmeleri incelemesi kapatıldı. Windows Update'ten sonra otomatik oturum açma ve etkin saat ayarı önerildi; kullanıcı gerek görmedi, güç ve Windows ayarlarına müdahale yok. Yeni gecikme haftalık kontrolde aynı yöntemle incelenir. | 28 Eylül 22:00–16 Kasım 10:00 arasındaki 98 tur zamanının zamanında başlamayan 21'inin hepsi tur logları ve Windows olay günlüğüyle açıklandı: 15 uyku, 2 kapalı bilgisayar, 1 modern bekleme, 1 tur saatinden hemen önce açılış, 1 Windows Update sonrası kapalı oturum, 1 süren önceki tur (`IgnoreNew`). Kod veya görev ayarı kaynaklı gecikme yok; ayrıntı [teknik rehberde](docs/teknik.md#bilinen-sınırlar). |
 
 **ML kararlarının güncelliği:** 28 Ekim ve 2 Kasım satırlarındaki yeniden
 kalibrasyon seçeneği, mevcut dondurulan model için 4 Kasım kararıyla
@@ -333,7 +334,8 @@ Ayrıntı ve kanıtları: [teknik rehber, Bilinen sınırlar](docs/teknik.md#bil
 - Trendyol araması yalnız satıştaki sayfaları gösterir; stoktan çıkan sayfa
   yeniden keşfedilemez (önceden eklenmişse korunur). Reklam kartları 2–3 ürünü
   sayfalamadan düşürür.
-- Bilgisayar uyuyunca veya kapanınca o saatin turu kaçar; açılışta yalnız bir
+- Bilgisayar uyuyunca, kapanınca veya oturum kapalıyken (ör. Windows Update
+  yeniden başlatmasından sonra) o saatin turu kaçar; açılışta yalnız bir
   tur telafi edilir. İnternet kesilirse sayfalar `network` hatası alır (tur sonu
   ikinci okuma kurtarabilir). Kaçan gözlem geriye dönük toplanamaz.
 - Hepsiburada bir sayfanın içeriğini başka modele çevirebilir; kimlik kuralı
@@ -540,7 +542,9 @@ Amaç, zamanında ve eksiksiz veri toplamayı görev/log/görüntü kanıtıyla
 izlemektir. 22–23 Ekim'de güç ayarları uygulanıp bir kapak kapalı turla
 sınandı; kullanıcı 4 Kasım'da bilgisayarı geceleri çoğu zaman kapattığını
 bildirdi. Önceki ayarlar, her gece açık kalındığı kanıtı sayılmaz.
-Geç/kaçan turların nedeni ayrı incelenir; güç ayarına yeni müdahale kararı yok.
+16 Kasım incelemesinde geç/kaçan 21 turun hepsinin nedeni (uyku, kapalı
+bilgisayar, kapalı oturum, süren önceki tur) olay günlüğüyle doğrulandı ve
+inceleme kapandı; güç veya Windows Update ayarına müdahale kararı yok.
 Görev saatleri ve kaynak sınırları [teknik rehberdedir](docs/teknik.md#bilinen-sınırlar),
 izlenecek açık işler [güncel tablodadır](#güncel-takip-tablosu).
 

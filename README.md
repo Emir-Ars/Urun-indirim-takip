@@ -197,14 +197,14 @@ teslim işleri [proje planında](proje_plani.md#güncel-takip-tablosu) ayrı izl
 | ML öncesi bakım ve otomatik güvenli keşif kabulü | ✅ Tamamlandı |
 | Proje yapısının sadeleştirilmesi | ✅ Tamamlandı (26 Ekim) |
 | ML ile indirim olasılığı tahmininin yazılımı | ✅ Model, gölge kayıt/değerlendirme ve tahmin kartı tamam. Kendi verimizde kesin değerlendirme [güncel takip tablosunda](proje_plani.md#güncel-takip-tablosu), eski ikincil hedefler [açık kapsam bölümünde](proje_plani.md#ml-ikincil-hedeflerinin-kapsamı). |
-| Zamanlanmış görevlerin kurulumu | ✅ Toplama, keşif ve günlük gölge görevleri kurulu; ilk işletim kontrolleri doğrulandı. Düzenli takip ve gecikme incelemesi [planda](proje_plani.md#güncel-takip-tablosu). |
+| Zamanlanmış görevlerin kurulumu | ✅ Toplama, keşif ve günlük gölge görevleri kurulu; ilk işletim kontrolleri doğrulandı. Düzenli takip [planda](proje_plani.md#güncel-takip-tablosu); geçmiş tur gecikmelerinin nedeni 16 Kasım'da doğrulandı ([bilinen sınırlar](docs/teknik.md#bilinen-sınırlar)). |
 | Docker teslim yazılımı | ✅ Kod, rehber, yerel kontroller ve GitHub Docker CI tamam. Fiziksel kabul ayrı izlenir ([rehber](docs/teslim.md), [kayıt](docs/gecmis.md)). |
 
 ### Düzenli takip ve bekleyen işler
 
 Haftalık sistem/model kontrolü düzenli işletim işidir. Kesin model
-değerlendirmesi, geçmiş tur gecikmelerinin incelenmesi, fiziksel teslim
-kabulü ve sunum/final teslim için [tek güncel takip tablosu](proje_plani.md#güncel-takip-tablosu)
+değerlendirmesi, fiziksel teslim kabulü ve sunum/final teslim için
+[tek güncel takip tablosu](proje_plani.md#güncel-takip-tablosu)
 kullanılır; iş numaraları, sonraki adımlar ve tamamlanma koşulları oradadır.
 Eski ikincil ML hedeflerinin kapsamı ayrıca netleştirilecektir; bunlar
 tamamlandı sayılmaz. Yeni geliştirme/model çalışması ayrı plan ve onay ister.
