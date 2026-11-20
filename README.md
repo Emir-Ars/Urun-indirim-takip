@@ -203,12 +203,12 @@ teslim işleri [proje planında](proje_plani.md#güncel-takip-tablosu) ayrı izl
 | Proje yapısının sadeleştirilmesi | ✅ Tamamlandı (26 Ekim) |
 | ML ile indirim olasılığı tahmininin yazılımı | ✅ Model, gölge kayıt/değerlendirme ve tahmin kartı tamam. Kendi verimizde kesin değerlendirme [güncel takip tablosunda](proje_plani.md#güncel-takip-tablosu), eski ikincil hedeflerin [16 Kasım kapsam kararı](proje_plani.md#ml-ikincil-hedeflerinin-kapsamı) planda; güvenilirlik grafiği eklendi ([komut](docs/teknik.md#güvenilirlik-grafiği-python--m-appml-reliability-chart)). |
 | Zamanlanmış görevlerin kurulumu | ✅ Toplama, keşif ve günlük gölge görevleri kurulu; ilk işletim kontrolleri doğrulandı. Düzenli takip [planda](proje_plani.md#güncel-takip-tablosu); geçmiş tur gecikmelerinin nedeni 16 Kasım'da doğrulandı ([bilinen sınırlar](docs/teknik.md#bilinen-sınırlar)). |
-| Docker teslim yazılımı | ✅ Kod, rehber, yerel kontroller ve GitHub Docker CI tamam. Fiziksel kabul ayrı izlenir ([rehber](docs/teslim.md), [kayıt](docs/gecmis.md)). |
+| Docker teslim yazılımı | ✅ Kod, rehber, yerel kontroller ve GitHub Docker CI tamam. İkinci bilgisayarda fiziksel kabul yapılmadı; [teslim sınırıdır](proje_plani.md#6-bilinen-sınırlar-özet) ([rehber](docs/teslim.md), [kayıt](docs/gecmis.md)). |
 
 ### Düzenli takip ve bekleyen işler
 
 Haftalık sistem/model kontrolü düzenli işletim işidir. Kesin model
-değerlendirmesi, fiziksel teslim kabulü ve sunum/final teslim için
+değerlendirmesi ve sunum/final teslim için
 [tek güncel takip tablosu](proje_plani.md#güncel-takip-tablosu)
 kullanılır; iş numaraları, sonraki adımlar ve tamamlanma koşulları oradadır.
 Eski ikincil ML hedeflerinden güvenilirlik grafiği eklendi; ablasyon ve TL

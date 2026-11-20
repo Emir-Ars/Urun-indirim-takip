@@ -33,8 +33,9 @@ Kullanıcı arayüzde arama yaptığında canlı scraping veya model eğitimi
 ## 2. Güncel durum
 
 Ana uygulamanın geliştirmeleri ve ilgili yerel/CI kontrolleri tamamlandı.
-Aşağıdaki tamamlanma durumu yazılımı anlatır; düzenli işletim, modelin kendi
-verimizde kesin değerlendirmesi ve fiziksel teslim kabulü ayrı izlenir.
+Aşağıdaki tamamlanma durumu yazılımı anlatır; düzenli işletim ve modelin
+kendi verimizde kesin değerlendirmesi ayrı izlenir. İkinci bilgisayarda
+fiziksel teslim kabulü 20 Kasım kararıyla [teslim sınırıdır](#6-bilinen-sınırlar-özet).
 Eski ML kararlarındaki ikincil hedeflerin kapsamı 16 Kasım'da karara
 bağlandı; [ilgili bölümde](#ml-ikincil-hedeflerinin-kapsamı) açıklanır.
 
@@ -53,7 +54,7 @@ bağlandı; [ilgili bölümde](#ml-ikincil-hedeflerinin-kapsamı) açıklanır.
 | Proje yapısının sadeleştirilmesi (Bölüm 8, Adım 1–5) | ✅ Tamamlandı (26 Ekim) | `75d4732` |
 | ML öncesi ekran iyileştirmeleri 1–2 | ✅ Tamamlandı (28 Ekim) | `dd2e262`, `94045bd` |
 | 8. ML (indirim tahmini) | ✅ Hazırlık, model dondurma/saklı test, gölge kayıt/değerlendirme ve tahmin kartı yazılımı tamamlandı; ilgili yerel/görsel kontroller ve CI doğrulandı | [Tamamlanan uygulama adımları](#tamamlanan-uygulama-adımları), Bölüm 9 |
-| 9. Sürekli işletim ve Docker | ✅ Görevler kurulu; Docker planı, yazılımı, rehberi ve yerel/CI kontrolleri tamamlandı. İşletim takibi ve ikinci bilgisayar kabulü aşağıdaki tabloda | [Tamamlanan uygulama adımları](#tamamlanan-uygulama-adımları), Bölüm 9 |
+| 9. Sürekli işletim ve Docker | ✅ Görevler kurulu; Docker planı, yazılımı, rehberi ve yerel/CI kontrolleri tamamlandı. İşletim takibi aşağıdaki tabloda; ikinci bilgisayar kabulü yapılmadı ([teslim sınırı](#6-bilinen-sınırlar-özet)) | [Tamamlanan uygulama adımları](#tamamlanan-uygulama-adımları), Bölüm 9 |
 
 Öğrenme programı pasiftir; kullanıcı istediğinde Oturum 2'den sürer.
 Program [kendi bölümünde](#öğrenme-programı-proje-mühendisliğini-pekiştirme),
@@ -82,8 +83,7 @@ bakım ve geliştirmeler [geçmişte](docs/gecmis.md) tutulur.
 |---|---|---|---|---|
 | Düzenli takip | **6.5 / 9.1 — Haftalık sistem ve model kontrolü.** İşletimde; ilk otomatik ve ilk haftalık kontrol doğrulandı | Her Pazar 14:00 keşfi gerçekten bittikten sonra görev/logları, veri/kayıt bütünlüğünü ve model ara raporunu inceleme; ardından [haftalık yedek](docs/teknik.md#haftalık-yedek) | Her kontrolde sonuç ve sorunlar doğrulanır; bu satır tekrarlanan işletim rutinidir | [Kontrol takvimi](#65-kontrol-planı); tarihli sonuçlar [README'de](README.md#-güncel-kapsam) |
 | Kesin değerlendirme | **6.5 — Modelin kendi verimizde kabulü.** Bekliyor; gerçek olasılık gösterimi kapalı | 21 Aralık haftası bilgi amaçlı ara rapor; 5 Ocak 2027'de o gün alınmış tek kesin görüntüyle değerlendirme | Ön kayıtlı üç durumlu sonuç belgelenir; gösterim yalnız koşullar karşılanırsa mevcut doğrulama komutuyla açılabilir | [6.5 kapanış koşulu](#65-kontrol-planı), [gösterim onayı](docs/teknik.md#tahmin-gösterim-onayı-python--m-appml-shadow-display) |
-| Fiziksel kabul | **9.7 — İkinci bilgisayarda teslim kabulü.** Erişim bekliyor; 10 Kasım kullanıcı bildirimine göre yalnız mevcut bilgisayar var | Ayrı Windows 11 x64 bilgisayarda ilk kurulum ve ilk hazırlıktan sonra internet kapalı kullanım | [Teslim rehberindeki](docs/teslim.md#kabulün-kapsamı) fiziksel kabul adımları o bilgisayarda doğrulanır | Yerel/CI kabulünün kaydı [geçmişte](docs/gecmis.md); fiziksel kabul bununla kapanmaz |
-| Sunum ve teslim | **İş 8 — Sunum ve final teslim.** Hazırlık bekliyor | Sunum biçimi/içeriği ve kesin staj bitişini netleştirme; 21–31 Aralık hazırlık hedefi. Bildirilen bitiş Ocak 2027'nin ilk veya ikinci haftası | Sunum, son veri paketi ve rehberle teslim tamamlanır | Kullanım [teslim rehberinde](docs/teslim.md); biçim/içerik kararı bekliyor |
+| Sunum ve teslim | **İş 8 — Sunum ve final teslim.** Biçim ve kitle belli (20 Kasım): slayt + Docker kopyasından canlı demo, teknik ekip; tarih bilinmiyor | Sunum tarihini ve kesin staj bitişini 4 Aralık'a kadar staj sorumlusundan öğrenme; 21–31 Aralık hazırlık. Tarih 5 Ocak'tan sonraysa kesin değerlendirme sonucu eklenir; önceyse tahmin kartı kapalı gösterilir ve ara rapor anlatılır | Sunum, son veri paketi ve rehberle teslim tamamlanır | Kararlar [Bölüm 5'te](#5-kararlar); kullanım [teslim rehberinde](docs/teslim.md) |
 
 5 Ocak raporunun koşulları sağlanırsa mevcut doğrulama komutuyla gösterim
 ayrıca açılabilir. Koşullar sağlanmazsa kapalı kalır; yeni model/özellik
@@ -295,6 +295,8 @@ açık işler [güncel takip tablosundadır](#güncel-takip-tablosu).
 | 19 Kasım | Katalogdaki mevcut etkin sayfalara HTTP 301 ile yönlenen iki eski Trendyol kaydının pasife alınması onaylandı; kayıtlar ve geçmiş ürün bağları korunur. | Kullanıcının hedefli kaynak kaydı yönlendirmeyi doğruladı; hedefler zaten izleniyor. Kimlik kuralını değiştirmeden tekrarlayan eski adres okumaları durdurulur. |
 | 20 Kasım | Haftalık yedek: her Pazar haftalık kontrolden sonra ve 5 Ocak 2027 kesin değerlendirmesinden sonra mevcut Export paketi, loglar ve keşif raporlarıyla birlikte E: sürücüsüne ve OneDrive'a kopyalanır; iki kopya `verify` ile doğrulanır. Yeni kod veya görev yoktur; komutlar [teknik rehberdedir](docs/teknik.md#haftalık-yedek). Docker parola dosyaları ve `artifacts/` yedeğe girmez. | Canlı DB, gölge kayıtları ve dondurulan model kanıtları yalnız C: diskindeydi; son paket 10 Kasım tarihliydi ve kaçan gözlem geri toplanamaz. E: ayrı fiziksel disk, OneDrive bilgisayar dışı kopyadır; kullanıcı seçimi. |
 | 20 Kasım | Tatil işletimi: 24 Aralık–4 Ocak arasında bilgisayar evde, prizde ve oturumu açık kalır (kapak kapatılabilir); her sabah salt okunur [tur kontrolü](docs/teknik.md#tatil-dönemi-tur-kontrolü) yapılır, plan 20 Aralık Pazar kontrolünde teyit edilir. Görev, güç ve Windows Update ayarı değişmez; bilgisayarı uykudan uyandırma eklenmez (16 Kasım kararı sürer). | 5 Ocak kapısının 60 gün koşulu, 27 Ekim'den sayıldığı için 25–28 Aralık arasında en az bir etiketli başlangıç ister: o akşamın 22:00 turu ve sonraki 7 günün en az 6'sında gözlem. 27 Ekim–19 Kasım'da 24 akşamın 23'ünde tur yapıldı; kullanıcı ek teknik önlem seçmedi, Windows Update kaynaklı aksama riski günlük kontrolle izlenir. |
+| 20 Kasım | İş 8 sunumu: slayt + Docker kopyasından canlı demo; kitle teknik ekip (mimari, veri bütünlüğü, test/CI ve ML değerlendirme yöntemi öne çıkar). Tarih belli değil; kullanıcı tarihi ve kesin staj bitişini 4 Aralık'a kadar staj sorumlusundan öğrenir. Tarih 5 Ocak'tan sonraysa kesin değerlendirme sonucu sunuma eklenir; önceyse tahmin kartı kapalı gösterilir ve ara rapor anlatılır. Hazırlık 21–31 Aralık. | Kullanıcı seçimi. Sunum tarihi, kesin model sonucunun sunuma girip girmeyeceğini belirler; 4 Aralık, 21 Aralık hazırlığından önce iki hafta pay bırakır. |
+| 20 Kasım | 9.7 ikinci fiziksel bilgisayar kabulü yapılmayacak; teslim sınırı olarak kapatıldı. Kanıt, bu bilgisayardaki temiz klasör/yalıtılmış ağ denemesi ve CI yapay Docker kabulüdür; ikinci bilgisayarda ilk kurulum ve internet kapalı kullanım doğrulanmamış sayılır, “tamamlandı” denmez. | 10 Kasım'dan beri ikinci bilgisayar erişimi yok; süresiz açık iş takvimi belirsizleştiriyordu. Kullanıcı kararı. |
 
 **ML kararlarının güncelliği:** 28 Ekim ve 2 Kasım satırlarındaki yeniden
 kalibrasyon seçeneği, mevcut dondurulan model için 4 Kasım kararıyla
@@ -352,10 +354,14 @@ Ayrıntı ve kanıtları: [teknik rehber, Bilinen sınırlar](docs/teknik.md#bil
 - Cimri'nin kullanım uygunluğu doğrulanmadı; iki ürünün eşleştirmesi yok;
   Cimri serisi kendi ölçümümüzle aynı kapsamda sayılmaz.
 - Siteler değişebilir; "bir daha bakmaya gerek yok" garantisi verilmez.
+- İkinci fiziksel Windows bilgisayarında teslim kabulü yapılmadı (20 Kasım
+  kararı). İlk kurulum ve internet kapalı kullanım yalnız bu bilgisayardaki
+  temiz klasör, yalıtılmış Docker ağı ve CI yapay kabulüyle sınandı; başka
+  donanımda veya Windows kurulumunda sorun çıkmayacağı kanıtlanmadı.
 
 ## 7. Açık kararlar
 
-İşletim, fiziksel kabul ve sunumun bekleyen koşulları
+İşletim ve sunumun bekleyen koşulları
 [güncel takip tablosundadır](#güncel-takip-tablosu). Docker teslim kapsamı
 9 Kasım'da onaylanmıştır; yeniden kapsam kararı beklemiyor. Mevcut
 [9.2 sözleşmesi](#docker-ve-teslim-hedefi-92) geçerlidir.
@@ -513,7 +519,7 @@ Gerçek olasılık gösterimi kapalıdır; yazılımın bitmesi gösterim onayı
 | 9.4 | Manifestli dışa aktarma, ayrı kopyaya DB/dosya aktarımı ve okuma rolü | ✅ 9 Kasım; yapay doğrulama ve ilk gerçek paket kabulü; kaynak/kopya eşleşmesi, yetki ve tekrar hazırlama |
 | 9.5 | API/ekran bağlantısı, aktarım bildirimi ve kopyaya özel gösterim bakımı | ✅ 10 Kasım; yapay/gerçek kopya kabulü; Linux gösterim açma/kapatma yalnız yapay verilerle sınandı |
 | 9.6 | Tek PowerShell girişi ve paket seçimi/geçişi/geri dönüş | ✅ 10 Kasım; yapay hata/kurtarma ve gerçek kopyanın yeniden açılışı |
-| 9.7 | Bütün akış aracı, ayrı yapay Docker CI işi ve teslim rehberi | ✅ 10 Kasım; kod, yerel temiz klasör ve aynı SHA'nın CI test/biçim/Docker kabulü tamamlandı. **İkinci fiziksel PC kabulü açık**; [güncel durum](#güncel-takip-tablosu) |
+| 9.7 | Bütün akış aracı, ayrı yapay Docker CI işi ve teslim rehberi | ✅ 10 Kasım; kod, yerel temiz klasör ve aynı SHA'nın CI test/biçim/Docker kabulü tamamlandı. İkinci fiziksel PC kabulü yapılmadı; 20 Kasım kararıyla [teslim sınırı](#6-bilinen-sınırlar-özet) |
 
 Yerel kontrol, gerçek kopya ve yapay testin kanıt sınırları
 [teknik rehberde](docs/teknik.md#docker-kabul-senaryoları), alıcının kullanımı
@@ -580,9 +586,11 @@ yerel araçlarını kullanır. Docker'a özel parola istisnasının tek kaynağ�
 kalıcılık, paket bütünlüğü, parolalar ve geri dönüşün bugünkü sözleşmesi
 [teknik rehberdedir](docs/teknik.md#docker-imaj-ve-compose-temeli);
 [zorunlu kabul senaryoları](docs/teknik.md#docker-kabul-senaryoları) orada tutulur.
-Alıcının kurulum/kullanımı ve **ikinci fiziksel Windows bilgisayarında**
-bekleyen ilk kurulum/host interneti kapalı kabulü [teslim rehberindedir](docs/teslim.md#kabulün-kapsamı).
-Yapay/yerel/CI başarısı bu fiziksel kabulü kapatmaz; durum güncel tabloda izlenir.
+Alıcının kurulum/kullanımı ve yeni bilgisayardaki ilk kurulum kontrolleri
+[teslim rehberindedir](docs/teslim.md#kabulün-kapsamı). İkinci fiziksel
+Windows bilgisayarında kabul yapılmadı; 20 Kasım kararıyla
+[teslim sınırıdır](#6-bilinen-sınırlar-özet) ve yapay/yerel/CI başarısı bu
+kabulün yerine geçmez.
 
 Aralık sunumunda fiyat ve grafikler çalışır; gerçek olasılık gösterimi
 kesin değerlendirmeye bağlıdır. 31 Aralık temel geliştirme, 21–31 Aralık

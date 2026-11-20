@@ -4190,7 +4190,7 @@ sahiplik, API izinleri ve tekrar hazırlama doğrulanmıştır; kapsam sayılar�
 [README Güncel kapsam](../README.md#-güncel-kapsam) tablosundadır. Gerçek
 kopyada yazma denemesi yapılmaz; yetkiler salt okunur SQL ile denetlenir.
 Yazmanın fiilen reddi yalnız yapay `_test` kopyasında sınanır. Başka
-bilgisayarda kurulum ve teslim kabulü 9.7 kapsamındadır.
+bilgisayarda kurulum kabulü yapılmadı; [teslim sınırıdır](../proje_plani.md#6-bilinen-sınırlar-özet).
 
 ### Docker: tek komutla kullanım
 
@@ -4258,8 +4258,9 @@ senaryosunda hedef ağı `internal: true` ile dışa kapatılır; normal Start a
 `--pull never` kullanılır. Ana bilgisayarın ağ ayarı değiştirilmez. Açılış
 sonrasında konteyner içindeki gerçek HTTP/grafik akışı çalışırken dış TCP
 bağlantısının kurulamadığı da sınanır. Host tarayıcı portu normal ağda ayrı
-denetlenir; internal ağın host port erişimiyle aynı kanıt sayılmaz. Fiziksel
-ikinci Windows bilgisayarı denemesi ayrı kabul kanıtıdır; mevcut durum [güncel takip tablosunun 9.7 satırında](../proje_plani.md#güncel-takip-tablosu).
+denetlenir; internal ağın host port erişimiyle aynı kanıt sayılmaz. İkinci
+fiziksel Windows bilgisayarında deneme yapılmadı; bu yalıtılmış ağ denemesi
+onun yerine geçmez ([teslim sınırı](../proje_plani.md#6-bilinen-sınırlar-özet)).
 
 ```powershell
 .venv\Scripts\python.exe tools/docker_check.py --context desktop-linux --output artifacts/docker-kabul-yeni
@@ -4282,14 +4283,15 @@ ve ilk hazırlık tarihi korundu. Bu deneme, host'ta Python/PG'nin kurulu
 olmadığını veya ikinci fiziksel Windows PC kabulünü kanıtlamaz. Kullanıcı onaylı
 gönderim sonrasında aynı SHA'nın normal test/biçim ve yeni Docker kabul/rapor
 işleri GitHub'da başarılı doğrulandı; kimlikler [geçmiştedir](gecmis.md).
-İkinci fiziksel Windows bilgisayarı kabulü açık kalır.
+İkinci fiziksel Windows bilgisayarı kabulü yapılmadı; 20 Kasım kararıyla
+teslim sınırıdır.
 
 ### Docker kabul senaryoları
 
-9.7 için onaylanan kontroller aşağıdadır. Yerel/yapay CI kanıtı ile
-ikinci fiziksel Windows bilgisayarındaki kullanıcı kabulü ayrı izlenir;
-güncel durum [takip tablosundadır](../proje_plani.md#güncel-takip-tablosu),
-hedef bilgisayarın adımları [teslim rehberindedir](teslim.md#kabulün-kapsamı).
+9.7 için onaylanan kontroller aşağıdadır. Bunlar kaynak bilgisayarda ve
+CI'da yapıldı; ikinci fiziksel Windows bilgisayarındaki kullanıcı kabulü
+yapılmadı ([teslim sınırı](../proje_plani.md#6-bilinen-sınırlar-özet)).
+Yeni bilgisayara kuran kişinin kontrolleri [teslim rehberindedir](teslim.md#kabulün-kapsamı).
 
 - Boş Docker ortamına kurulum ve aynı paketi tekrar hazırlama.
 - Eksik/bozuk dosya, yanlış model veya uyumsuz şemada aktarımın reddi.
@@ -4499,8 +4501,9 @@ sistemi yedekten yeniden kurmak kullanıcı kararı ve ayrı plan gerektirir.
   `.dockerignore` ile yalnız yapay dosyalar içeren ayrı bağlamda yapılır.
   Gerçek paket/kopya ve Docker CI kabulü tamamlandı; [teslim rehberi](teslim.md)
   bugünkü kullanımı açıklar. İkinci fiziksel Windows bilgisayarındaki ilk
-  kurulum ve host interneti kapalı kullanım kabulü erişim bekler; yerel
-  temiz klasör/yalıtılmış ağ denemesi bu maddeyi kapatmaz.
+  kurulum ve host interneti kapalı kullanım kabulü yapılmadı (20 Kasım
+  kararı, teslim sınırı); yerel temiz klasör/yalıtılmış ağ denemesi bunun
+  yerine geçmez.
 
 - **Hepsiburada arama API'si** uzun süre HTTP 403 ile engelledi; 1 ve 2 Kasım
   2026'da cevap verdi; 8 Kasım zamanlanmış keşifte de erişildi. O çalışmada

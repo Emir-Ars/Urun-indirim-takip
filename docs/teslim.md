@@ -128,7 +128,8 @@ klasörüne yazılır. Dış ağsız denemede yalnız kabul projesinin Docker a�
 Bu ayar [Docker'ın ağ yalıtımı sözleşmesine](https://docs.docker.com/reference/compose-file/networks/#internal)
 dayanır.
 
-Ayrı bir Windows bilgisayarı mevcut olduğunda son kullanıcı kabulü:
+Projeyi yeni bir Windows bilgisayarına kuran kişi ilk kurulumda şunları
+kontrol eder:
 
 - Temiz proje klasöründe ilk Prepare ve Start başarılı olmalı.
 - Aktarım tarihi, örnek fiyatlar ve iki grafik verilen paketle eşleşmeli.
@@ -136,7 +137,8 @@ Ayrı bir Windows bilgisayarı mevcut olduğunda son kullanıcı kabulü:
 - İlk hazırlık tamamlandıktan sonra test bilgisayarında internet kapalıyken
   Start ve tarayıcı ekranı çalışmalı.
 
-Bu fiziksel bilgisayar denemesi, bu bilgisayardaki boş kurulum klasörü ve
-yalıtılmış Docker ağ denemesiyle aynı kanıt değildir. Güncel tamamlanma ve
-bekleyen kabul durumu [güncel takip tablosunun 9.7 satırında](../proje_plani.md#güncel-takip-tablosu)
-izlenir.
+Bu kontroller ikinci bir fiziksel bilgisayarda yapılmadı; 20 Kasım kararıyla
+[teslim sınırıdır](../proje_plani.md#6-bilinen-sınırlar-özet). Kaynak
+bilgisayardaki boş kurulum klasörü, yalıtılmış Docker ağı ve CI yapay kabulü
+başka donanımda veya başka bir Windows kurulumunda sorun çıkmayacağını
+kanıtlamaz.
