@@ -297,6 +297,7 @@ açık işler [güncel takip tablosundadır](#güncel-takip-tablosu).
 | 20 Kasım | Tatil işletimi: 24 Aralık–4 Ocak arasında bilgisayar evde, prizde ve oturumu açık kalır (kapak kapatılabilir); her sabah salt okunur [tur kontrolü](docs/teknik.md#tatil-dönemi-tur-kontrolü) yapılır, plan 20 Aralık Pazar kontrolünde teyit edilir. Görev, güç ve Windows Update ayarı değişmez; bilgisayarı uykudan uyandırma eklenmez (16 Kasım kararı sürer). | 5 Ocak kapısının 60 gün koşulu, 27 Ekim'den sayıldığı için 25–28 Aralık arasında en az bir etiketli başlangıç ister: o akşamın 22:00 turu ve sonraki 7 günün en az 6'sında gözlem. 27 Ekim–19 Kasım'da 24 akşamın 23'ünde tur yapıldı; kullanıcı ek teknik önlem seçmedi, Windows Update kaynaklı aksama riski günlük kontrolle izlenir. |
 | 20 Kasım | İş 8 sunumu: slayt + Docker kopyasından canlı demo; kitle teknik ekip (mimari, veri bütünlüğü, test/CI ve ML değerlendirme yöntemi öne çıkar). Tarih belli değil; kullanıcı tarihi ve kesin staj bitişini 4 Aralık'a kadar staj sorumlusundan öğrenir. Tarih 5 Ocak'tan sonraysa kesin değerlendirme sonucu sunuma eklenir; önceyse tahmin kartı kapalı gösterilir ve ara rapor anlatılır. Hazırlık 21–31 Aralık. | Kullanıcı seçimi. Sunum tarihi, kesin model sonucunun sunuma girip girmeyeceğini belirler; 4 Aralık, 21 Aralık hazırlığından önce iki hafta pay bırakır. |
 | 20 Kasım | 9.7 ikinci fiziksel bilgisayar kabulü yapılmayacak; teslim sınırı olarak kapatıldı. Kanıt, bu bilgisayardaki temiz klasör/yalıtılmış ağ denemesi ve CI yapay Docker kabulüdür; ikinci bilgisayarda ilk kurulum ve internet kapalı kullanım doğrulanmamış sayılır, “tamamlandı” denmez. | 10 Kasım'dan beri ikinci bilgisayar erişimi yok; süresiz açık iş takvimi belirsizleştiriyordu. Kullanıcı kararı. |
+| 20 Kasım | Proje denetiminin küçük bulguları: Galaxy S25 512 GB (`samsung_galaxy_s25_512gb`) katalogda pasife alınır, kaydı ve geçmişi korunur; teslim rehberine kısa klasör yolu notu eklenir; bağımlılık sürümleri ve uzun fonksiyonlar final teslime kadar değiştirilmez ([bilerek değiştirilmeyen davranışlar](#bilerek-değiştirilmeyen-davranışlar)). | 16 Ekim'den beri ürünün hiç sayfası yok; ekran bir aylık turu “fiyat doğrulanamadı” diye gösteriyordu. Keşif pasif ürüne sayfa eklemez, raporda çakışma olarak gösterir; ML etkilenmez. Teslimde proje yolu yaklaşık 110 karakteri aşarsa Prepare PowerShell 5.1 yol sınırına takılıyor. Kullanıcı seçimi. |
 
 **ML kararlarının güncelliği:** 28 Ekim ve 2 Kasım satırlarındaki yeniden
 kalibrasyon seçeneği, mevcut dondurulan model için 4 Kasım kararıyla
@@ -329,6 +330,17 @@ Denetimlerde incelenip gerekçesiyle olduğu gibi bırakılan davranışlar:
 - Katalog altı yerde okunur ama iki ayrı kuralla: veritabanı eşitlemesi
   parmak izini satır sonundan bağımsız hesaplar, keşif yazma güvenliği için
   ham baytları karşılaştırır. Tek okuyucuda birleştirmek bu farkı bozar.
+- Çekirdek paketler (pydantic, curl_cffi, psycopg, tzdata, beautifulsoup4,
+  filelock) `pyproject.toml` içinde aralıkla kalır; yerel `.venv`, CI ve
+  Docker kilidi küçük sürüm farkıyla çalışır, ML ve web paketleri her yerde
+  aynıdır ([sürümler](docs/teknik.md#bilinen-sınırlar)). Final teslime kadar
+  güncelleme veya sabitleme yapılmaz (20 Kasım): sabitleme Docker kilidinin
+  yeniden üretilmesini ister ve 5 Ocak öncesi gereksiz risk taşır.
+- Uzun fonksiyonlar (ör. Hepsiburada `get_product_data` 212 satır,
+  `app/ml/__main__.py` `main` 176 satır, `app/ml/reporting.py` 1.313 satır)
+  final değerlendirmeden önce bölünmez (20 Kasım): davranışı değiştirme
+  riski taşır. Okunabilirlik için yeniden düzenleme gelecek çalışmadır ve
+  ayrı plan ister.
 
 ## 6. Bilinen sınırlar (özet)
 

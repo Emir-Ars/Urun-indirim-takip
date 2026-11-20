@@ -145,13 +145,13 @@ gerekli yolları açıklar.
 |---|---|
 | Fiyat kaynakları | Trendyol ve Hepsiburada |
 | Keşif hedefleri | 25 (24 etkin): Apple 9, Samsung 8, Xiaomi 6, POCO 2 |
-| Katalog | 61 ürün, 391 bağlantı (386 etkin); Hepsiburada 241, Trendyol 150 |
+| Katalog | 61 ürün (60 etkin; sayfası olmayan Galaxy S25 512 GB 20 Kasım'da pasife alındı), 391 bağlantı (386 etkin); Hepsiburada 241, Trendyol 150 |
 | Katalog bağlantılarının markalara dağılımı | Apple 181, Samsung 126, Xiaomi 79, POCO 5; pasif bağlantılar dahil (16 Kasım) |
 | Toplama düzeni | Her gün 10:00 ve 22:00; haftalık keşif Pazar 14:00 (otomatik güvenli kabul) |
 | Cimri geçmişi | 4 Kasım salt okuma denetimi: 58 ürün, 22.595 tarihli kayıt (14 üründe 699 eksik fiyat), 9 Ekim 2025–2 Kasım 2026; ürünlerin kendi ilk–son kayıtları arasında kayıtsız gün yok. Galaxy S24 FE 128 GB 3 Kasım 2025'ten başlıyor; diğer 57 ürün 9 Ekim'den. Galaxy S25 512 GB ve Redmi Note 14 Pro 5G 256 GB eşleştirmesi yok; son alım 2 Kasım, düzenli alım yok. |
 | Kendi toplama geçmişi | 20 Kasım 11:00 günlük görüntüsüyle doğrulama: 28 Eylül 2026 15:39–20 Kasım 2026 10:35 (İstanbul); 105 tamamlanmış tur (103 zamanlanmış, 2 elle), 37.133 sayfa sonucu. DB görüntüsünde 61 ürün ve geçmişte kaldırılmış bir bağlantı dahil 392 sayfa var; katalogla görüntünün 386 etkin bağlantı kümesi aynı. Önceki günlük görüntüdeki 36.361 kontrol ve 103 tur değişmedi. |
 | Kendi geçmişimizdeki fiyat boşlukları | 4 Kasım denetimi; yalnız 3 Kasım sonuna kadar kapanmış günler: 2.199 ürün-günün 1.796'sında en az bir ham fiyat, 310'unda yalnız stoksuz sonuç, 16'sında fiyat yok ve hata var, 77'sinde hiç kontrol yok. ML için kullanılabilir 22:00 fiyatı 776 ürün-günde, günlük minimum 463 ürün-günde yok; bu iki sayı birbirine eklenmez ve ham fiyat yokluğuyla aynı ölçü değildir. |
-| Otomatik testler | 19 Kasım: katalog bakımı öncesi tam pytest 2677 başarılı, 0 atlanan; bakım sonrası sözleşme/keşif kataloğu/DB eşitleme testleri 118 başarılı, 0 atlanan. Black ve Flake8 temiz. |
+| Otomatik testler | 20 Kasım: Galaxy S25 512 GB pasifleştirmesinden sonra tam pytest 2677 başarılı, 0 atlanan; Black ve Flake8 temiz. |
 | Docker gerçek paket kabulü | 10 Kasım 11:14 paketi: 57 dosya; kopyada 60 ürün, 85 tur, 29.447 sayfa sonucu ve 22.595 Cimri satırı. Kaynak/kopya satır, şema, dizi ve dosya SHA'ları eşleşti; native kaynak değişmedi. API SELECT hesabında yazma yetkisi yok. API/UI/DB sağlıklı; bütün telefonlarda olasılık kapalı, gerçek API ile fiyatlar/iki grafik, aralık ve telefon seçimi, doğru aktarım bildirimi doğrulandı. Bakım/tekrar hazırlama veriyi veya hazırlık kaydını değiştirmedi; model ve kapı korundu. |
 
 <details>

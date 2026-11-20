@@ -9,7 +9,11 @@ Yeni veriler kaynak bilgisayardan yeni paketle aktarılır.
 
 1. Docker Desktop/WSL2 kurulumunu tamamlayıp Linux konteynerlerini açın.
    İlk kurulum ve imaj oluşturma sırasında internet gerekir.
-2. Pakete uygun proje sürümünü yazabildiğiniz bir klasöre çıkarın. Projenin
+2. Pakete uygun proje sürümünü yazabildiğiniz, **yolu kısa** bir klasöre
+   çıkarın (ör. `C:\FiyatTakip`; tam yol en çok 100 karakter). Paket klasörünün
+   adı da kısa kalsın (ör. `paket_20261120_164304`). Windows PowerShell 5.1
+   259 karakterden uzun dosya yollarını işleyemez; uzun yolda Prepare yarıda
+   kalır ([ayrıntı](teknik.md#bilinen-sınırlar)). Projenin
    içinde `data\teslim\paketler\` klasörünü oluşturup teslim edilen paket
    klasörünü buraya kopyalayın. Teslim; proje kodu, veri paketi ve bu
    rehberden oluşur. Paket ayrı verilir; GitHub deposu gerçek veriyi içermez.

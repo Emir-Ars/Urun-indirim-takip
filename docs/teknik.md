@@ -1512,7 +1512,8 @@ verdiği için kimlik aramada doğrulanamadı; 2 Kasım son alımında doğrulan
 (sayfa ve API kimliği, marka, kategori, başlık ve H1'lerin model/kapasitesi)
 doğrular; bunlardan biri tutmazsa ürün `error` olur ve aktarılmaz. Aynı
 aramada diğer iki ürün için yine yalnız başka ürünlere ait sayfalar çıktı.
-Galaxy S25 512 GB'ın katalogda etkin sayfası da yoktur.
+Galaxy S25 512 GB'ın katalogda etkin sayfası da yoktur; ürün 20 Kasım'da
+pasife alındı ([plan](../proje_plani.md#5-kararlar)).
 
 Redmi Note 14 Pro'nun [256 GB](https://www.cimri.com/cep-telefonlari/en-ucuz-xiaomi-redmi-note-14-pro-fiyatlari,a2372365369)
 ve [512 GB](https://www.cimri.com/cep-telefonlari/en-ucuz-xiaomi-redmi-note-14-pro-512gb-12gb-ram-fiyatlari,a2430184601)
@@ -4504,6 +4505,24 @@ sistemi yedekten yeniden kurmak kullanıcı kararı ve ayrı plan gerektirir.
   kurulum ve host interneti kapalı kullanım kabulü yapılmadı (20 Kasım
   kararı, teslim sınırı); yerel temiz klasör/yalıtılmış ağ denemesi bunun
   yerine geçmez.
+- **Teslimde klasör yolu uzunluğu:** teslim kontrolü Windows PowerShell 5.1
+  ile çalışır ve 259 karakterden uzun yolları işleyemez (bu bilgisayarda
+  `LongPathsEnabled = 0`). Paket `data\teslim\paketler\<paket>\` altına
+  konduğunda proje yolunun üstüne yaklaşık 147 karakter eklenir (paketin en
+  uzun iç yolu 103 karakter). Proje yolu yaklaşık 110 karakteri aşarsa
+  Prepare yarıda kalır. 20 Kasım tam test çalışmasında 272 karakterlik
+  geçici test yolunda aynı hata görüldü; kısa yolda aynı testler geçti.
+  Kullanıcı adımı [teslim rehberindedir](teslim.md#ilk-kez-başka-bilgisayara-kurma).
+- **Bağımlılık sürümleri (20 Kasım 2026):** ML ve web paketleri
+  (`numpy`, `scikit-learn`, `lightgbm`, `fastapi`, `uvicorn`, `streamlit`,
+  `psycopg-pool`, `httpx`, `altair`) `pyproject.toml` içinde kesin sürümlüdür
+  ve yerel `.venv` ile Docker kilidinde aynıdır. Çekirdek paketler aralıkla
+  tanımlıdır: yerel `.venv` pydantic 2.13.5, curl_cffi 0.16.3, psycopg 3.3.6,
+  tzdata 2026.4; Docker kilidi pydantic 2.14.3, curl-cffi 0.17.0,
+  psycopg-binary 3.3.8, tzdata 2026.6 kullanır; CI her çalışmada aralık
+  içindeki güncel sürümleri kurar. Her ortam kendi testinden geçer. Final
+  teslime kadar güncelleme veya sabitleme yapılmaz ([plan](../proje_plani.md#bilerek-değiştirilmeyen-davranışlar));
+  CI'da dış sürüm kaynaklı kırılma görülürse sabitleme ayrı adımla yapılır.
 
 - **Hepsiburada arama API'si** uzun süre HTTP 403 ile engelledi; 1 ve 2 Kasım
   2026'da cevap verdi; 8 Kasım zamanlanmış keşifte de erişildi. O çalışmada

@@ -480,7 +480,7 @@
       "brand": "Samsung",
       "model": "Galaxy S25",
       "storage_gb": 512,
-      "active": true
+      "active": false
     },
     {
       "product_id": 59,
