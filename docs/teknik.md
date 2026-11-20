@@ -4461,6 +4461,51 @@ kanıtlarıyla hash üzerinden eşleştirilmiştir.
   görüldü). Kimlik kuralı `identity` verir, yanlış fiyat geçmişe girmez; bağlantı
   hedefli kararla pasife alınır veya katalogdan çıkarılır. Kalıcı çıkarılan
   bağlantının ürün bağı `retired_listing_bindings` içinde korunur.
+- **Trendyol adres–yanıt ürün kodu uyuşmazlığı (18–20 Kasım 2026):**
+  `trendyol_1212833893` (iPhone 17 512 GB, Mavi) ve
+  `trendyol_1135932836` (iPhone 17 Pro 1 TB, Turuncu) sabah turunda
+  `identity: Trendyol ürün kimliği değişmiş` verdi. Bu özel hata, yanıtın
+  model/kapasite kontrolünden sonra, adresteki `-p-` koduyla yapısal
+  `product.id` eşleşmediğinde üretilir; farklı model geldiğini tek başına
+  kanıtlamaz. Önceki akşam aynı bağlantılarda fiyat vardı. Hatalı yanıtlar
+  fiyat olarak yazılmadı; ilgili ürünlerin diğer sayfaları fiyat üretti.
+  Aynı iki hata 18 Kasım 22:00 ve 19 Kasım 10:00 turlarında da görüldü.
+  Kullanıcının 19 Kasım 13:25'te çalıştırdığı hedefli inceleme nedeni
+  doğruladı: iki eski adres HTTP **301** (kalıcı yönlendirme) döndürüyor,
+  hedef sayfa HTTP 200 veriyor; hedefin canonical adresi ve `product.id`
+  alanı yönlendirmeyle aynı kodu gösteriyor:
+  `trendyol_1212833893` → `trendyol_985256829` (iPhone 17 512 GB) ve
+  `trendyol_1135932836` → `trendyol_985256864` (iPhone 17 Pro 1 TB).
+  İki hedef katalogda zaten etkin ve aynı ürünlere bağlı. Kaynak renk
+  seçicileri `Blue` ve `Cosmic Orange`; bunlar mevcut hedef kayıtlarıyla
+  aynı, satıcı renkleri eski kayıtlardaki Mavi/Turuncu. Model ve yapısal
+  kapasite de eşleşiyor. Ham dosyaların SHA-256'ları kayda uygun bulundu;
+  aynı HTML'ler ağsız ayrıştırmada eski kayıtlarla `identity`, mevcut
+  hedef kayıtlarla geçerli fiyat sonucu verdi. Hedeflerin ikisi de 19
+  Kasım sabah turunda fiyat üretti. Kimlik koruması beklenen davranışı
+  gösterdi. Kullanıcı onayıyla 19 Kasım'da iki eski kayıt katalogda
+  `active: false` yapıldı; mevcut hedefler etkin kaldı. Kayıtlar ve eski
+  ürün bağları katalogda korunuyor; pasif kayıt keşifte kendiliğinden
+  açılmaz. Katalogdan silme yapılmadığından `retired_listing_bindings`
+  değişmedi. Yerel doğrulama yalnız iki aktiflik alanının değiştiğini ve
+  tur planından yalnız eski kayıtların çıktığını doğruladı. 20 Kasım
+  kontrolünde 19 Kasım 22:00 ve 20 Kasım 10:00 turları hatasız tamamlandı;
+  eski kayıtlar taranmadı, mevcut hedeflerin ikisi de fiyat üretti.
+  Günlük gölge görevinin 20 Kasım görüntüsü eski kayıtların DB'de de
+  pasif olduğunu ve etkin bağlantı kümesinin katalogla eşleştiğini
+  doğruladı. Önceki günlük görüntünün bütün tur/fiyat sonuçları ve Cimri
+  geçmişi aynı kaldı; bağlantı satırlarında yalnız onaylı iki aktiflik
+  değişti. Kontrol mevcut loglar ve doğrulanmış günlük görüntü üzerinden
+  yapıldı; agent DB'ye bağlanmadı veya yazmadı. Yerel ve canlı kabul
+  tamamlandı; ayrı onaylı gönderim/CI bekliyor.
+  Kaynak kanıtı:
+  `artifacts/trendyol_kimlik_20261119/yanitlar_20261119_102512_717809/`;
+  ağsız karşılaştırma ve iki alanlık katalog önizlemesi aynı üst klasörde
+  `kaynak_incelemesi_20261119.json` ve `katalog_pasif_onizleme.diff`;
+  uygulama doğrulaması `katalog_uygulama_20261119.json`. Canlı kabul ve
+  yeni kayıt bütünlüğü kanıtı:
+  `artifacts/sistem_kontrol_20261120/canli_kabul_ve_kayit_kontrolu.json`;
+  görevlerin salt okunur durum kaydı aynı klasörde `gorev_durumlari.json`.
 - **`invalid_host` (www3.hepsiburada.com):** bazı Hepsiburada sayfaları ara sıra
   izinli alan adı dışına (`www3.hepsiburada.com/`) gidiyor. Olaylar tek turluk ve
   kendiliğinden geçiyor; yönlendirmenin nedeni doğrulanmadı, izin listesi
