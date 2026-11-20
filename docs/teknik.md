@@ -37,6 +37,7 @@ API ve ekran sözleşmeleri, hata kodları ve bilinen sınırlar. Yalnız sistem
 - [Tahmin gösterim onayı](#tahmin-gösterim-onayı-python--m-appml-shadow-display)
 - [Gölge işletiminde kontrol komutları](#gölge-işletiminde-kontrol-komutları)
 - [Gölge kayıtlarının kontrol sırası](#gölge-kayıtlarının-kontrol-sırası)
+- [Tatil dönemi tur kontrolü](#tatil-dönemi-tur-kontrolü)
 - [Docker: imaj ve Compose temeli](#docker-imaj-ve-compose-temeli)
 - [Docker: paket ve veritabanı aktarımı](#docker-paket-ve-veritabanı-aktarımı)
 - [Docker: tek komutla kullanım ve kabul](#docker-tek-komutla-kullanım)
@@ -3942,6 +3943,47 @@ gölge görevi, kaçmış bir turun geçmiş fiyatlarını geri getiremez.
 
 Bu çıkışlar uygulamanındır; Windows görev sonucu ayrıca yorumlanır. Sorun
 nedeni bulunmadan tekrar tekrar çalıştırmak kontrolün yerine geçmez.
+
+### Tatil dönemi tur kontrolü
+
+5 Ocak kesin değerlendirmesinde süre koşulu (en az 60 takvim günü) ilk
+etiketli başlangıç olan 27 Ekim'den sayılır. Bu yüzden **25–28 Aralık
+arasında en az bir etiketli başlangıç** gerekir. Bunun için o akşamın 22:00
+turunda ürünün bütün planlanan sayfaları cevap vermeli ve sonraki 7 günün
+en az 6'sında fiyat gözlenmelidir (günün bir tam turu yeterlidir). 5 Ocak
+görüntüsünde en geç 28 Aralık başlangıcı etiketlenebilir. Bu koşul
+sağlanmazsa model sonucu ne olursa olsun kapı “değerlendirilemedi” olur.
+
+24 Aralık–4 Ocak arasında bilgisayar evde, prizde ve oturumu açık kalır;
+kapak kapatılabilir ([20 Kasım kararı](../proje_plani.md#5-kararlar)).
+Windows ayarı ve görev değiştirilmez. Her sabah 11:00 gölge görevinden sonra
+proje kökünde aşağıdaki salt okunur komut çalıştırılır. Son iki fiyat turunu
+ve son gölge kaydını gösterir:
+
+```powershell
+& {
+    [Console]::OutputEncoding = [Text.Encoding]::UTF8
+    $son = @(Get-ChildItem data\logs -Filter 'tur_*.log' | Sort-Object Name -Descending | Select-Object -First 2) +
+        @(Get-ChildItem data\logs -Filter 'golge_*.log' | Sort-Object Name -Descending | Select-Object -First 1)
+    foreach ($log in $son) {
+        $ozet = Get-Content -LiteralPath $log.FullName -Encoding UTF8 |
+            Select-String -Pattern 'tamamlandı:|Yeni kayıt:|başarısız|başlatılmadı|tamamlanamadı|Çıkış kodu'
+        "$($log.Name): $(($ozet | ForEach-Object { $_.Line.Trim() }) -join ' | ')"
+    }
+}
+```
+
+Beklenen: dünün `22-00` ve bugünün `10-00` tarihli tur logları, ikisinde de
+`tamamlandı` ve `Çıkış kodu: 0` ya da `2` (tur tamamlandı, bazı sayfalarda
+hata), ayrıca bugünün `golge_` logunda `Çıkış kodu: 0`. Eksik tarih, çıkış
+1 veya 3 ya da sonu olmayan log aksama demektir: önce bilgisayarın açık,
+prizde ve oturumunun açık olduğu sağlanır, sonra neden yukarıdaki sıra ve
+[bilinen sınırlarla](#bilinen-sınırlar) araştırılır. Kaçan tur geriye dönük
+toplanamaz. Tur, başlangıç saatine göre dilime yazılır: gece yarısından
+sonra biten akşam turu o günün başlangıcını vermez; ertesi sabah 10:00'dan
+önce başlayan telafi turu önceki akşamın dilimine yazılır ve gün aşımı
+nedeniyle kullanılmaz; 10:00'dan sonra başlayan telafi turu o günün sabah
+dilimi sayılır.
 
 ## Docker: imaj ve Compose temeli
 
