@@ -42,6 +42,7 @@ API ve ekran sözleşmeleri, hata kodları ve bilinen sınırlar. Yalnız sistem
 - [Docker: tek komutla kullanım ve kabul](#docker-tek-komutla-kullanım)
 - [Docker kabul senaryoları](#docker-kabul-senaryoları)
 - [Docker servis bağlantısı ve gösterim bakımı](#docker-servis-bağlantısı-ve-gösterim-bakımı)
+- [Haftalık yedek](#haftalık-yedek)
 - [Testler ne kanıtlar, ne kanıtlamaz](#testler-ne-kanıtlar-ne-kanıtlamaz)
 - [Bilinen sınırlar](#bilinen-sınırlar)
 
@@ -3925,6 +3926,8 @@ gölge görevi, kaçmış bir turun geçmiş fiyatlarını geri getiremez.
   veya `Değerlendirilemedi` geçerli rapor sonucu olabilir; çıkış 0 modelin
   gösterim koşullarını karşıladığını söylemez. Erken iyi/kötü puana göre
   model, eşik veya kesin tarih değiştirilmez.
+- Kontrol bitince [haftalık yedek](#haftalık-yedek) alınır; iki kopyanın
+  `verify` sonucu aynı paket SHA-256'sını göstermelidir.
 
 **Sorun çıkarsa izlenecek sıra:**
 
@@ -4340,6 +4343,87 @@ denemesiyle yetki sınanmadı. Bakım sonrası tekrar hazırlama veriyi/hazır
 kaydını değiştirmedi. Gerçek kabulün uygulama/test kodu, tam test ve biçim
 kanıtlarıyla hash üzerinden eşleştirilmiştir.
 
+## Haftalık yedek
+
+Canlı veritabanı, resmi gölge kayıtları ve dondurulan modelin kanıtları
+yalnız bu bilgisayardadır; kaçan veya kaybolan gözlem geriye dönük
+toplanamaz. Bu yüzden her Pazar [haftalık kontrol](#gölge-kayıtlarının-kontrol-sırası)
+bittikten sonra ve 5 Ocak 2027 kesin değerlendirmesinden sonra yedek alınır
+([20 Kasım kararı](../proje_plani.md#5-kararlar)). Yeni kod veya görev yoktur:
+yedek, [dışa aktarma](#dışa-aktarma-ve-paket-sözleşmesi) paketidir.
+
+| Kopya | Yer | Koruduğu durum |
+|---|---|---|
+| Yerel | `E:\FiyatTakip_Yedek\yedek_<tarih>` (C:'den ayrı fiziksel disk) | C: diskinin bozulması |
+| Bulut | `%OneDrive%\FiyatTakip_Yedek\yedek_<tarih>` | Bilgisayarın arızası veya kaybı |
+
+Her yedek klasöründe iki bölüm vardır:
+
+- `paket/`: Export paketi. Veritabanının `public` şemasının tam dökümü
+  (`database.dump`), `config/` dosyaları, dondurulan modelin
+  etiket/girdi/bölme/model kanıtları, manifesti tamamlanmış tahmin ve
+  değerlendirme klasörleri ve bunların görüntüleri. Her dosyanın SHA-256'sı
+  `manifest.json` içindedir.
+- `kayitlar/logs` ve `kayitlar/discovery`: tur, keşif ve gölge logları ile
+  keşif raporları. `verify` paket klasöründe fazladan dosya kabul etmediği
+  için paketin yanına konur.
+
+Yedeğe girmeyenler: `data/teslim/` (Docker kopyasının durum ve parola
+dosyaları; parola buluta taşınmaz), `%APPDATA%\postgresql\pgpass.conf`,
+`artifacts/` (tamamlanmış incelemelerin kanıtları; on binlerce dosya ve bu
+hesabın okuyamadığı `b3_*` klasörleri içerir, sonuçları belgelerde
+özetlenir) ve Git dışı yerel notlar.
+
+Komut proje kökünde, kullanıcının terminalinde çalıştırılır. 10:00/22:00
+turu, 11:00 gölge görevi veya Pazar 14:00 keşfi sürerken çalıştırılmaz.
+`DATABASE_URL` mevcut şifresiz kaynak adresidir. Blok ilk hatada durur:
+
+```powershell
+& {
+    [Console]::OutputEncoding = [Text.Encoding]::UTF8
+    if (-not $env:OneDrive) { throw 'OneDrive klasörü bulunamadı' }
+    $py = '.venv\Scripts\python.exe'
+    $ad = "yedek_$(Get-Date -Format 'yyyyMMdd_HHmmss')"
+    $yerel = Join-Path 'E:\FiyatTakip_Yedek' $ad
+    $bulut = Join-Path $env:OneDrive "FiyatTakip_Yedek\$ad"
+    & $py -m app.delivery export --output "$yerel\paket"
+    if ($LASTEXITCODE -ne 0) { throw "Export tamamlanmadı (çıkış $LASTEXITCODE)" }
+    & $py -m app.delivery verify --bundle "$yerel\paket"
+    if ($LASTEXITCODE -ne 0) { throw "Yerel paket doğrulanamadı (çıkış $LASTEXITCODE)" }
+    foreach ($klasor in 'logs', 'discovery') {
+        robocopy "data\$klasor" "$yerel\kayitlar\$klasor" /E /R:1 /W:1 /NFL /NDL /NJH /NJS /NP | Out-Null
+        if ($LASTEXITCODE -ge 8) { throw "data\$klasor kopyalanamadı (robocopy $LASTEXITCODE)" }
+    }
+    robocopy $yerel $bulut /E /R:1 /W:1 /NFL /NDL /NJH /NJS /NP | Out-Null
+    if ($LASTEXITCODE -ge 8) { throw "OneDrive kopyası tamamlanmadı (robocopy $LASTEXITCODE)" }
+    & $py -m app.delivery verify --bundle "$bulut\paket"
+    if ($LASTEXITCODE -ne 0) { throw "OneDrive paketi doğrulanamadı (çıkış $LASTEXITCODE)" }
+    "Yedek tamamlandı: $yerel ve $bulut"
+}
+```
+
+Çıktıda bakılacaklar:
+
+- Export satırları: `Paket SHA-256` ve `Model manifest SHA-256`. İkincisi
+  ön kayıtlı `89c819ed…4cf2` olmalıdır.
+- İki `verify` satırı: aynı `bundle_sha256` (Export'un paket SHA-256'sı)
+  ve aynı `files` sayısı.
+- Son satır: `Yedek tamamlandı`. OneDrive simgesinde klasörün “güncel”
+  görünmesi bulut yüklemesinin bittiğini gösterir; `verify` yalnız yerel
+  OneDrive klasörünü sınar.
+
+Çıkış 3, ortak kilidin dolu olduğunu (tur, keşif veya gölge kaydı sürüyor)
+gösterir; iş bitince yeni zaman damgasıyla tekrar çalıştırılır. Çıkış 1 veya
+robocopy hatasında yarım kalan klasör yedek sayılmaz. Git'te commit edilmemiş
+değişiklik varsa manifestteki `source_dirty` alanı `true` olur; bu, yedeği
+geçersiz kılmaz, yalnız o anki kod durumunu kaydeder.
+
+Bütün yedekler proje sonuna kadar silinmeden tutulur (her biri yaklaşık
+106 MB; 5 Ocak 2027'ye kadar toplam yaklaşık 1 GB). Paket biçiminin geri
+yüklenebilirliği [Docker kopyasına aktarımla](#docker-kabul-senaryoları)
+doğrulanmıştır; yedekten yalnız ayrı Docker kopyası hazırlanabilir. Canlı
+sistemi yedekten yeniden kurmak kullanıcı kararı ve ayrı plan gerektirir.
+
 ## Testler ne kanıtlar, ne kanıtlamaz
 
 - **Otomatik testler:** Kuralların doğru çalıştığını kayıtlı ve sahte
@@ -4496,8 +4580,9 @@ kanıtlarıyla hash üzerinden eşleştirilmiştir.
   doğruladı. Önceki günlük görüntünün bütün tur/fiyat sonuçları ve Cimri
   geçmişi aynı kaldı; bağlantı satırlarında yalnız onaylı iki aktiflik
   değişti. Kontrol mevcut loglar ve doğrulanmış günlük görüntü üzerinden
-  yapıldı; agent DB'ye bağlanmadı veya yazmadı. Yerel ve canlı kabul
-  tamamlandı; ayrı onaylı gönderim/CI bekliyor.
+  yapıldı; agent DB'ye bağlanmadı veya yazmadı. Yerel ve canlı kabul,
+  kullanıcı onaylı gönderim ve aynı SHA'nın test/biçim ile yapay Docker
+  kabul/rapor CI'ı tamamlandı; kapanış [geçmiştedir](gecmis.md).
   Kaynak kanıtı:
   `artifacts/trendyol_kimlik_20261119/yanitlar_20261119_102512_717809/`;
   ağsız karşılaştırma ve iki alanlık katalog önizlemesi aynı üst klasörde

@@ -75,18 +75,15 @@ Git dışındadır, projeye bağlı değildir ve tamamlanmış iş sayılmaz.
 Düzenli kontroller ve henüz tamamlanmamış işler yalnız bu tabloda izlenir.
 Diğer bölümler kontrol yöntemini veya tamamlanmış uygulamanın kanıtını
 açıklar. 6.5 ve 9.1'in rutin kontrolleri tek haftalık incelemede birlikte
-yapılır; 6.5'in bekleyen kesin değerlendirmesi ayrı satırdır. 9.1'in geçmiş
-tur gecikmeleri incelemesi 16 Kasım'da kanıtla kapandı. 16 Kasım kararıyla
-tek küçük geliştirme işi açıldı: ML güvenilirlik grafiği.
+yapılır; 6.5'in bekleyen kesin değerlendirmesi ayrı satırdır. Tamamlanan
+bakım ve geliştirmeler [geçmişte](docs/gecmis.md) tutulur.
 
 | Tür | İş / durum | Sonraki adım | Tamamlanma koşulu | Kanıt / ayrıntı |
 |---|---|---|---|---|
-| Düzenli takip | **6.5 / 9.1 — Haftalık sistem ve model kontrolü.** İşletimde; ilk otomatik ve ilk haftalık kontrol doğrulandı | Her Pazar 14:00 keşfi gerçekten bittikten sonra görev/logları, veri/kayıt bütünlüğünü ve model ara raporunu inceleme | Her kontrolde sonuç ve sorunlar doğrulanır; bu satır tekrarlanan işletim rutinidir | [Kontrol takvimi](#65-kontrol-planı); tarihli sonuçlar [README'de](README.md#-güncel-kapsam) |
-| Gönderim | **9.1 — Trendyol adres–yanıt ürün kodu uyuşmazlığı.** İki eski kaydın pasifleştirilmesi, yerel kontrolleri ve canlı kabulü tamam: 19 Kasım akşam / 20 Kasım sabah turları ve günlük görüntüyle doğrulandı | Değişmiş dosyalar için ayrı commit/push onayı ve aynı SHA'nın CI'ını doğrulama | Yerel ve canlı kabul tamam; gönderim ve CI bekliyor | Kaynak, eşleşmeler ve kabul kanıtı [teknik rehberde](docs/teknik.md#bilinen-sınırlar); güncel sonuçlar [README'de](README.md#-güncel-kapsam) |
+| Düzenli takip | **6.5 / 9.1 — Haftalık sistem ve model kontrolü.** İşletimde; ilk otomatik ve ilk haftalık kontrol doğrulandı | Her Pazar 14:00 keşfi gerçekten bittikten sonra görev/logları, veri/kayıt bütünlüğünü ve model ara raporunu inceleme; ardından [haftalık yedek](docs/teknik.md#haftalık-yedek) | Her kontrolde sonuç ve sorunlar doğrulanır; bu satır tekrarlanan işletim rutinidir | [Kontrol takvimi](#65-kontrol-planı); tarihli sonuçlar [README'de](README.md#-güncel-kapsam) |
 | Kesin değerlendirme | **6.5 — Modelin kendi verimizde kabulü.** Bekliyor; gerçek olasılık gösterimi kapalı | 21 Aralık haftası bilgi amaçlı ara rapor; 5 Ocak 2027'de o gün alınmış tek kesin görüntüyle değerlendirme | Ön kayıtlı üç durumlu sonuç belgelenir; gösterim yalnız koşullar karşılanırsa mevcut doğrulama komutuyla açılabilir | [6.5 kapanış koşulu](#65-kontrol-planı), [gösterim onayı](docs/teknik.md#tahmin-gösterim-onayı-python--m-appml-shadow-display) |
 | Fiziksel kabul | **9.7 — İkinci bilgisayarda teslim kabulü.** Erişim bekliyor; 10 Kasım kullanıcı bildirimine göre yalnız mevcut bilgisayar var | Ayrı Windows 11 x64 bilgisayarda ilk kurulum ve ilk hazırlıktan sonra internet kapalı kullanım | [Teslim rehberindeki](docs/teslim.md#kabulün-kapsamı) fiziksel kabul adımları o bilgisayarda doğrulanır | Yerel/CI kabulünün kaydı [geçmişte](docs/gecmis.md); fiziksel kabul bununla kapanmaz |
 | Sunum ve teslim | **İş 8 — Sunum ve final teslim.** Hazırlık bekliyor | Sunum biçimi/içeriği ve kesin staj bitişini netleştirme; 21–31 Aralık hazırlık hedefi. Bildirilen bitiş Ocak 2027'nin ilk veya ikinci haftası | Sunum, son veri paketi ve rehberle teslim tamamlanır | Kullanım [teslim rehberinde](docs/teslim.md); biçim/içerik kararı bekliyor |
-| Planlanan iş | **ML güvenilirlik grafiği.** 16 Kasım'da uygulandı (`reliability-chart`); ✅ Tamamlandı: yerel testler, iki gerçek rapordan bağımsız değer kontrolü, kullanıcının görsel kabulü, gönderim ve CI ([geçmiş](docs/gecmis.md)) | Yok; satır sonraki gönderimde tablodan çıkarılabilir | Grafikteki değerler kaynak rapordakilerle birebir doğrulanır; model, resmi raporlar ve eşikler değişmez; testler ve CI geçer | [Kapsam kararı](#ml-ikincil-hedeflerinin-kapsamı), [komut](docs/teknik.md#güvenilirlik-grafiği-python--m-appml-reliability-chart) |
 
 5 Ocak raporunun koşulları sağlanırsa mevcut doğrulama komutuyla gösterim
 ayrıca açılabilir. Koşullar sağlanmazsa kapalı kalır; yeni model/özellik
@@ -296,6 +293,7 @@ açık işler [güncel takip tablosundadır](#güncel-takip-tablosu).
 | 16 Kasım | Güvenilirlik grafiği uygulama planı onaylandı: yalnız standart kütüphaneyle SVG dosyası; kaynak, manifestle doğrulanmış saklı test ve gölge değerlendirme (asıl sonuç) raporlarının kovaları; yeni `reliability-chart` komutu, yeni dosyaya yazar, rapor klasörüne yazmaz ve yazılanı kovalarla doğrular. Ekrana eklenmez. | Kullanıcı seçimi. Yeni paket gerekmez, internetsiz açılır, aynı rapordan aynı dosya çıkar. Gösterim kapısı kapalıyken ekranda model başarısı göstermek kafa karıştırırdı. |
 | 17 Kasım | Tamamlanan yazılımı, kullanılan teknolojileri, mühendislik gerekçelerini ve takipteki işleri açıklayan görsel kişisel öğrenme sunumu hazırlanır; İş 8 final sunumundan ayrıdır. | Kullanıcı projeyi ve yazılım mühendisliğini öğrenmek istiyor; final teslimin kapsamı, eski öğrenme programının ilerlemesi ve mevcut model kararları değişmez. |
 | 19 Kasım | Katalogdaki mevcut etkin sayfalara HTTP 301 ile yönlenen iki eski Trendyol kaydının pasife alınması onaylandı; kayıtlar ve geçmiş ürün bağları korunur. | Kullanıcının hedefli kaynak kaydı yönlendirmeyi doğruladı; hedefler zaten izleniyor. Kimlik kuralını değiştirmeden tekrarlayan eski adres okumaları durdurulur. |
+| 20 Kasım | Haftalık yedek: her Pazar haftalık kontrolden sonra ve 5 Ocak 2027 kesin değerlendirmesinden sonra mevcut Export paketi, loglar ve keşif raporlarıyla birlikte E: sürücüsüne ve OneDrive'a kopyalanır; iki kopya `verify` ile doğrulanır. Yeni kod veya görev yoktur; komutlar [teknik rehberdedir](docs/teknik.md#haftalık-yedek). Docker parola dosyaları ve `artifacts/` yedeğe girmez. | Canlı DB, gölge kayıtları ve dondurulan model kanıtları yalnız C: diskindeydi; son paket 10 Kasım tarihliydi ve kaçan gözlem geri toplanamaz. E: ayrı fiziksel disk, OneDrive bilgisayar dışı kopyadır; kullanıcı seçimi. |
 
 **ML kararlarının güncelliği:** 28 Ekim ve 2 Kasım satırlarındaki yeniden
 kalibrasyon seçeneği, mevcut dondurulan model için 4 Kasım kararıyla
@@ -641,7 +639,7 @@ Aşağıdaki tarihler İstanbul saatidir; canlı komutları kullanıcı çalış
 | Her gün otomatik 11:00 | Mevcut görev görüntü ve tahmin üretir; ilk doğrulamadan sonra ayrıca her gün elle değerlendirme zorunluluğu yoktur | Bilgisayar kapalıysa uygun oturumda telafi; zamanında/geç kayıt bilgisi korunur |
 | 8 Kasım Pazar'dan itibaren her Pazar, 14:00 keşfi gerçekten bittikten sonra | Keşif logu/raporu, haftanın gölge logları ve yeni salt okunur görüntüyle `shadow-evaluate` raporu | Kaynak sorunları ve gölge kayıt sağlığı ayrı incelenir. Hepsiburada arama düzeltmesi 8 Kasım keşfinde doğrulandı; kısmi kapsam sınırı izlenir |
 | 21 Aralık haftası | Aynı komutlarla yeni ara rapor; sunum için veri yeterliliği, ölçümler ve sınırlar | Bilgi amaçlı sonuç; erken kapı kararı veya model ayarı yapılmaz |
-| 5 Ocak 2027 Salı, çalışan işler tamamlandıktan sonra | **O gün alınmış tek kesin görüntüyle** kesin değerlendirme ve kanıt dosyalarının korunması | Ön kayıtlı üç durumlu kapı sonucu belgelenir; komut ekranı kendiliğinden açmaz |
+| 5 Ocak 2027 Salı, çalışan işler tamamlandıktan sonra | **O gün alınmış tek kesin görüntüyle** kesin değerlendirme ve kanıt dosyalarının korunması; ardından [haftalık yedek](docs/teknik.md#haftalık-yedek) komutuyla son yedek | Ön kayıtlı üç durumlu kapı sonucu belgelenir; komut ekranı kendiliğinden açmaz |
 
 **İlerleme ve kapanış:** ilk otomatik çalışma ile ilk haftalık kontrolün
 kanıtları doğrulanınca durum "izleme sürüyor" olur; planın hazırlanması
