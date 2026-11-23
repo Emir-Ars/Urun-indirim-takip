@@ -51,234 +51,97 @@ API ve ekran sözleşmeleri, hata kodları ve bilinen sınırlar. Yalnız sistem
 
 ### Proje kökü ve belgeler
 
-| Dosya | Görevi |
-|---|---|
-| `README.md` | Projenin tanıtımı: amaç, özellikler, akış, teknolojiler, güncel kapsam, yol haritası. |
-| `proje_plani.md` | Kararların, aşama durumunun, açık kararların ve sıradaki işin tek kaynağı. |
-| `AGENTS.md` | Projede çalışan yapay zekâ araçlarının (Claude Code, Codex) ortak çalışma kuralları. |
-| `docs/teknik.md` | Bu rehber: bugünkü davranışın başvuru belgesi. |
-| `docs/teslim.md` | Teslim kullanıcısının ilk kurulum, günlük kullanım, veri yenileme ve geri dönüş rehberi. |
-| `DEVAM.md`, `ARAC_GECISI.md`, `CLAUDE.md` | Yerel devir notu, araç geçişi rehberi ve ortak kuralları içe alan Claude sarmalayıcısı; Git dışıdır. |
-| `docs/arastirma/` | Karar öncesi araştırma girdileri; güncel uygulama talimatı değildir. |
-| `docs/gecmis.md` | Her plan adımı için kısa geçmiş satırı (tarih, ne yapıldı, commit, CI). |
-| `docs/arsiv/` | 20 Ekim 2026'da dondurulmuş eski plan ve rehber, Aşama 7 araştırma raporları. Değiştirilmez. |
-| `pyproject.toml` | Bağımlılıklar, Python sürümü, paketleme ve test/biçim araçlarının ayarları. |
-| `Dockerfile`, `.dockerignore` | Sabit Linux tabanı, hash'li paket kurulumu ve ayrı kullanıcı; imaja yalnız gerekli uygulama kaynaklarının alınması. |
-| `compose.yaml` | Ayrı teslim kopyası için DB/API/ekran servisleri, ağ, kalıcı alanlar ve gizli dosya bağlantıları. Veri hazırlamaz. |
-| `requirements-linux.lock` | Python 3.13.15 / Linux x86_64 için doğrudan ve dolaylı çalışma bağımlılıklarının sürüm ve wheel hash'leri. Windows'a kurulmaz. |
-| `app/delivery/` | Tutarlı salt okunur yedek, kapalı paket envanteri ve Docker kopyasının hazırlık/doğrulama komutları. |
-| `scripts/teslim.ps1` | Docker tesliminin Export, Prepare, Start, Status, Logs, Stop ve Rollback girişi. |
-| `scripts/teslim_ortak.ps1` | Sabit yerel motor, seçim/kilit, Compose çağrısı, sağlık ve geri dönüş işlemleri. |
-| `scripts/teslim_paket.ps1` | Paket/imaj doğrulama, ayrı kopyaya geri yükleme ve hazırlık kaydı. |
-| `scripts/teslim_hazirla.ps1` | Eski hazırlama komutunu aynı Prepare girişine yönlendiren uyumluluk dosyası. |
-
-Eski veritabanı, API, ML, arayüz ve Docker taslakları yerel
-`_eski_taslaklar/` klasöründedir. Git’e gönderilmez, güncel uygulamanın
-parçası değildir ve bugünkü kodla çalışmazlar; yalnız örnek olarak korunur.
+[README](../README.md) kapsamı, [plan](../proje_plani.md) kararları,
+[geçmiş](gecmis.md) commit/CI'ı, [AGENTS.md](../AGENTS.md) kuralları tutar.
+`pyproject.toml` paket ve denetim ayarlarını tanımlar.
+[Teslim rehberi](teslim.md) · [Arşiv envanteri](arsiv/teknik_2026-11-23.md#dosyalar-ve-sorumlulukları)
 
 ### Ayarlar: `config/` (kod değil, veri)
 
-| Dosya | Ne işe yarar | Kim yazar |
-|---|---|---|
-| `discovery.json` | Takip edilecek telefonlar ve tarama sınırları | Kullanıcı |
-| `catalog.json` | Keşfin doğruladığı ürünler ve sayfalar | Keşif (elle yazılmaz) |
-| `runtime.json` | Zaman aşımı, tekrar deneme, istekler arası bekleme (3 sn) | Kullanıcı, nadiren |
-| `market_history.json` | Bir defalık Cimri alımı: `product_key`, URL ve beklenen Cimri kimliği. Güncel eşleştirme kapsamı README tablosunda; sözleşme [eşleştirme bölümündedir](#eşleştirme-dosyası). | Araştırma ve gerçek çıktı kontrolüyle |
-| `shadow.json` | Gölge mod: başlangıç günü (27 Ekim 2026), dondurulan modelin ön kayıtlı manifest SHA-256'sı, model ve 2 Kasım kanıtlarının kalıcı kopya yolları (`data/ml/golge/kanitlar/`, Git dışı) ve resmi kayıt klasörü (`data/ml/golge`). Ayrıntı: [Gölge mod tahmin kaydı](#gölge-mod-tahmin-kaydı-python--m-appml-shadow-predict). | Kullanıcı, nadiren; model değişmez |
+| Dosya | Sorumluluk |
+|---|---|
+| `discovery.json` | Hedefler, sınırlar, kaldırılmış bağlantı bağları |
+| `catalog.json` | Keşfin ürettiği katalog |
+| `runtime.json` | Zaman aşımı, tekrar ve 3 sn istek aralığı |
+| `market_history.json` | [Cimri eşleştirmeleri](#eşleştirme-dosyası) |
+| `shadow.json` | [Gölge başlangıcı, model SHA'sı ve yollar](#gölge-mod-tahmin-kaydı-python--m-appml-shadow-predict) |
 
 ### Ortak parçalar: `app/`
 
-| Dosya | Ne işe yarar |
-|---|---|
-| `contracts.py` | Verinin şekilleri ve doğrulaması (Pydantic V2 strict): `Product`, `Listing`, `Catalog`, `PriceObservation`, keşif hedefleri ve raporu. Hatalı veri içeri giremez (ör. fiyat alanına "Tükendi"). Yalnızca biten aşamanın kullandığı tanımları içerir. |
-| `settings.py` | Ayar dosyalarını okur. `CATALOG_PATH`, `DISCOVERY_PATH`, `RUNTIME_PATH`, `SCRAPE_LOCK_PATH`, `LOG_DIR`, `DISCOVERY_REPORT_DIR` ortam değişkenleriyle başka dosya veya klasör gösterilebilir. |
-| `scrape_lock.py` | Siteye giden bütün girişlerin paylaştığı kilit (`data/scrape.lock`). Fiyat turu, keşif, Cimri yerel alımı/ağsız aktarımı ve iki canlı kontrol aracı (`live_scraper_check`, `live_discovery_check`) alır; biri sürerken diğeri beklemeden "sürüyor" deyip çıkar. Süreç çökse bile işletim sistemi kilidi bırakır. |
-| `console.py` | Komut satırı araçlarının ortak çıktı yardımcıları: UTF-8 çıktı (`utf8_output`; fiyat turu, keşif, `app.database`, `app.ml` ve canlı kontrol araçları kullanır), `<ön ek>_<tarih-saat>.log` dosyası açma, stdout/stderr'i log dosyasına da yazan `tee_output` ve ikisini birleştiren `run_logged` (zamanlanmış tur/keşif ile elle veya zamanlanmış günlük gölge çalışması: log açılamazsa iş başlamaz ve 1 döner; başlık satırı, beklenmeyen hatanın ayrıntısı ve "Çıkış kodu" satırı log'a yazılır). pythonw.exe altında ekran akışları yoktur (`None`); hepsi buna dayanır. |
-| `price_statistics.py` | `ProductSnapshot.all_history` verisinden mevcut tam kapsam dönemini, 30 günlük gözlenen dibi, dönem zirvesini ve değişkenliği hesaplar; eksiklik gerekçeleri ve gözlem sayıları döndürür. Bağlantı/HTTP/dosya işlemi yapmaz; Cimri verisini kullanmaz. |
+`contracts.py` veri, `settings.py` ayar, `scrape_lock.py` kilit,
+`console.py` log, `price_statistics.py` istatistik katmanıdır.
+Yol ayarları `CATALOG_PATH`, `DISCOVERY_PATH`, `RUNTIME_PATH`,
+`SCRAPE_LOCK_PATH`, `LOG_DIR`, `DISCOVERY_REPORT_DIR` ile seçilebilir.
 
 ### Cimri geçmişi: `app/market_history/`
 
-| Dosya | Ne işe yarar |
-|---|---|
-| `cimri.py` | Gömülü ürün ve grafik yanıtını ağsız okur; marka/model/kapasite, kategori ve kimlik doğrulaması yapar. Alım ayrıca fiyatı mevcut `money` ile kuruşa doğrular. |
-| `capture.py` | Eşleştirmeleri doğrular; seçilen ürünlerin HTML ve API JSON yanıtlarını yeni klasöre, parmak izlerini ve sonucu rapora yazar. Veritabanına bağlanmaz. |
-| `importer.py` | Sonlandırılmış alım raporunu ve kaynak parmak izlerini doğrular; aynı baytlardan kimlik/geçmişi yeniden hesaplar. Katalog kimliği ve rapor eşitliği zorunludur. Dosya/veritabanı yazmaz, ağa çıkmaz. |
-| `__main__.py` | `capture` ve ağsız `import`/`--dry-run` girişidir; ortak kilidi alır, Türkçe sonucu basar, çıkış kodlarını yönetir. `capture` veritabanına bağlanmaz; `import` HTTP çalışma ayarlarını okumaz. |
+Alım, kimlik ve ağsız doğrulama. [Cimri komutları](#cimri-geçmişi-bir-defalık-alım-ve-aktarım)
 
 ### Fiyat okuma: `app/scraper/`
 
-| Dosya | Ne işe yarar |
-|---|---|
-| `http.py` | İnternete açılan tek kapı. `curl_cffi` + `impersonate="chrome120"`; yalnızca izinli alan adları, zaman aşımı, sınırlı tekrar, istek aralığı (alan adı başına, bütün istemciler arasında ortak), yönlendirme kontrolü, indirme sırasında 8 MB gövde sınırı, istek bütçesi. 401/403/418/429 yanıtları `blocked` olarak sınıflanır. Playwright, Selenium veya `requests` kullanılmaz. |
-| `parsing.py` | Ortak yardımcılar: fiyatı kuruşa çevirme (`money`), metin normalleştirme, sayfaya gömülü JSON okuma ve **kimlik kuralları** (`identify`, `verify_identity`, `matches_model`, `network_type`, `verify_model_network`). Trendyol'un açık 5G model/4G özellik reddi de iki tüketicide aynı ortak kontroldür. |
-| `base.py` | Bütün sitelerin sözleşmesi: `fetch(listing) -> PriceObservation`. Ayrıştırma hatalarını ortak `FetchError`'a çevirir. |
-| `factory.py` | Platform adından (`trendyol`, `hepsiburada`) doğru scraper sınıfını yükler. |
-| `trendyol_scraper.py` | Trendyol sayfasını okur, satıcıları karşılaştırır. |
-| `hepsiburada_scraper.py` | Hepsiburada sayfası + satıcı listesi API'si + fiyat API'siyle satıcıları karşılaştırır. |
+`http.py` pazaryeri HTTP'sini `curl_cffi` ve `impersonate="chrome120"`
+ile sınırlar. 8 MB üstü reddedilir. 401/403/418/429 `blocked` olur.
+`parsing.py` kimlik ve kuruş hesabını, `base.py`
+`fetch(listing) -> PriceObservation` sözleşmesini sağlar.
+[Fiyat okuma](#fiyat-okuma-nasıl-çalışır)
 
 ### Keşif: `app/discovery/`
 
-| Dosya | Ne işe yarar |
-|---|---|
-| `trendyol.py` | Trendyol arama API'si, filtreler, varyant (renk/kapasite) listeleri ve ürün sayfası doğrulaması. |
-| `hepsiburada.py` | Hepsiburada arama/model sayfası kartları, grup sayfaları ve ürün sayfasındaki seçenek listesi. |
-| `matching.py` | "Yeni telefon kategorisi mi?" kuralı (aksesuar ve yenilenmiş kategoriler hariç). |
-| `base.py` | Ortak iskelet: istek bütçesi, uyarı listesi (`issues`), tanılama izi (`trace`) ve ağ türü kontrolü (`verify_network`). |
-| `service.py` | Platformları çalıştırır, sonuçları katalogla birleştirir, raporu yazar (`run`); incelenmiş önizleme raporunu siteye gitmeden kataloğa uygular (`apply_report`); raporun tek satırlık özetini üretir (`summarize_report`). Tarama bittikten sonra katalog ya da rapor yazılamazsa `DiscoveryWriteError` verir (`run`). |
-| `__main__.py` | Komut satırı: `python -m app.discovery [--dry-run] [--target KEY]`, `--scheduled --dry-run` veya `--scheduled --auto-accept` (Görev Zamanlayıcı) ve `--apply-report RAPOR`. |
+Adaptörler kanıt toplar. `acceptance.py` kabulü, `service.py` yazımı
+yönetir (`DiscoveryWriteError`). [Keşif](#keşif-nasıl-çalışır)
 
 ### Veritabanı: `app/database/`
 
-| Dosya | Ne işe yarar |
-|---|---|
-| `connection.py` | PostgreSQL bağlantısı. Adres `DATABASE_URL` ortam değişkeninden okunur (şifresiz); `database_url(API_DATABASE_URL_ENV)` okuma hesabının adresini (`API_DATABASE_URL`) verir. Şifre PostgreSQL'in `pgpass.conf` dosyasındadır. Oturum saati UTC; bağlanma 10 sn, tablo kilidi bekleme 30 sn ile sınırlı (yarım bırakılmış bir işlem turu sonsuza kadar bekletmez, hata verir). |
-| `migrate.py` | Migration koşucusu: `migrations/` altındaki numaralı SQL dosyalarını sırayla, her birini tek transaction'da ve yalnızca bir kez uygular; `schema_migrations` tablosuna parmak iziyle yazar. |
-| `migrations/001_initial.sql` | Katalog kopyası, toplama turları ve sayfa sonuçları tabloları; bütün kurallar (`CHECK`, `UNIQUE`, yabancı anahtarlar). |
-| `migrations/002_guards_and_comparability.sql` | İki yeni `CHECK` (Tükendi satırı fiyat taşımaz, çizili fiyat güncel fiyattan büyüktür), beş tabloda 15 tetikleyici (silmeyi ve `TRUNCATE`'i reddeder, kimlik alanlarını korur, yazılmış sayfa sonucunu dondurur), `product_run_prices` görünümü. |
-| `migrations/003_closed_run_guards.sql` | İki tetikleyici işlevini yeniler: kapanmış turun sonuçsuz satırına yazımı ve kapanmış turun durum/bitiş zamanı değişimini reddeder; ilk sonuç ve `network` yeniden yazımını tur kapanışıyla sıraya alır. Veri satırlarını ve görünümü değiştirmez. |
-| `migrations/004_market_history.sql` | Ayrı Cimri geçmişi tablosu; ürün/kaynak/gün tekilliği, pozitif kuruş/NULL ve ilk kaydın güncelleme/silme korumaları. |
-| `migrations/005_listing_offer_url.sql` | Seçilen teklifin ölçüm anındaki satıcı bağlantısı; yalnız `offer` sonucunda dolabilir, eski kayıtlar `NULL` kalır. |
-| `market_history.py` | Ağsız aktarımın SQL işlemleri: kimlik ön kontrolü, salt okunur önizleme, ürün başına transaction, tekrar/çelişki koruması ve tur kilidi. |
-| `catalog_sync.py` | `catalog.json`'u veritabanındaki kopyaya eşitler: `plan_sync` farkı veritabanına dokunmadan hesaplar, `sync_catalog` tek transaction'da yazar. |
-| `runs.py` | Tur SQL'leri: veritabanı tur kilidi, yarım kalan turu kapatma, turu ve planlanan sayfaları açma, sayfa sonucunu (bir kez, yalnızca süren tura) yazma, süren turdaki `network` hatası satırını ikinci okumanın sonucuyla değiştirme (`rewrite_network_result`, tek istisna), turu kapatma, özet. |
-| `read.py` | API'nin kullanacağı salt okunur veri katmanı: etkin ürünler, global tur durumu, ürüne özel son tamamlanmış tur, teklifler ve ayrı kendi/Cimri geçmişi. Hazır bağlantıda tek REPEATABLE READ, READ ONLY işlem; bağlantı/havuz açmaz, kilit almaz, veri yazmaz. |
-| `ml_data.py` | ML veri görüntüsünün okuması: ürün, platform, sayfa, tur, sayfa sonucu ve Cimri satırlarının yalnız ML'in kullandığı alanları, `read.py` ile aynı tek REPEATABLE READ, READ ONLY işlemde. Hesabın varsayılanı salt okunur değilse, bekleyen migration varsa veya bir tur sürüyorsa okumaz ([ML hazırlığı](#ml-hazırlığı)). |
-| `__main__.py` | Komut satırı: `python -m app.database migrate` / `status` / `sync-catalog [--dry-run]`. Çıkış kodları: `0` başarılı; `1` komut başarısız (şema, katalog çakışması, bağlantı, ayar; mesaj stderr'e `Veritabanı komutu başarısız: …` diye yazılır); `2` argüman hatası. |
+`connection.py` UTC oturumu, 10 sn bağlantı ve 30 sn kilit sınırı
+sağlar. Migration, katalog, tur ve Cimri yazımı burada yürür.
+`read.py` ve `ml_data.py` salt okunurdur. [DB sözleşmesi](#veritabanı-postgresql)
 
 ### Fiyat toplama turu: `app/collection/`
 
-| Dosya | Ne işe yarar |
-|---|---|
-| `service.py` | Bir tur: şema kontrolü, yarım kalan turu kapatma, katalog eşitleme, planlama, her sayfayı mevcut scraper'la okuyup sonucunu hemen yazma, `network` hatası alan sayfaları tur sonunda bir kez yeniden okuma, turu kapatma. Scraper ile veritabanını bağlayan tek yer. |
-| `__main__.py` | Komut satırı: `python -m app.collection [--prefix ÖN_EK] [--scheduled]`; ortak kilidi alır. `--scheduled` ile çıktı `data/logs/` altındaki log dosyasına da yazılır. |
+Scraper ve DB'yi [toplama komutuyla](#toplama-turu-python--m-appcollection)
+bağlar (`--prefix ÖN_EK`, `--scheduled`).
 
 ### Yerel API: `app/api/`
 
-| Dosya | Ne işe yarar |
-|---|---|
-| `main.py` | `create_app()` fabrikası, lifespan ile havuz açma/kapatma, beş GET adresi, cevap doğrulaması ve Türkçe güvenli hata cevapları. İçe aktarmada bağlantı açmaz. |
-| `database.py` | Yalnız `API_DATABASE_URL` ile 1–4 bağlantılık Psycopg havuzu; her istekte rol, SELECT/yazma izinleri, nesneler ve migration durumunun salt okunur denetimi. |
-| `schemas.py` | API ve istemcinin ortak, ağsız cevap modelleri. DB/havuz/hesaplama/FastAPI yüklemez; JSON alanları ve OpenAPI aynı kalır. |
-| `models.py` | Tek `ProductSnapshot` içinden istatistik ve fiyat yaşıyla ortak cevaba dönüşüm. İç `all_history`, ham sayfa hata metni ve tur notu dışarı verilmez. |
+FastAPI, 1–4 salt okunur bağlantı ve [cevap sözleşmesi](#salt-okunur-fastapi).
 
 ### Yerel istemci ve ekran: `app/ui/`
 
-| Dosya | Ne işe yarar |
-|---|---|
-| `api_client.py` | `ApiClient`: beş sabit yerel GET, katı girdi/JSON/hedef doğrulaması; proxy/yönlendirme/tekrar/önbellek yok, açık zaman aşımı ve güvenli Türkçe hatalar. UI veritabanı/sunucu uygulamasını yüklemez. |
-| `main.py` | Kartlı Streamlit ekranı: telefon/aralık seçimi, güncel sonuç, tek tahmin kartı, API istatistikleri, iki grafik ve 30 sn/elle yenileme. Tahmin hatası yalnız kendi kartında kalır; fiyat hatasında eski veriler kaldırılır. Yalnız seçim tercihleri korunur. |
-| `presentation.py` | Tamsayı kuruş, bir ondalıklı olasılık yüzdesi ve İstanbul saati biçimleme, Türkçe gerekçeler, açık boşluk/kapsam sınırlarına sahip Altair çizgi/nokta verisi. İstatistik hesaplamaz veya veri kaynağına bağlanmaz. |
+Sabit yerel HTTPX istemcisi, Streamlit ekranı ve biçimleme.
+[İstemci](#yerel-api-istemcisi) · [Ekran](#streamlit-ekranı)
 
 ### ML hazırlığı: `app/ml/`
 
-| Dosya | Ne işe yarar |
-|---|---|
-| `dataset.py` | Veri görüntüsünün sözleşmesi (Pydantic V2 strict) ve dosyası: satırları anahtar sırasına dizer, kayıtlar arası bağları denetler, `snapshot.json`'u SHA-256 parmak iziyle yeni klasöre yazar, okurken parmak izini ve içeriği yeniden denetler. Veritabanı, ağ ve pazaryeri katmanı yüklemez. |
-| `series.py` | İstanbul günleri, zamanlanmış tur dilimleri, sağlam akşam başlangıcı, günlük minimum ve Cimri yarım gün maskesi; eski sıkı karşılaştırmanın günlük serisi. |
-| `labels.py` | Ayrı kendi/Cimri serilerinden simetrik 6/7 etiketi, sabit/izlenen sayfa kapsamı, sıkı pencere ve etiket özeti. Model eğitmez ve zaman bölmesi yapmaz. |
-| `features.py` | Yalnız geçmiş günlük başlangıç fiyatlarından sabit sözleşmeli girdiler, aile/segment kategorileri ve eksiklik raporu. Etiket okumaz; öğrenilen dönüşüm veya model eğitimi yapmaz. |
-| `splitting.py` | Parmak izli etiket/girdi eşleşmesi, ortak %70/%15/%15 tarih bölmesi, purge, ayrı kalibrasyonlu dört ileri yürüyen kat; katların etiket/girdi satırlarını ve saklı test dışındaki değerlendirme hedeflerini sınır denetimiyle seçer. Aynı dilim kuralıyla son modelin eğitim/kalibrasyon satırlarını (`final_samples`) verir; saklı test satırları yalnız ayrı `reserved_test_samples` girişindedir. |
-| `metrics.py` | Anahtarlı tahminlerde AP/Brier/log loss/Brier skill, güvenilirlik kovaları, olumlu pencere kümeleri, kırılımlar/makro ve eşleştirilmiş tarih bloklu güven aralığı. İstatistik kütüphaneleri yalnız puanlama çağrısında yüklenir. Doğrulama işlevleri saklı testi reddeder; saklı testi yalnız `score_reserved_test` ve `reserved_test_bootstrap` puanlar. |
-| `models.py` | R0 sabit oran, R1 dip kuralı, R2 lojistik regresyon ve LightGBM; yalnız eğitimden öğrenilen ön işlemler, ayrı dilimde Platt kalibrasyonu, ham/kalibre tahminler ve öğrenilen değerlerin özeti. Dondurulan model (`FrozenModel`: R0 + seçilen model) ve özeti. |
-| `experiment.py` | Etiket/girdiden bölmeyi yeniden üretip kanıt dosyalarıyla karşılaştırır; hazır katlarda eğitim/kalibrasyon/doğrulama akışını, birleşik ölçütleri, güven aralıklarını ve seçim önerisini yürütür. Saklı test ve kendi serimiz puanlanmaz. |
-| `final.py` | Deneyin seçim sonucundan modeli türetir, son dilimlerle dondurur, dondurulan modeli yalnız denetimlerden sonra yükler ve saklı testi bir kez puanlar. |
-| `shadow_records.py` | Ortak ayar, gerekçe, satır/manifest/parmak izi ve tekillik doğrulamaları. NumPy/scikit-learn yüklemez; eski gölge komutları bu işlevleri aynı adlarla kullanır. |
-| `shadow_display.py` | Ayrı gösterim onayını atomik yazar/kapatır; kayıt ve kaynak görüntüden güncel tahmini salt okunur hazırlar. API yolu model/puanlama kütüphanelerini yüklemez. |
-| `shadow.py` | Gölge mod: ön kayıtlı SHA-256'sı ve kanıt zinciri doğrulanmış dondurulan modeli açar, veri görüntüsünden kendi serimizin girdilerini bellekte hesaplar, kayıtsız her (ürün, gün) için olasılık ve gerekçe üretir, değişmeyen tahmin klasörünü yazar/yeniden doğrular ve resmi kayıtlardaki anahtarları çıkarır. Veritabanı, ağ ve pazaryeri katmanı yüklemez. |
-| `daily.py` | Günlük gölge akışı: kısa ortak tarama kilidi altında salt okunur görüntü, sınırlı tur/DB bekleme ve ardından mevcut gölge tahmin komutu; her çalışmada tarihli log. Kayıtlı ürün-günleri yeniden yazmaz. |
-| `shadow_evaluation.py` | Kayıtlı olasılıkları yeni görüntünün gerçek sonuçlarıyla eşleştirir; kayıt girdilerini yeniden hesaplayıp doğrular, puan/kapı/sağlık raporunu yeni klasöre yazar ve yeniden okur. DB/ağ, pickle, eğitim veya yeni tahmin kullanmaz. |
-| `reliability.py` | Manifestle doğrulanmış saklı test veya gölge değerlendirme raporunun kalibrasyon kovalarından güvenilirlik diyagramı (SVG) çizer; yazılan dosyayı yeniden okuyup her kovayı raporla karşılaştırır. Yeni ölçüm hesaplamaz; numpy/scikit-learn, DB ve ağ katmanı yüklemez. |
-| `reporting.py` | Etiket, girdi, bölme, deney, dondurulan model ve saklı test için belirlenimci JSON/JSONL, Türkçe Markdown ve en son yazılan parmak izli başarı manifesti; çıktıların yeniden doğrulanması. `split_plan_files` bölme yazımıyla deneyin bayt karşılaştırmasına ortak dosya içeriği üretir. |
-| `__main__.py` | `snapshot` yalnız `API_DATABASE_URL` okuma hesabıyla görüntü alır; `labels`/`features` görüntüden, `split` etiket/girdiden, `experiment` etiket/girdi/bölme klasörlerinden, `freeze` ve `final-test` ayrıca deney/model klasöründen çalışır. `shadow-predict` görüntü ve model/kanıt klasörlerinden tahmin üretir; `shadow-evaluate` kayıtları yeni görüntüyle değerlendirir; `shadow-display` kesin rapora bağlı ayrı gösterim onayını yönetir; `reliability-chart` saklı test veya gölge değerlendirme raporundan grafik çizer. Dosyadan çalışan bu komutlar DB katmanını yüklemez. `shadow-daily` görüntü + tahmin akışını ve loglamayı yürütür; yalnız görüntü aşaması okuma bağlantısı kullanır. Çıkış kodları ilgili [ML hazırlığı](#ml-hazırlığı) alt bölümündedir. |
+Görüntü, etiket, girdi, eğitim ve gölge komutları.
+[ML kanıt zinciri ve komutlar](#ml-hazırlığı)
 
 ### Kurulum ve zamanlayıcı: `scripts/`
 
-| Dosya | Ne işe yarar |
-|---|---|
-| `zamanlayici_kur.ps1` | Fiyat toplama turunu Windows Görev Zamanlayıcı'ya kurar (her gün 10:00 ve 22:00, penceresiz); `-Kaldir` ile siler. Ayarları [Zamanlanmış tur](#zamanlanmış-tur-görev-zamanlayıcı) bölümündedir. |
-| `kesif_zamanlayici_kur.ps1` | Haftalık keşfi Görev Zamanlayıcı'ya kurar (her Pazar 14:00, penceresiz, kaçan çalışmayı telafi etmez). Seçeneksiz kurulum önizleme (`--dry-run`), `-OtomatikKabul` otomatik kabul (`--auto-accept`) modunu kurar; `-Kaldir` siler. Ayarları [Zamanlanmış keşif](#zamanlanmış-keşif-görev-zamanlayıcı) bölümündedir. |
-| `golge_zamanlayici_kur.ps1` | Günlük gölge tahmin görevini kurar (11:00, penceresiz, uygun oturumda kaçan tetiklemeyi telafi eder); kullanıcı ortamında `API_DATABASE_URL` ister. `-Kaldir` ile siler. Ayarları [günlük gölge çalışması](#günlük-gölge-çalışması-python--m-appml-shadow-daily) bölümündedir. |
-| `api_okuma_rolu.sql` | Yönetici hesabıyla çalıştırılan, tek işlemde rol/SELECT izinlerini hazırlayan ortam kurulumu. Yeni tablo veya migration oluşturmaz; fiyat/katalog satırlarını değiştirmez. Üretimde `fiyat_takip_api`, `_test` DB'de `fiyat_takip_api_test`; mevcut ayrıcalıklı/üye/sahip veya yazma yetkili rolü reddeder. |
+`*_kur.ps1` görevleri kurar (`-Kaldir` siler), `api_okuma_rolu.sql`
+SELECT rolünü hazırlar. `teslim.ps1` [Docker paket ve servis girişidir](#docker-tek-komutla-kullanım).
 
 ### Testler ve CI
 
-Son doğrulanmış test sayısı [README Güncel kapsam](../README.md#-güncel-kapsam)
-tablosunda tarihle tutulur. Her yeni koşunun geçme/atlama bilgisi ayrıca
-çıktısından doğrulanır.
+`conftest.py` gerçek HTTP'yi ve canlı DB adreslerini engeller. Ortak
+fixture ve örnekler `tests/support/` ve `tests/fixtures/` altındadır.
+Testler birbirini içe aktarmaz. [Test DB kuralları](#test-ortamı-ve-sınırı)
 
-| Yer | Ne sınar |
-|---|---|
-| `tests/conftest.py` | Her testte gerçek curl_cffi ve HTTPX ağ transport'ları kesilir; ASGI/TestClient/MockTransport süreç içinde çalışır. Kalıcı `DATABASE_URL` ve `API_DATABASE_URL` silinir. `db` yalnız `TEST_DATABASE_URL`'deki `_test` DB'yi her testte boşaltır; ortak test kilidi en çok 30 sn bekler. `api_db` ayrıca `TEST_API_DATABASE_URL` ve `fiyat_takip_api_test` ister; iki bağlantının aynı `_test` DB olduğunu denetleyip test şemasında SELECT izinlerini yeniden kurar. `migrated`, `db`'ye bütün migration'ları uygular. `world`, `client` ve `stub` fixture'ları `tests/support/read_world.py` ile `tests/support/api.py`'dedir; burada `pytest_plugins` ile kaydedildikleri için testler onları içe aktarmadan kullanır. Eksik test adresleri yerelde atlama, CI'da hata üretir. |
-| `tests/support/` | Doğrudan pytest ile toplanan test modülleri değildir; ortak fixture ve Docker kabul yardımcılarıdır: sahte HTTP oturumu ve yanıtı (`fake_http.py`), `_test` DB'ye satır yazan `insert` (`database.py`), toplama turunun küçük sahte kataloğu ve sahte scraper'ları (`collection.py`), Cimri kayıtlı örnekleri ve sahte istemcisi (`market_history.py`), salt okunur sorgu ve API testlerinin küçük veritabanı dünyası ve satır ekleme yardımcıları (`read_world.py`), ML veri görüntüsünün küçük tablo örneği ve etiket, girdi, bölme, deney ile dondurulmuş model kanıtını üreten yardımcılar (`ml.py`), yerel API'nin sahte havuzu ve TestClient fixture'ları (`api.py`), istatistik testlerinin sentetik tur ve Cimri geçmişi (`price_statistics.py`), keşif testlerinin örnek dosyası okuyucusu, sabit katalog kopyası ve hedefleri (`discovery.py`), Streamlit ekranının yapay örnekleri, ekran yazılarını toplayan `messages` ve AppTest süre sınırı (`ui_samples.py`, 30 sn; varsayılan 3 sn yavaş makinede doğru ekranı da düşürebilir). Test dosyaları birbirinden içe aktarma yapmaz (`from test_…`, `import test_…`, `from tests.test_…`); bunu `tests/test_http.py` denetler. Yalnız tek dosyada kullanılan yardımcı o dosyada kalır. Buradaki `assert`'ler de pytest'in ayrıntılı hata mesajını verir (`conftest.py`'deki kayıt). |
-| `tests/test_http.py` | HTTP katmanı: hata kodları (`invalid_host` mesajı hedef alan adını yazar, sorgu metnini yazmaz), indirme sırasında 8 MB sınırı, büyük hata/yönlendirme yanıtları, yönlendirme kuralları, 5xx tekrarı ve bekleme süreleri, istekler arası bekleme, scraper factory. Mimari sınır da burada: pazaryeri HTTP'si yalnız `app/scraper/http.py` ve curl_cffi ile; HTTPX yalnız `app/ui/api_client.py` için; UI veritabanı/havuz/sunucu katmanını yüklemez; test ve araç dosyaları başka bir test dosyasından içe aktarma yapmaz. |
-| `tests/test_contracts.py` | Pydantic sözleşmeleri: satılabilir teklif fiyat ve satıcı taşır, puan ölçeği aşamaz, üstü çizili fiyat güncel fiyattan büyüktür, katalog kimlik/referans/alan adı kuralları, `money()` kuruş çevirimi. |
-| `tests/test_url_identity.py` | Ortak ürün adresi kimliği: ürün yolu, sorgu, son eğik çizgi, küçük harfli SKU, eksik/bozuk kimlik ve bütün tüketicilerin aynı kimliği okuması. |
-| `tests/test_trendyol_scraper.py`, `tests/test_hepsiburada_scraper.py` | Fiyat okuma: seçilen teklif, eşit fiyatta satıcı adı, çizili fiyat, Kritik Stok, Tükendi'nin yalnız açık sinyalle verilmesi, bozuk satıcı kayıtlarının reddi, ret nedenleri, `parse` dönüşümü. Sahte sayfa ve istemci; internete çıkmaz. |
-| `tests/test_discovery_identity.py` | Keşif hedefi ve keşifle scraper'ın ortak kimlik kuralları: model/kapasite eşleşmesi, `exclude_terms`, aksesuar adları, ağ türü, yurt dışı sürüm, telefon kategorisi, Yenilio kenar durumları. Siteye ve keşif sınıfına gitmez. |
-| `tests/test_discovery_trendyol.py` | Trendyol keşif adaptörü: arama imleci ve sayfalama, sayfa sınırları, varyantlar, renk seçici, filtre yedekleri, uyarı türleri ve izler; kayıtlı gerçek örneklerle ağ, Yenilio kapsamı ve adres kimliği. |
-| `tests/test_discovery_hepsiburada.py` | Hepsiburada keşif adaptörü: API engellenince HTML kartları, arama API'sinde sayfalama ve tekrar, varyant kimliği ve çelişkisi, kanonik adres/SKU kuralı, ağ özelliği, sayfa sınırları. |
-| `tests/test_discovery_catalog.py` | Katalog birleştirme ve rapor içeriği (siteye ve dosyaya gitmeden): kimliklerin korunması ve sıradan bağımsızlığı, `catalog_conflict`, aramada görünmeyen bağlantıların korunması, rapor özeti, renk kapsamı. |
-| `tests/test_discovery_run.py` | Keşfin çalıştırılması: rapor ve katalog yazma, dry-run'ın kataloğa yazmaması, LF satır sonu, BOM'lu ayar dosyaları, eklenti yükleyici, gerçek `config/*.json` dosyalarının sözleşmeye uyması, UTF-8 çıktı, çıkış kodları, zamanlanmış keşif ve `--apply-report`. |
-| `tests/test_discovery_acceptance.py` | Otomatik güvenli kabul: gerçek kaynak örnekleriyle doğrulandı/uyuşmazlık/kanıt yetersiz kararı, rapor ve katalog yazma koruması, kesinti sonrası uzlaştırma. |
-| `tests/test_collection.py` | Toplama turu: sahte scraper'larla her sonuç türü, Ctrl+C, tur ortasında veritabanı hatası, yarım kalan tur, kilitlerin bırakılması, pasif sayfa/ürün/platform, ön ek, çıkış kodları, zamanlanmış turun logu, kapanış sonrası hatalar ve tur sonu ikinci okuma. |
-| `tests/test_catalog_sync.py` | Katalog eşitleme: kararlar veritabanısız; yazma, deneme, çakışma ve komut satırı veritabanında. |
-| `tests/test_database.py` | Migration koşucusu, şemanın bütün `CHECK`/`UNIQUE`/yabancı anahtar kuralları, 002 ve 003 tetikleyicileri, kodun gerçek güncellemelerinin geçmesi, "bilerek silme" yolu ve testlerin emniyet kemerleri. |
-| `tests/test_comparability.py` | `product_run_prices` görünümü: aynı sayfa kümesi, hataya giriş/çıkış, yeni sayfa, Tükendi, `--prefix` turu, süren/yarıda kalan turlar, uzun boşluk. |
-| `tests/test_database_read.py` | Salt okunur sorgular ve istatistiklerle bütünleşme: ürüne özel tamamlanmış tur, kısmi kapsam, ayrı Cimri/NULL, iki bağlantıyla tutarlı görüntü, sorgu hatası/zaman aşımı sonrası yeniden okuma. |
-| `tests/test_ml_dataset.py` | ML veri görüntüsü (veritabanısız): yazma/okuma gidiş-dönüşü, satır sırasından bağımsız aynı baytlar, var olan klasöre yazmama, değiştirilmiş veya bozuk dosyanın ve parmak izi yenilenmiş tutarsız içeriğin reddi, kayıtlar arası bağ kuralları; `app/ml` modüllerinin (komut dosyası dışında) veritabanı, ağ ve pazaryeri katmanı yüklememesi. |
-| `tests/test_ml_data.py` | Görüntünün `_test` DB'den okuma hesabıyla okunması (alanlar, sıra, işlemin kapanması); süren tur, bekleyen migration ve yazan hesap reddi; `python -m app.ml snapshot` çıktısı ve çıkış kodları. |
-| `tests/test_ml_labels.py` | 30 günlük geçmiş, simetrik 6/7 gelecek, kuruşla %5 sınırı, sağlam akşam başlangıcı, tek tur, gün aşımı, değişen sayfa kapsamı, Cimri kimliği ve yarım gün kuralları. |
-| `tests/test_ml_label_cli.py` | Ağsız etiket komutu, aynı dosyaların tekrar üretimi, parmak izi ve kesinti koruması, eski hesaplayıcıyla bağımsız sıkı çapraz kontrol. |
-| `tests/test_ml_features.py` | Girdi formülleri ve eksikler, aile/segment, Cimri kimliği, ölçekten bağımsızlık; gelecek fiyat/stok/sayfa/ürün değişimlerine ve kayıtların kesilmesine karşı geçmiş girdilerin sabitliği; 4.2 başlangıç anahtarlarıyla eşleşme. |
-| `tests/test_ml_feature_cli.py` | Ağsız, etiket ve eğitim modüllerini yüklemeyen features komutu; aynı dosyaların tekrarı, tipli şema, parmak izi, mevcut klasör ve kesinti/yazma hatası koruması. |
-| `tests/test_ml_splitting.py` | Ortak tarih kesimleri, purge eşitliği, ayrı kalibrasyon, dört aylık katlar, boş/tek sınıflı bölüm, kendi kaynağının ayrılığı ve saklı test değişimlerine karşı geliştirme çıktısının sabitliği; kat girdilerinin eşleşmesi ve bozuk üyeliklerin reddi; son modelin dilimleri, yabancı rollü satırın reddi ve saklı testin ayrı giriş noktası. |
-| `tests/test_ml_metrics.py` | Elle hesaplanan ölçütler, geçersiz anahtar/etiket/olasılık, uç değerler ve kovalar, küme/makro desteği, bütün ürün günlerini koruyan tekrar üretilebilir eşleştirilmiş bootstrap; saklı test girişlerinin doğrulama puanlamasıyla aynı sayıları vermesi ve karışık/boş hedefi tahminler okunmadan reddetmesi. |
-| `tests/test_ml_split_cli.py` | Etiket/girdi bütünlüğü ve başlangıç eşleşmesi, yanlış kurallar/hedef sonu, belirlenimci bölme kanıtı, saklı test bilgi/üyelik koruması ve DB/ağ/eğitim katmanı yüklememe. |
-| `tests/test_ml_models.py` | R0/R1 elle hesap kontrolü, çekirdek girdi sözleşmesi, eksikler ve yeni kategoriler, tekrar üretilebilirlik, eğitim/kalibrasyon ayrılığı, Platt dönüşümü, sabit ayarlar ve öğrenilen değerlerin özeti. Yapay veriyle, ağsız. |
-| `tests/test_ml_experiment.py` | Kat ve birleşik ölçütler, seçim sonucunun üç durumu; saklı test/kendi kaynak/etiketsiz satırların X/y değişimlerine karşı çıktı baytlarının sabitliği ve eğitim değişiminin çıktıyı değiştirdiği olumlu kontrol. |
-| `tests/test_ml_experiment_cli.py` | Deney kanıt zinciri, parmak izi yenilense de değiştirilmiş bölmenin reddi, aynı dosyaların tekrarı, doğrulama dışı/saklı test tahmininin reddi, yarım yazım ve mevcut klasör koruması, çıkış kodları, DB/ağ katmanı yüklememe. |
-| `tests/test_ml_final.py` | Seçimden modelin türetilmesi, son dilimlerin ve katlarla aynı yöntemin kanıtı; saklı test etiket/girdisinin dondurmayı değiştirmemesi ve kalibrasyon etiketinin değiştirdiği olumlu kontrol; model yüklemede SHA, parmak izi, sürüm, çelişkili manifest ve yeniden üretim denetimleri (pickle açılmadan reddedilir); saklı test puanlarının bağımsız yeniden hesabı, okuma koşullarının üç durumu ve çıktı doğrulayıcısı. |
-| `tests/test_ml_final_cli.py` | `freeze` ve `final-test` komutları: tam çalışma, aynı baytlar, var olan klasör, kesinti, yanlış SHA/değişmiş model/başka girdi (saklı test satırlarına gelinmeden çıkış 1), zorunlu SHA, DB/ağ katmanı yüklememe ve dondurmanın saklı test girişlerini çağırmaması. |
-| `tests/test_ml_shadow.py` | Gölge tahmin kaydı (yapay veri): satırların `features` komutuyla aynı girdiler olması, olasılıkların dondurulan modelin çıktısı olması, 30 günden kısa geçmişe olasılık verilmemesi, gelecek verinin önceki tahmini değiştirmemesi (olumlu kontrolle), eksik gün eşiği, eğitimde olmayan aile, `recorded_after_days`; yazılan kaydın yeniden okunması, aynı baytlar, kayıtlı günün yeniden tahmin edilmemesi, manifestsiz klasörün kayıt sayılmaması, bozuk/yabancı/yinelenen kaydın hata vermesi, parmak izi yenilenmiş tutarsız satırların reddi, yanlış SHA'da pickle'ın açılmaması ve gerçek `config/shadow.json`'ın geçerliliği. |
-| `tests/test_ml_shadow_cli.py` | `shadow-predict` komutu: deneme/resmi kayıt ayrımı, aynı günlerin ikinci kez yazılmaması (`--records-dir` dahil), var olan klasör, eksik/fazla alanlı ayar, yanlış SHA, eksik görüntü, kesinti sonrası manifestsiz klasör ve DB/ağ katmanı yüklememe. |
-| `tests/test_ml_shadow_daily.py` | Günlük görüntü + gerçek tahmin akışı, tekrar çalışmada kayıtların değişmemesi, tur/keşif ve DB `running` kaydı için 5 dakika / 90 dakika bekleme, kayıt kilidi çakışması, eksik/hatalı kanıt ve adres, penceresiz log, çıkış kodları, gerçek `_test` okuma rolü ve yazan hesabın reddi; görev betiğinin BOM ve çalışma sözleşmesi. |
-| `tests/test_ml_shadow_evaluation.py` | Kaydedilmiş olasılıktan puan, yeni görüntüde girdi eşleşmesi, geleceğin etiketi değiştirip eski girdiyi değiştirmemesi ve geçmiş değişiminin reddi, yeni sayfanın yalnız y_izlenen etkisi; NULL/kısa geçmiş/showable ayrımı, kapı eşikleri ve takvim sayımı, yarım/bozuk/yinelenen kayıt, kısa kilit, değişmez/aynı bayt çıktısı ve rapor doğrulaması. |
-| `tests/test_ml_shadow_evaluation_cli.py` | Gerçek komut akışı ve çıkış kodları, hatalı SHA/ayar/görüntü, mevcut çıktı koruması, kilit ve kesinti, boş kayıtta yetersiz rapor; DB/ağ bağlantısı, pickle açma, eğitim ve tahmin çağrılarının ayrı süreçte engellenmesi. |
-| `tests/test_ml_reliability.py` | `reliability-chart` (yapay raporlar): her dolu kovanın değer, konum ve destek işaretiyle aynen çizilmesi, iki rapor türünün başlıkları, kesin görüntü adı, aynı bayt; var olan dosya, `.svg` dışı uzantı, rapor klasörüne yazma, manifestten sonra değişmiş/tamamlanmamış/desteklenmeyen rapor, tutarsız kovalar ve satırsız rapor reddi; doğrulanamayan grafiğin silinmesi; numpy/scikit-learn/LightGBM, DB ve ağ katmanının ayrı süreçte yüklenmemesi. |
-| `tests/test_price_statistics.py` | İstatistik hesabı: tam kapsam dönemi, 30 gün/14 geçiş/7 gün/18 saat eşikleri, İstanbul günü, NULL üzerinden geçmeme, değişkenlik, grafik aralığından bağımsızlık. Veritabanısız. |
-| `tests/test_api_foundation.py` | API okuma rolünün izinleri (yazamaması, kalıcı nesne kuramaması) ve test ortamının ağ/adres korumaları. |
-| `tests/test_api.py` | FastAPI: adresler ve OpenAPI, kuruş/UTC/NULL, fiyat yaşı, rol/şema hataları, dört bağlantı sınırı, kesinti ve yeniden bağlantı, 5 sn sorgu zaman aşımı, tutarlı cevap. |
-| `tests/test_api_client.py` | Yerel API istemcisi: katı girdi/JSON ve alan tamlığı, sabit hedef/proxy/yönlendirme sınırı, güvenli hatalar, tekrar/önbellek olmaması, kaynak bırakma. |
-| `tests/test_docker_entrypoint.py`, `tests/test_docker_lock.py` | Docker parolasının çıktıdan korunması, yalnız kopya DB hedefi, pgpass yazımı ve süreç devri; yanlış ortam, bozuk hash, eksik ek özellik ve pyproject/kilit uyuşmazlığının reddi. |
-| `tests/test_delivery.py`, `tests/test_delivery_display.py`, `tests/test_delivery_cli.py` | Paket/kod/model/şema bütünlüğü, Docker kopyası ve gösterim onayı, PowerShell seçim/kilit/idempotence/kurtarma sözleşmesi. |
-| `tests/test_docker_check.py`, `tests/support/docker_fixture.py`, `tests/support/docker_probe.py` | Kabul aracının alan/env/sır sınırları; CI ve yerel Docker için yalnız yapay kaynak, HTTP/rol/grafik/kapı/ağsız kabul yardımcıları. |
-| `tests/test_ui.py` | Streamlit ekranı (AppTest) ve grafik verisi. Yapay örnekler `tests/support/ui_samples.py`'dedir; AppTest ve önizleme ortak kullanır, gerçek fiyat değildir. |
-| `tests/test_api_ui_integration.py` | Gerçek test okuma hesabı → FastAPI → istemci → Streamlit zinciri; SQL ve hesaplama sahte değildir. |
-| `tests/test_api_ui_check.py`, `tests/test_ml_data_check.py`, `tests/test_live_discovery_check.py` | Aşağıdaki denetim/kontrol araçlarının kendileri. |
-| `tests/test_market_history.py`, `tests/test_market_history_import.py` | Cimri alımı ve aktarımı: kimlik, tarih/fiyat/eksik veri, ham kanıt ve parmak izi, istek bütçesi, kilit, ilk/tekrar aktarım, çelişki, READ ONLY önizleme, kesinti. |
-| `tests/fixtures/` | Gerçek kaynaklardan küçültülmüş örnekler (kaynak yolu ve SHA-256 ile), kataloğun sabit kopyası (`discovery/catalog.json`) ve Cimri örneklerindeki 57 ürünün sabit kopyası (`cimri_catalog_products.json`). Testler `data/` veya ağa bağlı değildir; sonuçları canlı `config/catalog.json` içeriğine bağlı değildir. Gerçek dosyaların sözleşmesini bilerek denetleyen testlere örnekler: `test_real_config_files_match_contracts` (keşif ayarı ve katalog sözleşmeye uyar), `test_config_mapping_uses_existing_catalog_and_recorded_source_ids` (Cimri eşleştirmesi gerçek katalogdaki etkin ürünlere bağlı) ve `test_existing_catalog_keys_can_use_client_validation` (her gerçek ürün anahtarı ekran istemcisinin anahtar kuralından geçer). ML ve Docker denetimleri de ilgili ayar/kilit/kod dosyalarını kendi sözleşmeleri için okur; bu, canlı site veya fiyat doğrulaması değildir. |
-| `.github/workflows/ci.yml` | Her push/pull request'te geçici PostgreSQL 17 (`C.UTF-8`) açar, `dev,web,ml` bağımlılıklarını kurar; yalnız `_test` DB'de API rolünü hazırlar ve Black/Flake8/tam testleri çalıştırır. Ayrı Docker işi imajı ve yapay _test kaynağını sıfırdan hazırlar, bütün akış kabulünü çalıştırıp yalnız raporu yükler. `ci_only` şifresi yalnız test işinin geçici sunucunundur. |
-| `.github/workflows/bulut-deneme.yml` | Elle tetiklenen bulut erişim denemesi (zamanlama, veritabanı ve gizli anahtar yok): `tools/live_scraper_check.py samsung_galaxy_a55_128gb` ile 4 sayfayı GitHub'ın makinesinden okur; ardından iki Trendyol sayfası için gelen sayfanın kısa özetini (boyut, dil, başlık, veri blokları, koruma izleri, çerez adları) yazar. Sonuç "Bilinen sınırlar"dadır. Tur saatlerinde (10:00–10:40, 22:00–22:40) tetiklenmez: `data/scrape.lock` bu makineye özgüdür. |
+`ci.yml` PostgreSQL 17 `C.UTF-8` testleri ve yapay Docker kabulünü
+yürütür. Tur dışı elle `bulut-deneme.yml` girişi
+`tools/live_scraper_check.py samsung_galaxy_a55_128gb` kullanır.
 
 ### Canlı kontrol ve denetim araçları: `tools/`
 
-Otomatik test değildir; `pytest` bu klasörü toplamaz. Araçlar proje kökünden
-`.venv\Scripts\python.exe tools\<araç>.py` biçiminde çalıştırılır. Siteye giden
-araçları kullanıcı kendi terminalinden, tur/keşif saatleri dışında çalıştırır.
-Gerçek DB denetimi yalnız okuma hesabıyla yapılır; Docker kabulü ayrı yapay
-`_test` kaynağını kullanır. Yetki sınırının kaynağı [AGENTS.md](../AGENTS.md)'dir.
+Kullanıcı proje kökünde `.venv\Scripts\python.exe tools\<araç>.py`
+çalıştırır. Canlı iş tur/keşif dışında, DB denetimi salt okunurdur.
 
-| Araç | Ne işe yarar |
+| Araç | Sorumluluk |
 |---|---|
-| `tools/docker_check.py` | Yalnız yapay _test verisiyle ayrı yerel Docker/CI kabulü; port/rol/dosya, HTTP/grafik, kalıcılık, kesinti, kapı ve ağsız çalışma. Ayrıntı [Docker kabulünde](#docker-tek-komutla-kullanım). |
-| `tools/live_scraper_check.py` | Katalogdaki sayfaları canlı okur; bütün satıcıları gösterir. İsteğe bağlı `product_key` ön eki (ör. `samsung_`) ile yalnız o ürünler; sayfa seçimi toplama turuyla aynı fonksiyondur. Başka bir tarama sürüyorsa (ortak kilit) çıkış kodu 3'tür. |
-| `tools/live_discovery_check.py` | Keşfi kataloğa yazmadan canlı çalıştırır; `--trace` ile her kararın nedenini gösterir. Normalde raporu `data/discovery_report.json` dosyasının üzerine yazar. `--save-responses KLASOR`, tek hedefin ham HTML/JSON yanıtlarını ve raporunu yeni klasöre kaydeder; karar izini de basar. |
-| `tools/ui_preview.py` | Aynı Streamlit ekranını ağsız test istemcisiyle gösterir; kalıcı test verisi uyarısı vardır. API/DB veya canlı site gerekmez; kullanıcı görünüm/yenileme kontrolünü burada yapar. |
-| `tools/ml_data_check.py` | Yalnız okuma hesabıyla günlük 30+7 ML pencereleri, %5 hedefi, eksik/kapsam nedenleri ve zaman bölümlerini hesaplar. Kendi/Cimri ayrı; `--snapshot` ile ağsız tekrar. Model eğitmez, API/site çağırmaz. |
-| `tools/ml_label_check.py` | 4.1 görüntüsü ve 4.2 etiket klasörünü yalnız dosyadan okur; manifesti doğrular ve bütün sıkı pencereleri eski hesaplayıcıyla karşılaştırır. DB/site çağırmaz; dosya yazmaz. |
-| `tools/api_ui_check.py` | Yerel API'nin gerçek veritabanını doğru sunduğunu, üretim kodunu kullanmadan bağımsız SQL hesabıyla karşılaştırır ([bağımsız denetim](#sqlapistreamlit-bağımsız-denetimi)). |
-| `tools/docker_entrypoint.py` | İmajın girişidir; API için gizli dosyadan geçici pgpass hazırlar ve komutu `exec` ile devreder. UI parolayı okumaz; DB/site isteği yapmaz. |
-| `tools/docker_lock.py` | `input` ile pyproject çalışma gereksinimlerini yazar; `lock` ile Linux pip raporunu doğrulayıp hash'li kilidi üretir. Paket kurmaz, ağ/DB kullanmaz. |
+| `live_scraper_check.py` | Katalog/ön ek ile teklifler. Ortak kilit meşgulse 3. |
+| `live_discovery_check.py` | Kataloğa yazmadan `data/discovery_report.json` üretir. `--trace` kararları, `--save-responses KLASOR` tek hedefin ham kanıtını yazar. |
+| `ui_preview.py`, `api_ui_check.py` | Ağsız ekran ve bağımsız SQL–API denetimi |
+| `ml_data_check.py`, `ml_label_check.py` | Sıkı sayım (`--snapshot` ağsız tekrar) ve etiket doğrulama |
+| `docker_check.py`, `docker_entrypoint.py`, `docker_lock.py` | Yapay kabul, imaj girişi ve wheel kilidi (`input`, `lock`) |
 
 ## Komutlar
 
@@ -468,135 +331,68 @@ yazılmaz. Scraper factory de Ctrl+C'yi `plugin` olarak sarmaz.
 
 ### Örnek: iPhone 15 128 GB baştan sona
 
-Bu tarihsel örnek keşif ile fiyat okumasının bağlantısını anlatır; sayfa,
-satıcı ve fiyat değerleri bugünkü durum değildir. Kaynak notunda doğrulama
-tarihi bulunmadığından örnek güncel fiyat kanıtı olarak kullanılmaz.
-
-1. `discovery.json` içinde `Apple / iPhone 15` hedefi var.
-2. Keşif Trendyol aramasında yaklaşık 120 iPhone kartı görür. 5'i gerçekten
-   iPhone 15'tir, gerisi (iPhone 16, 15 Pro, 17…) başka model diye elenir.
-   Hepsiburada'da tek bir ürün sayfasındaki seçenek listesinden 16 renk/kapasite
-   sayfasına ulaşır.
-3. Doğrulanan sayfalar kataloğa yazılır: iPhone 15 128 GB için Trendyol'da 3,
-   Hepsiburada'da 6 sayfa.
-4. Scraper bu 9 sayfanın her birindeki satıcıları karşılaştırır (ör. Hepsiburada
-   Mavi sayfasında 11 satıcı).
-5. Ürünün takip edilen en ucuz teklifi: 56.999 TL (tarayıcıda doğrulandı).
+Hedef → arama/varyant → doğrulanmış katalog → toplanan en ucuz teklif.
+[Tarihsel örnek](arsiv/teknik_2026-11-23.md#örnek-iphone-15-128-gb-baştan-sona)
 
 ### Trendyol
 
-1. Ana sayfa açılarak oturum hazırlanır. HTML arama sayfası (`/sr`) **açılmaz**:
-   içeriği kullanılmıyordu ve canlıda HTTP 403 ile engelleniyordu (25 Eylül
-   2026'da 9 modelin 6'sı bu yüzden taranamadı); API'ye yalnız `Referer` olarak
-   gönderilir.
-2. Arama API'sine "marka + model" sorulur.
-3. Yanıttaki filtre listesinden marka ve **telefon kategorisi** filtresi bulunur;
-   kılıf ve aksesuarlar böylece elenir. Marka önce `canonicalFilters`, yoksa
-   `aggregation/WebBrand` içinden okunur. "Yenilenmiş Cep Telefonu" telefon
-   kategorisi sayılmaz. Birden çok geçerli telefon kategorisi varsa yalnızca ilki
-   taranır ve rapora `category_partial` yazılır.
-4. Sayfalar kaynaktaki "sonraki" bağlantısıyla gezilir (en fazla 20 sayfa).
-   Toplam ürün sayısı tutmazsa `count_mismatch` raporlanır.
-5. Her arama kartı için karar verilir: kabul, `excluded_word` (kılıf, yenilenmiş…),
-   `other_model` (Pro, 16e, başka model), `excluded_term`, `brand`, `category`.
-6. Kabul edilen kartların ürün grubu için Trendyol'un "renk/kapasite seçenekleri"
-   listesi (`slicing-attributes`) okunur; kardeş sayfalar eklenir. Bağlantının
-   rengi bu listedeki addır (sayfanın renk seçicisinde görünen ad, ör. "Abis");
-   ürün listede yoksa satıcının "Renk" özelliği kullanılır.
-7. Aday adresinin ürün yolundaki `-p-<id>` kimliği, arama/varyant kaynağındaki
-   ürün kimliğiyle eşleştirilir. Eksik veya farklı kimlikte istek gönderilmeden
-   `identity` hatası verilir; raporda `candidate_rejected` olur, diğer adaylarla
-   devam edilir. Sorgu parametresindeki kimlik eşleşme için kullanılmaz.
-   Reddedilen adres ürün sayfası deneme sınırından bir hak tüketir; HTTP istek
-   bütçesini tüketmez. Geçerli sayfa açılınca sayfanın kendi ürün kimliği, marka,
-   telefon kategorisi, model, kapasite ve (hedefte `network` varsa) "Mobil Bağlantı
-   Hızı" ayrıca doğrulanır; başka ürüne yönlendirme kimlik denetimini aşamaz.
+Ana sayfa oturum açar. `/sr` yalnız `Referer`'dır. API marka + model
+arar. Marka önce `canonicalFilters`, yoksa `aggregation/WebBrand` içinden okunur.
+İlk geçerli telefon kategorisi taranır, birden fazlaysa
+`category_partial`. Kart retleri `excluded_word`, `other_model`,
+`excluded_term`, `brand`, `category`. Toplam en çok 20 sayfa gezilir.
+
+`slicing-attributes` kardeş renk/kapasite sayfalarını verir. Adayın
+`-p-<id>` yol kodu arama/varyant kimliğiyle eşleşmelidir. Yalnız sorgudaki
+kod geçersizdir. Eksik/yanlış kod HTTP yapılmadan `identity` ve
+`candidate_rejected` üretir. Ürün denemesi hakkını tüketir, HTTP bütçesini
+tüketmez. Açılan sayfada ürün kimliği, marka, kategori, model, kapasite
+ve gerekiyorsa mobil ağ yeniden doğrulanır.
 
 ### Hepsiburada
 
-1. Arama sayfası (`ara?q=…`) okunur. Varsa model filtresi sayfasına
-   (`…-xc-…`) geçilir; bulunamazsa `model_filter_missing` raporlanır.
-2. Ürün kartları toplanır. Kart iki biçimde olabilir:
-   `-p-HBCV…` (ürün sayfası) veya `-pm-HBC…` (grup sayfası). Grup sayfası
-   **aday olmaz**; yalnızca gerçek ürün SKU'larına çözülür.
-3. Arama API'si sayfa sayfa okunur. Ürünün markası hedefe, ana kategori ya da
-   tanım adı yeni telefona uyuyorsa varyantları model adıyla süzülür; iki
-   alandan biri aksesuar/yenilenmiş diyorsa ürün elenir (iPhone'ların ana
-   kategorisi "iPhone iOS Telefonlar", tanımı "Cep Telefonu"dur). İkinci
-   sayfadan itibaren hedefe uyan yeni varyant kalmazsa sayfalama uyarısız
-   durur: sonuçların alaka sırasıyla geldiği varsayılır. Sayfadaki bütün
-   ürün kodları önceki sayfalarda görülmüşse `repeated_page` raporlanır. API
-   engellenirse (`search_api`) HTML'den bulunanlar korunur.
-4. Her ürün sayfası açılır ve kimlik kanıtı kaydedilir. Doğrulanmış sayfa aday
-   üretir ve `allVariantCombinations` (bütün renk/kapasite seçenekleri) kuyruğa
-   eklenir. Kabul edilmeyen sayfada marka/kategori, kendi SKU'sunun seçenekleri,
-   model/kapasite ve hedefte varsa ağ denetimleri gezinmenin devamını belirler.
-   Bu denetimlerden geçen sayfanın seçenekleri taranır ama kendisi aday olmaz;
-   hata veren sayfanın seçenekleri eklenmez. Stoksuz olduğu için aramada
-   görünmeyen kapasiteler de bu yolla bulunur.
+`ara?q=…` ve varsa `…-xc-…` model sayfası taranır. `-p-HBCV…` ürün,
+`-pm-HBC…` grup yoludur. Grup yalnız gerçek SKU'lara çözülür.
+API'de marka ve ana kategori/tanım yeni telefona uymalıdır. İki
+alandan birindeki aksesuar veya yenilenmiş kanıtı eler. Varyantlar
+modelle süzülür. İkinci sayfadan itibaren yeni uygun varyant kalmazsa
+durulur. Tamamen tekrarlı kod sayfası `repeated_page`, engel
+`search_api` üretir. API engelinde HTML adayları korunur.
 
-Doğrulanmış adayın adresi, kanıtın toplandığı istenen ürün adresidir; canonical
-bu adresin yerine yazılmaz. Canonical ürün yolundaki SKU başka bir ürünü
-gösterirse `source_id_mismatch` kimlik çelişkisi oluşturur. Aynı SKU'nun başka
-bir yazımı veya yolundan SKU çıkarılamayan bir canonical, aday adresini
-değiştirmez. Küçük harfli SKU eşdeğerdir; yalnız sorgudaki SKU kullanılmaz.
+Doğrulanan ürün adaydır. `allVariantCombinations` kuyruğa girer.
+Retli sayfada yalnız marka/kategori/SKU/model/kapasite/ağ geçerse
+seçenekler gezilir. Hatalı sayfada gezinilmez.
+Aday URL'si kanıt adresidir. Canonical başka SKU ise `source_id_mismatch`.
+Küçük harf eşdeğerdir. Sorgu SKU'su ve SKU'suz canonical adresi değiştirmez.
 
 ### Otomatik güvenli kabul
 
-`app/discovery/acceptance.py`, aynı sayfanın ürün koduna bağlı kimlik
-kanıtlarını toplar ve `verified` (doğrulandı), `mismatch` (uyuşmazlık),
-`insufficient` (kanıt yetersiz) kararı verir. Model, marka, kapasite, renk,
-yeni telefon kategorisi ve kendi JSON-LD Product/ProductGroup teklifindeki
-NewCondition birlikte aranır. Garanti yazısı yeni ürün kanıtı değildir;
-yenilenmiş/aksesuar/ikinci el/teşhir kanıtı NewCondition etiketinden önce gelir.
-Fiyat/satıcı/stok, kimlik kararı yerine kullanılmaz; kimliği tam stoksuz aday
-kabul edilebilir. Yanlış başka SKU'nun fiyatı veya özelliği ödünç alınmaz.
+`acceptance.py`, aynı ürün koduna bağlı marka, model, kapasite, renk,
+yeni telefon kategorisi ve kendi Product/ProductGroup teklifindeki
+NewCondition kanıtıyla `verified`, `mismatch` veya `insufficient` verir.
+Aksesuar/yenilenmiş/ikinci el/teşhir kanıtı NewCondition'dan önce gelir.
+Garanti, fiyat, satıcı ve stok kabul kanıtı değildir. Stoksuz aday kimliği
+tam ise kabul edilir. İki adaptör yalnız `verified` döndürür.
+Rapor kararı kanıttan yeniden hesaplar.
 
-İki adaptör de yalnız `verified` kararındaki adayı döndürür. Doğrulanmayan
-sayfalarda eski kimlik denetimleri ayrıntılı `candidate_rejected` açıklamasını,
-Hepsiburada'da ayrıca seçenek taramasının sınırını korur; bu denetimler ikinci
-bir aday üretmez. Son rapor kontrolü bütün kararları kanıttan yeniden hesaplar;
-`mismatch` ve `insufficient` sayfalar ret/eksik kanıt gerekçeleriyle raporlanır.
+- Hedefte ağ varsa kendi başlığından veya özelliğinden olumlu kanıt gerekir.
+  5G yazmaması 4G kanıtı değildir. 4.5G, 4G sayılır. Ağ, kapasite, renk veya
+  RAM çelişkisi reddedilir. RAM eksikliği tek başına ret değildir.
+- Trendyol renk seçicisinde `DsmColor` ve `product.slicingAttributes`
+  önceliklidir. Çelişirlerse ret verilir. Seçici yoksa satıcı "Renk"
+  ve JSON-LD değeri karşılaştırılır. Salt kapasite renk sayılmaz.
+- Hepsiburada özelliği ana `productState.product`/ürün kökünden, renk
+  kendi varyantından veya ürün alanından gelir. Kayıtlı satışa kapalı
+  biçimde açık başlık son eki kullanılabilir. Öneri ürününden ya da
+  görselden kanıt alınmaz. “Çok Renkli” özgül renk değildir.
+  Bilinen normalleştirme `blue` → `mavi`dir.
 
-Ağ ayrımı hedefin kimliğine dahilse olumlu kanıt gerekir: kendi başlığında
-açık 5G veya aynı kodun ağ özelliği. 5G yazmaması 4G kanıtı değildir; 4.5G
-4G sayılır. Açık ağ, kapasite, renk veya RAM çelişkisi ret nedenidir; RAM'ın
-bulunmaması tek başına ret değildir. Hepsiburada özellikleri yalnız ürünün
-ana `productState.product`/ürün kökü içinde okunur; önerilen ürüne girilmez.
-Renk kendi varyantı/ürün alanından alınır; kayıtlı satışa kapalı örneklerde
-yalnız tam başlığın açık renk son eki de kullanılır. Sınırlı renk sözlüğü,
-tanınmayan renkleri görselden tahmin etmez (bilinen sınırı: "Bilinen sınırlar"). Blue/Mavi eşitliği kayıtlı 6 Ekim
-örneğine dayanır; genel WebColor “Çok Renkli” özgül renk sayılmaz.
-
-Trendyol'da renk, sayfanın renk seçicisindeki addır (varyant listesindeki
-`DsmColor` ve `product.slicingAttributes`): bu ad varsa satıcının "Renk"
-özelliği ve JSON-LD rengi karşılaştırmaya girmez. Satıcı alanı genel ad
-yazar ("Black" için "Siyah", "Cosmic Orange" için "Turuncu"), JSON-LD bazen
-kapasite ("256 GB"). Seçici adı yoksa diğer renkler yine birbiriyle
-karşılaştırılır; tamamı kapasite olan değer renk sayılmaz. İki seçici alanı
-çelişirse sayfa reddedilir. Kural 19 Ekim raporundaki 109 Trendyol sayfasına
-dayanır (hepsinde seçici adı vardı, iki alan hiç çelişmedi); kayıtlı
-örnekler `tests/fixtures/discovery/acceptance_examples.json` içindedir.
-Hepsiburada'da renk adı uyuşmazlığının gerçek örneği görülmediği için orada
-kural değişmedi. Kural kanıttan yeniden hesaplandığı için bu değişiklikten
-önce üretilmiş önizleme raporları `--apply-report` ile uygulanamaz; yeni
-önizleme gerekir.
-
-Etkin, tanımlı hedeflerin doğrulanan yeni kapasiteleri yeni ürün oluşturabilir;
-tanımlanmayan marka/model oluşturulmaz. Mevcut ürün/listing kimlikleri, pasif
-kayıtlar ve görülmeyen bağlantılar korunur. Aynı platform kodu aynı taramada
-çelişkili kimlikler gösterirse grubun tamamı dışarıda tutulur. Bir arama
-yolunun engellenmesi, kendi sayfasında yeterli kanıt bulunan adayı topluca
-engellemez; `complete=false` ve kısmi çıkış kodu yine korunur.
-
-`config/discovery.json` içindeki `retired_listing_bindings`, kaldırılan
-bağlantının platform kodunu, eski listing_id, product_id ve product_key bağını
-saklar. İlk kayıt HBCV00008BCY51 → ürün 58 / Galaxy S25 512 GB'dır. Keşif DB'ye bağlanmaz.
-Kaldırılmış bağlantı yalnız tam yeni kanıtla aynı ürüne eski kimliğiyle
-dönebilir; başka ürüne taşınamaz. Katalogda hâlen bulunan pasif bağlantı
-kendiliğinden açılmaz. Gelecekte hedefli kalıcı kaldırmada bu kayıt güncellenir.
-
-Komut seçenekleri:
+Yeni ürün yalnız etkin hedefin doğrulanmış kapasitesinden gelir.
+Aynı platform kodunun çelişkili grubu elenir. Kısmi aramada kanıtlı
+aday yazılabilir. `retired_listing_bindings` kaldırılan kod,
+listing_id/product_id/product_key bağını saklar. Kalıcı kaldırmada
+güncellenir. Tam kanıtla yalnız eski kimliğe ve ürüne döner.
+Pasif katalog kaydı otomatik açılmaz.
 
 ```powershell
 # Tek seferlik toplu önizleme; katalog yazmaz.
@@ -605,160 +401,75 @@ Komut seçenekleri:
 .venv\Scripts\python.exe -m app.discovery --scheduled --auto-accept
 ```
 
-`--auto-accept` ile `--dry-run` birlikte kullanılamaz. `--scheduled` açıkça bu
-iki moddan birini ister. Eski seçeneksiz normal yazma yolu da aynı kanıt
-katmanını kullanır. Yeni günlük görev, 24 saat bekleme veya süre dolunca
-kabul yoktur; belirsiz aday sonraki normal haftalık keşifte tekrar görülebilir.
+`--scheduled` açıkça `--auto-accept` veya `--dry-run` ister. İkisi
+birlikte geçersizdir. Seçeneksiz yazma da aynı kanıt kurallarına tabidir.
 
-**Rapor ve kesinti:** `results[].decisions` kendi ürün kodunu, URL'yi,
-gözlem zamanını, UTF-8 HTML içerik parmak izini, alan/değer/kaynak/owner_id
-kanıtlarını ve gerekçeleri içerir. HTML alınamayan sayfada boş içerik izi ve
-eksik kanıt kararı kalır; tam HTML elde edilmiş gibi gösterilmez. Katalog
-yazmadan önce kararlar ve önceki/beklenen sonraki katalog parmak izleri
-atomik rapora, ardından Git dışı `data/discovery/pending_<katalog>.json`
-kaydına yazılır. Sonra katalog atomik değiştirilir, sonuç raporu tamamlanır.
-İki dosyanın tek atomik işlem olduğu varsayılmaz. Sonuç durumları:
-
-| `application.state` | Anlamı |
-|---|---|
-| `preview` | Yazmadan hesaplanan eklemeler; katalog değişmedi. |
-| `prepared` | Yazma niyeti kalıcı kaydedildi; son durum henüz kesinleşmedi. |
-| `applied` / `unchanged` | Beklenen katalog yazıldı / katalog baytları değişmedi. |
-| `not_applied` | Kesinti sonrası mevcut parmak izi önceki katalogla aynı; eski adaylar kendiliğinden yeniden uygulanmadı. |
-
-Sonraki başlangıç, yarım işlemin iki parmak izini kontrol eder. Katalog
-beklenen son durumdaysa uygulandı, önceki durumdaysa uygulanmadı olarak kaydı
-tamamlar. İkisinden farklıysa yeni tarama/yazma durur; otomatik geri alma
-yoktur. Rapor hazırlanamıyorsa katalog değişmez. Son rapor yazılamadığında
-katalog değişmiş olabilir; çıkış1 “hiçbir şey yazılmadı” garantisi değildir.
-Yerel rapor, katalog ve hedef ayarı parmak izleri yeniden denetlenir; raporun
-kendi kabul iddiası yerine kanıttan karar tekrar hesaplanır.
+`decisions` URL, kod, gözlem zamanı, HTML parmak izi, alan/değer/kaynak/
+owner_id ve gerekçeyi tutar. Alınamayan HTML'de iz boş kalır. Önce
+hazırlık raporu ve önceki/sonraki SHA'lar, sonra
+`data/discovery/pending_<katalog>.json` yazılır. Atomik katalog yazımı
+ardından rapor tamamlanır. `preview` yazmasız, `prepared` hazırlık,
+`applied` yazıldı, `unchanged` aynı, `not_applied` kesintiden sonra
+önceki katalog kaldı demektir. Sonraki başlangıç önceki/sonraki SHA ile
+uzlaştırır. İkisi de tutmazsa durur. Rapor hazırlanamıyorsa katalog yazılmaz.
+Son rapor hatasında çıkış 1 olsa bile katalog değişmiş olabilir.
 
 ### Katalogla birleştirme (`service.py`)
 
-- Ürün kimliği: marka + model + kapasite. Bağlantı kimliği: platform + sitedeki
-  ürün kimliği/SKU. Yeni bağlantı adı `platform_urunkimligi` biçimindedir.
-- Mevcut kimlikler değişmez; kimlik başka ürün için tekrar kullanılmaz; bu
-  taramada görülmeyen eski kayıtlar **silinmez**.
-- Aynı keşfi tekrar çalıştırmak çift kayıt üretmez (canlıda doğrulandı: ikinci
-  çalışmada sıfır ekleme, dosya bayt düzeyinde aynı).
-- Katalogdaki bir sayfa bu kez başka ürün (ör. başka kapasite) olarak görülürse
-  o aday yazılmaz, mevcut kayıt korunur ve rapora `catalog_conflict` yazılır;
-  diğer geçerli adaylar yine eklenir.
-- Dosya kilit altında yeniden okunur ve atomik olarak (geçici dosya, diske
-  zorla yazma, yer değiştirme) yazılır. Katalog, rapor ve hazırlık kaydı aynı
-  yazıcıyı (`_atomic_json`) kullanır; yazılan baytlar parmak izi hesabındaki
-  JSON'un aynısıdır. `--dry-run` kataloğa hiç yazmaz.
+Ürün marka/model/kapasite, bağlantı platform/SKU ile tekildir. Yeni
+bağlantı `platform_urunkimligi` biçimindedir. Kimlikler, görülmeyen ve
+pasif kayıtlar korunur. Aynı tarama ikinci kayıt üretmez. Başka ürüne
+bağlı aday `catalog_conflict` olur, diğer adaylara devam edilir.
+Katalog kilit altında yeniden okunur. `_atomic_json` geçici dosya,
+diske yazma ve yer değiştirmeyle aynı JSON baytlarını kullanır.
+`--dry-run` katalog yazmaz.
 
 ### İncelenen raporu uygulama (`--apply-report`)
 
-Yazmanın tek yolu keşfi `--dry-run` olmadan yeniden çalıştırmak olsaydı, ikinci
-tarama incelenenden farklı sayfalar bulabilirdi: Hepsiburada'nın genel
-aramasında yalnız ilk 36 kart görünür ve bu kartlar her seferinde değişebilir.
-`python -m app.discovery --apply-report RAPOR` bu yüzden siteye gitmeden **raporun
-kendi adaylarını** kataloğa birleştirir:
+`python -m app.discovery --apply-report RAPOR` yalnız BOM'lu veya BOM'suz
+geçerli `dry_run: true` önizlemesini okur. `--trace` sarmalı ve daha önce
+yazmış rapor geçersizdir. Eski kanıtsız rapor okunabilir, yeni aday ekleyemez.
+Rapor, katalog ve ayar parmak izleri, kanıttan karar ve beklenen sonuç
+doğrulanır. Kural değişince yeni önizleme gerekir.
 
-- Rapor bir önizleme (`dry_run: true`) olmalıdır; kataloğu zaten yazmış bir
-  çalışmanın raporu reddedilir. `--trace` çıktısı gibi sarmalanmış ya da bozuk
-  dosya da rapor sayılmaz (sözleşme katıdır). Dosyanın başında BOM olabilir.
-- Kanıtlı raporlarda (otomatik kabul sonrası biçim) kanıt kararı, katalog/ayar/rapor
-  parmak izleri ve beklenen son katalog denetlenir. Eski raporlar okunabilir; fakat kanıtsız rapordan
-  yeni ekleme yapılmaz. Aynı raporun zaten uygulanmış kayıtları çoğaltılmaz.
-- Birleştirme canlı yazmayla aynı koddur (`service.py`): kilit altında
-  yeniden okuma, aynı `merge_catalog`, yalnız içerik değiştiyse yazma. Önizleme
-  ve uygulama, aynı başlangıç kataloğundan canlı yazmayla bayt bayt aynı dosyayı verir.
-- **Önizlemeyi aşmama kuralı:** hesaplanan eklemeler, raporun `added_products` ve
-  `added_listings` listesinin alt kümesi olmalıdır. Katalog önizlemeden sonra
-  elle değiştiyse (ör. bir sayfa silindi) önizlemede görünmeyen bir ekleme
-  çıkabilir; o durumda hiçbir şey yazılmaz ve yeni bir önizleme istenir. Önizlemede
-  görünen ama artık katalogda olan kayıtlar sorun değildir: aynı rapor ikinci kez
-  uygulanırsa eklenecek bir şey kalmaz ve dosya yazılmaz.
-- Siteye gitmez; adaptör hiç çalışmaz. Yalnız katalog kilidini alır, `data/scrape.lock`'u
-  almaz: fiyat turu sürerken de çalışır (tur kataloğu yalnız başlarken okur, yazma
-  atomiktir).
-- Eklenen her ürün ve sayfa `+` ile listelenir; katalogla çelişen aday
-  (`catalog_conflict`) yazılmaz ve ayrıca gösterilir.
-- Tek bir sayfa istenmiyorsa ayrı seçenek yoktur: rapor uygulanır, sonra ilk fiyat
-  turundan önce `catalog.json`'da o sayfanın `"active": false` yapılır. Bu kalıcıdır;
-  sonraki raporlar o sayfayı yeniden önermez.
-- Kataloğa giren sayfa en geç bir sonraki fiyat turunda veritabanına eşitlenir;
-  `config/catalog.json` değişikliği Git'e commit edilmelidir (geri alınırsa
-  `product_id` yeniden kullanılabilir ve eşitleme `CatalogConflict` verir).
+Katalog kilidinde canlıyla aynı birleştirme yürür. Sonuç
+`added_products`/`added_listings` alt kümesi olmalıdır. Yeni ekleme
+çıkarsa yazmadan yeni önizleme istenir. Mevcut kayıt çoğaltılmaz.
+Siteye gidilmez, `data/scrape.lock` alınmaz. Süren tur başlangıç
+kataloğunu kullanır. Eklemeler `+` ile, çakışmalar ayrıca yazılır.
+Tek aday seçilemez. İstenmeyen sayfa sonraki turdan önce `active: false`
+yapılabilir. Sonraki tur DB'yi eşitler. Katalog onayla Git'e girer.
+Geri alma kimlik tekrarına ve `CatalogConflict`e yol açabilir.
 
 ### Rapor: `data/discovery_report.json` (zamanlanmışta `data/discovery/kesif_<tarih-saat>.json`)
 
-| Alan | Anlamı |
-|---|---|
-| `generated_at` | Raporun üretildiği an (UTC); `--apply-report` hangi önizlemeyi uyguladığını bununla gösterir. Alan eklenmeden önce yazılmış raporlarda yoktur (`null`). |
-| `dry_run` | Çalışma katalog yazmadan mı yapıldı. |
-| `complete` | Kullanılan kaynakların tamamı tarandı mı. Bütün pazaryerinin bulunduğunu **kanıtlamaz**. |
-| `results` | Hedef × platform başına ayrıntı: kanıtı yeterli adaylar, sayfa kararları (`decisions`), uyarılar, taranan arama/ürün sayfası sayısı. RAM yalnız kanıt varsa doldurulur; garanti kimlik yerine geçmez. |
-| `application` | Yazma işleminin durumu, katalog yolu, önceki/sonraki katalog ve ayar/rapor parmak izleri. Eski raporda `null`; yeni ekleme yetkisi vermez. |
-| `added_products`, `added_listings` | Önizleme/hazırlıkta planlanan, `applied` sonucunda eklenen ürünler/sayfalar; `not_applied` durumda eklenmemiştir. |
-| `existing_listings` | Yeniden görülen, zaten katalogda olan sayfalar. |
-| `retained_unobserved_listings` | Etkin olduğu hâlde bu taramada görülmeyen, katalogda korunan sayfalar; güncel teklif sayılmaz. Pasif sayfalar listelenmez. |
-| `pending` | Taramayı kısmi yapan nedenler (aşağıdaki tablo). |
-| `rejected` | Reddedilen sayfalar ve nedenleri (gözlenen ürün adıyla) ve `catalog_conflict` kayıtları. |
-| `observed_colors` | Kapasite ve platform bazında bulunan renkler; pazaryerinin eksiksiz renk listesi değildir. |
-| `coverage_changes` | Platform başına bu çalışmada eklenen bağlantı sayısı. |
-
-`pending` içindeki uyarılar (taramayı kısmi yapar):
+`generated_at` UTC, `dry_run` mod, `complete` kaynak tamamlanma durumu.
+`results` hedef/platform kararları, `application` yazım ve SHA'lar,
+`added_products`/`added_listings` planlanan veya uygulanan farktır.
+`existing_listings` yeniden görülen, `retained_unobserved_listings`
+görülmeyen etkin sayfadır. `pending` uyarı, `rejected` ret,
+`observed_colors` kapasite/platform renkleri, `coverage_changes` ekleme sayısıdır.
 
 | Uyarı | Anlamı |
 |---|---|
-| `search_fetch` | Arama aşaması hiç tamamlanamadı; ayrıntıda hata kodu, mesaj ve adres var (ör. `network: …` bağlantı kesildi, `blocked: Kaynak HTTP 403 …`). |
-| `search_api` | Hepsiburada arama API'si engellendi. |
-| `model_filter_missing` | Hepsiburada model filtresi sayfası bulunamadı; genel arama sayfası kullanıldı. |
-| `html_partial` | Sayfadaki kart sayısı sitenin bildirdiği toplamdan az. |
-| `filter_unavailable` | Trendyol telefon kategorisi filtresi alınamadı ya da bulunamadı. Filtre isteği hata verdiyse ayrıntıda hata kodu ve mesajı bulunur; aynı arama için uyarı bir kez yazılır. |
-| `category_partial` | Birden çok telefon kategorisi var, yalnızca ilki tarandı. |
-| `count_mismatch` | Trendyol'un bildirdiği toplamla gelen ürün sayısı farklı. Bugünkü nedeni reklam kartları: sonuçların arasına giren reklamlar 2–3 ürünü hiçbir sayfaya düşürmez (bkz. bilinen sınırlar). |
-| `search_limit`, `product_limit` | Sayfa veya ürün sınırı doldu. |
-| `repeated_page` | Site aynı sonuç sayfasını tekrar döndürdü; sayfalama durduruldu. Hepsiburada API'sinde sayfadaki bütün ürün kodları önceki sayfalarda görülmüş demektir; yalnız hedefe uyan yeni sonuç kalmaması bu uyarıyı vermez. |
-| `variant_fetch`, `missing_variants` | Varyant listesi alınamadı veya boş geldi. |
-| `group_url_pending` | Hepsiburada arama API'sinin varyant kaydındaki adres ne ürün (`-p-`) ne grup (`-pm-`) biçiminde; aday çözülemedi. 1–2 Kasım 2026 API yanıtlarında görülmedi. HTML arama sayfasında bu iki kalıba uymayan bağlantılar (menü, kategori…) kart sayılmaz ve uyarısız atlanır. |
-| `evidence_missing` | Kendi ürün koduna bağlı kritik kimlik/yeni ürün kanıtı eksik. Aday eklenmez. |
+| `search_fetch`, `search_api` | Arama tamamlanmadı / Hepsiburada API engellendi. |
+| `model_filter_missing`, `html_partial` | Model filtresi yok / HTML kart sayısı eksik. |
+| `filter_unavailable`, `category_partial`, `count_mismatch` | Trendyol kategori filtresi yok / yalnız ilk kategori / toplam uyuşmuyor. |
+| `search_limit`, `product_limit`, `repeated_page` | Tarama sınırı doldu / sayfa tekrarlandı. Yalnız yeni hedef kalmaması tekrar sayılmaz. |
+| `variant_fetch`, `missing_variants`, `group_url_pending` | Varyant listesi erişilemedi / boş / API ürün veya grup URL'si çözülemedi. |
+| `evidence_missing`, `candidate_rejected`, `identity_mismatch`, `catalog_conflict` | Kanıt eksik / aday reddi / kimlik çelişkisi / katalog bağı çelişkisi. |
 
-`rejected` içindeki kayıtlar (tek bir aday atlanır, tarama sürer):
+| Çıkış | Tarama | `--apply-report` |
+|---|---|---|
+| 0 | Tam | Güncellendi veya fark yok |
+| 1 | Başlama (ör. tanımsız hedef), log veya yazma hatası | Rapor, ayar veya yazma hatası |
+| 2 | Kısmi, çakışma veya etkin hedef yok. Yeterli adaylar yazılabilir | Çakışan aday atlandı |
+| 3 | Ortak kilit meşgul | Ortak tarama kilidi kullanılmaz |
 
-| Kayıt | Anlamı |
-|---|---|
-| `candidate_rejected` | Aday sayfa doğrulanamadı; ayrıntıda neden ve ürün adı var (başka model, kapasite, ağ türü, yurt dışı sürüm, aksesuar…). Taramayı da kısmi sayar. |
-| `catalog_conflict` | Sayfa katalogda başka bir ürüne bağlı; aday yazılmadı, mevcut kayıt korundu. |
-| `identity_mismatch` | Kendi ürün koduna bağlı alanlarda açık model/kapasite/ağ/renk/RAM/kapsam çelişkisi. |
-
-Komutun çıkış kodu: `0` tam tarama, `2` kısmi tarama (doğrulanmış kayıtlar yine
-eklenir; Hepsiburada'da iPhone dışı hedeflerin model filtresi bulunamadığı için
-(`model_filter_missing`) bugün pratikte her zaman 2; katalogla
-çelişen aday, `catalog_conflict`, de taramayı kısmi sayar; hiç etkin hedef
-yoksa sonuç listesi boştur ve çıkış yine 2'dir), `1` keşif başlatılamadı
-(`--target` ile verilen anahtar `discovery.json`'da yok, ayar dosyası bozuk,
-platform adaptörü yüklenemedi…) **ya da** tarama bitti ama sonuç kataloğa veya
-rapora yazılamadı (disk, kilit zaman aşımı; mesaj "Tarama bitti ama sonuç
-yazılamadı" der; kalıcı hazırlık kaydı varsa uzlaştırma gerekir), `3` kilit meşgul (tur, başka bir keşif veya canlı kontrol
-sürüyor). `--apply-report` için: `0` katalog güncellendi ya da eklenecek bir şey
-kalmadı, `2` güncellendi ama katalogla çelişen aday atlandı, `1` rapor/ayar/
-yazma hatası (geçersiz önizleme veya yazma öncesi uyuşmazlıkta katalog yazılmaz;
-son rapor hatasında katalog değişmiş olabilir). `--scheduled` kodları tarama kodlarıyla aynıdır;
-ek olarak log dosyası açılamazsa `1` döner ve keşif hiç başlamaz. Argüman hatası
-(`--scheduled` için mod seçmeden, iki modu birlikte veya `--apply-report` başka seçenekle) çıkış `2`
-verir ve hiçbir şey yazmaz.
-
-Her taramanın sonunda stderr'e tek satırlık özet yazılır, ör. `Özet: yeni ürün 1 ·
-yeni sayfa 5 (hepsiburada 2, trendyol 3) · zaten kayıtlı 310 · görülmeyen 4 ·
-çakışma 0 · reddedilen 7 · tam sonuç 24/48 · uyarı search_api 24`. Çıkış kodu
-bugün pratikte hep `2` olduğundan tek başına bir şey söylemez; uyarılar
-`pending` nedenlerine göre sayıldığı için beklenen `model_filter_missing` ve
-`search_api` ile gerçek sorunlar (ör. `search_fetch`, `variant_fetch`) bu
-satırdan ayırt edilir. "Zaten kayıtlı", bu taramada yeniden görülen katalog sayfalarıdır;
-raporda katalogun toplam sayfa sayısı yoktur.
-
-Çıktı UTF-8'dir; dosyaya yönlendirildiğinde de Türkçe karakterler
-bozulmaz. `catalog.json`, `discovery.json` ve `runtime.json` başında BOM olsa
-da okunur (PowerShell'in `Out-File -Encoding utf8` ile yazdığı kopya gibi);
-katalog her zaman BOM'suz ve LF satır sonuyla yazılır. Trendyol'da arama sayfası
-sınırı (`max_search_pages`) dolunca sonraki sayfa istenmez, `search_limit`
-yazılır.
+`--target KEY` tek hedef seçer. Geçersiz argüman 2 ile yazmadan,
+log hatası 1 ile taramadan çıkar. UTF-8 stderr özeti ekleme, görülen,
+görülmeyen, çakışma, ret ve uyarıları sayar. Ayar BOM kabul eder, katalog BOM'suz LF'dir.
+`max_search_pages` sınırı `search_limit` üretir.
 
 ## Fiyat okuma nasıl çalışır
 
@@ -962,18 +673,14 @@ böylece keşfin kabul ettiği sayfayı scraper aynı girdilerle reddetmez.
 
 ## Veritabanı (PostgreSQL)
 
-Fiyat toplama turlarının sonuçları PostgreSQL 17'de saklanır. Günde 2 turu
-Görev Zamanlayıcı başlatır ([Zamanlanmış tur](#zamanlanmış-tur-görev-zamanlayıcı)).
+PostgreSQL 17, katalog kopyasını ve fiyat turlarını saklar.
+[Zamanlanmış tur](#zamanlanmış-tur-görev-zamanlayıcı)
 
 ### Bir kerelik kurulum (Windows)
 
-1. EDB'nin PostgreSQL 17 kurulum programı; bileşenler: Server ve Command Line
-   Tools. **"Locale" adımında `C` seçilmelidir.** Türkçe Windows'un varsayılan
-   locale adı `Turkish_Türkiye.1254` ASCII dışı karakter içerdiği için `initdb`
-   başarısız olur; kurulum programı yine de "tamamlandı" der ama servis ve veri
-   klasörü oluşmaz (28 Eylül 2026'da yaşandı).
-2. Yönetici olarak (`psql -U postgres -h localhost`) proje kullanıcısı ve iki
-   veritabanı:
+1. EDB PostgreSQL 17, Server ve Command Line Tools bileşenleri.
+   Locale `C` seçilir. ASCII dışı Windows locale adı `initdb`'yi bozar.
+2. Yönetici `psql -U postgres -h localhost` oturumunda:
 
    ```sql
    CREATE ROLE fiyat_takip LOGIN;
@@ -982,89 +689,67 @@ Görev Zamanlayıcı başlatır ([Zamanlanmış tur](#zamanlanmış-tur-görev-z
    CREATE DATABASE fiyat_takip_test OWNER fiyat_takip TEMPLATE template0 ENCODING 'UTF8' LOCALE_PROVIDER builtin BUILTIN_LOCALE 'C.UTF-8';
    ```
 
-   `fiyat_takip` yönetici değildir; yalnızca bu iki veritabanının sahibidir.
-   Şifrede Türkçe karakter kullanılmamalıdır (psql konsolu ile `pgpass.conf`
-   farklı kodlama kullanır). Yerel kurulum yalnızca bu bilgisayardan gelen
-   bağlantılara izin verir (`pg_hba.conf`).
-3. Şifre `%APPDATA%\postgresql\pgpass.conf` dosyasına:
-   `localhost:5432:*:fiyat_takip:ŞİFRE`. Repoda ve ortam değişkeninde şifre
-   bulunmaz.
-4. Şifresiz adresler kullanıcı ortam değişkeni olarak (sonra VS Code/terminal
-   yeniden açılır):
+   Rol yalnız bu DB'lerin sahibidir. Parolada ASCII kullan. `pg_hba.conf`
+   yalnız yerel bağlantıya izin verir.
+3. Parolayı `%APPDATA%\postgresql\pgpass.conf` dosyasına
+   `localhost:5432:*:fiyat_takip:ŞİFRE` biçiminde kaydet.
+4. Şifresiz kullanıcı değişkenlerini ayarla, terminali ve IDE'yi yeniden aç.
 
    ```powershell
    setx DATABASE_URL "postgresql://fiyat_takip@localhost:5432/fiyat_takip"
    setx TEST_DATABASE_URL "postgresql://fiyat_takip@localhost:5432/fiyat_takip_test"
    ```
 
-5. `python -m app.database migrate` tabloları kurar.
+5. `python -m app.database migrate` ile şemayı kur.
+
+`python -m app.database migrate` / `status` / `sync-catalog [--dry-run]`
+çıkışları 0 başarı, 1 komut hatası (stderr'de `Veritabanı komutu başarısız: …`),
+2 argüman hatasıdır.
 
 ### Tablolar
 
 | Tablo | İçerik |
 |---|---|
-| `platforms`, `products`, `listings` | `catalog.json`'un kopyası (asıl kaynak dosyadır). Kayıt silinmez; yabancı anahtarlar bu kopyaya dayanır. |
-| `collection_runs` | Her fiyat toplama turu: başlama şekli (`scheduled`/`manual`), durum (`running`/`completed`/`interrupted`), zamanlar, turun başındaki `catalog.json` parmak izi, planlanan sayfa sayısı. |
-| `listing_checks` | Her tur × planlanan sayfa bir satır. Tur başında sonuçsuz açılır (`outcome` boş = planlandı, bakılmadı); sayfa okununca `offer` (fiyat), `sold_out` (Tükendi) veya `error` (hata kodu) olur. Fiyat alanları `PriceObservation` ile aynıdır, para kuruş. |
-| `schema_migrations` | Uygulanan migration dosyaları ve parmak izleri. |
-| `market_history` | 004 ile ayrı Cimri geçmişi: ürün/kaynak/gün tekil, fiyat kuruş veya NULL; Cimri kimliği/adresi, alım zamanı ve üç kaynak parmak izi. Kendi turlarımızın görünümüne katılmaz. |
-| `product_run_prices` (görünüm) | Her biten tur × ürün için bir satır: en ucuz fiyat ve önceki turla karşılaştırılabilir mi ([Karşılaştırılabilirlik](#karşılaştırılabilirlik-product_run_prices)). |
+| `platforms`, `products`, `listings` | Asıl kaynak `catalog.json` dosyasının DB kopyası. Bağlar yabancı anahtarlarla korunur. |
+| `collection_runs` | Tetikleyici (`scheduled`/`manual`), durum (`running`/`completed`/`interrupted`), zaman, katalog SHA'sı ve planlanan sayfa. |
+| `listing_checks` | Tur × planlanan sayfa. NULL bakılmadı, `offer` fiyat, `sold_out` Tükendi, `error` hata. Fiyat kuruştur. |
+| `schema_migrations` | Uygulanan numara/ad ve parmak izi. |
+| `market_history` | Ayrı Cimri ürün/kaynak/gün kaydı. |
+| `product_run_prices` | Tamamlanmış tur × ürün için en düşük fiyat ve karşılaştırma. |
 
 ### Veritabanının zorladığı kurallar
 
-Kurallar kodda değil tabloda tanımlıdır; koddaki bir hata bile aykırı satır
-yazamaz (`tests/test_database.py` aşağıdakilerin her birini dener):
+`(run_id, listing_id)` tekil, `(listing_id, product_id)` yabancı anahtardır.
+Tek `running` tur olabilir. Yalnız kapanmış turun bitiş zamanı vardır.
+Marka/model/kapasite harf büyüklüğünden bağımsız tekildir.
 
-- Aynı turda aynı sayfa bir kez yazılır (`PRIMARY KEY (run_id, listing_id)`).
-- Hata sonucu fiyat, satıcı veya stok taşımaz; fiyat sonucu satıcısız ve
-  Tükendi stoklu olamaz; Tükendi sonucu yalnız `Tükendi` stokla yazılır;
-  planlanmış ama bakılmamış satır hiçbir sonuç alanı taşımaz.
-- Bir sayfanın sonucu başka bir ürünün altına yazılamaz
-  (`(listing_id, product_id)` yabancı anahtarı).
-- Aynı anda yalnızca bir tur `running` olabilir (kısmi benzersiz indeks).
-  Süren turun bitiş zamanı yoktur, biten turun vardır.
-- Satıcı puanı ölçeği aşamaz; fiyatlar sıfırdan büyüktür; marka + model +
-  kapasite büyük/küçük harften bağımsız tekildir.
-- `CHECK` ifadesi NULL sonuç verirse satır kabul edilir. Bu yüzden sonuç
-  kuralları `CASE` ile ve her koşul `IS NOT NULL` ile korunarak yazıldı
-  (korumasız yazımda satıcısı boş bir fiyat satırı kabul ediliyordu).
-- **002 ile gelenler:** Tükendi satırı fiyat, çizili fiyat, satıcı, puan veya puan
-  ölçeği taşıyamaz (`listing_checks_sold_out_has_no_offer`). Üstü çizili fiyat yalnız
-  güncel fiyattan büyükse saklanır (`listing_checks_original_above_current`); aynı
-  kural `PriceObservation` sözleşmesinde de vardır, scraper bozulup eşit ya da
-  küçük çizili fiyat verirse sayfa hata olur. Scraper'lar bugün bu durumda zaten
-  `null` verir.
-- **002 ile gelen tetikleyiciler** (aşağıdaki tablo): hiçbir tabloda satır
-  silinemez, `TRUNCATE` reddedilir, kimlik alanları değişmez ve yazılmış sonuç
-  donar.
+`offer` pozitif fiyat, satıcı ve satılabilir stok ister. Puan ölçeğini
+aşamaz. Çizili fiyat yalnız güncel fiyattan büyükse bulunabilir. `sold_out`
+yalnız Tükendi stok durumunu taşır. Fiyat, çizili fiyat, satıcı, puan ve
+ölçek boş kalır. Hata fiyat, satıcı veya stok taşımaz. Planlı satırın
+sonuç alanları boştur. `CHECK` NULL'ı geçirebildiği için `CASE` ve
+`IS NOT NULL` kullanılır. 005'in satıcı URL'si yalnız `offer` ile dolabilir.
+Eski URL alanı NULL kalır.
 
 #### Tetikleyiciler: neyin değişip neyin değişmediği
 
-Tetikleyici (trigger), bir değişiklik yapılmadan önce veritabanının araya girip
-reddedebildiği kuraldır. Hata `integrity_constraint_violation` (SQLSTATE `23000`)
-koduyla döner; kodun gerçek güncellemeleri (katalog eşitleme, `record_result`,
-`finish_run`, `close_stale_runs`) bu kurallara takılmaz ve bu `tests/test_database.py`
-ile bütün tur ve eşitleme testlerinde sınanır.
+002 silme ve `TRUNCATE` işlemlerini engeller. İhlal SQLSTATE `23000` döner.
 
-| Tablo | Değişmez | Değişebilir |
+| Tablo | Kimlik alanları | Güncellenebilen |
 |---|---|---|
 | `platforms` | `key` | `name`, `active` |
-| `products` | `product_id`, `product_key`, `brand`, `model`, `storage_gb` | `active` |
+| `products` | `product_id`, `product_key`, marka, model, kapasite | `active` |
 | `listings` | `listing_id`, `product_id`, `platform` | `url`, `color`, `active` |
-| `collection_runs` | `trigger`, `started_at`, `catalog_sha256`, `planned_count` (`run_id`'yi PostgreSQL kendisi korur: `GENERATED ALWAYS`); 003 ile kapanmış turun `status` ve `finished_at` alanları | Çalışan turun `status`, `finished_at` alanları; her turun `note` alanı |
-| `listing_checks` | `run_id`, `listing_id`, `product_id` | Sonuç alanları **bir kez**, yalnız çalışan turda yazılır: sonuçsuz (planlı) satır ilk sonucunu alır, sonra satır donar |
+| `collection_runs` | `run_id` (`GENERATED ALWAYS`), tetikleyici, başlangıç, katalog SHA'sı, planlanan sayı | Çalışan turda `status`/`finished_at`, her turda `note` |
+| `listing_checks` | `run_id`, `listing_id`, `product_id` | Çalışan turda sonuç bir kez yazılır ve donar. |
 
-- **Tek istisna:** çalışan turdaki `network` hatası, aynı tur içinde yeniden
-  okunup yerine sonuç yazılabilir ([tur sonu ikinci okuma](#tur-sonu-ikinci-okuma),
-  `runs.rewrite_network_result`). Başka hata kodları ve biten turun satırları
-  değiştirilemez. `003_closed_run_guards.sql` ilk sonuç yazımını da çalışan
-  turla sınırlar; sonuç yazarken tur satırını işlem sonuna kadar `FOR SHARE`
-  ile kilitler, eşzamanlı kapanışı sıraya alır. Kapanmış turun durumu ve bitiş
-  zamanı değişmez, notu güncellenebilir.
-- **Bilerek silme:** gerçekten gerekirse (örneğin yanlış eklenmiş bir sayfanın
-  geçmişi) tablonun sahibi (`fiyat_takip`) ilgili tetikleyiciyi kapatıp işini
-  yapar ve hemen açar. Önce `SELECT` ile neyin silineceğine bakılır, tur
-  saatleri dışında yapılır:
+Tek istisna çalışan turun `network` sonucudur. `003_closed_run_guards.sql`
+kapanmış turun ilk sonuç yazımını ve durum/bitiş güncellemesini reddeder.
+Yazım, `FOR SHARE` ile tur kapanışıyla sıraya girer.
+[İkinci okuma](#tur-sonu-ikinci-okuma)
+
+- **Bilerek silme.** Sahibi tur dışında önce `SELECT` ile kapsamı
+  kontrol eder. Tetikleyiciyi kapatır ve işlemden sonra açar.
 
   ```sql
   ALTER TABLE listing_checks DISABLE TRIGGER listing_checks_no_delete;
@@ -1072,32 +757,19 @@ ile bütün tur ve eşitleme testlerinde sınanır.
   ALTER TABLE listing_checks ENABLE TRIGGER listing_checks_no_delete;
   ```
 
-  Tetikleyici adları `<tablo>_no_delete`, `<tablo>_no_truncate` ve
-  `<tablo>_guard_update`'tir. Kapatıp açma yolu `tests/test_database.py`'de
-  denenir.
+  Tetikleyiciler `<tablo>_no_delete`, `<tablo>_no_truncate` ve
+  `<tablo>_guard_update` biçimindedir.
 
 ### Karşılaştırılabilirlik (`product_run_prices`)
 
-Bir sayfa hata alınca ürünün "en ucuz fiyatı" yukarı sıçrar, sonraki turda geri
-düşer; bu sahte bir indirim gibi görünürdü. Kural: **iki tur ancak ürünün cevap
-veren sayfa kümesi aynıysa karşılaştırılır.** Cevap `offer` (fiyat) veya `sold_out`
-(Tükendi) demektir; hata cevap değildir, Tükendi gerçek cevaptır. Bir hata iki
-karşılaştırmayı bozar (hataya girerken ve hatadan çıkarken); kapsam değişince de
-(yeni eklenen ya da pasife alınan sayfa) bir kez bozulur.
-
-`product_run_prices`, biten (`completed`) her tur × ürün için bir satırdır;
-süren ve yarıda kalan turlar girmez.
-
-| Sütun | Anlam |
-|---|---|
-| `run_id`, `product_id`, `run_started_at` | Tur, ürün ve turun başlama zamanı |
-| `planned_pages`, `answered_pages`, `offer_pages`, `sold_out_pages`, `error_pages` | Ürünün o turdaki sayfaları: planlanan, cevap veren, fiyatlı, Tükendi, hatalı |
-| `best_price`, `best_listing_id` | Fiyatı olan sayfalar arasındaki en ucuz fiyat (kuruş) ve sayfası; eşitlikte kimliği küçük olan. Bütün cevaplar Tükendi ise boş: bu bir düşüş değildir |
-| `previous_run_id`, `previous_best_price` | O ürünün satırı bulunan bir önceki biten tur (`--prefix` turu başka ürünleri atladığı için ürüne göre) ve onun en ucuz fiyatı |
-| `hours_since_previous` | İki tur arası saat. **Karşılaştırmayı engellemez:** bilgisayar uyurken kaçan turlar (2–4 Ekim: yaklaşık 40 saat) yalnız bilgi olarak gösterilir, yorumu tüketen taraf (API, ML) yapar |
-| `comparable_with_previous` | Doğru ise `best_price` ile `previous_best_price` karşılaştırılabilir. İlk tur, cevapsız ürün ve küme değişen satırlarda yanlış |
-
-Karşılaştırma yalnız `comparable_with_previous = true` olan satırlarda yapılır.
+Yalnız `completed` tur × ürün satırı üretilir. Sayımlar
+`planned_pages`, `answered_pages`, `offer_pages`, `sold_out_pages`,
+`error_pages` alanlarındadır. `offer` ve `sold_out` cevap sayılır.
+`best_price` ve `best_listing_id` minimum tekliftir. Eşitlikte küçük
+kimlik kazanır, fiyat yoksa boş kalır. Önceki tur o ürünün bulunduğu önceki tamamlanmış turdur.
+`comparable_with_previous` yalnız aynı cevap veren sayfa kümesinde
+doğrudur. İlk, cevapsız veya kapsamı değişen tur karşılaştırılmaz.
+`hours_since_previous` yalnız bilgidir. Hata, giriş ve dönüşte kapsamı bozar.
 
 ```sql
 SELECT run_id, run_started_at, best_price / 100.0 AS en_ucuz_tl,
@@ -1110,201 +782,85 @@ ORDER BY run_id;
 
 ### Toplama turu (`python -m app.collection`)
 
-1. Ortak kilidi alır (`data/scrape.lock`); başka bir tur, keşif veya canlı
-   kontrol sürüyorsa beklemeden çıkar (kod 3).
-2. Şema güncel değilse durur. Veritabanının kendi tur kilidini (advisory lock)
-   alır; aynı veritabanını kullanan başka bir süreç (ör. farklı kilit dosyasıyla
-   çalışan bir kopya) tur yürütüyorsa çıkar (kod 3) ve onun turuna dokunmaz. İki
-   kilit de bizdeyse `running` kalmış eski turlar yarıda kalmıştır;
-   `interrupted` yapılır.
-3. Katalogu eşitler (aşağıdaki kurallar); çakışma varsa tur açılmaz.
-4. Etkin sayfa + etkin ürün + etkin platform (isteğe bağlı `--prefix`) planlanır;
-   tur satırı ve planlanan sayfalar (sonuçsuz) tek transaction'da yazılır.
-5. Her sayfa mevcut scraper'la (`fetch`) okunur ve sonucu **hemen** yazılır;
-   tur ortasında bilgisayar kapanırsa okunanlar kaybolmaz. Ekrana
-   `[12/326] listing_id  fiyat 57.249,00 TL · satıcı (Stokta Var)` biçiminde
-   ilerleme yazılır.
-6. Tur sonunda yalnız `network` hatası alan sayfalar **bir kez** yeniden okunur
-   (aşağıda [Tur sonu ikinci okuma](#tur-sonu-ikinci-okuma)).
-7. Tur `completed` yapılır ve özet basılır.
+1. Ortak `data/scrape.lock` ve güncel şemadan sonra DB advisory lock
+   alınır. Meşgul kilit çıkış 3 verir. İki kilit de alındığında eski
+   `running` turlar `interrupted` yapılır.
+2. Katalog eşitlenir. Çakışmada tur açılmaz. Etkin platform/ürün/sayfalar
+   `--prefix` filtresiyle planlanır. Tur ve sonuçsuz satırlar tek işlemde yazılır.
+3. Her sonuç hemen yazılır ve ilerleme basılır. Sonunda yalnız `network`
+   için ikinci okuma yapılır. Tur kapanır, ardından özet okunur.
 
-| `fetch()` sonucu | `listing_checks` |
+| Sonuç | Yazım |
 |---|---|
-| Stokta Var / Kritik Stok | `offer` + fiyat, satıcı, puan, stok |
-| Tükendi | `sold_out`; fiyat ve satıcı **yazılmaz** (satın alınamayan fiyat "en ucuz" hesabına karışmasın) |
-| `FetchError` (`blocked`, `network`, `parse`, `identity`, `no_eligible_offer`…) | `error` + aynı kod ve mesaj (`network` tur sonunda bir kez yeniden okunur) |
-| Gözlem başka bir sayfaya ait ya da scraper doğrulanmamış veri döndürdü (`ValueError`) | `error`, `validation`. Gerçek scraper'larda sayfa içindeki doğrulama hatası zaten `parse` koduyla gelir |
-| Beklenmeyen hata | `error`, `unexpected`; ayrıntı ekrana yazılır, **tur sürer** |
-| Veritabanı değeri reddetti (ör. sütuna sığmayan fiyat) | `error`, `storage`; **tur sürer**. Metinlerdeki NUL (`\x00`) karakteri yazmadan önce silinir |
-| Ctrl+C veya veritabanı hatası | Tur `interrupted`; bakılmayan sayfalar sonuçsuz kalır. Veritabanı bağlantısı tamamen koptuysa tur kapatılamaz ve `running` kalır; bir sonraki tur onu `interrupted` yapar |
+| Stokta Var / Kritik Stok | `offer` ve teklif alanları |
+| Tükendi | `sold_out`, fiyat ve satıcı boş |
+| `FetchError` | `error`, aynı kod ve mesaj |
+| Yanlış sayfa/geçersiz gözlem | `validation`. Scraper ayrıştırma hatası `parse` olabilir. |
+| Beklenmeyen hata | `unexpected`, ayrıntı logda |
+| Reddedilen DB değeri | `storage`. Metindeki NUL (`\x00`) temizlenir. |
 
-Çıkış kodları: `0` tamamlandı ve hata yok; `2` tamamlandı ama bazı sayfalarda
-hata var; `1` başlayamadı (şema, çakışma, `DATABASE_URL`, `runtime.json`,
-planlanacak etkin sayfa yok: ör. hiçbir ürünle eşleşmeyen `--prefix`)
-**ya da** tur ortasında veritabanı hatasıyla kesildi (tur `interrupted`, o ana
-kadar yazılanlar kalır) **ya da** tur tamamlandıktan sonra özeti okuyan sorgu
-düştü (tur `completed` kalır, yalnız çıkış kodu 1 olur); `3` kilit meşgul; `130`
-Ctrl+C (tur kapandıktan sonra gelirse `completed` kalır). `--scheduled` turu
-`scheduled` olarak kaydeder (Görev
-Zamanlayıcı için); verilmezse `manual`. `--prefix` kullanıldıysa turun
-notuna yazılır. Sonuç yalnızca süren tura yazılabilir; kapanmış bir tur
-yeniden kapatılmaya çalışılırsa hata verir (sessiz geçmez).
+Sayfa hatasında tur sürer. Ctrl+C/kesen DB hatasında `interrupted`,
+bakılmayan sayfa NULL kalır. DB kopmuşsa sonraki tur kalan `running`
+kaydını kapatır. İkinci kapanış reddedilir. `--scheduled` tetikleyicisi
+`scheduled`, varsayılan `manual` olur. `--prefix` nota yazılır.
+
+| Çıkış | Anlamı |
+|---|---|
+| 0 | Tamamlandı, sayfa hatası yok |
+| 1 | Başlama (şema/ayar/çakışma/etkin sayfa), kesen DB veya özet hatası |
+| 2 | Tamamlandı, sayfa hatası var |
+| 3 | Kilit meşgul |
+| 130 | Ctrl+C |
 
 #### Kapanış sonrası hatalar
 
-Turun kapanışı özet sorgusundan önce, autocommit bağlantıda kalıcıdır.
-Özet SQL hatası veya özet okunurken kullanılan bağlantının kapanması, yazılmış
-sonuçları ve `completed` durumunu değiştirmez; komut çıkış kodu 1 olur.
-Kapanış sonrası Ctrl+C'de de tur `completed` kalır, çıkış kodu 130 olur.
-Tur ortasında kesilme ve bağlantı kopması kuralları yukarıdaki gibi sürer.
-
-Ctrl+C mesajı kapanmış ve yarım kalmış turu ayırır:
-
-> Komut durduruldu. Tamamlanmış tur 'completed' kalır; yarım kalan tur 'interrupted' olarak kapatılır. Kapatılamadıysa bir sonraki tur kapatır.
+Autocommit kapanışından sonra SQL/bağlantı hatası 1, Ctrl+C 130
+verir. Tur `completed`, sonuçlar kayıtlı kalır.
 
 #### Tur sonu ikinci okuma
 
-Bağlantı tur ortasında koptuysa ve tur bitmeden döndüyse (28 Eylül: 47 sayfa,
-4 Ekim: ilk 109 sayfa) `network` hatası alan sayfalar bu sırada okunabilir
-durumdadır. Tur, sayfa döngüsü bittikten sonra ve kapatılmadan önce bunları bir
-kez daha okur:
+Yalnız `error`/`network` (5xx dahil), kapanıştan önce, yeni
+scraper ve aynı `check_listing` ile bir kez denenir. İstek aralığı
+3 sn'dir. Ardışık 5 `network` hatası geçişi durdurur. İlk geçiş
+bu sınırla durmaz.
 
-- **Kapsam:** yalnız o turda `error` / `network` sonuçlu sayfalar (5xx dahil).
-  `blocked`, `parse`, `identity`, `invalid_host`, `http_error` ve diğer bütün hatalar
-  yeniden denenmez: engel aşılmaz, kalıcı hatalar tekrar denenmez. Her sayfa aynı
-  `check_listing` ile ve yeni bir scraper nesnesiyle okunur; 3 sn istek aralığı aynen
-  geçerlidir.
-- **Yazma:** yeni sonuç hata satırının **üzerine yazılır**
-  (`runs.rewrite_network_result`: yalnız süren turun `error`/`network` satırı;
-  002 tetikleyicisi aynı istisnayı tanır). Sayfa başına tek satır kuralı korunur ve
-  bir sayfa bir turda en çok bir kez yeniden okunur. Düzelen sayfanın `checked_at`
-  değeri ikinci okuma anıdır (ilk denemeden en çok tur süresi, ~30 dk sonra).
-- **İkinci okuma da `network` verirse** yeni bilgi yoktur: satır (mesaj ve zaman
-  damgası dahil) olduğu gibi kalır. Başka bir sonuç gelirse (fiyat, Tükendi ya da
-  `network` dışında bir hata) o yazılır.
-- **Veritabanı yeni sonucu reddederse** (ör. sütuna sığmayan fiyat) ilk `network`
-  satırı kalır, log'a yazılır ve tur sürer.
-- **Erken durdurma:** ardışık 5 sayfa yine `network` verirse bağlantı hâlâ yok
-  demektir ve geçiş durur; kalan sayfalar `network` olarak kalır (internet tur
-  boyunca yoksa 333 sayfayı bir de denemek 3 sn aralıkla ~17 dk boşa giderdi).
-  Birinci geçişte erken durdurma yoktur.
-- **Log ve tur notu:** `Tur sonu: network hatası alan N sayfa yeniden okunuyor`,
-  her sayfa için `[tekrar i/N] listing_id  …` ve özet satırı. Tur notuna yalnız
-  sayılar yazılır, sayfa kimlikleri logdadır: `network hatası alan 109 sayfa,
-  ikinci okuma: 104 düzeldi, 5 hâlâ hatalı` (durursa sonuna `, 2 denenmedi
-  (ardışık 5 network hatasında durdu)` eklenir; `--prefix` notunun ardından `; `
-  ile gelir). Hiç `network` hatası yoksa ikinci okuma yapılmaz ve not eklenmez.
-- **Çıkış kodu ve özet** ikinci okumadan sonraki duruma göre hesaplanır; tamamen
-  kurtarılan bir kesinti çıkış 0 verir. Kurtarılan sayfa cevap sayıldığı için
-  ürünün cevap veren sayfa kümesi değişmez ve [karşılaştırılabilirlik
-  görünümünde](#karşılaştırılabilirlik-product_run_prices) sahte bir
-  "karşılaştırılamaz" satırı oluşmaz.
-- **Sınırı:** bilgisayar uyursa ya da kesinti tur bitene kadar sürerse sayfalar
-  hatalı kalır; bu kalıcı çözüm değildir (sürekli işletim, Aşama 9). Gerçek
-  turlarda çalıştığı görüldü: 17 Ekim tur 37'de 55/55, 19 Ekim tur 42'de 3/3
-  sayfa düzeldi.
+Başka sonuç gelirse `rewrite_network_result` aynı satırı yeni
+`checked_at` ile değiştirir. Tekrar `network` veya yazma reddinde ilk
+satır kalır. Ret loglanır. Log, denenen sayfa ve sonuçları; not, yalnız
+düzelen/kalan/denenmeyen sayıları taşır. Son çıkış ve karşılaştırılabilirlik
+düzeltilmiş sonuca göre hesaplanır. Hiç `network` yoksa ikinci okuma ve
+not oluşmaz.
 
 ### Zamanlanmış tur (Görev Zamanlayıcı)
 
-`scripts/zamanlayici_kur.ps1`, Windows Görev Zamanlayıcı'ya
-`\FiyatTakip\FiyatToplamaTuru` görevini kurar. Yönetici izni gerekmez; tekrar
-çalıştırmak görevi aynı ayarlarla yeniden kurar, `-Kaldir` siler. Windows
-varsayılan olarak `.ps1` çalıştırmadığı için komut
-`powershell -ExecutionPolicy Bypass -File …` biçimindedir (izin yalnız o komut
-içindir, sistem ayarı değişmez). Betik, `.venv\Scripts\pythonw.exe` yoksa ya da
-`DATABASE_URL` kullanıcı ortam değişkeni tanımlı değilse görevi kurmadan hata
-verip durur (görev bu değişkeni Windows kullanıcı ortamından alır).
+`scripts/zamanlayici_kur.ps1` yönetici izni istemeden
+`\FiyatTakip\FiyatToplamaTuru` görevini kurar/yeniler, `-Kaldir` siler.
+`-ExecutionPolicy Bypass` yalnız çağrılan süreç içindir. `pythonw.exe`
+ve kullanıcı ortamında `DATABASE_URL` gerekir.
 
-| Ayar | Değer | Neden |
-|---|---|---|
-| Tetikleyiciler | Her gün yerel saatle 10:00 ve 22:00 | Karar ([proje_plani.md](../proje_plani.md)). Görev Zamanlayıcı saati varsayılan olarak UTC'ye çevirir; script yerel saat yazar. |
-| Eylem | `.venv\Scripts\pythonw.exe -m app.collection --scheduled`; çalışma klasörü proje klasörü | `pythonw` pencere açmaz: 31 dakika açık kalan ve kapatılınca turu kesen bir pencere olmaz. `config\` ve `data\` yolları çalışma klasörüne göredir. |
-| Kaçan tur | "Kaçırılırsa en kısa sürede çalıştır" | Bilgisayar kapalıyken kaçan tur, açılınca **bir kez** yapılır (iki tur kaçtıysa da bir kez). |
-| Pil | Pildeyken de başlar, pile geçince durmaz | Windows'un varsayılanı yalnız şarjdayken çalıştırmaktır; dizüstünde pilde tur hiç başlamazdı. |
-| Uyandırma | Yok | Uykudaki bilgisayar uyandırılmaz; kaçan tur açılınca telafi edilir. |
-| Aynı anda | Görev çalışıyorsa yeni kopya başlatılmaz (`IgnoreNew`) | Atılan tetikleme log, veritabanı satırı ve çıkış kodu bırakmaz ve sonradan telafi edilmez (aşağıdaki sınırlara bakın). Elle başlatılan keşif ve canlı kontrol araçlarını ortak kilit engeller. |
-| Süre sınırı | 2 saat | Normal tur ~31 dk (kesintili turlar 36–38 dk sürdü: uyku ya da bağlantı kopması). Görev Zamanlayıcı süreci zorla kapatırsa tur `running` kalır; bir sonraki tur onu `interrupted` yapar. |
-| Kullanıcı | Kurulumu yapan kullanıcı, yalnız oturum açıkken | Windows şifresi saklanmaz; `DATABASE_URL` ve `pgpass.conf` bu kullanıcınındır. Kilitli ekran "oturum açık" sayılır. |
+Yerel 10:00/22:00'de proje kökünde
+`.venv\Scripts\pythonw.exe -m app.collection --scheduled` çalışır.
+Oturum açıkken, kilitli ekran ve pilde de çalışır. Uyandırma yoktur,
+2 saat sınırı vardır. Kaçan tetiklemeler uygun oturumda bir kez
+telafi edilir. Kesinti, `IgnoreNew` veya kod 3 telafi edilmez.
+`IgnoreNew` ayrı log/DB/çıkış bırakmaz. Kapanamayan `running` turu
+sonraki tur kapatır. Ağ/uyku kesintilerinde ikinci okuma geçerlidir.
 
-`--scheduled` ile bütün çıktı `data/logs/tur_<yerel tarih-saat>.log` dosyasına
-da yazılır: başlangıç satırı, her sayfanın ilerleme satırı, beklenmeyen
-hataların ayrıntısı (traceback), özet ve **çıkış kodu**. Başlayamayan (kod 1)
-ve kilit meşgul olduğu için atlanan (kod 3) turlar da log bırakır. Tek istisna:
-log dosyasının kendisi açılamazsa (ör. `data\logs` yazılamıyor) `pythonw`
-altında hiçbir yere yazı düşmez; yalnız Görev Zamanlayıcı sonucu `0x1` görünür.
-Dosya satır satır yazılır; tur ortasında bilgisayar kapanırsa o ana kadarki
-satırlar kalır. `pythonw` altında ekran akışları yoktur; tek yazılı kayıt bu
-dosyadır. Loglar silinmez (tur başına ~30 KB).
+`data/logs/tur_<yerel tarih-saat>.log` başlangıç, ilerleme, hata,
+özet ve çıkışı saklar. 1/3 de loglanır. Log açılamazsa tur başlamaz,
+`pythonw` altında yalnız `0x1` görünür. Windows `0x0/0x1/0x2/0x3`
+CLI ile aynıdır. `0x41301` çalışıyor demektir.
 
-Görev Zamanlayıcı "Son çalıştırma sonucu"nu onaltılık gösterir: `0x0`
-hatasız, `0x2` bazı sayfalar hatalı, `0x3` kilit meşgul (tur atlandı, yeniden
-denenmez), `0x1` başlayamadı ya da veritabanı hatasıyla kesildi. Görev
-çalışırken `0x41301` (267009) görünür; bu hata değil, "çalışıyor" kodudur.
-Ayrıntı log dosyasında, sonuçlar veritabanındadır
-(`collection_runs.trigger = 'scheduled'`).
-
-Sınırlar:
-
-- 10:00 veya 22:00'de elle keşif ya da canlı kontrol sürüyorsa zamanlanmış tur
-  başlamaz (kod 3) ve o tur telafi edilmez.
-- Bilgisayar açılışında başlayan telafi turu ağ bağlantısı kurulmadan
-  başlayabilir; ilk sayfalar `network` hatası alabilir.
-- Tur bilgisayarın o anki internet bağlantısına bağlıdır. Bağlantı tur
-  ortasında koparsa o sıradaki sayfalar `network` hatası alır, bağlantı dönünce
-  tur kaldığı yerden sürer ve tamamlanır; tur sonunda bu sayfalar bir kez yeniden
-  okunur ([Tur sonu ikinci okuma](#tur-sonu-ikinci-okuma)). Kesinti tur
-  bitene kadar sürerse ya da bilgisayar uyursa sayfalar hatalı kalır (28 Eylül,
-  ilk zamanlanmış tur: 326 sayfanın 47'si `network`, 279'u okundu, çıkış 2; ikinci
-  okuma o tarihte yoktu). İnternet hiç yoksa tur bütün sayfalara hata yazarak biter
-  (birinci geçişte erken durdurma yok; ikinci okuma ardışık 5 hatada durur). Hata
-  "cevap" sayılmadığı için sahte fiyat veya sahte düşüş oluşmaz.
-- Tur yarıda kesilirse (bilgisayar kapandı, süre sınırı) Görev Zamanlayıcı onu
-  "çalıştı" saydığı için telafi edilmez.
-- Görev bilgisayarı uyandırmaz. Bilgisayar uyurken gelen tur kaçar ve
-  açılışta bir kez telafi edilir. 30 Eylül'de bilgisayar 17:57'den 1 Ekim
-  09:20'ye kadar uykudaydı; 22:00 turu çalışmadı ve telafi turu 1 Ekim 09:26'da
-  başladı (tur 7). Kaçan turun verisi geriye dönük toplanamaz; yalnız o saatin
-  gözlemi kaybolur.
-- Telafi turu bir sonraki tur saatine sarkarsa o tetikleme `IgnoreNew` ile
-  atılır: ayrı log, `collection_runs` satırı ve çıkış kodu oluşmaz ve sonradan
-  telafi edilmez (1 Ekim 10:00: tur 7 hâlâ sürüyordu). `LastRunTime` tetikleme
-  saatini, `LastTaskResult` ise çalışmakta olan turun sonucunu gösterir. Görev
-  Zamanlayıcı geçmişi bu bilgisayarda kapalıdır; atılma, önceki turun logunun
-  son yazılma saatinden doğrulanır (tur 7'nin logu 10:03:38'de kapandı).
-- Görev yalnız oturum açıkken çalışır. Windows Update bilgisayarı kendiliğinden
-  yeniden başlatırsa oturum kapanır ve kullanıcı oturum açana kadar tur
-  başlamaz; oturum açılınca kaçan tur bir kez telafi edilir. 12 Kasım'da
-  güncelleme 05:48–05:51'de yeniden başlattı, oturum 16:41'de açıldı ve 10:00
-  turu 16:51'de yapıldı. Güncellemeden sonra otomatik oturum açma ayarı
-  kullanıcı kararıyla açılmadı.
-- Tur ortasında bilgisayar uyursa (1 Ekim 09:29, kritik pil, yaklaşık 6,5 dk)
-  uyanma anındaki sayfalar `network` hatası alabilir (tur 7: 1 sayfa, DNS
-  çözülemedi); tur tamamlanır. Tur sonu ikinci okuma bu sayfaları yeniden dener;
-  düzelmezlerse çıkış kodu 2 olur.
-- **Bu bilgisayarın güç ayarları:** dizüstünün uyku türü Modern Standby'dır;
-  ekran bir zamanlayıcıyla kapanınca (kilit ekranında 30 sn, aksi hâlde 10 dk)
-  bilgisayar da uykuya geçer ve tur durur. Kapak kapalı ve ekran kilitliyken
-  turların çalışması için prizdeyken (AC) kapak eylemi "hiçbir şey yapma",
-  uyku (`STANDBYIDLE`), ekran kapanma (`VIDEOIDLE`) ve kilit ekranında ekran
-  kapanma (`VIDEOCONLOCK`) süreleri 0 olmalıdır. ASUS Armoury Crate güç planını
-  kendiliğinden değiştirir (prizde "Performance", pilde "Silent"); bu yüzden
-  ayarlar üç planın (Dengeli, Silent, Performance) hepsine yazılır. Şarj
-  kablosunda temassızlık var (14 günde 52 kez 1–9 sn kesinti); kapak eylemi
-  pildeyken de "hiçbir şey yapma"dır, yoksa kısa bir kesinti kapağı kapalı
-  bilgisayarı uyutuyordu. Pildeki ekran ve uyku süreleri değişmedi (kilitliyken
-  30 sn, aksi hâlde 3–4 dk). Pilde uyuyan bilgisayar kablo dönünce kendiliğinden
-  uyanmaz; kilitliyken kısa kesintide uyuyup uyumadığı henüz sınanmadı. 22–23 Ekim:
-  ayar yalnız "Dengeli"deyken 22:00 turu kaçtı, telafi turu (tur 48) 22:52'de
-  başlayıp gece uykuda bekledi ve ertesi sabah 09:32'de bitti; üç plan
-  düzeltildikten sonra tur 49 kapak kapalıyken 10:00'da başladı ve sayfalar
-  arasında en uzun ara 42 sn oldu.
+Modern Standby bu bilgisayarda ekran kapanınca uyutabilir. AC'de
+kapak eylemi “hiçbir şey yapma”, `STANDBYIDLE`, `VIDEOIDLE`,
+`VIDEOCONLOCK` 0'dır. Armoury Crate nedeniyle Dengeli/Silent/Performance
+planlarının üçüne uygulanır. Pilde kapak eylemi aynı, ekran/uyku süreleri
+mevcut ayardadır. [İşletim kanıtı](arsiv/teknik_2026-11-23.md#zamanlanmış-tur-görev-zamanlayıcı)
 
 #### Geç veya kaçan turun nedeni
 
-Görev Zamanlayıcı geçmişi kapalı olduğu için neden, Windows System olay
-günlüğündeki güç ve oturum kayıtlarından okunur. Komut yalnız okur; tarih
-aralığı incelenen tur zamanının birkaç saat öncesinden tur logunun
-başlangıcına kadar seçilir:
+Görev geçmişi kapalıysa `LastRunTime`, `LastTaskResult`, önceki
+log ve Windows System günlüğünü karşılaştır. Tarihleri tura uyarla.
 
 ```powershell
 Get-WinEvent -FilterHashtable @{ LogName = 'System'
@@ -1318,215 +874,86 @@ Get-WinEvent -FilterHashtable @{ LogName = 'System'
     Sort-Object TimeCreated | Select-Object TimeCreated, ProviderName, Id
 ```
 
-| Kayıt | Anlamı |
-|---|---|
-| Kernel-General 12 / 13 | Açılış / kapanış |
-| Kernel-Power 42 | Uykuya giriş |
-| Power-Troubleshooter 1 | Uykudan uyanma (kaydın zamanı uyanma anıdır) |
-| Kernel-Power 506 / 507 | Modern bekleme girişi / çıkışı |
-| Kernel-Power 41 | Düzgün kapanmamış sistemin yeniden açılışı |
-| User32 1074 | Kapatma/yeniden başlatma isteği; ayrıntıda isteyen süreç (ör. `Explorer.EXE` kullanıcı, `MoUsoCoreWorker.exe` Windows Update) |
-| Winlogon 7001 / 7002 | Oturum açıldı / kapandı (kilit ekranı bu kaydı üretmez) |
-
-Kernel-Power 107 (uykudan dönüş) zamanı uykuya giriş anını gösterebildiği için
-uyanma zamanı olarak kullanılmaz. Tur saatinde son kayıt uyku, kapanış,
-modern bekleme girişi veya oturum kapanmasıysa tur o anda başlayamazdı; telafi
-turu sonraki uyanma/açılış ve oturum açılmasından birkaç dakika sonra başlar.
+12/13 açılış/kapanış, 42 uyku, Power-Troubleshooter 1 uyanış,
+506/507 modern bekleme, 41 düzgün kapanmamış sistemin açılışıdır.
+107 uyanma saati olarak kullanılmaz. User32 1074 isteği ve süreci,
+Winlogon 7001/7002 oturum açılış/kapanışını gösterir. Kilit ekranı
+oturumu kapatmaz. Telafi için bilgisayarın uyanık olması ve oturum
+gerekir. Açılışta ağın hazır olması ayrı koşuldur.
 
 ### Zamanlanmış keşif (Görev Zamanlayıcı)
 
-`scripts/kesif_zamanlayici_kur.ps1`, `\FiyatTakip\HaftalikKesif` görevini kurar
-(yönetici izni gerekmez; tekrar çalıştırmak yeniden kurar, `-Kaldir` siler;
-fiyat görevine dokunmaz). Kurulu görev **otomatik kabul** modundadır
-(`-OtomatikKabul`, 19 Ekim 2026); seçeneksiz yeniden kurulum önizleme moduna
-(`--dry-run`) döner. İki biçimde de keşif veritabanına bağlanmaz.
+`scripts/kesif_zamanlayici_kur.ps1` yönetici izni istemeden
+`\FiyatTakip\HaftalikKesif` görevini kurar/yeniler, `-Kaldir` siler.
+Pazar 14:00'te proje kökünde `.venv\Scripts\pythonw.exe -m app.discovery --scheduled --dry-run`
+çalışır. Kurulu `-OtomatikKabul` modu `--scheduled --auto-accept` kullanır.
+Seçeneksiz kurulum önizlemeye döner. DB ve otomatik Git işlemi yoktur.
 
-| Ayar | Değer | Neden |
-|---|---|---|
-| Tetikleyici | Her Pazar yerel saatle 14:00 | Fiyat turları 10:00 ve 22:00'de başlayıp ~31 dk sürer; keşif (~35 dk) onlardan uzak bir saate konur. Saat yerel yazılır (UTC'ye çevrilmez). |
-| Eylem | Önizleme kurulumunda `.venv\Scripts\pythonw.exe -m app.discovery --scheduled --dry-run`; çalışma klasörü proje klasörü | Penceresiz. `config\` ve `data\` yolları çalışma klasörüne göredir. `--dry-run` görevin kataloğa hiç yazmamasını sağlar. |
-| Otomatik mod seçimi | Betik `-OtomatikKabul` ile çalıştırılırsa eylem `--scheduled --auto-accept` olur | Yalnız yeterli kimlik kanıtı olan adaylar eklenir. Seçeneksiz yeniden kurulum önizlemeye dönüş sağlar; Git işlemi yapmaz. |
-| Kaçan çalışma | **Telafi edilmez** | Geç açılan bir bilgisayarda telafi keşfi ortak kilidi ~35 dk tutar ve o sırada gelen 22:00 fiyat turu "kilit meşgul" (kod 3) deyip atlanırdı. Kaçan fiyat turu geriye dönük toplanamaz; keşif raporu ise elle her zaman alınabilir. |
-| Pil | Pildeyken de başlar, pile geçince durmaz | Windows'un varsayılanı yalnız şarjdayken çalıştırmaktır. |
-| Uyandırma | Yok | Uykudaki bilgisayar uyandırılmaz; o hafta keşif kaçar. |
-| Aynı anda | Görev çalışıyorsa yeni kopya başlatılmaz | Ortak kilit de engeller. |
-| Süre sınırı | 2 saat | Normal çalışma ~35 dk (5 Ekim: 34 dk). Zorla kapatılırsa normal çıkış satırı olmayabilir; hazırlık kaydı yazılmışsa sonraki başlangıç uzlaştırır. |
-| Kullanıcı | Kurulumu yapan kullanıcı, yalnız oturum açıkken | Windows şifresi saklanmaz. Keşif veritabanı kullanmadığı için `DATABASE_URL` gerekmez. |
+Oturum açık olmalıdır. Pilde çalışır, uyandırmaz, `IgnoreNew` ve 2
+saat sınırı vardır. Kaçan/atlanan iş telafi edilmez. Çalışırken canlı
+iş açma. `data/logs/kesif_<yerel tarih-saat>.log` ve
+`data/discovery/kesif_<yerel tarih-saat>.json` aynı damgayı taşır.
+Rapor klasörü taramadan önce hazırlanır. Yazılamazsa 1, kilit meşgulse
+3. Log açılamazsa yalnız görev sonucu `0x1` görünür. Kesinti sonrası
+hazırlık kaydını sonraki başlangıç uzlaştırır. İlerleme satırı yoktur.
 
-`--scheduled` ile bütün çıktı `data/logs/kesif_<yerel tarih-saat>.log` dosyasına da
-yazılır (başlık, özet satırı (uyarılar nedene göre sayılarak orada görünür),
-beklenmeyen hataların ayrıntısı, rapor yolu ve **çıkış kodu**); tam rapor aynı damgayla
-`data/discovery/kesif_<yerel tarih-saat>.json` dosyasına kaydedilir. Kilit meşgulken
-(kod 3), program hatasında ve tarama sonrası yazma hatasında (kod 1) de log bırakılır. Tek istisna: log dosyası
-açılamazsa keşif hiç başlamaz ve `pythonw` altında hiçbir yere yazı düşmez; yalnız
-Görev Zamanlayıcı sonucu `0x1` görünür. Rapor klasörü taramadan önce oluşturulur;
-yazılamıyorsa keşif hiç başlamaz (kod 1, loga yazılır), ~35 dakikalık tarama boşa gitmez.
-Keşif ilerleme satırı yazmaz: 4 ve 5 Ekim'deki iki zamanlanmış biçimli çalışmanın
-logu yalnız başlık, özet, rapor yolu ve çıkış kodundan oluşuyordu (4 satır); tarama
-sürerken ekran ve log sessiz kalır.
+`Get-ScheduledTaskInfo -TaskPath '\FiyatTakip\' -TaskName 'HaftalikKesif'`
+sonucu `0x0` tam, `0x2` kısmi, `0x3` kilit, `0x1` hatadır.
+Log tarihini ve son çıkışı kontrol et. Log ve rapor saklanır.
+Kaçan keşfi kullanıcı elle başlatır.
 
-Otomatik kabul modunda haftalık akış:
-
-1. Pazar 14:00'te görev başlar; yaklaşık 35 dk sonra log ve tarihli rapor oluşur.
-2. Yeterli kimlik kanıtı olan adaylar kataloğa eklenir; eksik veya çelişkili
-   olanlar raporda (`decisions`, `rejected`) nedenleriyle dışarıda kalır.
-   Süre dolması kabul nedeni değildir.
-3. Sonraki normal fiyat turu yeni katalogu veritabanına eşitler.
-4. `config/catalog.json` değişikliği yerelde birikir; kullanıcı ayrıca
-   onayladığında commit edilir. Otomatik Git işlemi yoktur.
-5. Katalog değiştiyse sonraki normal turdan sonra
-   [bağımsız SQL–API denetimi](#sqlapistreamlit-bağımsız-denetimi) çalıştırılabilir.
-
-Önizleme modunda (seçeneksiz kurulum) 2. adımda katalog yazılmaz: log'un
-sonundaki özet satırına ve rapora bakılır (yeni ürün/sayfalar, `rejected`
-nedenleri, `pending` içinde beklenen `model_filter_missing`/`search_api` dışında
-bir uyarı), uygunsa
-`python -m app.discovery --apply-report data\discovery\kesif_<tarih-saat>.json`
-ile uygulanır.
-
-Otomatik ekleme, kaynakların eksiksiz tarandığı veya ML verisinin hazır olduğu
-anlamına gelmez. Yeni sayfa ürünün izlenen kapsamını değiştirir; eski fiyatlar
-silinmez. Güncel ML hesabında `y_sabit`, başlangıç akşamının sayfa kümesini
-korur; sonradan eklenen sayfa önceki başlangıcın gelecek minimumuna girmez.
-Yalnız kapsam değişmesi bu başlangıcın geçmiş süresini sıfırlamaz veya
-etiketini geçersiz kılmaz. Eski sıkı 30+7 denetiminde ise kapsam değişen
-pencere elenir; iki hesabın farkı [etiket rehberindedir](#günlük-seri-ve-etiketler-python--m-appml-labels).
-
-Görev Zamanlayıcı "Son çalıştırma sonucu"
-(`Get-ScheduledTaskInfo -TaskPath '\FiyatTakip\' -TaskName 'HaftalikKesif'`):
-`0x0` tarama tam, `0x2` tarama kısmi (bugün beklenen sonuç; bkz. keşif çıkış
-kodları), `0x3` kilit meşgul (keşif atlandı, telafi edilmez), `0x1` başlayamadı
-ya da program hatası. Ayrıntı log dosyasındadır.
-
-Sınırlar:
-
-- Pazar 14:00'te bilgisayar kapalı ya da uykudaysa o hafta keşif kaçar (log oluşmaz);
-  elle çalıştırılır. Görev Zamanlayıcı geçmişi kapalıysa kaçan ya da atılan çalışma
-  Windows tarafında görünmez; kanıt, o günün log dosyasının varlığıdır.
-- Fiyat turunun telafisi 14:00'e sarkarsa ya da o sırada elle canlı komut
-  çalışıyorsa keşif kod 3 ile atlanır (loga yazılır) ve telafi edilmez.
-- Tarama sürerken (~35 dk) elle canlı komut çalıştırılmaz: ortak kilit tutulur.
-- Raporlar silinmez; klasör zamanla büyür (tam tarama raporu birkaç yüz KB,
-  haftada bir dosya). İnternet kesilince rapor küçük kalır.
-- Testler komut akışını kayıtlı sonuçlarla sınar; görevin gerçek sitelerle
-  çalıştığını ve raporun doğruluğunu yalnız canlı çalışma gösterir.
+Otomatik mod yalnız doğrulananları ekler. Sonraki tur DB'yi eşitler.
+Önizleme `python -m app.discovery --apply-report data\discovery\kesif_<tarih-saat>.json`
+ile uygulanır. Katalog Git'e ayrı onayla alınır. Yeni sayfalar geçmişi
+silmez. `y_sabit` başlangıç kapsamını korur. Sıkı 30+7, kapsamı
+değişen pencereyi eler. [Etiket kuralları](#günlük-seri-ve-etiketler-python--m-appml-labels)
 
 ### Katalog eşitleme (`sync-catalog`)
 
-`listing_checks` yalnızca veritabanında var olan sayfayı kabul eder; bu yüzden
-`catalog.json` önce veritabanındaki kopyaya (`platforms`, `products`,
-`listings`) yazılır. Asıl kaynak dosyadır. Toplama turu da kendi başında aynı
-eşitlemeyi çalıştırır; komut, keşiften sonra farkı gözle görmek içindir.
+Asıl kaynak `catalog.json`, eşitleme tek transaction'dır.
+`--dry-run` aynı işlemi geri alır. Tur başında da uygulanır.
+Platform adı/aktifliği, ürün aktifliği ve sayfanın adres/renk/aktifliği
+güncellenebilir. Kimlik alanı, başka kaydın `product_key`i veya
+URL'siyle çakışma bütün işlemi durdurur. Katalogdan düşen kayıt
+silinmeden pasife alınır.
 
-- Tek transaction: ya bütün değişiklikler yazılır ya hiçbiri. `--dry-run`
-  aynı işi yapıp sonunda geri alır.
-- Yeni kayıt eklenir. Değişebilen alanlar güncellenir: platform adı ve
-  aktifliği, ürün aktifliği, sayfanın adresi, rengi ve aktifliği.
-- **Kimlik alanları değişemez:** ürünün `product_key`, marka, model ve
-  kapasitesi; sayfanın `product_id`'si ve platformu. Değişmişse (ya da yeni bir
-  kayıt başka kaydın `product_key`'ini veya adresini kullanıyorsa) eşitleme
-  hiçbir şey yazmadan durur ve bütün çakışmaları listeler. Gerekçe: o sayfanın
-  geçmiş fiyatları yanlış ürüne bağlanırdı.
-- Katalogdan düşen kayıt silinmez (geçmiş fiyatlar ona bağlıdır), pasife
-  alınır ve raporlanır.
-- Her tabloda önce güncellemeler, sonra eklemeler yazılır: bir sayfanın adresi
-  değişip eski adres yeni bir sayfaya verildiyse sorun çıkmaz. İki sayfanın
-  adresi yer değiştirmişse tek adımda yazılamaz; hiçbir şey yazılmadan açık bir
-  çakışma mesajı verilir.
-- Katalog dosyası başında BOM olsa da okunur.
-- İkinci çalıştırma değişiklik yapmaz. Şema güncel değilse (bekleyen migration)
-  eşitleme başlamaz.
-- Çıktıdaki parmak izi, `catalog.json`'un sha256'sıdır (satır sonundan
-  bağımsız); toplama turları hangi katalogla yapıldığını
-  `collection_runs.catalog_sha256` alanında bununla kaydeder.
+Her tabloda önce güncelleme sonra ekleme yapılır. İki adresin
+karşılıklı takası tek adımda reddedilir. BOM kabul edilir.
+Şema güncel olmalıdır. İkinci eşitleme fark üretmez. Satır
+sonundan bağımsız katalog SHA-256, `collection_runs.catalog_sha256`
+ve komut çıktısında yer alır.
 
 ### Migration kuralları
 
-- Dosya adı `NNN_ad.sql`; numaralar 001'den boşluksuz artar. Uzantı büyük harfle
-  yazılmış (`.SQL`) ya da kurala uymayan ad hata verir; hiç dosya bulunamazsa da
-  hata verilir. Dosyalar pakete dahildir (`pyproject.toml`, `package-data`).
-- Her dosya tek transaction'da uygulanır; hata verirse o dosyadan hiçbir iz
-  kalmaz (PostgreSQL'de tablo oluşturma da geri alınır). Aynı anda iki
-  `migrate` çalışırsa ikincisi bekler (en çok 30 sn, bağlantının
-  `lock_timeout` ayarı; sonra hata verir).
-- **Uygulanmış dosya değiştirilmez;** değişiklik yeni numaralı dosyayla yapılır.
-  Değiştirilirse parmak izi tutmaz ve `migrate`/`status` hata verir. Parmak izi
-  satır sonundan bağımsızdır (Windows CRLF ile CI'daki LF aynı sayılır).
-- Uygulanmış dosya **yeniden adlandırılamaz** da: `schema_migrations` dosyanın
-  numarasız adını (ör. `initial`) tutar; ad değişirse `migrate` ve `status` eski
-  ve yeni adı gösteren bir hatayla durur. Numaralar boşluksuz artmazsa (atlanmış
-  ya da aynı numaralı iki dosya) hata mesajı bulunan numaraları listeler (ör.
-  `bulunan: [1, 1]`).
-- Veritabanında kodda olmayan bir sürüm varsa ("veritabanı koddan yeni") komut
-  hata verir.
-- **Yeni migration'ı koymak ile `migrate` arasında tur başlamamalı.** Dosya
-  klasördeyken veritabanı güncel değilse tur "şema güncel değil" deyip başlamaz ve
-  o tur kaçar (telafisi tek turdur). Bu yüzden yeni migration projenin kopyasında
-  geliştirilir ve gerçek klasöre yalnız bitince konur; `migrate` hemen ardından,
-  10:00–10:40 ve 22:00–22:40 tur saatleri dışında çalıştırılır.
+`NNN_ad.sql`, 001'den boşluksuz, tekil numara ve küçük `.sql`
+uzantısı ister. Dosyalar paket verisidir. Eksik/bozuk dosya veya
+koddan yeni DB hata verir. Dosya başına tek transaction uygulanır.
+Eşzamanlı `migrate` 30 sn'ye kadar bekler.
+
+`migrate` ve `status` uygulanmış dosyanın adını ve satır sonundan
+bağımsız SHA'sını denetler. Değişiklik yeni numarayla ayrı kopyada
+geliştirilir. Bitince dosyayı ekle ve tur başlamadan, 10:00–10:40
+ile 22:00–22:40 dışında `migrate` çalıştır.
+[Eski şema ve işletim ayrıntıları](arsiv/teknik_2026-11-23.md#veritabanı-postgresql)
 
 ## Cimri geçmişi (bir defalık alım ve aktarım)
 
-Katalogdaki telefonların Cimri'de görünen bir yıllık fiyat geçmişi ayrı
-`market_history` tablosundadır. İlk alım 8 Ekim 2026'da yapıldı (57 ürün,
-20.805 kayıt). Son alım 2 Kasım 2026'da yapıldı
-(`data/market_history/katalog_20261102_162033_694/`): 58 ürün kaydedildi,
-iki eşleştirmesiz ürün atlandı. Önizleme ve aktarım 1.790 yeni gün ekledi,
-19.360 gün aynı çıktı; çelişki yoktu. 8 Ekim satırlarındaki 20 yarım gün
-farkında eski kayıt korundu. Güncel ürün/kayıt/eksik fiyat sayıları ve tarih
-aralığı [README Güncel kapsam](../README.md#-güncel-kapsam) tablosundadır;
-Galaxy S24 FE 128 GB 3 Kasım 2025'ten başlar. Her ürünün 8 Ekim ve 2 Kasım
-satırları [yarım gündür](#ağsız-aktarım-import). Düzenli Cimri toplaması
-yapılmaz; Cimri serisi kendi toplama serimizle birleştirilmez ve aynı ölçüm
-sayılmaz. Kod (`app/market_history/`) korunur; yeni bir alım ayrı karar ister
-([kullanım değerlendirmesi](#kullanım-değerlendirmesi)).
+`market_history` ayrı seridir. Son alım 2 Kasım 2026'da tamamlandı.
+Düzenli alım yoktur. Yeni alım ayrı karar ister. [Kapsam](../README.md#-güncel-kapsam)
+[Alım ve aktarım kayıtları](arsiv/teknik_2026-11-23.md#cimri-geçmişi-bir-defalık-alım-ve-aktarım)
 
 ### Eşleştirme dosyası
 
-Eşleştirme dosyası `version: 1`, `source: "cimri"`, `entries` taşır. Her girdi
-`product_key`, `url`, `cimri_product_id` içerir; anahtar, URL ve Cimri kimliği
-tekrar edemez. URL yalnız Cimri'nin HTTPS telefon sayfası olabilir; ürün etkin
-katalogda bulunmalıdır. 8 Ekim web araştırmasıyla 59 ürünün 57'sinin ana
-sayfa adresi ve görünen ürün başlığı eşleştirildi. İlk üç eşleştirme aynı
-kaldı. Araştırmada 57 başlık mevcut model/kapasite kuralıyla ağsız doğrulandı;
-bu kontrol tek başına API erişimini veya gömülü kimliği kanıtlamaz.
-Alım sırasında 57 sayfa/API kimliği ayrıca doğrulandı.
-
-Araştırma izi yerelde
-`data/market_history/mapping_research_20261008_073732.json` içindedir:
-araştırma zamanı, görülen başlıklar, kaynak adres/kimlikleri ve açık anahtarlar.
-URL/kimlik tahmin edilmedi; ana sayfalar kullanıldı, renk sayfaları birleştirilmedi.
-Galaxy S25 512 GB (`samsung_galaxy_s25_512gb`) ve Redmi Note 14 Pro 5G
-256 GB (`xiaomi_redmi_note_14_pro_5g_256gb`) için doğru ana adres araştırmada
-doğrulanamadı. Başka kapasite, Ultra/Plus veya 4G sayfası bunların yerine
-konmadı; eşleştirmesi olmayan ürünün Cimri'de bulunmadığı varsayılmaz.
-
-28 Ekim web aramasıyla, katalogda sonradan eklenen Galaxy S24 FE 128 GB
-(`samsung_galaxy_s24_fe_128gb`) için [ana sayfa](https://www.cimri.com/cep-telefonlari/en-ucuz-samsung-galaxy-s24-fe-fiyatlari,a2372356868)
-eklendi; dosyada 58 eşleştirme var. Bu sayfanın adında kapasite yazmıyor.
-Modelin ilk çıktığı kapasitenin ana sayfası böyle adlandırılıyor; Galaxy
-S25 128 GB eşleştirmesi de aynı kalıptadır. Renk sayfasında 128 GB yazıyor;
-S24 FE 256 GB ise ayrı bir ana sayfadır. Cimri sayfası web aracına 403
-verdiği için kimlik aramada doğrulanamadı; 2 Kasım son alımında doğrulandı
-(Cimri 2372356868, "Samsung Galaxy S24 FE 128 GB 8 GB Ram"). Kimliği alımın kendi kontrolleri
-(sayfa ve API kimliği, marka, kategori, başlık ve H1'lerin model/kapasitesi)
-doğrular; bunlardan biri tutmazsa ürün `error` olur ve aktarılmaz. Aynı
-aramada diğer iki ürün için yine yalnız başka ürünlere ait sayfalar çıktı.
-Galaxy S25 512 GB'ın katalogda etkin sayfası da yoktur; ürün 20 Kasım'da
-pasife alındı ([plan](../proje_plani.md#5-kararlar)).
-
-Redmi Note 14 Pro'nun [256 GB](https://www.cimri.com/cep-telefonlari/en-ucuz-xiaomi-redmi-note-14-pro-fiyatlari,a2372365369)
-ve [512 GB](https://www.cimri.com/cep-telefonlari/en-ucuz-xiaomi-redmi-note-14-pro-512gb-12gb-ram-fiyatlari,a2430184601)
-başlıkları 4G yazmıyor; her iki sayfanın teknik özelliklerinde
-`Veri Aktarım Hızı: 4G` doğrulandı. [5G 512 GB](https://www.cimri.com/cep-telefonlari/en-ucuz-xiaomi-redmi-note-14-pro-5g-fiyatlari,a2428710429)
-ayrı ana sayfadır. [Poco X6 Pro](https://www.cimri.com/cep-telefonlari/en-ucuz-xiaomi-poco-x6-pro-5g-512gb-12gb-ram-fiyatlari,a2308370397)
-sayfasında marka Poco'dur; URL'deki Xiaomi metni marka yerine kullanılmadı.
-Galaxy A55 256 GB ve Redmi Note 13 Pro 5G 256 GB için 8 GB RAM ana sayfaları
-seçildi; RAM/renk eş anlamlıları veya yeni kimlik istisnası eklenmedi.
+`config/market_history.json`, `version: 1`, `source: "cimri"` ve `entries`
+taşır. Tekil `product_key`, `url` ve `cimri_product_id`, etkin katalog
+ürününe ait HTTPS Cimri telefon ana sayfasını gösterir. Model/kapasite
+yerine benzer ürün veya renk sayfası kullanılmaz. URL/kimlik tahmin edilmez.
+Alım sayfa ve API kanıtını ayrıca doğrular.
+[Tarihli eşleştirme örnekleri](arsiv/teknik_2026-11-23.md#eşleştirme-dosyası)
 
 ### Yerel alım (`capture`)
 
-Zamanlanmış tur bittikten sonra katalog alımı:
+Zamanlanmış işler bittiğinde kullanıcı çalıştırır.
 
 ```powershell
 $cimriKlasor = "data\market_history\katalog_$(Get-Date -Format yyyyMMdd_HHmmss_fff)"
@@ -1535,216 +962,100 @@ $cimriKlasor = "data\market_history\katalog_$(Get-Date -Format yyyyMMdd_HHmmss_f
 $LASTEXITCODE
 ```
 
-`--product-key` tekrarlanabilir; verilmezse etkin katalogdaki bütün ürünler
-raporlanır. `--mapping` ve `--output-dir` zorunludur. Var olan klasöre yazılmaz;
-eskisini silmek yerine tarih-saatli yeni klasör kullanılır. Kilit meşgulse
-klasör oluşturulmaz. Canlı komutu kullanıcı tur saatleri dışında çalıştırır.
-İki eşleştirme açık olduğundan bütün 58 alım başarılı olsa bile katalog
-komutunun çıkışı 2 olur. `captured`/`error`/`not_attempted` kayıtları ayrıca
-incelenir; yalnız çıkış 2'den ağ veya kimlik hatası olduğu sonucu çıkarılmaz.
+`--mapping` ve `--output-dir` zorunludur. `--product-key` tekrarlanabilir.
+Seçenek yoksa etkin katalog raporlanır. Var olan klasöre yazılmaz.
+Ortak kilit meşgulse klasör oluşmaz. Alım DB'ye bağlanmaz.
 
-Her ürün için aynı `PageClient` ile sayfa ve grafik okunur (grafik, sayfadaki
-ürün kimliğiyle `POST https://www.cimri.com/api/cimri` üzerinden
-`priceHistoryV2Query` sorgusuyla alınır); yönlendirme/tekrar
-dahil dört istek bütçesi, ortak bekleme, alan adı ve 8 MB sınırı korunur.
-`__OCTOPUS_DATA__` içindeki ürün kimliği eşleştirmeyle aynı olmalıdır; marka
-katalogla, başlık ve H1'lerin her biri model/kapasiteyle doğrulanır. Kategori
-`cep-telefonlari` olmalıdır. Bunlar doğrulanmadan grafik isteği yapılmaz.
-Grafik API'si kimliği de aynı olmalıdır. HTTP `blocked` alınırsa kalan eşleşmiş
-ürünlere istek yapılmaz; diğer ürün hatalarında sıradaki ürüne devam edilir.
+`PageClient` sayfa ve `POST https://www.cimri.com/api/cimri`
+`priceHistoryV2Query` sorgusu için toplam dört istek (yönlendirme/tekrar
+dahil), ortak bekleme, alan adı ve 8 MB sınırı kullanır.
+`__OCTOPUS_DATA__` kimliği eşleştirmeyle, marka katalogla, gömülü başlık
+ve her H1 model/kapasiteyle eşleşmelidir. Kategori tam `cep-telefonlari`
+olmalıdır. Yenilenmiş/ikinci el/teşhir başlıkları ve kategorileri elenir.
+Sonra grafik istenir ve API kimliği doğrulanır. `blocked` kalan istekleri
+durdurur, diğer ürün hatalarında devam edilir.
 
-**Yeni / yenilenmiş ayrımı:** `verified_page`, ürünün gömülü başlığına ve
-her H1 başlığına ortak `verify_identity` kuralını uygular. Başlıktaki
-yenilenmiş, refurbished, ikinci el, teşhir ve diğer kapsam dışı ifadeler
-reddedilir; kategori tam `cep-telefonlari` olmalıdır. `yenilenmis-cep-telefonlari`
-bu kontrolden geçmez. Aktarım da kaydedilmiş HTML'den aynı kimliği yeniden
-doğrular; yalnız alım raporundaki sonuca güvenmez. Kategori ve başlık
-korumaları ilk alım kodunda da vardır; testler yenilenmiş başlık ve kategoriyi
-ayrı ayrı sınar. Bu kontrol sayfa kimliğine aittir; Cimri tekliflerinin her
-birine ayrı durum filtresi uygulanmaz. Tarihsel fiyatların durum kanıtı
-[Cimri sınırında](#bilinen-sınırlar) açıklanır.
+`lastDay` geriye doğru en çok 366 noktanın tarihini belirler. Pozitif,
+en çok iki ondalıklı fiyat `money` ile kuruşa çevrilir. Sayısal sıfır,
+tabloyla çelişmiyorsa eksiktir. Eksik NULL kalır. Ortak günler tabloyla
+eşleşmelidir. Ortak gün yoksa `table_comparison: "unavailable"`.
+Geçersiz tarih veya fiyat reddedilir.
 
-Grafik, `lastDay`'den geriye sıralanmış en çok 366 nokta verir. Mevcut
-araştırmada doğrulanan bu biçim kullanılır; bilinmeyen biçim için tahmin
-yapılmaz. Geçersiz tarih, fiyat veya ortak tarihte tablo uyuşmazlığı hata olur.
-Fiyatlar pozitif ve en çok iki ondalıklı olmalı; mevcut `money` ile kuruşa
-çevrilir. Sayısal grafik sıfırı, aynı tarihte tablo fiyatı yoksa eksik sayılır;
-tablo fiyatıyla çelişirse reddedilir. Eksik değer `null` kalır, kısa geçmiş
-tamamlanmaz. Ham API dosyasında sıfır değeri korunur. Tabloyla ortak
-tarih yoksa `table_comparison: "unavailable"` yazılır. Tekrarlanan fiyatlar
-bağımsız günlük ölçümleri veya sabit satıcı kapsamını kanıtlamaz.
+İlk teklif yoksa API korunur. Geçerli ilk teklif yalnız son API
+fiyatının yerini alır. İlk teklif varken son API fiyatı sıfır/NULL ise `parse`.
+Dönüşüm için `page_started_at_utc` ve `captured_at_utc` sıralı ve
+`lastDay` ile aynı İstanbul gününde olmalıdır. Fark `parse` olur.
+Ortak tablo günleri dönüşümden sonra karşılaştırılır. `latest_price`
+gün, `page_first_offer`/`api` kuralı, API/ilk teklif/etkin kuruşlar,
+`changed` ve tablo karşılaştırmasını taşır. Ağsız doğrulama kayıtlı
+zamanları, İstanbul hesabı `ZoneInfo`/`tzdata` kullanır.
 
-Yeni klasörde `responses/<product_key>.html`, `responses/<product_key>.json`
-ve `report.json` bulunur. HTML alınmış metindir; API JSON'u, ortak HTTP
-katmanının ayrıştırdığı nesnenin UTF-8 dosyasıdır, özgün JSON baytlarının
-aynısı olduğu iddia edilmez. Her kaynak dosyasının SHA-256 parmak izi saklanır.
-HTTP/JSON ayrıştırma hatasında alınamamış gövde uydurulmaz; sayfa alınmışsa
-korunur. Kimlik/grafik doğrulaması başarısızsa kabul edilmiş geçmiş yazılmaz.
+`responses/<product_key>.html` alınmış metin, `responses/<product_key>.json`
+ayrıştırılmış API nesnesidir. SHA-256 yerel baytlara aittir. Eksik gövde
+üretilmez. Kimlik/grafik hatasında seri kabul edilmez. Sürüm 1 rapor
+kaynak, UTC zaman, kapsam, ürün kimliği/eşleştirme, istek, yol/SHA ve
+`history`yi tutar. Noktalar sıralı gün/kuruştur. Ürün `captured`,
+`error`, `unmapped`, `not_attempted` veya `interrupted`, rapor
+`running`, `completed`, `partial`, `interrupted` veya `failed` olur.
+Ürün başına atomik yazım yapılır. Disk hatası isteği durdurur, Ctrl+C
+kayıtları korur. İstemci ve kilit kapanır.
 
-Rapor sürümü 1'dir. Kaynak, başlangıç/bitiş zamanı (UTC), sonuç, katalogdaki
-ürün sayısı, eşleştirmesi henüz olmayan katalog anahtarları ve `products`
-listesi taşır. Ürün kaydı katalog kimliğini, eşleştirmeyi, istek sayısını,
-varsa sayfa/API dosyalarının yolunu ve parmak izini, doğrulanmış kimliği,
-API alınma zamanını ve `history`yi içerir. `history.points` eski tarihten yeniye
-`day` ve `price_kurus` taşır; özet tarih aralığını, nokta/eksik fiyat sayısını
-ve tablo karşılaştırmasını gösterir. Ürün durumları `captured`, `error`,
-`unmapped`, `not_attempted`, `interrupted`; genel sonuç `running`, `completed`,
-`partial`, `interrupted` veya `failed` olabilir. Hata ve durma nedeni raporda
-kalır. Yalnız seçilen üç ürünün başarılı olması bütün kataloğun alındığı
-anlamına gelmez; seçilmeyen ürünler için ağ isteği yapılmaz.
-
-Rapor her işlenen ürünün ardından geçici dosyadan atomik olarak yenilenir.
-Ctrl+C önceki kayıtları korur; disk hatasında yeni istekler durur. İstemci ve
-ortak kilit kapanır. Çıkış: 0 seçilen ürünler kaydedildi, 2 kısmi sonuç,
-1 ayar/seçim/klasör/dosya hatası, 3 ortak kilit meşgul, 130 Ctrl+C.
-
-**Bugünkü fiyatın ilk teklif dönüşümü.** Cimri'nin ekrandaki grafiği, ürün
-sayfasında teklif varsa API'nin son günündeki fiyatı sayfadaki ilk teklifin
-fiyatıyla değiştirir; kalan günler API'den gelir (8 Ekim'de grafik kaynak
-kodunda doğrulandı). Alım aynı kuralı uygular:
-
-`verified_page` doğrulanmış ürünün ilk teklif fiyatını da okur. İlk teklif
-yoksa mevcut API fiyatları korunur; bozuk teklif geçerli fiyat sayılmaz.
-`history_in_kurus`, bütün ham API fiyatlarını önce doğrular; ardından yalnız
-son noktada geçerli ilk teklif fiyatını kullanır ve bütün ortak tablo günlerini
-yeniden birebir karşılaştırır. Diğer günler ile sıfır/eksik değer kuralı
-korunur (grafikteki sayısal sıfır eksik sayılır, tabloyla çelişirse ret). Bugünün ham API fiyatı sıfır/null ise ilk
-teklifle doldurulmaz; doğrulanmamış bu birleşim `parse` olarak kalır.
-
-Alım, HTML isteğinden önce `page_started_at_utc`, API yanıtından sonra
-`captured_at_utc` kaydeder. İlk teklif kullanılacaksa iki zaman UTC, sıralı ve
-İstanbul'da aynı gün olmalı; API `lastDay` bu güne eşit olmalıdır. Gün sınırı
-veya eski API günü `parse` üretir; tarih dizisi yine `lastDay` üzerinden
-kurulur. Ağsız yeniden doğrulama bilgisayarın o gününü kullanmaz.
-İstanbul tarihi `ZoneInfo` ile hesaplanır; Windows'ta da saat dilimi verisinin
-bulunması için zaten ortamda kurulu `tzdata` açık bağımlılık yapıldı
-([Python belgeleri](https://docs.python.org/3/library/zoneinfo.html#data-sources)).
-
-`history.summary.latest_price` alanında `day`, `rule` (`page_first_offer`
-veya `api`), `api_price_kurus`, `first_offer_price_kurus`,
-`effective_price_kurus`, `changed`, `table_comparison` kaydedilir.
-Son günün tablo satırı yoksa `unavailable` olur ve komut bunu ayrıca söyler;
-bu sınır diğer ortak günlerin eşleşmesini geçersiz kılmaz. İstek sırası,
-bütçe, kilit, çıkış kodu ve ham dosyaları koruma davranışı bu kuraldan etkilenmez.
+Çıkış 0 başarı, 2 kısmi (eşleştirmesiz ürün dahil), 1 ayar/seçim/klasör/
+dosya hatası, 3 kilit, 130 Ctrl+C.
 
 ### Ağsız aktarım (`import`)
-
-Komutlar:
 
 ```powershell
 .venv\Scripts\python.exe -m app.market_history import <alım_klasörü> --dry-run
 .venv\Scripts\python.exe -m app.market_history import <alım_klasörü>
 ```
 
-Girdi `report.json` ve onun gösterdiği HTML/API dosyalarıdır. Raporun
-`version: 1`, `source: cimri`, sonlandırılmış sonuç ve UTC zamanları gerekir;
-`running`, bozuk zarf ve tekrarlanan kimlikler bütün girdiyi reddettirir.
-`completed`, `partial`, `interrupted`, `failed` raporlarından yalnız `captured`
-kayıtlar doğrulanır; hatalı kayıtlar başarıya çevrilmez. Güncel ürün başlangıç
-zamanı ve `latest_price` alanları zorunludur; eski raporlara uyumluluk yoktur.
+Sürüm 1, `source: cimri`, son durum ve UTC zamanları gerekir.
+`running`, bozuk zarf ve tekrarlı kimlik reddedilir. Yalnız
+`captured` doğrulanır. `page_started_at_utc` ve `latest_price` gerekir.
+Kayıtlı eşleştirme ve alım klasöründeki HTML/API kullanılır. Katalog
+kimliği, SHA, zaman ve yeniden hesaplanan geçmiş/özet eşleşmelidir.
+Fiyat pozitif bigint veya NULL'dır. Karşılaştırılamayan tarihler raporlanır.
 
-Okuyucu rapor/katalogdaki ürün ID'si, anahtar, marka, model ve kapasiteyi
-karşılaştırır. Kaydedilmiş eşleştirme kullanılır; güncel eşleştirme dosyasından
-adres değiştirilmez. Kaynak yolları çözülünce alım klasörü içinde kalmalıdır.
-HTML/API'nin doğrulanan baytları bir kez okunup ayrıştırılır; SHA-256 değişimi,
-eksik kaynak, zaman aralığı, kaynak kimliği veya yeniden hesaplanan
-kimlik/geçmiş/özet uyuşmazlığı ilgili ürünü reddettirir. Fiyatlar bigint'e
-sığmalıdır. Tabloyla karşılaştırılamayan günler tarih aralıklarıyla yazılır.
+Dosya ve DB tur kilitleri beklemeden alınır. Önce tüm ürün kimlikleri
+DB ile eşleşmelidir. Katalog eşitlenmez ve tur açılmaz/kapatılmaz.
+Gün anahtarı `(product_id, source, day)`. Kaynak `cimri`, kimlik
+pozitif rakam dizisi, URL HTTPS telefon yolu ve tarihler sonlu olmalıdır.
+Üç SHA-256 HTML, API ve rapor baytlarını tanımlar. 004 tabloyu ekler.
+UPDATE, DELETE ve TRUNCATE reddedilir.
 
-`app/database/market_history.py` yazma başlamadan bütün rapor ürünlerinin
-kimliğini veritabanıyla karşılaştırır; uyuşmazlıkta hiçbir ürün yazılmaz.
-Katalog eşitlemez, ürün oluşturmaz, tur açmaz veya eski turu kapatmaz.
-Ortak dosya kilidi ve mevcut veritabanı tur kilidi kullanılır; kilit meşgulse
-beklenmez. Normal aktarımda ürün başına READ COMMITTED transaction açılır.
-Önce mevcut günler karşılaştırılır; `ON CONFLICT DO NOTHING` ile eklenir;
-aynı transaction içinde tekrar okunup karşılaştırılmadan commit edilmez.
-Böylece ilk kontrolden sonra eşzamanlı eklenen farklı fiyat da bütün ürünün
-geri alınmasına yol açar. [PostgreSQL eşzamanlılık belgeleri](https://www.postgresql.org/docs/17/transaction-iso.html)
+Ürün başına READ COMMITTED işlem, önce karşılaştırma, sonra
+`ON CONFLICT DO NOTHING`, commit öncesi yeniden okuma uygular.
+Aynı fiyat (NULL–NULL dahil) ve Cimri kimliğinde ilk satır kalır.
+Adres/zaman/hash tek başına fark değildir. Farklı Cimri kimliği veya
+tam gün fiyatı bütün ürünü geri aldırır. Diğer uygun ürünler sürer.
+Gün, alımın İstanbul tarihiyse yarımdır. Ortak günde iki kayıttan
+biri yarımsa fiyat farkı ilk satırı korur ve “Yarım gün farkı”
+olarak raporlanır. Aynı sayısına ve çıkışa etki etmez. Kimlik farkı
+yarım günde de çelişkidir.
 
-Anahtar `(product_id, source, day)`; `source` yalnız `cimri`, Cimri kimliği
-pozitif rakam dizisi, adres HTTPS Cimri telefon yolu, fiyat pozitif bigint
-veya NULL'dır. Tarih ve alım zamanı sonlu olmalıdır. Üç SHA-256 alanı HTML,
-API ve alım raporunun **yerel dosya baytlarına** aittir. Bunlar kaynak
-imzası değildir; raporun kendisi güvenilir bir dijital imzayla doğrulanmaz.
-004, yalnız yeni tablo ve onun korumalarını ekler: UPDATE reddedilir;
-DELETE/TRUNCATE mevcut `reject_delete` işleviyle engellenir. 001–003 değişmez.
-
-Aynı günün fiyatı ve Cimri kimliği aynıysa ilk satır bütün alanlarıyla
-korunur; adres/zaman/parmak izi değişimi tek başına çelişki değildir.
-NULL–NULL aynı, NULL–fiyat farklıdır. Tam bir günde fiyat ya da herhangi bir
-günde Cimri kimliği farklıysa o üründe hiç yeni gün yazılmaz; diğer
-doğrulanmış ürünler devam eder.
-
-**Yarım gün:** Alım günü Cimri'de henüz kapanmamıştır; o günün değeri gün
-içinde değişir. 8 Ekim'deki alımlar arasında 19.292 geçmiş gün değerinin
-hiçbiri değişmedi; alım gününün değeri ise 53 üründe 5 kez değişti. Günü,
-alım anının (`captured_at`) İstanbul tarihine eşit olan değer yarım gündür.
-Ortak bir günde fiyat farklıysa ve eski satır ya da gelen değer yarım günse
-bu çelişki sayılmaz: ilk satır korunur, fark ürünün altında "Yarım gün farkı"
-olarak raporlanır ve ürünün yeni günleri eklenir. Cimri kimliği farkı yarım
-günde de çelişkidir. Yarım gün farkı "aynı" sayısına girmez ve çıkış kodunu
-değiştirmez.
-
-SQL/bağlantı hatasında komut durur, tamamlanan ürünler kalır. COMMIT
-yanıtı kaybolduğunda son ürünün sonucu belirsiz olarak bildirilir; yeniden
-çalıştırma aynı kaydı çoğaltmadan sonucu netleştirir.
-
-`--dry-run` tek REPEATABLE READ, READ ONLY transaction'da çalışır; INSERT
-deneyip geri almaz. Önizleme yazma yetkisi veya sonuç rezervasyonu değildir;
-normal komut bütün kontrolleri yeniden yapar. Çıktı her ürünü, eklenecek/aynı
-kayıtları, yarım gün farklarını, çelişkili tarihleri ve eski/yeni kuruş fiyatı
-ile Cimri kimliğini gösterir. Kaynak dosyalarına veya giriş raporuna
-yazılmaz; çıktı terminaldedir.
-[PostgreSQL READ ONLY belgeleri](https://www.postgresql.org/docs/17/sql-set-transaction.html)
-
-Çıkışlar: **0** girdideki ürünler aktarıldı/zaten aynı (yarım gün farkı olsa
-da); **2** atlanan veya
-çelişkili ürün var; **1** yapı/kimlik/şema/veritabanı hatası; **3** kilit
-meşgul; **130** Ctrl+C. Kesintide son ürün ya tamamen yazılır ya hiç yazılmaz;
-önceki ürünler korunur. Global katalogdaki eşleştirmesiz ürünler seçili
-girdide yoksa komutun başarısını değiştirmez; katalog kapsamı ayrıca raporlanır.
+DB/SQL hatasında önceki ürünler kalır. COMMIT cevabı kaybolursa son
+ürün belirsizdir. Tekrar çalıştırma sonucu çoğaltmadan netleştirir.
+`--dry-run` tek REPEATABLE READ, READ ONLY işlemde terminale
+ekleme/aynı/yarım gün/çelişki ve eski/yeni fiyat-kimlik bilgisi verir.
+Normal aktarım kontrolleri yeniden yapar. Çıkış 0 başarı/aynı,
+2 atlanan/çelişkili ürün, 1 yapı/kimlik/şema/DB hatası, 3 kilit,
+130 Ctrl+C. Girdi dışında kalan eşleştirmeler çıkışı değiştirmez.
 
 ### Gerçek aktarımın akışı
 
-Her alım ayrı klasörde saklanır. Raporlar birleştirilmez/değiştirilmez; ek
-alım yalnız başarısız/denenmemiş ürünleri tamamlar. Her kabul edilen ürünün
-kaynak klasörü ve rapor hash’i belirlenir. Önce ana alım, sonra eksikleri
-karşılayan ek alımlar önizlenir ve kullanıcı tarafından ayrı ayrı aktarılır.
-Önizleme ve rapor değerlendirmesinden önce gerçek aktarım başlatılmaz.
-
-Bağımsız doğrulama READ ONLY sorgularla bütün geçmiş satırlarını kaynakla
-karşılaştırır: ürün/kaynak/kimlik/adres/gün/kuruş/zaman ve üç hash.
-Ürün başına sayı, tarih aralığı ve NULL sayısı ayrıca raporlanır. Kullanıcının
-aynı girdiyi tekrar aktarımında 0 yeni kayıt ve ilk kaynak bilgilerinin
-korunması beklenir; atlanan ürünler nedeniyle çıkış 2 sürebilir.
+Ana ve ek alımlar ayrı klasörlerde önizlenip ayrı aktarılır.
+Ek alım başarısız/denenmemiş ürünleri tamamlar. READ ONLY denetim
+kimlik, adres, gün, kuruş, zaman ve üç hash'i kanıtla karşılaştırır.
+Tekrarda 0 yeni satır ve ilk kaynak beklenir. Atlanan ürün 2 verebilir.
 
 ### Kullanım değerlendirmesi
 
-Cimri'nin [kullanım koşulları](https://www.cimri.com/kullanim-kosullari)
-(2.2, 3.1, 4.12) kullanım amacını, kopyalamayı/işlemeyi ve başka mecrada
-kullanımı sınırlıyor; [kullanıcı sözleşmesi](https://www.cimri.com/kullanici-sozlesmesi)
-üyelik sözleşmesidir. 19 Ekim 2026 incelemesinin sonucu:
-
-| Projedeki amaç | Teknik inceleme sonucu | Uygun kullanım doğrulandı mı? |
-|---|---|---|
-| Yeni geçmişi indirme ve saklama | Kısıtlı | Hayır |
-| Mevcut geçmişi yerel uygulamada gösterme | Belirsiz | Hayır |
-| ML eğitiminde kullanma | Belirsiz | Hayır |
-
-Bu, kesin hukuki izin kararı değildir; eğitim/staj amacı tek başına izin
-kanıtı sayılmadı. Bu nedenle **19 Ekim'de** yeni alım/aktarım yapılmadı.
-Kullanıcı **23 Ekim'de** son bir defalık alımı ve ML eğitiminde kullanımı
-onayladı; son alım/aktarım **2 Kasım'da** tamamlandı
-([kararlar](../proje_plani.md#5-kararlar), [alım kaydı](#cimri-geçmişi-bir-defalık-alım-ve-aktarım)).
-Bu kullanıcı kararı kullanım uygunluğunun resmen doğrulandığı anlamına
-gelmez; yukarıdaki sınır sürer. Düzenli Cimri toplaması yoktur, yeni alım
-ayrı karar ister. Akakçe'ye ilişkin o tarihli değerlendirme de
-[arşivdeki kullanım incelemesindedir](arsiv/teknik_2026-10-20.md#cimri-kullanım-değerlendirmesi-bakım-41-19-ekim).
-
-Galaxy S25 512 GB ve Redmi Note 14 Pro 5G 256 GB için doğru Cimri ana
-sayfası bulunamadı (incelenen adaylar Plus 512 GB, normal S25 256 GB,
-Redmi 5G 512 GB ve 4G 256 GB idi). Bu, ürünlerin Cimri'de olmadığı
-anlamına gelmez; başka kapasite/model bunların yerine konmaz.
+19 Ekim incelemesinde indirme/saklama kısıtlı, yerel gösterim ve
+ML belirsiz bulundu. Kullanım uygunluğu doğrulanmadı. 23 Ekim kullanıcı
+kararı son bir alımı ve ML kullanımını onayladı.
+[Kararlar](../proje_plani.md#5-kararlar)
+· [Tarihli koşul incelemesi](arsiv/teknik_2026-11-23.md#kullanım-değerlendirmesi)
 
 ## Yerel API: kurulum ve okuma hesabı
 
