@@ -3635,6 +3635,46 @@
       "url": "https://www.hepsiburada.com/xiaomi-14t-pro-titan-black-12gb-ram-1024gb-rom-xiaomi-turkiye-garantili-p-HBCV0000Q9VKK4",
       "color": "Black",
       "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv0000qgsnly",
+      "product_id": 26,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-17-pro-max-256gb-gumus-p-HBCV0000QGSNLY",
+      "color": "Gümüş",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv0000om7n53",
+      "product_id": 27,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/apple-iphone-17-pro-max-512-gb-akilli-telefon-kozmik-turuncu-p-HBCV0000OM7N53",
+      "color": "Turuncu",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv000052wyq1",
+      "product_id": 41,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s23-fe-128-gb-8-gb-ram-grafit-grafit-p-HBCV000052WYQ1",
+      "color": "Grafit",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv000052wyq2",
+      "product_id": 41,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s23-fe-128-gb-samsung-turkiye-garantili-nane-rengi-p-HBCV000052WYQ2",
+      "color": "Nane Rengi",
+      "active": true
+    },
+    {
+      "listing_id": "hepsiburada_hbcv0000r8zms8",
+      "product_id": 33,
+      "platform": "hepsiburada",
+      "url": "https://www.hepsiburada.com/samsung-galaxy-s25-ultra-12-512-gb-gumus-cep-telefonu-p-HBCV0000R8ZMS8",
+      "color": "Gümüş",
+      "active": true
     }
   ]
 }
