@@ -2415,15 +2415,12 @@ ham hata veya özel tur notları çıktıya konmaz; raporlar Git'e gönderilmez.
 
 ## ML veri denetimi
 
-Araç, mevcut tools/api_ui_check.py içindeki configured_url/read_dataset
-hesap/şema denetimlerini kullanır. Yalnız API_DATABASE_URL ve SELECT hesabı;
-her görüntü REPEATABLE READ / READ ONLY, 5 saniye sorgu sınırı ve UTC ile alınır.
-Analiz önceki tek görüntüde yapılır; sonunda sekiz nesne yeniden okunup parmak
-izleri karşılaştırılır. Devam eden tur varsa başlanmaz; kaynak değişirse
-hesaplanan sayılar kesin kabul edilmez. API, internete HTTP, migration,
-katalog eşitlemesi veya gerçek DB yazması yoktur.
-
-Toplama ve keşif çalışmıyorken proje kökünde kullanıcı terminalinden:
+Denetim, `tools/api_ui_check.py` içindeki hesap ve şema kontrollerini
+kullanır. `API_DATABASE_URL` ile yalnız SELECT hesabına bağlanır. Tek
+görüntüyü UTC, 5 saniye sorgu sınırı ve `REPEATABLE READ / READ ONLY` işlemle
+alır. Başlamadan önce çalışan turu kontrol eder. Hesabın sonunda sekiz
+nesneyi yeniden okuyup parmak izlerini karşılaştırır. Toplama ve keşif
+bittiğinde komutu proje kökünde kullanıcı çalıştırır.
 
 ```powershell
 $env:API_DATABASE_URL = "postgresql://fiyat_takip_api@localhost:5432/fiyat_takip"
@@ -2432,8 +2429,9 @@ $mlAuditOut = "artifacts\ml_denetim_$(Get-Date -Format yyyyMMdd_HHmmss_fff)"
 $LASTEXITCODE
 ```
 
-Şifre pgpass'ten okunur, komuta yazılmaz. API sunucusunu açmak veya yeni tur
-başlatmak gerekmez. Araç otomatik zamanlanmaz; eski çıktı klasörü kabul edilmez.
+Parolayı `pgpass.conf` sağlar. Araç doğrudan DB okur, API sunucusu
+gerektirmez ve otomatik zamanlanmaz. Her deneme için yeni çıktı klasörü
+kullanılır.
 
 | Çıkış | Anlamı |
 |---|---|
@@ -2442,85 +2440,75 @@ başlatmak gerekmez. Araç otomatik zamanlanmaz; eski çıktı klasörü kabul e
 | 2 | Kaynak değişti; sonuç kesin kabul edilmedi. Bu görüntünün ağsız tekrarı da 2 kalır. |
 | 130 | Kullanıcı durdurdu; tamamlanmış sonuç değildir. |
 
-Başarılı veya kaynak değişen denetim; snapshot.json, rules.json, report.json,
-source_check.json, windows.jsonl, daily.jsonl, report.md ve dosya parmak
-izlerini içeren manifest.json üretir. snapshot.json yalnız gereken alanları
-taşır; DSN/parola/tur notu/satıcı/ham hata metni içermez. Çıktı yazımı kesilirse
-failure.json varsa önceki kısmi dosyalar kesin sonuç sayılmaz. Yerel hash
-bütünlük kontrolüdür, kaynağın dijital imzası değildir. Görüntüdeki ilk
-hesaplayıcı SHA'sı ve source_check.json içindeki analysis_verifier_sha256
-ayrıdır; başka kod sürümüyle tekrar alınırsa hangi hesaplayıcının kullanıldığı bellidir.
+Tamamlanan denetim (çıkış 0 veya 2) `snapshot.json`, `rules.json`,
+`source_check.json`, `windows.jsonl`, `daily.jsonl`, `report.json` ve
+`report.md` üretir. `manifest.json` çıktıların SHA-256 değerlerini taşır.
+Görüntü yalnız analiz alanlarını içerir. DSN, parola, satıcı, tur notu
+ve ham hata metni dışarıda tutulur. `failure.json` varsa kısmi çıktılar
+sonuç olarak kullanılmaz. Kaynak ve analiz hesaplayıcıları ayrı parmak
+izleriyle kaydedilir (`analysis_verifier_sha256`). Parmak izi yerel
+bütünlük kontrolüdür.
 
-Kaydedilmiş görüntünün ağsız tekrarı da kullanıcı terminalinden:
+Kaydedilmiş görüntüyü ağsız tekrarlamak için şu komutu kullan.
 
 ```powershell
 .venv\Scripts\python.exe tools/ml_data_check.py --snapshot "$mlAuditOut\snapshot.json" --output-dir "${mlAuditOut}_tekrar"
 $LASTEXITCODE
 ```
 
-Tekrar DB adresini okumaz/bağlanmaz ve görüntünün sabit tarihiyle hesaplar;
-aynı hesaplayıcı sürümü ve kurallarıyla
-report.json/windows.jsonl/daily.jsonl aynı olmalıdır. source_check.json içindeki
-çalışma biçimi farklıdır. Dışarıdan eklenen alanlar, tekrarlı/bozuk kimlikler,
-plan–kontrol veya sonuç–fiyat çelişkisi ve bozuk hash reddedilir.
+Tekrar görüntünün sabit tarihiyle hesaplar. Aynı kod ve kurallarla
+`report.json`, `windows.jsonl` ve `daily.jsonl` birebir eşleşmelidir.
+`source_check.json` çalışma biçimini kaydeder. Geçersiz parmak izi, fazladan
+alan, tekrarlı veya bozuk kimlik, plan–kontrol ve sonuç–fiyat çelişkisi
+reddedilir.
 
-**Günlük kurallar:** kendi verimizde başlangıç fiyatı akşam turunun ürün
-minimumu, gelecek sonucu günün iki turunda gözlenen minimumdur. Akşam fiyatı
-yoksa sabah fiyatı başlangıca taşınmaz. Her scheduled tur, başlangıcından
-önceki en yakın İstanbul 10.00/22.00 dilimine aittir; örneğin ertesi gün
-09.00 başlangıcı önceki 22.00 dilimidir. Eksik/tekrarlı dilim, kesilen tur,
-günü aşan tamamlanma, ürünün planlanmaması ve eksik/hatalı sayfa cevabı kalite
-kusurudur. İki turun ürün sayfa kimlikleri aynı olmalı; başka ürünün değişen
-kataloğu etkilemez. Manuel turlar envanterde kalır, örneklere katılmaz.
-Cimri günlük fiyatları ayrı kalır; ürün kimliği değişimi pencereyi eler,
-tarihsel satıcı kapsamının aynı olduğu varsayılmaz.
+**Sıkı sayım.** İstanbul 10:00 ve 22:00 dilimlerini yalnız zamanlanmış
+turlar doldurur. Tur başlangıcı önceki en yakın dilime atanır. Bu nedenle
+ertesi gün 09:00 başlangıcı önceki 22:00 dilimindedir. Eksik veya tekrarlı
+dilim, yarıda kalma, günü aşan bitiş, planlanmamış ürün ya da eksik/hatalı
+sayfa cevabı kalite kusurudur. İki turda ürünün kendi planlanan sayfa
+kimlikleri eşleşmelidir.
 
-Geçmiş d−29…d, gelecek d+1…d+7'dir; d başlangıç günüdür. İlk 30 günde her gün
-başlangıç fiyatı ve sonraki yedi günde her gün minimum fiyat gerekir. Kendi
-37 günlük kapsamı sabit ve cevapları tam olmalı. Tükendi geçerli kaynak
-sonucudur; bütün gün fiyatsızsa doldurulmaz. Sabah fiyatı olan, akşam stoksuz
-bir gün gelecek minimumu sağlayabilir; geçmiş başlangıç fiyatını sağlayamaz.
-Eksik gelecekte gözlenen düşüş olsa dahi sıkı temel sayımda pencere dışarıda
-kalır; olumsuz etiket üretilmez. Tam sayı kuruşla
-100×gelecek_minimum ≤ 95×başlangıç ise 1, değilse 0; kullanılamayan etiket NULL.
-İçinde bulunduğumuz İstanbul günü elenir. API'nin 18 saat/14 geçiş/7 gün gibi
-gösterge eşikleri ML denetimine aktarılmaz.
+Başlangıca akşam turunun ürün minimumu, gelecek güne iki turda görülen
+minimum fiyat yazılır. Sabah fiyatı, akşam stoksuzsa gelecek minimumuna
+girebilir. Başlangıcı yalnız akşam fiyatı sağlar. `Tükendi` geçerli cevaptır.
+Cimri ayrı sayılır. Pencerede Cimri ürün kimliğinin değişmesi örneği eler.
 
-Rapor ürün/kaynak bazında tur/sonuç sayıları, süre, eksik gün/fiyat aralıkları,
-kapsam dönemleri, azami tur boşluğu, aday/elenen/kullanılabilir pencere ve
-sınıfları verir. calendar_days takvim uzunluğu, observed_days en az bir
-kontrol sonucu/kaydı bulunan nominal gün sayısıdır; boş hazırlanan satır
-gözlem sayılmaz. Cimri'de NULL fiyatlı tarih kaydı gözlemdir, fiyat değildir.
-Elenme nedenleri birden fazla olabilir; neden sayıları
-toplamı elenen pencere sayısına eşit olmak zorunda değildir. Güncel etkin
-sayfalar değişmişse bekleme hesabı eski kapsamı sürüyormuş gibi saymaz.
-Koşullu ilk pencere sonu ve ertesi gün yapılabilecek denetim tarihi verilir;
-bu vaat değildir. Takip sayfası yoksa veya ürün pasifse tarih hesaplanmaz.
+Başlangıç günü `d` için `d−29…d` boyunca 30 başlangıç fiyatı, `d+1…d+7`
+boyunca 7 günlük minimum gerekir. Kendi verimizde kapsam 37 gün boyunca
+sabit ve cevaplar tam olmalıdır. Eksik veri, düşüş gözlense bile NULL etiket
+üretir. Tam pencere kuruşla `100×gelecek_minimum ≤ 95×başlangıç` ise 1,
+aksi halde 0 etiketini alır. İstanbul'da henüz kapanmamış gün dışarıda kalır.
+API'nin 18 saat, 14 geçiş ve 7 gün gibi gösterge eşikleri ayrı hesaplara aittir.
 
-Kaynak başına kullanılabilir ortak referans tarihlerinde ilk floor(%70),
-sonraki floor(%85)'e kadar doğrulama, kalanı testtir. Bütün ürünler aynı
-tarih bölümünü paylaşır. Önceki bölümün hedef sonu sonraki dolu bölümün ilk
-referansına eşit/sonraysa purged olarak ayrılır. first_anchor/last_anchor,
-ayırmadan önceki bölüm sınırlarıdır; distinct_anchor_days kalan günleri sayar.
-Ürün/sınıf/gün sayıları ve
-boş/tek sınıflı bölümler belirtilir; model eğitilmez, puan üretilmez.
-Çakışmayan 37 günlük pencereler en erken olandan açgözlü seçilir; bunlar da
-ürünler arası istatistiksel bağımsızlık kanıtı değildir. numerical_candidate
-yalnız bu sayımlarda engel bulunmadığıdır; yayın yeterliliği değildir.
-Mevcut Cimri serisinin eski kalması ve ML kullanım belirsizliği ayrıca gösterilir.
+Ürün ve kaynak raporunda tur, sonuç, süre, eksik gün veya fiyat aralığı,
+kapsam dönemi, azami tur boşluğu ve pencere sınıfı sayıları bulunur.
+`calendar_days` dönem uzunluğu, `observed_days` en az bir kontrol sonucu
+veya kaydı bulunan nominal gün sayısıdır. Cimri'de NULL fiyatlı kayıt
+gözlem sayılır. Bir pencerenin birden çok elenme gerekçesi olabilir.
+İlk pencere sonu ve ertesi gün denetim tarihi etkin, sayfası olan ürün
+ve güncel kapsam için koşullu hesaplanır. Cimri'nin veri yaşı ve ML kullanım
+belirsizliği raporlanır.
+
+Her kaynakta ortak uygun günlerin ilk taban %70'i eğitim, taban %85'e
+kadarı doğrulama ve kalanı testtir. Tarih sınırları bütün ürünlerde ortaktır.
+Hedef sonu sonraki dolu bölümün ilk başlangıcına eşit veya daha geç olan
+önceki satırlar `purged` olur. Sınırlar temizleme öncesi, gün sayıları
+sonrasıdır. Raporda boş ve tek sınıflı bölümler görünür. Çakışmayan 37 günlük
+pencereler en erken olandan açgözlü seçilir. Ürünler arası bağımsızlık
+ayrıca kanıt ister. `numerical_candidate` sayım engeli bulunmadığını belirtir.
 
 ## ML hazırlığı
 
-ML hazırlığının kodu `app/ml` paketindedir; tamamlanan adımlar
-[planın uygulama dizininde](../proje_plani.md#ml-hazırlığı-ve-ilk-deney-4046),
-kalıcı kararlar [kararlar tablosundadır](../proje_plani.md#5-kararlar). Gerçek veritabanı okuma
-hesabıyla bir kez okunup bir **veri görüntüsü** dosyasına yazılır; etiket ve
-deney adımları bu dosyadan ağsız ve veritabanısız çalışır. Böylece aynı
-görüntü/kod/ortam aynı sonucu verir; etiket, girdi, bölme ve deney testleri
-veritabanı istemez. Kütüphaneler `ml`
-bağımlılık grubundadır (numpy, scikit-learn, LightGBM; kesin sürümler,
-`pyproject.toml`). Eski sıkı kuralla sayan [ML veri denetimi](#ml-veri-denetimi)
-aracı ayrıdır ve değişmeden kalır.
+ML akışı `app/ml` paketindedir. Tek salt okunur görüntüden etiket,
+girdi, bölme ve deney ağsız yürür. Aynı görüntü, kod ve ortam aynı
+çıktıları üretir. NumPy, scikit-learn ve LightGBM sürümleri için
+`pyproject.toml` içindeki `ml` grubuna bak. Sıkı referans sayımı
+[ML veri denetimindedir](#ml-veri-denetimi).
+
+- [ML planı](../proje_plani.md#ml-hazırlığı-ve-ilk-deney-4046) ve [kalıcı kararlar](../proje_plani.md#5-kararlar)
+- [Uygulama ve kabul geçmişi](gecmis.md#aşama-8-ml-gölge-mod-ve-tahmin-gösterimi)
+- [Sadeleştirme öncesi ayrıntılı kayıt](arsiv/teknik_2026-11-23.md#ml-hazırlığı)
 
 ### Veri görüntüsü (`python -m app.ml snapshot`)
 
@@ -2532,20 +2520,13 @@ $env:API_DATABASE_URL = "postgresql://fiyat_takip_api@localhost:5432/fiyat_takip
 $LASTEXITCODE
 ```
 
-Şifre pgpass'ten okunur, komuta yazılmaz. Komut:
-
-- Klasör zaten varsa veritabanına bağlanmadan durur.
-- `API_DATABASE_URL`'deki hesapla bağlanır. Hesabın varsayılanı salt okunur
-  değilse (ör. yazan `fiyat_takip` hesabı) okumaz.
-- Bütün tabloları tek REPEATABLE READ, READ ONLY işlemde okur (5 sn sorgu
-  sınırı, UTC). Bekleyen veya kodla uyuşmayan migration varsa ya da bir tur
-  `running` durumundaysa okumaz; görüntü yarım tur içermez.
-- `snapshot.json`'u yazar, dosyayı yeniden okuyup doğrular ve özet basar:
-  dosya yolu, SHA-256, şema sürümü, okuma anı, ürün ve sayfa (etkin), tur
-  (tamamlanan, yarıda kalan), sayfa sonucu ve Cimri satır/ürün/eksik fiyat.
-
-Veritabanına yazmaz, siteye gitmez ve ortak tarama kilidini almaz; süren turu
-veritabanındaki `running` kaydından anlar.
+Parolayı `pgpass.conf` sağlar. Komut önce çıktı klasörünün henüz bulunmadığını,
+okuma hesabını, migration uyumunu ve tamamlanmamış tur bulunmadığını
+kontrol eder. Tek `REPEATABLE READ / READ ONLY` işlem (UTC, 5 saniye
+sorgu sınırı) kullanır. Tarama kilidi yerine veritabanındaki `running`
+kaydına bakar. `snapshot.json` yeniden okunur ve doğrulanır. Özet,
+yolu ve SHA-256'yı, şema ve okuma anını, ürün/sayfa etkinliğini, tur
+durumlarını, sayfa sonuçlarını ve Cimri kayıt/eksik fiyat sayılarını verir.
 
 | Çıkış | Anlamı |
 |---|---|
@@ -2554,42 +2535,27 @@ veritabanındaki `running` kaydından anlar.
 | 2 | Argüman hatası. |
 | 3 | Tur sürüyor; klasör oluşturulmaz. Tur bitince yeniden çalıştırın. |
 
-**İçerik:** yalnız ML'in kullandığı alanlar. Ürünler (kimlik, anahtar, marka,
-model, kapasite, etkinlik), platformlar ve sayfalar (kimlik, ürün, platform,
-etkinlik), turlar (tetikleyici, durum, başlangıç, bitiş, planlanan sayfa
-sayısı), sayfa sonuçları (kontrol anı, sonuç, güncel fiyat) ve Cimri satırları
-(Cimri kimliği, gün, kuruş veya NULL, alım anı). Satıcı adı, teklif adresi,
-hata metni, tur notu ve bağlantı adresi girmez. Pasif ürün ve sayfalar,
-yarıda kalan turlar ve kontrol edilmemiş sayfalar da girer; hangisinin
-kullanılacağına etiket kuralları karar verir.
+**Dosya.** `format_version=1` zarfı `payload` ve `sha256` alanlarını taşır.
+Parmak izi, sıralı anahtarlı ve boşluksuz UTF-8 JSON içeriğine aittir.
+Zaman UTC (`…Z`), fiyat tam sayı kuruştur. Ürün, platform, sayfa, tur,
+sayfa sonucu ve Cimri satırları birincil anahtara göre sıralı ve tekildir.
+Pasif ürün ve sayfalar, yarıda kalan turlar ve henüz kontrol edilmemiş
+sayfalar görüntüde korunur. Satıcı, teklif adresi, ham hata, tur notu
+ve bağlantı adresi görüntüye alınmaz.
 
-**Dosya biçimi:** `{"payload": …, "sha256": …}`. `payload` anahtarları sıralı,
-boşluksuz UTF-8 JSON'dur; `sha256` bu baytların parmak izidir. Zamanlar UTC
-(`…Z`), para kuruş tam sayıdır. Kayıtlar tablo anahtarına göre sıralı ve
-tekildir; aynı veri ve aynı okuma anı aynı baytları verir. `format_version` 1.
-
-**Okurken denetim:** bozuk JSON, fazladan zarf anahtarı veya parmak izi
-tutmayan dosya reddedilir. Parmak izi yeniden hesaplanmış olsa bile içerik
-sözleşmeye göre yeniden denetlenir: fazladan alan yok; sayfa→ürün/platform ve
-sonuç→tur/sayfa/ürün bağları tutar; her turda sonuç satırı sayısı planlanan
-sayfa sayısına eşit; fiyat yalnız `offer` sonucunda, kontrol anı yalnız sonuç
-varken bulunur ve tur aralığındadır; süren tur yoktur; Cimri satırı bir ürüne
-bağlıdır; ürün anahtarı tekrarlanmaz. Parmak izi yerel bütünlük kontrolüdür,
-imza değildir.
-
-`app/ml` modülleri (komut dosyası dışında) veritabanı, ağ ve pazaryeri
-katmanlarını yüklemez; bunu `tests/test_ml_dataset.py` denetler.
+Okuyucu zarfı, parmak izini, alanları ve tabloların bağlarını doğrular.
+Turun sonuç satırı sayısı planlanan sayfa sayısıyla eşleşir. Fiyat yalnız
+`offer` sonucunda bulunur. Sonuçlu satırın kontrol anı tur aralığında
+olmalıdır. `running` tur ve geçersiz Cimri ürün bağı reddedilir. ML
+modüllerinin komut dosyası dışında DB, ağ ve pazaryeri katmanı yüklememesi
+`tests/test_ml_dataset.py` ile sınanır.
 
 ### Günlük seri ve etiketler (`python -m app.ml labels`)
 
-Girdi, yukarıdaki `snapshot` komutunun oluşturduğu **klasördür**. Etiket
-komutu gerçek DB adresi istemez; dosyanın parmak izini ve sözleşmesini
-doğrular. Hesaplama görüntünün İstanbul tarihinden önceki son kapanmış güne
-kadar yapılır; bilgisayarın çalıştırma anındaki tarihi sonucu değiştirmez.
-Güncel katalog, eşleştirme dosyası veya etkinlik bayrakları tarihsel
-gözlemleri değiştirmez. Kendi ölçümlerimiz ve Cimri birleştirilmez.
-
-Kullanıcı terminalinde, mevcut görüntüyle:
+Etiket komutu görüntü **klasörünü** ve parmak izini doğrular. İstanbul'da
+görüntü anından önce kapanmış son güne kadar hesaplar. Kaynaklar ayrı
+işlenir. Hesap tarihsel tur planlarını kullanır. Sonraki katalog,
+eşleştirme ve etkinlik değişiklikleri geçmişi yeniden yazmaz.
 
 ```powershell
 $mlLabelSnapshot = "artifacts\ml_veri_20261102_201315_398"
@@ -2600,28 +2566,20 @@ $LASTEXITCODE
 $LASTEXITCODE
 ```
 
-İlk komut başarısızsa çapraz kontrole geçilmez. İki komutta da çıkış 0
-beklenir; kullanılabilir örnek sayısının sıfır olması hesaplama hatası
-değildir. Bu komutlar tur/keşif başlatmaz ve DB'ye bağlanmaz. Yeni görüntü
-almak ise ayrı `snapshot` işlemidir ve tur/keşif sırasında yapılmaz.
+Çapraz kontrole `labels` çıkışı 0 ise geç. Her iki komut ağsız çalışır.
+Yeni görüntü ayrı `snapshot` işlemidir.
 
-**Günlük kendi serimiz:** yalnız `scheduled` turlar, başlangıcından önceki
-en yakın İstanbul 10:00/22:00 dilimine atanır; manuel turlar kullanılmaz.
-Tekrarlı dilimden bir tur seçilmez. Kesilen veya kendi nominal gününde
-bitmeyen tur o dilim için eksiktir; fiyatı başka güne taşınmaz. Diğer sağlam
-dilim günlük gelecek minimumunu sağlayabilir.
+**Kendi serimiz.** Yalnız zamanlanmış turlar, başlangıçlarına göre önceki
+en yakın İstanbul 10:00/22:00 dilimine atanır. Tekrarlı, yarıda kalan ya da
+kendi gününde bitmeyen dilim eksiktir. İlk gözlem, ürünün ilk gerçek fiyat
+veya stoksuzluk cevabının nominal günüdür.
 
-Başlangıç için tekil, aynı gün bitmiş 22:00 turunda ürünün planlanan bütün
-sayfaları `offer` veya `sold_out` cevabı vermeli ve en az bir fiyat olmalı.
-Başka ürünün hatası engel değildir; sabah fiyatı başlangıca taşınmaz. İlk
-gözlem tarihi, zamanlanmış turda ürün için ilk gerçek fiyat/stoksuzluk
-cevabının nominal günüdür; yalnız hatalı/cevapsız kayıt tarihi sayılmaz.
-
-Gelecek günün tek sağlam turu yeterlidir. Değerlendirilen tamamlanmış,
-kendi gününde bitmiş, tekil turlardaki ilgili sayfaların tamamı cevap
-vermelidir; birindeki `error`/cevapsızlık o günün minimumunu geçersiz kılar.
-İlgili tekliflerin hepsi stoksuzsa veya kullanılabilir turda ilgili sayfa
-planlanmamışsa günlük fiyat NULL'dır; bu durumlar ayrı gerekçeler taşır.
+Başlangıç için aynı gün biten tekil 22:00 turunda ürünün bütün planlı
+sayfaları `offer` veya `sold_out` dönmeli ve en az bir fiyat olmalıdır.
+İlgili sayfada hata veya cevapsızlık gelecek günün minimumunu geçersiz
+kılar. Gelecek minimumu için tek sağlam dilim yeterlidir. Bütün teklifler
+stoksuzsa veya kullanılabilir turda ilgili sayfa planlanmamışsa minimum
+NULL kalır. Kalite gerekçeleri duruma göre ayrı kaydedilir.
 
 **Cimri:** ilk kayıtlı tarih geçmişi başlatır. Eksik tarih ve NULL fiyat
 doldurulmaz. `day == captured_at` İstanbul tarihi olan kayıt yarım gündür;
@@ -2653,29 +2611,22 @@ minimumdur, `tracked` NULL'dır. Kapsam fark oranının paydası yalnız iki
 etiketi de hesaplanabilen pencerelerdir; olumlu satır sayısı bağımsız olay
 sayısı değildir.
 
-**Dosyalar:** `daily.jsonl` kaynak kayıtlarını, tur kimliklerini, günlük
-fiyat ve kalite gerekçelerini; `windows.jsonl` başlangıç kümesini, geçmiş
-durumunu ve iki hedefin etiket/gün/minimum/gerekçelerini taşır.
-`strict_windows.jsonl` eski kusursuz 37 gün ve sabit kapsam kuralının
-pencereleridir. `report.json` makineye, `report.md` kullanıcıya yönelik
-ürün/kaynak kırılımı ve kapsam farklarını içerir. `manifest.json` biçim
-sürümü 1, kural sürümü 2, giriş SHA-256 ve beş çıktı dosyasının SHA-256
-değerlerini taşır; en son yazılır. Manifesti olmayan veya dosya parmak izi
-uyuşmayan klasör tamamlanmış kanıt değildir. Var olan klasöre yazılmaz;
-yarım kalmış deneme de yeni klasörle tekrarlanır. Aynı görüntü aynı
-hesaplama çıktıları ve manifesti üretir.
+**Dosyalar.** `daily.jsonl` günlük fiyat, tur ve kalite gerekçelerini,
+`windows.jsonl` başlangıç kapsamını, geçmişi ve iki hedefin gelecek
+kanıtını taşır. `strict_windows.jsonl` tam 37 gün ve sabit kapsam
+referansıdır. `report.json` ve `report.md` ürün, kaynak ve kapsam farkı
+özetidir. Manifest (biçim 1, kural 2) görüntü SHA-256'sı ve beş çıktının
+parmak izleriyle en son yazılır. Yarım veya uyuşmayan çıktı yeni klasörle
+tekrarlanır. Aynı görüntü aynı dosyaları üretir.
 
-`primary`, `tracked`, `target_end` ve `future_scope_change_days` geleceğe
-ait etiket/uygunluk alanlarıdır; model girdisi olamaz. Bu adım girdileri,
-eğitim/test bölmesini, model eğitimini veya tahmin gösterimini yapmaz.
+`primary`, `tracked`, `target_end` ve `future_scope_change_days` gelecek
+bilgisi taşır ve model girdilerine alınmaz.
 
-**Bağımsız sıkı çapraz kontrol:** eski `tools/ml_data_check.py` değişmez.
-Yeni araç aynı görüntüden eski `own_series`/`market_series` ve
-`windows_for` hesaplarını çağırır; bütün sıkı pencere anahtarlarını,
-fiyatlarını, etiket ve gerekçelerini karşılaştırır. Cimri yarım gün
-fiyatları iki tarafta da önce NULL yapılır. Görüntüde bulunmayan URL alanı
-eski aracın kullanılmayan envanteri için `None` kalır; adres uydurulmaz.
-Yeni 6/7 sayılarının sıkı sayılarla aynı olması beklenmez.
+**Sıkı çapraz kontrol.** `ml_label_check.py` aynı görüntüde eski
+`own_series`, `market_series` ve `windows_for` hesaplarıyla anahtar,
+fiyat, etiket ve gerekçeleri karşılaştırır. İki tarafta Cimri yarım günü
+NULL yapılır. Eski envanterin kullanılmayan URL alanı `None` kalır.
+Çapraz kontrol sıkı pencereye uygulanır. 6/7 kuralı ayrı sonuç verir.
 
 | Çıkış | `labels` | `ml_label_check.py` |
 |---|---|---|
@@ -2684,25 +2635,16 @@ Yeni 6/7 sayılarının sıkı sayılarla aynı olması beklenmez.
 | 2 | Argüman hatası. | Argüman hatası. |
 | 130 | Kullanıcı durdurdu. | Kullanıcı durdurdu. |
 
-`labels` komutunun DB/ağ katmanını yüklemeden çalıştığı ve çapraz kontrolün
-bağlantı açmadığı yapay görüntülü testlerle denetlenir. Gerçek görüntüdeki
-sonuç ve çapraz kontrol, kullanıcı terminalinde ayrıca doğrulanır.
-
-Son gerçek görüntü doğrulamasının kapsamı ve sayıları README Güncel kapsam
-tablosundadır; kanıt klasörü `artifacts/ml_etiket_20261102_201553_161/`.
-Bu çıktı son Cimri alımını içeren 2 Kasım görüntüsünü (son kapanmış gün
-1 Kasım) kapsar; daha sonraki turlar için yeni görüntü gerekir.
+Yapay testler komutların ağ/DB açmadığını doğrular. Gerçek görüntüyle
+yapılan çapraz kontrolün sonuçları
+[uygulama geçmişindedir](gecmis.md#aşama-8-ml-gölge-mod-ve-tahmin-gösterimi).
 
 ### Model girdileri (`python -m app.ml features`)
 
-Komut, 4.1 görüntü klasörünü okur; girdi hesabı etiketlerden bağımsızdır.
-Güncel katalog/eşleştirme, DB, API, ağ veya 4.2 etiket klasörü gerekmez.
-Görüntünün parmak izi ve sözleşmesi önce doğrulanır. Günlük fiyatlar 4.2 ile
-aynı seri katmanından gelir: kendi serimizde sağlam 22:00 başlangıcı,
-Cimri'de yarım gün maskeli günlük fiyat. Görüntünün alındığı İstanbul günü
-dahil edilmez; hesapta bilgisayarın bugünkü tarihi kullanılmaz.
-
-Kullanıcı terminalinde, mevcut görüntüyle:
+Komut aynı görüntüyü doğrular ve `labels` ile ortak seri katmanını
+kullanır. Kendi serisinde 22:00 başlangıcı, Cimri'de yarım günü
+maskelenmiş fiyat kullanılır. Takvimi görüntü belirler. Girdiler
+etiketler, canlı katalog ve çalışma anından bağımsız hesaplanır.
 
 ```powershell
 $mlFeatureSnapshot = "artifacts\ml_veri_20261102_201315_398"
@@ -2711,25 +2653,21 @@ $mlFeatureOut = "artifacts\ml_girdi_$(Get-Date -Format yyyyMMdd_HHmmss_fff)"
 $LASTEXITCODE
 ```
 
-Çıkış 0, rapor yolu, kaynak başına girdi satırı sayısı, tanınmayan model
-ailesi sayısı ve dosya/şema doğrulama mesajı beklenir. Fiyatlı başlangıç
-yoksa sıfır satır başarıdır; bu model eğitimi veya veri yeterliliği kararı
-değildir. Çıkış 1 girdi/dosya/mevcut klasör hatası, 2 argüman hatası,
-130 kullanıcı kesmesidir. Var olan çıktı klasörü değiştirilmez.
+Çıkış 0 rapor yolunu, kaynağa göre satır ve tanınmayan aile sayılarını
+ve doğrulama sonucunu verir. Geçerli başlangıç yoksa sıfır satır başarıdır.
+Çıkış 1 girdi, dosya veya mevcut klasör hatası, 2 argüman hatası, 130
+kullanıcı kesmesidir.
 
-**Girdi sözleşmesi:** Her satır iki nesne taşır. `metadata` içinde
-`product_id`, `product_key`, `source`, `anchor_day`, `anchor_at` ve `month`
-vardır. `anchor_at` kendi serimizde akşam turunun gerçek UTC bitişidir;
-Cimri'de saat bilinmediği için NULL'dır. Aynı an 4.2 `windows.jsonl`
-dosyasında `+00:00`, burada `Z` ile yazılır; 4.4 iki dosyayı yalnız
-ürün/kaynak/gün anahtarıyla eşleştirir, zaman alanını metin olarak
-karşılaştırmaz. Ay ve ürün anahtarı ileride yalnız
-ablasyon için seçilebilir; çekirdek girdiye otomatik katılmaz.
+**Satır şeması.** `metadata`, ürün kimliği ve anahtarı, kaynak,
+başlangıç günü ve anı ile ayı taşır. `anchor_at` kendi serimizde akşam
+turunun UTC bitişi, Cimri'de NULL'dır. Etiket dosyası zamanı `+00:00`,
+girdi dosyası `Z` ile yazabilir. Bölmede birleştirme ürün/kaynak/gün
+anahtarıyla yapılır. Ay ve ürün anahtarı çekirdek girdilere eklenmez.
 
-`features`, Pydantic strict ve `extra=forbid` ile sabit alanlıdır. Kaynak,
-ürün kimlikleri, ham fiyat, tarihin kendisi ve gelecek alanları bu nesneye
-eklenemez. Eksikler NULL, sayısal değerler sonludur; NaN/sonsuz değer
-reddedilir. Kategori kodlama, ölçekleme veya eksik değer doldurma yoktur.
+`features` sabit alanlıdır (Pydantic `strict`, `extra=forbid`). Kaynak,
+kimlik, ham fiyat, tarih ve gelecek alanları çekirdekten çıkarılır.
+Eksikler NULL, sayılar sonlu olmalıdır. Kodlama, ölçekleme ve eksik
+doldurma modelin eğitim aşamasına aittir.
 
 `d` başlangıç günü ve `p(d)` geçerli başlangıç fiyatı olmak üzere:
 
@@ -2748,72 +2686,44 @@ reddedilir. Kategori kodlama, ölçekleme veya eksik değer doldurma yoktur.
 | `weekday` | Kategori dizgisi: Pazartesi `"0"`, Pazar `"6"`. |
 | `brand`, `family`, `segment`, `capacity` | Marka, nesil, sürüm ve GB kapasitesi kategorileri; kapasite de dizgidir (örn. `"128"`). |
 
-Minimum ve ortalama için tek mevcut fiyat yeterlidir. Eksik günün üzerinden
-günlük geçiş kurulmaz; oynaklık ve değişim sayısı fiyatsız günler süzüldükten
-sonra hesaplanmaz. Lag 30 için `d−30` okunur, ancak bu ek fiyat 30 günlük
-minimum/ortalama/geçiş penceresine katılmaz. API istatistiklerinin 18 saat,
-14 geçiş gibi eşikleri burada kullanılmaz. Cimri geçmişinde başlangıçtaki
-kaynak ürün kimliğinden farklı kimliğe ait fiyatlar NULL kabul edilir;
-kimlikler bir girdi hesabında birleştirilmez. Kendi geçmişindeki sayfa
-kapsamı değişimleri günlük serideki geçmiş fiyatları geriye dönük silmez.
+Minimum ve ortalama için tek fiyat yeterlidir. Takvim boşlukları
+geçiş kurulmasını engeller. `d−30` sadece 30 günlük lag'e girer. Oynaklık,
+değişim ve 30 günlük özet penceresi `d−29…d` aralığıdır. Cimri'de diğer
+kaynak ürün kimliklerinin fiyatı NULL olur. Kendi kapsam değişikliği
+geçmiş fiyatı silmez. API istatistik eşikleri bu hesaba uygulanmaz.
 
-**Aile/segment:** Apple iPhone nesli ortak ailedir; Pro/Pro Max/Plus/mini/Air
-ayrı segmenttir. Samsung Galaxy S/A numarası aile, Ultra/FE/Plus/Edge sürüm
-segmentidir. Xiaomi sayısal T ve Redmi Note numarası aile, Pro/Pro Plus
-segmenttir; Redmi'nin sondaki 4G/5G eki yalnız bu kategori hesabında
-çıkarılır. POCO X numarası aile, Pro segmenttir. Eksiz tanınan modelin
-segmenti `standard` olur. Desene uymayan modelde marka + tam model aile
-olarak korunur, segment `unknown` olur ve rapora girer. Bu işlem ürün
-kimliğini veya scraper/keşfin ağ kurallarını değiştirmez; ek bir model
-eşleştirme dosyası gerekmez.
+**Aile ve segment.** iPhone nesli, Galaxy S/A numarası, Xiaomi T ve
+Redmi Note numarası ile POCO X numarası aileyi verir. Pro/Pro Max/Plus/mini/Air,
+Ultra/FE/Plus/Edge, Pro/Pro Plus ve POCO Pro ilgili ailenin segmentleridir.
+Redmi'nin son 4G/5G eki yalnız bu kategoride çıkarılır. Ek yoksa `standard`,
+desen tanınmazsa marka + tam model ve `unknown` yazılır. Ürün kimliği ve ağ
+kuralları bu kategorilerden bağımsızdır.
 
-**Zaman sınırı:** Hesaplayıcı yalnız `d−30…d` fiyatlarını okuyabilir.
-Kendi fiyatlarında geçmiş akşam bitişinin başlangıç anından sonra olmaması
-da aranır. Hesaplayıcıya gelecek etiketi veya pencere uygunluğu verilmez.
-Etiketi 0/1/NULL olan bütün geçerli başlangıçlar girdi satırı üretir;
-geleceği tamamlanmış satırlara göre girdi hazırlama yapılmaz.
+**Zaman sınırı.** Hesap en çok `d−30…d` fiyatlarını okur. Kendi serimizde
+geçmiş turun bitişi başlangıç anını aşamaz. 0, 1 veya NULL etiketli bütün
+geçerli başlangıçlar girdi oluşturur. Cimri'nin tarihsel ölçüm ve ilk
+erişilebilirlik saati bilinmediğinden bu girdi tarihsel erişim kanıtı
+sağlamaz.
 
-**Çıktılar:** `features.jsonl` anahtara göre sıralı ve tekil tipli satırlar;
-`feature_schema.json` alan türleri, formüller, pencere/eksik kuralları,
-çekirdek ve kategorik alan listeleri; `report.json` ve `report.md` kaynak ve
-ürün bazında satır/eksiklik/tanınmayan model dökümüdür. Manifest en son
-yazılır; biçim sürümü 1, girdi kural sürümü 1, giriş SHA-256 ve dört çıktı
-dosyasının parmak izlerini taşır. Komut parmak izlerini, çıktı şemasını,
-her satırın tiplerini ve anahtar sırasını yeniden doğrular. Manifesti eksik
-ya da parmak izi tutmayan klasör tamamlanmış kanıt değildir; yeni klasörle
-tekrarlanır. Aynı görüntü ve aynı kod/ortam aynı dosyaları üretir.
+**Dosyalar.** `features.jsonl` sıralı, tekil ve tipli satırlar,
+`feature_schema.json` alan ve hesap sözleşmesi, `report.json` ve
+`report.md` kaynak/ürün dökümüdür. En son yazılan manifest biçim ve kural
+sürümü 1, giriş SHA-256'sı ve dört çıktı parmak izi taşır. Yazılan dosyalar,
+şema, satır tipleri ve sıra tekrar doğrulanır. Yarım veya parmak izi
+uyuşmayan çıktı yeni klasörle tekrarlanır.
 
-**Sızıntı denetimi:** Yapay testler gelecekteki fiyat/stok/sayfa/ürünleri
-değiştirir ve gelecek kayıtlarını keser; ortak geçmiş başlangıçların
-girdileri aynı kalmalıdır. Geçmiş fiyatı değiştiren pozitif kontrol ilgili
-girdiyi değiştirmelidir. Şema gelecek/kimlik alanlarını çekirdek içinde
-reddeder; features komutu etiket/DB/ağ/eğitim modüllerini yüklemeden
-çalışır. Aynı görüntüde girdi anahtarları 4.2'nin geçerli başlangıçlarıyla
-testlerde karşılaştırılır. Gerçek görüntüdeki anahtar eşleşmesi kullanıcı
-çıktısından sonra mevcut etiket ve girdi dosyalarının salt okunur
-incelemesiyle ayrıca doğrulanır; features komutu etiket dosyasını okumaz.
-
-Cimri'nin günlük ölçüm saati ve fiyatın geçmişte gerçekten ne zaman
-erişilebilir olduğu bilinmez. Bu hesap tarihsel günlük değerlerden bir
-deney girdisi üretir; geçmişteki gerçek erişilebilirliği kanıtlamaz.
-Eğitim/test bölmesi, model eğitimi ve tahmin gösterimi bu adımın dışındadır.
-
-Son gerçek girdi doğrulamasının sayıları README Güncel kapsam tablosundadır;
-kanıt klasörü `artifacts/ml_girdi_20261102_201744_673/`. Bu klasörün
-manifesti ve girdi başlangıçları, aynı görüntüye ait 4.2 etiket kanıtıyla
-karşılaştırılıp doğrulandı. Eksik girdi alanları NULL olarak korunur;
-girdi satırları etiketli eğitim satırı sayısı değildir.
+**Sızıntı denetimi.** Yapay testler gelecek verisini değiştirip ortak
+geçmiş girdilerin sabit kaldığını, geçmiş fiyat değiştirilince ilgili
+girdinin değiştiğini sınar. Anahtarlar aynı görüntünün geçerli etiket
+başlangıçlarıyla karşılaştırılır. `features` komutu etiket, DB, ağ ve
+eğitim modüllerini yüklemeden çalışır.
 
 ### Zaman bölmesi ve ölçütler (`python -m app.ml split`)
 
-Bu adım 4.2 etiket ve 4.3 girdi klasörlerini okur; model veya kalibratör
-eğitmez, gerçek tahmin puanı hesaplamaz. Komut DB/ağ veya yeni görüntü
-gerektirmez. İki manifestin kural/şema sürümleri ve dosya parmak izleri,
-ortak görüntü SHA-256 değeri ve bütün başlangıç anahtarlarının sıralı,
-tekil ve birebir aynı olduğu doğrulanır. Hedef sonu daima başlangıç + 7
-gündür. Çelişkili girdide çıktı klasörü oluşturulmaz.
-
-Kullanıcı terminalinde mevcut kanıtlarla:
+Komut etiket ve girdi klasörlerini ağsız birleştirir. Manifestleri,
+kural/şema sürümlerini, dosya parmak izlerini, ortak görüntü SHA-256'sını ve
+başlangıç anahtarlarının tekil, sıralı ve birebir eşleşmesini doğrular.
+Hedef sonu başlangıç + 7 gündür. Girdi uyuşmazlığında çıktı oluşmaz.
 
 ```powershell
 $mlSplitLabels = "artifacts\ml_etiket_20261102_201553_161"
@@ -2828,53 +2738,40 @@ kayıt sayıları beklenir. `limited` (sınırlı), hesaplama hatası değil,
 veride uygunluk engeli olduğunu belirtir. Çıkış 1 dosya/veri/mevcut klasör
 hatası, 2 argüman hatası, 130 kullanıcı kesmesidir. Test açma seçeneği yoktur.
 
-**Ana tarih bölmesi:** yalnız Cimri'nin etiketi 0 veya 1 olan başlangıçları
-eğitim havuzuna girer. Girdide NULL var diye satır elenmez. Tekil uygun
-tarihler sıralanır; ilk `N×70//100` eğitim, `N×85//100` sınırına kadarı
-doğrulama, kalanı `test_reserved` olur. Aynı tarihteki ürünler aynı bölümde
-kalır; ürün yoğunluğu veya sınıf oranı kesimi değiştirmez. Kendi verimiz
-eğitim ve sınır hesabına katılmaz; yalnız değerlendirme/etiketsiz olarak
-ayrılır. Etiketsiz Cimri başlangıçları `unlabelled` kalır.
+**Ana bölme.** Eğitim havuzu 0 veya 1 etiketli Cimri satırlarıdır. NULL
+girdi dışlama nedeni değildir. Tekil uygun günlerin ilk `N×70//100`'ü
+eğitim, `N×85//100`'e kadarı doğrulama, kalanı `test_reserved` olur.
+Aynı tarihteki ürünler aynı bölümdedir. Kendi serimiz değerlendirme veya
+etiketsiz, etiketsiz Cimri başlangıçları `unlabelled` olarak ayrılır.
 
-**Purge:** önceki bölümde yalnız `target_end < sonraki bölüm başlangıcı`
-olan satırlar kullanılabilir. Eşitlik de elenir; olumlu etikette erken
-düşüş görülmesi hedef sonunu kısaltmaz. Ana bölmede temizlenenler
-`purged_train`/`purged_validation` olarak izlenir. Geçmiş 30 günlük
-girdilerin önceki dönemle örtüşmesi elenme nedeni değildir.
+**Purge.** Önceki bölümde hedef sonu, sonraki bölümün başlangıcından
+kesinlikle önce olmalıdır. Erken düşüş hedef sonunu kısaltmaz. Ana bölmede
+çıkarılanlar `purged_train` ve `purged_validation` olur. Girdi
+pencerelerinin örtüşmesi tek başına dışlama nedeni değildir.
+`first_anchor` ve `last_anchor` nominal sınırlar, rapor sayıları temizleme
+sonrası üyelerdir. Kesin üyeler `assignments.jsonl` içindedir.
 
-Ana rapordaki `first_anchor`/`last_anchor`, purge öncesi nominal bölüm
-sınırlarıdır; kayıt sayıları purge sonrasında kalanları gösterir. Kullanılan
-son başlangıç tarihi, sınırdaki temizleme nedeniyle nominal sondan erken
-olabilir; kesin üyeler `assignments.jsonl` içindedir.
+**Katlar.** İlk %85, saklı test sınırına göre temizlenir. Uygun aralıktaki
+son dört tam takvim ayı, boş aylar dahil seçilir. Eğitim geçmişi genişler.
+Kalibrasyon doğrulama ayından önceki 30 gündür. Eğitim, kalibrasyon ve
+doğrulama hedef sonları sırasıyla kalibrasyon, doğrulama ve sonraki ay
+başlangıcından önce olmalıdır. Katlar ana %70 kesimine göre kurulmadığından
+uygun `purged_train` satırı bir kata girebilir. Dört tam ay olmadığında
+veya bir dilim boş/tek sınıflı olduğunda kat durumu sınırlıdır. Bölme
+sınırları ve eşikler sabittir.
 
-**Katlar:** ilk %85, saklı test sınırına göre önce temizlenir. Bu havuzun
-ilk/son uygun tarihi arasındaki son dört tam takvim ayı seçilir. Aradaki
-boş ay daha iyi bir ayla değiştirilmez. Her katın eğitim geçmişi genişler;
-doğrulama ayından hemen önceki 30 takvim günü kalibrasyondur. Eğitim
-etiketleri kalibrasyon başlangıcına, kalibrasyon etiketleri doğrulama
-başlangıcına, doğrulama etiketleri sonraki ayın başlangıcına ulaşamaz.
-Ay sonundaki yedi başlangıç günü böylece temizlenebilir.
+**Saklı test.** Bölme raporu yalnız tarih aralığını ve kayıt sayısını,
+atamalar anahtar ve rolü verir. `evaluation_targets` olağan doğrulama,
+kat doğrulaması veya kendi değerlendirmesini seçer. Saklı test, sınırda
+temizlenen satır ve bozuk kat üyeliği reddedilir. Genel puanlama
+`test_reserved` rolünü kabul etmez.
 
-Katlar ana %70 kesiminden bağımsız, temizlenmiş ilk %85 havuzunda kurulur;
-ana kesimde `purged_train` olan bir başlangıç, kendi katındaki sınırlara
-uyuyorsa kullanılabilir. Saklı test ve test sınırını aşan hedefler hiçbir
-kata giremez. Dört tam ay yoksa veya eğitim/kalibrasyon/doğrulama bölümü
-boş ya da tek sınıflıysa durum sınırlıdır; tarih veya eşik kaydırılmaz.
-
-**Saklı test:** raporda yalnız ilk/son tarih ve kayıt sayısı; atamalarda
-yalnız başlangıç anahtarı/rolü vardır. Testin sınıf dağılımı, X/y kopyası
-veya puanı üretilmez. `evaluation_targets` yalnız normal doğrulama, bir
-katın doğrulaması veya kendi değerlendirme hedeflerini seçer. Saklı test,
-test sınırında temizlenen etiket ve bozuk kat üyeliği reddedilir. Alt
-ölçüt yardımcıları da `test_reserved` rolünü puanlamadan reddeder.
-
-**Ölçüt arayüzü:** `Target` ürün/kaynak/tarih anahtarı, 0/1 etiket, rol,
-marka ve aile; `Probability` aynı anahtar ve 1 sınıfı olasılığıdır.
-`score_predictions(targets, probabilities, references, role=...)` hedef,
-model ve R0 dizilerini aynı sırada eşleştirir; tekrarlı/uyuşmayan anahtar,
-geçersiz etiket/olasılık ve NaN/sonsuz değer reddedilir. R0 her katta yalnız
-eğitim sınıf oranından gelir; birleşik katlarda her satır kendi katının
-referans olasılığını taşımalıdır. Yardımcı yeni bir model öğrenmez.
+**Ölçüt arayüzü.** `Target` anahtar, 0/1 etiket, rol, marka ve aileyi,
+`Probability` aynı anahtar ve sınıf 1 olasılığını taşır.
+`score_predictions(targets, probabilities, references, role=...)`
+dizileri sırayla eşleştirir ve geçersiz/tekrarlı anahtarı, etiketi veya
+[0,1] dışında veya sonlu olmayan olasılığı reddeder. Her kat ve birleşik puanlamadaki her
+satır kendi eğitim diliminin R0 oranını kullanır.
 
 | Alan | Anlamı ve sınırı |
 |---|---|
@@ -2885,70 +2782,45 @@ referans olasılığını taşımalıdır. Yardımcı yeni bir model öğrenmez.
 | `calibration` | On eşit genişlikli kova; son kova 1'i içerir. Sayı/ortalama tahmin/gerçekleşen oran; boşta ortalamalar NULL, 20'den az kayıtta düşük destek. |
 | `breakdowns`, `macro` | Marka/aile/ürün kırılımı; yeterli ürünlerin eşit ağırlıklı ortalaması ve ölçüt başına kapsama. Ana sonuç bütün satırları ağırlıklandırır. |
 
-Boş ölçümde puanlar NULL'dır. Tek sınıfta Brier/log loss hesaplanabilir;
-AP hesaplanmaz ve model seçimi için yeterli sayılmaz. Deney komutu gerçek
-tahminleri ölçer; güvenilirlik kovalarını tablo olarak yazar, grafik çizmez.
+Boş toplulukta puanlar NULL'dır. Tek sınıfta Brier ve log loss
+hesaplanabilir. AP ve model seçimi için iki sınıf gerekir.
 
-**Olumlu pencere kümeleri:** ürün+kaynak bazında yalnız olumlu
-`[d+1,d+7]` aralıkları çakışıyorsa birleştirilir; ortak uç ve zincirleme
-çakışma dahildir, farklı ürünler birleştirilmez. Bu sayı bağımsız gerçek
-düşüş sayısı değildir. Beşten az kümesi olan kırılımda skor yerine
-`insufficient_clusters` ve kayıt/küme sayıları verilir. Makro yalnız yeterli
-ürünleri kullanır; her ölçütte hesaplanabilen ürün sayısı ayrıca gösterilir.
+**Olumlu pencere kümeleri.** Aynı ürün ve kaynakta çakışan olumlu
+`[d+1,d+7]` aralıkları ortak uç ve zincirleme örtüşme dahil birleştirilir.
+Beşten az kümede skor yerine `insufficient_clusters` ve destek sayısı
+yazılır. Küme sayısı bağımsız düşüş sayısından farklıdır. Makro ortalamada
+yalnız yeterli ürünler kullanılır ve ölçüt başına kapsama yazılır.
 
-**Güven aralığı:** `paired_bootstrap` aynı tekil doğrulama hedeflerinde
-model ve R2 olasılıklarını eşleştirir. 14 takvim günlük hareketli bloklar,
-2000 tekrar, tohum 42, %95 güven düzeyi sabittir. Boş takvim günleri
-korunur; blok başlangıçları eşit olasılıkla seçilir. Örneklenen gün dizisi
-özgün takvim uzunluğuna kırpılır, sonra o günlerin bütün ürünleri alınır;
-satır düzeyinde kırpılmaz. İki model aynı diziyi kullanır. Tek sınıflı
-tekrarlar atlanır; 28 günlük aralık veya 1800 geçerli tekrar yoksa aralık
-NULL ve gerekçelidir. Aralık AP farklarının %2,5/%97,5 yüzdelikleridir
-(linear quantile). Bu yardımcı yalnız doğrulama rolünde model seçimi
-karşılaştırması içindir; 4.4 komutu gerçek tahmin veya bootstrap çalıştırmaz.
+**Güven aralığı.** `paired_bootstrap`, aynı doğrulama hedeflerinde
+modelleri eşleştirir. 14 takvim günlük hareketli blok, 2.000 tekrar,
+tohum 42 ve %95 güven düzeyi kullanılır. Boş günler korunur ve bloklar
+eşit olasılıkla başlar. Örnek özgün takvim gün sayısına kırpılır, sonra
+bu günlerdeki tüm ürünler alınır. İki model aynı örnekleri kullanır.
+Tek sınıflı tekrarlar atlanır. En az 28 takvim günü ve 1.800 geçerli tekrar
+gerekir. Aralık, AP farkının doğrusal %2,5 ve %97,5 yüzdelikleridir.
+Bölme komutu planı çıkarır. Tahmin ve bootstrap ölçümü deneyde yapılır.
 
-**Kanıt dosyaları:** `assignments.jsonl` her başlangıcın anahtar/rolünü,
-`folds.json` dönemleri, üye anahtarlarını ve geliştirme özetlerini taşır.
-`metrics_schema.json` tipleri ve kuralları, `report.json`/`report.md` bölme
-uygunluğunu açıklar. Manifest biçim, bölme ve ölçüt sürümleri 1; ortak
-görüntü SHA-256, iki giriş manifestinin SHA-256 değeri ve beş çıktı dosyası
-parmak izi kayıtlıdır. Manifest en son yazılır; dosya/şema, anahtar
-tekilliği, kat sınırları ve saklı test sözleşmesi yeniden doğrulanır.
-Var olan klasöre yazılmaz; yarım deneme yeni klasörle tekrarlanır. Aynı
-girdi/kod/ortam aynı çıktıları verir. Hiçbir X/y kopyası üretilmez.
-
-Sızıntı ve ölçüt testleri yalnız yapay veridir. Gerçek bölme ve kat
-uygunluğu, kullanıcı komutu çalıştırdıktan sonra ayrıca doğrulanır. Son
-Cimri alımından sonra bölme aynı kurallarla yeniden üretildi; veri uzadığı
-için saklı test sınırı ileri kaydı. Önceki saklı testin puanı ve sınıf
-dağılımı hiç üretilmediğinden bu kayma bilgi sızdırmaz. Bölme model seçimini
-dondurmaz veya son testin kullanılmasına izin vermez.
-
-Son gerçek bölme doğrulamasının sayıları README Güncel kapsam tablosunda,
-kanıtı `artifacts/ml_bolme_20261102_202101_484/` klasöründedir. Giriş/çıkış
-parmak izleri, başlangıç tekilliği, ana/kat purge sınırları ve ayrı
-kalibrasyon üyelikleri dosyalar okunarak doğrulandı. Saklı test için yalnız
-sınır/anahtar/sayı incelendi; sınıf dağılımı veya tahmin puanı üretilmedi.
+**Dosyalar.** `assignments.jsonl` anahtar ve rolü, `folds.json` kat
+üyelerini ve dönemleri, `metrics_schema.json` hesap şemasını,
+`report.json`/`report.md` uygunluğu taşır. En son yazılan manifest
+biçim/bölme/ölçüt sürümü 1, ortak görüntü SHA-256'sı, iki giriş manifesti
+ve beş çıktı parmak izi taşır. Dosya şeması, tekil anahtarlar, kat sınırı
+ve saklı test sözleşmesi yeniden doğrulanır. Yarım çıktı yeni klasörle
+tekrarlanır. X/y kopyası veya saklı test sınıf dağılımı üretilmez.
 
 ### Modeller ve deney (`python -m app.ml experiment`)
 
-Komut 4.2 etiket, 4.3 girdi ve 4.4 bölme klasörlerini okur; DB'ye veya ağa
-bağlanmaz. Modeller her hazır katta yeniden eğitilir; yalnız o katın
-doğrulama ayına tahmin üretilir. Saklı test ve kendi serimiz puanlanmaz.
-Ana %15 doğrulama bölümü ayrıca puanlanmaz; birleşik sonuç, dört ileri
-yürüyen katın doğrulama satırlarından oluşur.
+Komut etiket, girdi ve bölme kanıtlarını okuyarak her hazır katta
+yeniden eğitim yapar. Puanlar, dört ileri yürüyen katın doğrulama
+aylarına aittir. Ana %15 doğrulama, saklı test ve kendi serimiz ayrı
+tutulur.
 
-**Kanıt zinciri:** etiket/girdi manifestleri, parmak izleri, ortak görüntü
-ve başlangıç eşleşmesi denetlenir. Bölme manifesti ve dosyaları doğrulanır;
-bölme planı etiketlerden yeniden kurulur. `assignments.jsonl`, `folds.json`,
-`report.json` ve `report.md`, `split_plan_files` ile yeniden üretilen
-baytlarla aynı olmalıdır; `metrics_schema.json` da kodun şemasıyla
-karşılaştırılır. Değiştirilmiş bölme, dosyanın parmak izi yenilense bile
-reddedilir. Bu kontroller eğitim ve çıktı klasörü oluşturulmadan yapılır.
-Kat dilimi seçilirken saklı test, etiketsiz, kendi kaynaklı, girdide
-bulunmayan veya kat/purge sınırını aşan üyeler sessizce atlanmaz; reddedilir.
-
-Kullanıcı terminalinde mevcut kanıtlarla (gerçek çalıştırma Adım 4.6'dır):
+**Kanıt zinciri.** Giriş manifestleri, parmak izleri, ortak görüntü ve
+başlangıç anahtarları doğrulanır. `assignments.jsonl`, `folds.json`,
+`report.json` ve `report.md` yeniden üretilen planla bayt bayt,
+`metrics_schema.json` kodun şemasıyla eşleşmelidir. Bu denetim
+eğitim ve çıktıdan önce çalışır. Saklı test, etiketsiz, kendi kaynaklı,
+girdisi eksik veya kat/purge sınırını aşan üye reddedilir.
 
 ```powershell
 $mlExperimentLabels = "artifacts\ml_etiket_20261102_201553_161"
@@ -2970,16 +2842,8 @@ Write-Output "Sure (saniye): $($mlExperimentTimer.Elapsed.TotalSeconds)"
 Write-Output "Klasor: $mlExperimentOut"
 ```
 
-Süre ve çıkış kodu kabuk tarafından deney klasörünün yanındaki
-`ml_deney_<tarih-saat>_run.json` dosyasına kaydedilir; bu dosya deney
-manifestinin parçası değildir. Uyarılar dahil terminal çıktısı ayrıca
-incelenir. İlk gerçek çalışma 3 Kasım'da kullanıcı terminalinde çıkış 0 ile
-44,33 saniyede tamamlandı; bu tek ortamın ölçümüdür, süre garantisi değildir.
-Kanıtlar `artifacts/ml_deney_20261103_135053_501/`, süre/çıkış kodu yanındaki
-`ml_deney_20261103_135053_501_run.json` dosyasındadır. Girdi/çıktı zinciri ve
-tahmin üyelikleri yeniden eğitim yapılmadan doğrulandı; yedi modelin kat
-ve birleşik AP/Brier/log loss/Brier skill puanları kayıtlı tahminlerden
-yeniden hesaplanıp raporla eşleştirildi. Saklı test açılmadı.
+Kabuk süre ve çıkışı `ml_deney_<tarih-saat>_run.json` dosyasına kaydeder.
+Bu dosya deney manifestinin dışındadır. Terminal uyarıları ayrı okunur.
 
 Çıkış 0; rapor yolu, görüntü SHA-256, değerlendirilen kat ve doğrulama satırı
 sayısı, ham/kalibre modellerin AP/Brier/log loss puanları ve seçim önerisi
@@ -3001,14 +2865,12 @@ ve kalibrasyona girmez.
 | R2 | Sayısal eksikler eğitim medyanıyla doldurulur, eksiklik göstergeleri eklenir ve ölçeklenir; tamamen boş sütun korunur. Kategoriler one-hot, bilinmeyen kategori yok sayılır. L2 lojistik regresyon: C=1, lbfgs, en çok 1000 yineleme. |
 | LightGBM | Sayısal eksikler NaN kalır; kategoriler eğitimden öğrenilen kodlara, bilinmeyenler NaN'a dönüşür. İkili amaç, 200 ağaç, öğrenme oranı 0,05, 15 yaprak, yaprakta en az 100 satır, L2=1; sınıf ağırlığı yok. Tek iş parçacığı, tohum 42, `deterministic=True`, `force_row_wise=True`. |
 
-R1, R2 ve LightGBM'nin ham olasılıkları ayrıca Platt sigmoid kalibrasyonundan
-geçer. Eğitilmiş model dondurulur (`FrozenEstimator`); kalibrasyon temel
-modeli yeniden eğitmez. Üçünde de olasılık `[1e-9, 1−1e-9]` sınırına
-kırpılıp log-odds skoruna çevrilir. Kalibratör bu skor üzerinden ayrı
-dilimde öğrenir. Öğrenilen eğim/kesişim ve sıralamanın korunup korunmadığı
-raporlanır; korunacağı varsayılmaz. Ham ve kalibre toplam yedi tahmin
-vektörü puanlanır. Kesin ayarlar `models.py` içindeki `MODEL_RULES`'ta ve
-deney manifestindedir; hiperparametre araması yapılmaz.
+Platt sigmoid kalibrasyonu için R1, R2 ve LightGBM `FrozenEstimator`
+ile sabitlenir. Olasılıklar `[1e-9, 1−1e-9]` aralığına kırpılıp log-odds'a
+çevrilir. Kalibratör ayrı dilimde öğrenir. Eğim, kesişim ve sıralamanın
+korunması raporlanır. Ham ve kalibre yedi vektör puanlanır. Ayarlar
+`models.py` içindeki `MODEL_RULES` ve deney manifestindedir. Hiperparametre
+araması yapılmaz.
 
 **Ölçüm ve seçim önerisi:** kat puanları ve birleşik doğrulama puanları,
 taban olumlu oranı, R0'a göre Brier skill, güvenilirlik kovaları,
@@ -3029,12 +2891,9 @@ büyük olmaması birlikte aranır. Sonuç şu sırayla belirlenir:
 | Dört kat hazır, sağlanmayan koşul yok, en az bir koşul hesaplanamıyor | `not_evaluable` — Değerlendirilemedi. |
 | Bütün koşullar sağlanıyor | `met` — Karşılandı. |
 
-NULL sıfır veya başarısız ölçüm sayılmaz; hesaplanamama gerekçesi korunur.
-“Karşılanmadı” seçim koşullarını anlatır; modelin her durumda kötü olduğunun
-istatistiksel kanıtı değildir. Sonuç yalnız öneridir: `decides_model=False`,
-`model_frozen=False`. Modeli dondurma ve son testi tek kez açma ayrı
-komutlardır (aşağıdaki "Model dondurma ve saklı test" bölümü); bu komut
-ekranda tahmin göstermez.
+NULL ölçüm gerekçesiyle saklanır. Seçim önerisi `decides_model=False` ve
+`model_frozen=False` olarak raporlanır. Son model ve saklı test için
+[dondurma adımlarını](#model-dondurma-ve-saklı-test-python--m-appml-freeze-final-test) izle.
 
 **Çıktılar:** yeni klasöre yazılır; var olan klasöre dokunulmaz.
 
@@ -3046,70 +2905,31 @@ ekranda tahmin göstermez.
 | `report.md` | Puanlar, kat AP'leri, fark aralıkları, seçim sonucu, güvenilirlik tabloları, ürün makro/marka özeti ve sınırların Türkçe görünümü. |
 | `manifest.json` | En son yazılan tamamlanma kaydı; görüntü SHA-256, etiket/girdi/bölme manifestlerinin SHA-256 değerleri, bölme/ölçüt/deney kuralları, kütüphane sürümleri ve dört çıktı parmak izi. |
 
-Yazımdan sonra manifest ve dosya parmak izleri yeniden doğrulanır; tahmin
-anahtarları hazır katların doğrulama üyeleriyle birebir olmalıdır. Eksik,
-fazla, tekrarlı, yanlış etiketli veya saklı test anahtarlı tahmin ve [0,1]
-dışındaki olasılık reddedilir. Raporda testin açılmadığı, kendi serimizin
-puanlanmadığı ve modelin dondurulmadığı denetlenir. Manifesti olmayan yarım
-yazım tamamlanmış deney değildir; yeni klasörle tekrarlanır. Aynı
-girdi/kod/ortam aynı dosya baytlarını üretir.
+Okuyucu parmak izlerinin yanında tahminlerin hazır kat üyeleriyle tam
+eşleşmesini, etiketleri ve [0,1] olasılıklarını doğrular. Rapor
+bayrakları dondurma, saklı test ve kendi seri puanlamasının deney
+kapsamı dışında olduğunu gösterir. Yarım deneme yeni klasör gerektirir.
 
 #### Gerçek deneyin ilk değerlendirmesi
 
-İlk deneyin kapsam ve puanları [README Güncel kapsam](../README.md#-güncel-kapsam)
-tablosundadır; ayrıntılı kat, güvenilirlik ve kırılım tabloları yukarıdaki
-kanıt klasörünün `report.md`/`report.json` dosyalarındadır.
+3 Kasım Cimri deneyinde LightGBM + Platt'ın AP farkı güven aralığı
+sıfırı içerdi ve seçim sonucu `not_met` oldu. Ön kayıt kuralıyla
+[R2 + Platt donduruldu](#4-kasım-2026-dondurma-ön-kaydı).
 
-- LightGBM + Platt'ın birleşik AP, Brier ve log loss değerleri R2 + Platt'tan
-  iyi olsa da AP farkının tarih bloklu güven aralığı sıfırı içerir. Hesaplama
-  eksikliği yoktur; alt sınırın pozitif olması koşulu sağlanmadığı için sonuç
-  `not_met` olur. Bu sonuç LightGBM'nin kesin daha kötü olduğunu veya R2'nin
-  otomatik seçildiğini belirtmez; deney komutu modeli dondurmaz. Sonraki
-  [ön kayıtta](#4-kasım-2026-dondurma-ön-kaydı) onaylı kurala göre R2 + Platt
-  donduruldu.
-- Kalibre AP'de Nisan ve Temmuz'da R2, Mayıs ve Haziran'da LightGBM öndedir.
-  Marka içinde Apple'da LightGBM, Samsung ve Xiaomi'de R2 öndedir; bu
-  kırılımların ayrı güven aralığı yoktur. Marka olumlu oranları farklıdır;
-  markalar arasında ham AP büyüklükleri doğrudan başarı sırası sayılmaz.
-  Aylık farklara kampanya gibi dış nedenler kanıt olmadan atanmaz.
-- Platt, LightGBM'nin birleşik Brier ve log loss değerlerini iyileştirmiştir;
-  her alt grupta iyileşme veya her olasılık aralığında güvenilirlik anlamına
-  gelmez. Özellikle yüksek olasılık kovalarında destek sınırlıdır. R2 bütün
-  katlarda yakınsamış; kalibrasyon her katta modellerin sıralamasını korumuştur.
-- Çoğu ürünün olumlu pencere kümesi sayısı ürün bazında skor raporlamaya
-  yetmez. Makro ortalama yalnız yeterli ürünlerdendir; bütün kataloğun
-  tipik başarısı olarak yorumlanmaz. POCO'nun marka kırılımı da yetersizdir.
-  Birleşik ölçütler ile ürün bazındaki kanıt desteği ayrı değerlendirilir.
-- R1 + Platt − R0 ve R2 + Platt − R1 + Platt AP fark aralıkları pozitiftir;
-  referans basamaklarının sıralama katkısına işaret eder. Kendi kaynağımızda
-  başarı, kesin seçim veya gösterim yeterliliği sonucu çıkarılmaz.
+Birleşik R0, kat başına eğitim oranını taşır. Kat içi sıralamayı koruyan
+kalibrasyon katlar arası ölçeği ve birleşik AP'yi değiştirebilir.
+Markalar arası AP, farklı taban oranlarıyla yorumlanır. Ürün makrosu
+yalnız destekli ürünleri kapsar. Bu ilk ölçüm Cimri dönemine aittir.
+[Deney kayıtları, puanlar ve yorumlar](arsiv/teknik_2026-11-23.md#gerçek-deneyin-ilk-değerlendirmesi)
 
-R0 her katta ayrı eğitim olumlu oranıdır; birleşik tahmin tek sabit değildir.
-Bu nedenle birleşik R0 AP'si genel olumlu oranla aynı olmak zorunda değildir.
-Benzer şekilde kalibrasyon kat içinde sıralamayı korurken katlar arasındaki
-puan ölçeğini değiştirebilir; birleşik AP'nin değişmesi bu durumla uyumludur.
-Kullanıcının paylaştığı gerçek terminal çıktısında uyarı görünmedi; ayrı tam
-terminal günlüğü olmadan uyarıların kesin yokluğu iddia edilmez.
-
-**Sınırlar:** ilk ölçüm yalnız mevcut Cimri dönemine aittir; kendi verimizde
-başarıyı veya gösterim yeterliliğini kanıtlamaz. Yapay küçük kalibrasyon
-dilimlerinde scikit-learn az olumlu örnek uyarısı verebilir. Bazı deney
-testlerinde yalnız süreyi azaltmak
-için bootstrap 100 tekrar/90 geçerli tekrar eşiğiyle çalışır; gerçek komutun
-2000/1800 ayarları değişmez ve `tests/test_ml_metrics.py` içinde ayrıca
-sınanır. Ay/ürün kimliği ablasyonu, TL kaybı raporu, kendi verimizde sınama,
-yeniden yüklenebilir model kaydı ve gölge mod bu komutta uygulanmış değildir.
 
 ### Model dondurma ve saklı test (`python -m app.ml freeze`, `final-test`)
 
-İki komut da etiket, girdi ve bölme klasörlerini okur; DB'ye veya ağa
-bağlanmaz. Çıkış kodları: 0 başarı, 1 girdi/dosya/veri hatası veya klasör
-zaten var, 2 argüman hatası, 130 kullanıcı kesmesi. Önce `freeze` modeli
-saklı teste dokunmadan dondurur; `final-test` ancak o modelin ön kayıtlı
-SHA-256 değeriyle saklı testi puanlar.
-
-**Modelin seçimi.** Model elle verilmez; deney raporundaki seçim sonucundan
-kurala göre türetilir:
+İki komut da etiket, girdi ve bölme klasörlerini ağsız okur.
+Çıkış 0 başarı, 1 girdi/dosya/veri veya mevcut klasör hatası, 2 argüman
+hatası, 130 kullanıcı kesmesidir. `freeze` model seçimini deneyden
+türetir. `final-test` için dondurulan modelin ön kayıtlı SHA-256 değeri
+gerekir.
 
 | Deney seçim sonucu | Dondurulan model |
 |---|---|
@@ -3117,20 +2937,18 @@ kurala göre türetilir:
 | `not_met` | R2 + Platt (en güçlü referans) |
 | `not_evaluable` | Dondurulmaz; çıkış 1. |
 
-**Son modelin dilimleri.** Katlardaki dilim kuralı aynen uygulanır; puanlanan
-dönem saklı testtir. T saklı testin ilk günüdür. Geliştirme satırı, ana
-bölmede eğitim, doğrulama veya purge ile temizlenmiş eğitim rolündeki etiketli
-Cimri satırıdır (hedef sonu < T). Saklı test, temizlenmiş doğrulama, etiketsiz
-ve kendi kaynaklı satırlar sessizce atlanmaz, reddedilir.
+T, saklı testin ilk günüdür. Geliştirme satırı, ana bölmede eğitim,
+doğrulama veya `purged_train` rolündeki etiketli Cimri satırıdır ve hedef
+sonu T'den öncedir. Saklı test, `purged_validation`, etiketsiz ve kendi
+kaynaklı üyeler geliştirme diliminde reddedilir.
 
 | Dilim | Kural |
 |---|---|
 | Eğitim | Geliştirme satırı, başlangıç < T − 30 gün ve hedef sonu < T − 30 gün. Doğrulama dönemi de buna girer, bu yüzden dondurulan model kat modellerinden daha geniş veriyle kurulur. |
 | Kalibrasyon | T − 30 gün ≤ başlangıç < T ve hedef sonu < T. |
 
-Yalnız R0 ve seçilen model kurulur; ayarlar `MODEL_RULES`'tadır ve kat
-modelleriyle aynıdır. Aynı veride kat yöntemi (`fit_models`) ile aynı
-olasılıkları verir.
+R0 ve seçilen model, kat modelleriyle aynı `fit_models` ve `MODEL_RULES`
+ayarlarıyla kurulur. Eğitim dilimi yukarıdaki son model dilimidir.
 
 #### `freeze`
 
@@ -3139,11 +2957,10 @@ $mlFreezeOut = "artifacts\ml_model_$(Get-Date -Format yyyyMMdd_HHmmss_fff)"
 .venv\Scripts\python.exe -m app.ml freeze --labels-dir <ETIKET> --features-dir <GIRDI> --split-dir <BOLME> --experiment-dir <DENEY> --output-dir $mlFreezeOut
 ```
 
-Kanıt zinciri `experiment` komutundaki gibi doğrulanır (bölme etiket ve
-girdiden yeniden üretilip bayt bayt karşılaştırılır); ardından deney klasörü
-doğrulanır ve seçim sonucundan model türetilir. Saklı test satırlarına hiç
-gelinmez. Yazılan model, komutun sonunda aşağıdaki yükleme yoluyla yeniden
-açılıp denetlenir. Çıktılar yeni klasöre yazılır, manifest en son:
+Önce `experiment` bölümündeki kanıt zinciri doğrulanır ve bölme
+bayt bayt yeniden üretilir. Deney klasörü doğrulandıktan sonra model
+seçilir. Yalnız geliştirme dilimleri kullanılır. Model yazımının sonunda
+aşağıdaki yükleme denetimi yapılır. Manifest en son yazılır.
 
 | Dosya | İçerik |
 |---|---|
@@ -3153,21 +2970,19 @@ açılıp denetlenir. Çıktılar yeni klasöre yazılır, manifest en son:
 | `report.md` | Türkçe özet. |
 | `manifest.json` | Görüntü SHA-256, etiket/girdi/bölme manifestlerinin SHA-256 değerleri, deney manifestinin SHA-256'sı, bölme/ölçüt/model/son kuralları, kütüphane sürümleri, dosya parmak izleri ve `test_opened=false`. |
 
-Komut çıktısı, dondurulan modeli, dilim sayılarını, "Platt sıralamayı
-koruyor" bilgisini ve **model manifest SHA-256** değerini yazar; bu değer ön
-kayıt olarak belgeye işlenir. Platt sıralamayı korumazsa komut yine çıkış 0
-verir ve bunu açıkça yazar; yeni bir ret kuralı yoktur. Aynı girdi, kod ve
-ortam `model.pkl` dahil aynı baytları üretir.
+Çıktıda model, dilim sayıları, Platt sıralama bilgisi ve ön kayda
+girecek **model manifest SHA-256** değeri bulunur. Sıralamanın korunmaması
+raporlanır ve çıkış 0 kalır. Aynı girdi, kod ve ortam `model.pkl` dahil
+aynı baytları üretir.
 
 #### 4 Kasım 2026 dondurma ön kaydı
 
-Kullanıcı `freeze` komutunu kendi terminalinde çalıştırdı: çıkış 0,
-süre 14,54 saniye. Deneyde LightGBM seçim koşulu karşılanmadığı için
-önceden onaylanan kurala göre **R2 + Platt** donduruldu. Saklı test
-açılmadı; kendi serimiz puanlanmadı; DB veya ağ kullanılmadı.
+Deney seçim koşulu karşılanmadığı için **R2 + Platt** donduruldu. Bu
+ön kayıt saklı test açılmadan Git'e gönderildi ve model seçimi bu
+SHA-256 ile sabitlendi. Model klasörü
+`artifacts/ml_model_20261104_104617_170/` (Git dışında).
 
-Model klasörü: `artifacts/ml_model_20261104_104617_170/` (Git dışında).
-Ön kayıtlı **model manifest SHA-256** değeri:
+Ön kayıtlı **model manifest SHA-256** değeri aşağıdadır.
 
 ```text
 89c819ed7c9f5eaf0dcc11c8f403a4439f53cfad2527d973646b71474fba4cf2
@@ -3183,44 +2998,35 @@ Kanıtlar: `artifacts/ml_etiket_20261102_201553_161/`,
 | Eğitim | 14.923 | 1.517 | 7 Kasım 2025 | 27 Temmuz 2026 | 3 Ağustos 2026 |
 | Kalibrasyon | 1.254 | 148 | 4 Ağustos 2026 | 26 Ağustos 2026 | 2 Eylül 2026 |
 
-Saklı testin ilk günü 3 Eylül 2026'dır. R2 yakınsadı; Platt sıralamayı
-koruyor. Manifestteki sürümler: Python 3.13.15, NumPy 2.5.3,
-scikit-learn 1.9.1, LightGBM 4.7.0.
+Saklı test 3 Eylül 2026'da başlar. R2 yakınsadı, Platt sıralamayı
+korudu ve 1.254 kalibrasyon kaydının olasılığı yeniden üretildi.
+`test_opened=false`. Python 3.13.15, NumPy 2.5.3, scikit-learn 1.9.1 ve
+LightGBM 4.7.0 sürümleri manifestte kayıtlıdır.
+[Ön kaydın ayrıntılı kanıtı](arsiv/teknik_2026-11-23.md#4-kasım-2026-dondurma-ön-kaydı)
 
-Yerel kontrolde manifest SHA-256'sı, dört çıktı dosyasının parmak izi,
-girdi ve deney manifestleri ile dilim üyeliği/sayıları doğrulandı. Model
-mevcut dosyadan yeniden yüklendi; kayıtlı 1.254 kalibrasyon satırının
-olasılıkları birebir yeniden üretildi. Manifest `test_opened=false`.
-Bu kontrolde yeniden eğitim veya saklı test puanlaması yapılmadı.
-
-Bu ön kayıt commit/push ve CI doğrulamasından sonra `final-test` için
-kullanılır. Test sonucu modeli veya ayarlarını değiştirmez. Deneydeki
-doğrulama puanları kat modellerinindir. Dondurma sırasında bu model
-puanlanmadı; sonraki [saklı test sonucu](#4-kasım-2026-saklı-test-sonucu)
-aşağıdadır. Kendi kaynağımızda başarı kanıtı yoktur.
 
 #### Model yükleme (pickle güvenliği)
 
-`load_frozen_model` bir pickle dosyasını yalnız şu sırayla açar; her adım
-hata verirse model kullanılmaz:
+`load_frozen_model` sırayla şu denetimleri yapar.
 
-1. Çağıran beklenen manifest SHA-256 değerini vermelidir (64 onaltılık hane);
-   `manifest.json`'un SHA-256 değeri onunla aynı olmalıdır. Değer verilmeden
-   model yüklenemez.
-2. Manifest, bugünkü kodla uyuşmalı: format, tamamlanmış durum, görüntü ve
-   etiket/girdi/bölme manifest SHA-256 değerleri, bölme/ölçüt/model/son
-   kuralları, **kütüphane sürümleri (python, numpy, scikit-learn, LightGBM
-   birebir)**, `test_opened=false`, model adı ve dosya kümesi.
-3. Dört dosyanın parmak izleri tutmalı. `model.json`'daki seçim sonucu,
-   manifestteki modeli türetmeli. Kalibrasyon dosyası sıralı, tekil olmalı ve
-   saklı test anahtarı içermemeli.
-4. Ancak bundan sonra pickle açılır; beklenen sınıfı içermelidir.
-5. Kalibrasyon dilimi kanıttan yeniden kurulur; yüklenen model, kayıtlı
-   anahtar, etiket ve olasılıkları birebir üretmelidir.
+1. Beklenen manifest SHA-256 değeri 64 onaltılık hanedir ve
+   `manifest.json` parmak iziyle eşleşmelidir.
+2. Biçim, tamamlanmış durum, görüntü ve etiket/girdi/bölme manifestleri,
+   kurallar, model adı ve dosya kümesi uyuşmalıdır. `test_opened=false`
+   ve Python, NumPy, scikit-learn, LightGBM sürümlerinin birebir eşitliği
+   aranır.
+3. Dört dosyanın parmak izi, `model.json` seçim sonucu ve model
+   eşleşmesi doğrulanır. Kalibrasyon sıralı ve tekildir. Saklı test
+   anahtarı reddedilir.
+4. Bu denetimlerden sonra pickle açılır ve beklenen sınıf doğrulanır.
+5. Kanıttan kurulan kalibrasyon diliminde anahtar, etiket ve olasılıklar
+   kayıtla birebir eşleşmelidir.
 
-Kütüphane sürümü değişirse model kullanılamaz. Yeniden dondurma yeni bir
-model ve manifest SHA-256 üretir; ayrı plan ve kullanıcı kararı gerektirir.
-Mevcut gölge değerlendirmesinde dondurulan model ve kütüphane sürümleri korunur.
+Sürüm değişirse yükleme reddedilir. Yeniden dondurma yeni model ve SHA-256
+üretir ve ayrı kullanıcı kararı gerektirir. Gölge çalışması mevcut
+model ve sürümleri kullanır.
+
+
 
 #### `final-test`
 
@@ -3230,24 +3036,19 @@ $mlFinalOut = "artifacts\ml_son_test_$(Get-Date -Format yyyyMMdd_HHmmss_fff)"
 .venv\Scripts\python.exe -m app.ml final-test --labels-dir <ETIKET> --features-dir <GIRDI> --split-dir <BOLME> --model-dir <MODEL> --expected-model-sha256 $mlFinalSha --output-dir $mlFinalOut
 ```
 
-Sıra: çıktı klasörü yoksa kanıt zinciri doğrulanır; model yukarıdaki yükleme
-yoluyla açılır. SHA değeri tutmazsa, dosya bozuksa veya başka girdilerden
-üretilmişse komut çıkış 1 verir ve saklı test satırlarına hiç gelinmez. Yalnız
-bundan sonra saklı testin etiketli Cimri satırları (sayısı bölme raporundaki
-sayıyla aynı olmalı) alınır; dondurulan model ve R0 puanlanır. Puanlama,
-doğrulamadakiyle aynı ölçütleri kullanan ayrı iki işlevle yapılır
-(`score_reserved_test`, `reserved_test_bootstrap`); bunlar doğrulama hedeflerini
-kabul etmez. Hesaplananlar: AP ve taban oran, Brier, log loss, R0'a göre Brier
-skill, güvenilirlik kovaları, marka/aile/ürün kırılımı ve makro ortalama,
-dondurulan model − R0 için 14 günlük tarih bloklu %95 AP farkı aralığı.
+Komut yeni çıktı klasörü, kanıt zinciri ve ön kayıtlı SHA-256
+kontrolünden sonra modeli açar. Hata olursa çıkış 1 ile saklı testten
+önce durur. Yalnız bölme raporundaki sayıyla eşleşen etiketli Cimri test
+satırları alınır. `score_reserved_test` ve `reserved_test_bootstrap`
+yalnız saklı test rolünde model ve R0'ı puanlar. AP, Brier, log loss,
+Brier skill, kovalar, kırılımlar, makro ortalama ve 14 günlük bloklarla
+%95 AP farkı aralığı hesaplanır.
 
-**Okuma koşulları** (sonuçtan önce sabit, yalnız bilgi): Brier skill 0'ın
-üstünde ve AP farkı aralığının alt sınırı 0'ın üstünde. Sonuç, deney seçimiyle
-aynı üç durumdadır: sağlanmayan koşul varsa `not_met` (başka koşul
-hesaplanamasa da), sağlanmayan yok ama hesaplanamayan varsa `not_evaluable`,
-hepsi sağlanırsa `met`. Okuma sonucu modeli, ayarları veya seçimi değiştirmez
-(`decides_model=false`, `model_changed=false`). Komut okuma koşulları
-sağlanmasa da çıkış 0 verir.
+**Okuma koşulları.** Brier skill > 0 ve AP farkı güven aralığının alt
+sınırı > 0 birlikte aranır. Hesaplanan bir koşul sağlanmazsa `not_met`,
+böyle bir koşul yokken eksik hesap varsa `not_evaluable`, ikisi sağlanırsa
+`met` olur. Rapor `decides_model=false` ve `model_changed=false` taşır.
+Geçerli raporda komut çıkışı 0'dır.
 
 | Dosya | İçerik |
 |---|---|
@@ -3256,76 +3057,43 @@ sağlanmasa da çıkış 0 verir.
 | `report.md` | Türkçe özet: puanlar, fark aralığı, okuma koşulları, doğrulama aylarıyla yan yana tablo, güvenilirlik, makro/marka, sınırlar. |
 | `manifest.json` | En son yazılan tamamlanma kaydı; `test_opened=true`, model manifest SHA-256 ve dosya parmak izleri. |
 
-Yazımdan sonra çıktılar yeniden doğrulanır: tahmin anahtarları saklı test
-anahtarlarıyla birebir aynı, etiketler girdiyle aynı, olasılıklar [0,1]
-içinde ve raporun bayrakları gerçek durumu söylemelidir.
+Yazım sonrası anahtarlar ve etiketler saklı test üyeleriyle birebir
+eşleşmeli, olasılıklar [0,1] aralığında ve rapor bayrakları tutarlı olmalıdır.
 
-**Sınırlar:**
+**Tek açılış işletim kuralıdır.** Ön kayda alınan SHA-256 testten önce
+Git'te korunur. `final-test` komutu teknik olarak aynı çıktıyı yeniden
+üretebilir. Saklı testi yeniden çalıştırma. Model veya ayar seçimi
+geliştirme verisiyle yapılır. Yaklaşık sekiz haftalık Cimri dönemindeki 14 günlük blok
+sayısı sınırlıdır. Örtüşen pencereler bağımsız düşüş sayısını vermez.
+Kendi serimiz gölge modda değerlendirilir. Doğrulama puanları ise
+farklı eğitim dilimindeki kat modellerine aittir.
 
-- **Tek açılış** kodla zorlanmaz. Güvence, model SHA-256 değerinin test
-  açılmadan Git'e işlenmesi, komutun yalnız o değerle çalışması, çıktıların
-  belirlenimci olması ve bu testin seçim veya ayar için bir daha
-  kullanılmamasıdır. Aynı komutu tekrar çalıştırmak aynı sayıları verir ama
-  tek açılış kuralını bozar.
-- Saklı test yaklaşık sekiz haftadır; 14 günlük tarih blokları az sayıdadır ve
-  aralık kaba ve geniştir. Ardışık günlerin pencereleri örtüşür; olumlu satırlar
-  bağımsız düşüş olayı sayısı değildir.
-- Sonuç Cimri üzerindedir; kendi verimizde başarıyı veya ekranda tahmin
-  gösterme yeterliliğini kanıtlamaz. Kendi kaynağımız bu komutlarda puanlanmaz.
-- Dondurulan model, doğrulama aylarında puanlanan kat modellerinden farklı bir
-  eğitim dilimiyle kurulur; kat puanları bu modelin puanı değildir.
 
 #### 4 Kasım 2026 saklı test sonucu
 
-Kullanıcı `final-test` komutunu gönderilmiş [dondurma ön kaydındaki](#4-kasım-2026-dondurma-ön-kaydı)
-model manifest SHA-256'sıyla kendi terminalinde bir kez çalıştırdı.
-Kapsam, puanlar, süre ve güven aralığı [README Güncel kapsam](../README.md#-güncel-kapsam)
-tablosundadır. Kanıt klasörü: `artifacts/ml_son_test_20261104_112007_023/`.
+Saklı test, [ön kayıtlı modelle](#4-kasım-2026-dondurma-ön-kaydı)
+bir kez açıldı. Brier skill ve AP farkı aralığının alt sınırı pozitifti.
+Okuma koşulu `met` oldu. Dosya bütünlüğü, üyelik, ölçütler ve güven
+aralığı kayıtlı olasılıklardan doğrulandı. Kanıt klasörü
+`artifacts/ml_son_test_20261104_112007_023/`. Kapsam ve puanlar
+[README'dedir](../README.md#-güncel-kapsam).
 
-Manifest ve dosya parmak izleri, ön kayıtlı modelin değişmediği, tahminlerin
-yalnız saklı test üyelerine ait olduğu, etiketler ve rapor bayrakları
-doğrulandı. Kayıtlı tahminlerden AP (eşit puanları birlikte işleyen ayrı
-hesap), Brier, log loss, Brier skill, güvenilirlik kovaları ve destekli
-marka/aile/ürün hücreleri bağımsız yeniden hesaplandı. Önceden belirlenen
-tarih örneklemesiyle AP farkı aralığı da yeniden üretildi; raporla uyuştu.
-Bu denetim yeni tahmin veya eğitim yapmadı; `final-test` yeniden
-çalıştırılmadı. Yerel denetim kanıtı:
-`artifacts/final_test_verification_20261104.json`.
+Ürün düzeyi ve POCO marka kırılımı için olumlu küme desteği yetersizdi.
+0,2–0,3 ve 0,3–0,4 kovalarında gerçekleşme ortalama tahminden yüksekti.
+Sonuç bu Cimri dönemiyle sınırlıdır. Kendi kaynağımızda gösterim
+[ayrı gölge kapısına](#gölge-değerlendirmesi-python--m-appml-shadow-evaluate)
+bağlıdır.
+[Saklı testin ayrıntılı kanıtı](arsiv/teknik_2026-11-23.md#4-kasım-2026-saklı-test-sonucu)
 
-**Sonucun anlamı:** R2 + Platt bu Cimri döneminde düşüş olan pencereleri
-R0 sabit referansından daha iyi sıraladı; olasılık hatasını ölçen Brier ve
-log loss da daha düşük. Brier skill ve AP farkı aralığının alt sınırı pozitif
-olduğundan ön kayıtlı okuma koşulları karşılandı. AP bir doğruluk yüzdesi
-değildir; bu sonuç her ürünün indirime girip girmeyeceğinin doğru bilindiği
-anlamına gelmez. Model ve ayarlar değişmedi.
-
-**Sınırlar:**
-
-- Ürünlerin hiçbiri ürün bazında puan raporlamak için gereken olumlu pencere
-  kümesi desteğine ulaşmadı; makro ortalama yok. POCO marka hücresi de yetersiz.
-  Olumlu pencere kümeleri bağımsız gerçek indirim olayları değildir.
-- Olumlu genel sonuç her olasılık diliminin kalibre olduğunu göstermez.
-  Rapordaki 0,2–0,3 ve 0,3–0,4 kovalarında gerçekleşen oran ortalama tahminden
-  belirgin yüksek; daha yüksek kovalar çok az kayıtlıdır. Son test bu
-  kalibrasyonu veya modeli düzeltmek için yeniden kullanılmaz.
-- Tek dönem ve az sayıda tarih bloğu vardır; pozitif aralık başka bir dönem
-  veya kaynağa başarı garantisi değildir. Doğrulama aylarıyla satır, olumlu
-  oranı ve eğitim dilimi farklı olduğundan puan artışı doğrudan modelin
-  iyileşmesi olarak yorumlanmaz.
-- Kendi serimiz puanlanmadı. Bu sonuç ekranda olasılık göstermeye yetmez;
-  sıradaki iş kendi verimizde gölge modun ayrı planıdır. Gösterim kapısı
-  plandaki koşullara bağlıdır.
 
 ### Gölge mod tahmin kaydı (`python -m app.ml shadow-predict`)
 
-Dondurulan model ([ön kayıt](#4-kasım-2026-dondurma-ön-kaydı)) kendi serimizin
-her başlangıcı için "önümüzdeki 7 günde ≥ %5 düşüş" olasılığı üretir ve bu
-olasılık, ekranda gösterilmeyen **değişmez** dosyalara yazılır. Bu komut yalnız
-tahmin kaydını üretir. Günlük otomatik çalışma aşağıdaki `shadow-daily`
-komutuyla yapılır. Sonradan değerlendirme `shadow-evaluate` ile yapılır; sıra ve
-kapı kuralları [planın gölge mod bölümündedir](../proje_plani.md#gölge-mod-kalan-sıra-6-4-kasım-planı).
-Komut DB'ye bağlanmaz, siteye gitmez ve ortak tarama kilidini almaz; bir tur
-sürerken de çalışabilir, çünkü yalnız verilen görüntü klasörünü okur.
+Komut [dondurulan modelle](#4-kasım-2026-dondurma-ön-kaydı) kendi
+serimizde sonraki 7 günde en az %5 fiyat düşüşü olasılığını kaydeder.
+Tahmin dosyalarını değerlendirme `shadow-evaluate`, günlük üretim
+`shadow-daily` ile yapılır. `shadow-predict` yalnız görüntü klasöründen
+ağsız çalışır. Tarama kilidini almadan, aktif tur sırasında da çalışabilir.
+[Gölge mod planı](../proje_plani.md#gölge-mod-kalan-sıra-6-4-kasım-planı)
 
 ```powershell
 $mlShadowOut = "artifacts\golge_deneme_$(Get-Date -Format yyyyMMdd_HHmmss_fff)"
@@ -3338,21 +3106,16 @@ klasörüdür; `--output-dir` yeni bir klasördür. İsteğe bağlı `--config`
 (varsayılan `config/shadow.json`) ve `--records-dir` (varsayılan ayardaki
 `records_dir`, yani `data/ml/golge`) verilebilir.
 
-**Model.** `load_experiment_inputs` 2 Kasım etiket/girdi/bölme klasörlerini
-doğrular, `load_frozen_model` modeli yalnız ayardaki ön kayıtlı manifest
-SHA-256'sı, dosya parmak izleri, birebir kütüphane sürümleri ve kalibrasyon
-yeniden üretimi tutarsa açar; hata varsa pickle'a hiç gelinmez. Bu kanıt
-klasörleri `config/shadow.json` içindeki `data/ml/golge/kanitlar/` altında
-`labels`, `features`, `split`, `model` olarak bulunmalıdır. Kaynak `artifacts/`
-klasörlerinin bayt aynı kopyalarıdır; model manifest SHA-256'sı değişmez.
-Eksik veya değiştirilmiş kanıt varsa komut çıkış 1 verir. Kopya denetimi
-`artifacts/golge_kanit_kopya_20261105.json` içindedir; orijinaller korunur.
+**Model.** `load_experiment_inputs` etiket, girdi ve bölmeyi,
+`load_frozen_model` ön kayıtlı SHA-256, dosya parmak izleri, kütüphane
+sürümleri ve kalibrasyonun yeniden üretimini doğrular. Varsayılan ayar
+`data/ml/golge/kanitlar/{labels,features,split,model}/` altında orijinal
+kanıtların birebir kopyalarını bekler. Eksik veya değişmiş kanıt
+çıkış 1 verir.
 
-**Satırlar.** Girdiler `features` komutuyla aynı koddan (`feature_rows`) gelir.
-Kendi serimizin, başlangıç günü ayardaki `start_day` ve sonrası olan, kaydı
-bulunmayan her başlangıcı için tek satır yazılır. Görüntünün İstanbul tarihinden
-önceki son kapanmış güne kadar olan günler değerlendirilir; bilgisayarın
-çalıştırma anındaki saati sonucu değiştirmez.
+**Satırlar.** `feature_rows` ile `start_day` ve sonrasındaki kayıtsız
+başlangıçlar için tek satır üretilir. Son gün, görüntü anından önceki
+kapanmış İstanbul günüdür.
 
 | Gerekçe kodu | Anlamı |
 |---|---|
@@ -3360,12 +3123,11 @@ bulunmayan her başlangıcı için tek satır yazılır. Görüntünün İstanbu
 | `recent_missing_over_30_percent` | `d−13…d` içinde 22:00 fiyatı olmayan gün sayısı 14 günün %30'unu aşıyor (en az 5 gün); olasılık yazılır, satır gösterilebilir sayılmaz. |
 | `family_not_in_training` | Ürün ailesi dondurulan modelin eğitim diliminde yok; olasılık yazılır, gösterilebilir sayılmaz. |
 
-Gerekçesi olmayan satır `showable` olur. `missing_days_14` ham sayıdır.
-Olasılıklar `r0` (eğitim olumlu oranı) ve model adıyla (`r2_platt`) anahtarlanır.
-`recorded_after_days`, görüntünün İstanbul tarihi eksi başlangıç günüdür: 1
-ertesi gün kaydedildiğini, daha fazlası geç veya geriye dönük kaydedildiğini
-söyler. Satır yalnız `d` gününün 22:00 turuna kadar bilinen girdileri taşır;
-bunu sınırlayan kural `features` komutununkidir.
+Gerekçe yoksa satır `showable` olur. `missing_days_14` eksik gün
+sayısıdır. Olasılık anahtarları `r0` ve model adıdır (`r2_platt`).
+`recorded_after_days`, görüntünün İstanbul tarihi eksi başlangıç
+günüdür. 1 ertesi gün, daha yüksek değer geç veya geriye dönük kayıttır.
+Girdiler başlangıcın 22:00 turuyla sınırlıdır.
 
 **Çıktı klasörü.** Yeni klasöre yazılır, `manifest.json` en son oluşur:
 
@@ -3375,28 +3137,20 @@ bunu sınırlayan kural `features` komutununkidir.
 | `report.md` | Türkçe özet: sayılar, gerekçe dağılımı ve günlük döküm. |
 | `manifest.json` | Biçim/kural sürümü, model adı ve manifest SHA-256'sı, görüntü SHA-256'sı ve okuma anı, son kapanmış gün, başlangıç günü, kütüphane sürümleri, özet ve dosya parmak izleri. |
 
-Yazımdan sonra klasör yeniden okunur: parmak izleri, satır alanları ve
-sıralaması, olasılıkların [0,1] aralığında olması, gerekçelerle `showable`
-tutarlılığı ve özetin satırlardan yeniden hesaplanması denetlenir. Parmak izi
-yenilenmiş tutarsız bir satır da reddedilir. Aynı görüntü, kod ve ortam aynı
-baytları üretir.
+Yazımdan sonra parmak izi, alan ve sıra, [0,1] olasılık aralığı,
+gerekçe/`showable` uyumu ve satır özeti doğrulanır. Parmak izi yenilenmiş
+tutarsız veri de reddedilir.
 
-**Resmi kayıt ve yinelenmeme.** Resmi kayıt, `records_dir` doğrudan altındaki adı
-`tahmin_` ile başlayan ve manifesti olan klasörlerdir. Komut başlarken bu
-klasörleri doğrular ve içlerindeki (ürün, gün) anahtarlarını atlar; kayıtlı
-gün yeniden tahmin edilmez, değişmez. Manifestsiz yarım klasör kayıt sayılmaz.
-Parmak izi tutmayan, başka bir modelle üretilmiş veya aynı günü iki klasörde
-taşıyan kayıt sessizce geçilmez; komut çıkış 1 verir. Çıktı doğrudan
-`records_dir` altına `tahmin_` adıyla yazılmadıysa komut bunu
-"Deneme çıktısı… kayıt sayılmaz" diye bildirir.
-Yeni kayıt yoksa komut çıkış 0 verir ve klasör oluşturmaz.
+**Resmî kayıt.** `records_dir` altında doğrudan `tahmin_` önekini ve
+tamamlanmış manifesti taşıyan klasörler geçerlidir. Kayıtlı ürün/gün
+yeniden tahmin edilmez. Aynı anahtarın iki klasörde olması, başka model
+veya uyumsuz SHA-256 çıkış 1 verir. Diğer yollar deneme çıktısıdır. Yeni
+satır yoksa çıkış 0 ile klasör oluşturmadan durur.
 
-Anahtarların okunması, model doğrulaması, tahmin ve kayıt yazımı aynı
-`records_dir/tahmin.lock` dosya kilidi altında yapılır. `shadow-predict` ve
-`shadow-daily` aynı kilidi kullanır; doluysa beklemeden çıkış 3 verir. İşletim
-sistemi süreç kapanınca kilidi bırakır; diskte kilit dosyasının bulunması
-tek başına çalışan süreç olduğu anlamına gelmez. Deneme çıktısı üreten
-`shadow-predict` de okuduğu resmi kayıt dizinini aynı kilitle korur.
+Envanter, model doğrulama, tahmin ve yazım `records_dir/tahmin.lock`
+altında yürür. Deneme dahil `shadow-predict` ile `shadow-daily` bu
+kilidi kullanır. Meşgul kilit beklemeden çıkış 3 verir. Süreç bitince
+işletim sistemi kilidi bırakır. Kilit dosyası diskte kalabilir.
 
 | Çıkış | Anlamı |
 |---|---|
@@ -3406,29 +3160,18 @@ tek başına çalışan süreç olduğu anlamına gelmez. Deneme çıktısı ür
 | 3 | Aynı resmi kayıt dizininde başka bir gölge tahmin yazıcısı çalışıyor. |
 | 130 | Kullanıcı durdurdu (manifestsiz klasör kalır, kayıt sayılmaz). |
 
-İlk gerçek deneme (4 Kasım görüntüsü, kullanıcı terminali, çıkış 0) ve
-bağımsız denetimin sayıları [README Güncel kapsam](../README.md#-güncel-kapsam)
-tablosundadır; kanıt klasörü `artifacts/golge_deneme_20261104_162830_686/`
-resmi kayıt değildir. Denetim, olasılıkları `model.json` katsayıları ve eğitim
-diliminin ortalama/sapma/medyanlarıyla pickle'ı açmadan yeniden hesapladı.
+Kendi seri girdileriyle Cimri eğitim girdilerinin dağılımı farklıdır.
+Bu durum olasılık ölçeğini etkileyebilir. `showable` kayıt yeterliliğidir.
+Gösterim kararı için gölge değerlendirmesi ve onay gerekir. Kayıt parmak
+izleri yerel bütünlüğü denetler.
+[İlk deneme ve bağımsız doğrulama](arsiv/teknik_2026-11-23.md#gölge-mod-tahmin-kaydı-python--m-appml-shadow-predict)
 
-**Sınırlar.**
-
-- Kayıt yerel dosyadır; parmak izi bütünlük kontrolüdür, imza değildir.
-- Tahminler, kendi girdilerimizin Cimri eğitiminden kaymış olduğu koşulda
-  üretilir ([ölçüm](../proje_plani.md#gölge-mod-kalan-sıra-6-4-kasım-planı));
-  olasılık ölçeği bu yüzden kayabilir. Bu komut kaymayı düzeltmez, yeniden
-  kalibrasyon yapmaz.
-- `showable` yalnız yukarıdaki kuralların sonucudur; kapı koşullarını
-  karşıladığı veya olasılığın doğru olduğu anlamına gelmez.
-- Python, NumPy, scikit-learn veya LightGBM sürümü değişirse model yüklenmez.
 
 ### Günlük gölge çalışması (`python -m app.ml shadow-daily`)
 
-`app/ml/daily.py`, mevcut `snapshot` ve `shadow-predict` komutlarını sırayla
-çalıştırır. İlk aşama yalnız `API_DATABASE_URL` okuma hesabıyla veritabanı
-görüntüsü alır; ikinci aşama bu dosyadan tahmin üretir. Siteye istek gitmez,
-veritabanına yazılmaz, model eğitilmez ve olasılıklar ekranda gösterilmez.
+`app/ml/daily.py` önce `API_DATABASE_URL` okuma hesabıyla `snapshot`,
+ardından görüntüden `shadow-predict` çalıştırır. Veritabanı salt okunur
+kullanılır. Tahmin aşaması ağsız ve mevcut modelle çalışır.
 
 ```powershell
 # Kullanıcı ortamına bir kez; parola yalnız pgpass.conf'ta kalır.
@@ -3438,22 +3181,17 @@ $env:API_DATABASE_URL = [Environment]::GetEnvironmentVariable('API_DATABASE_URL'
 $LASTEXITCODE
 ```
 
-İsteğe bağlı `--config AYAR_DOSYASI` farklı gölge ayarı seçer; varsayılan
-`config/shadow.json`'dır. `--scheduled` log başlığında zamanlanmış çalışmayı
-belirtir; veri ve tahmin kuralları elle çalışmayla aynıdır. Her iki biçim de
-`run_logged` ile `data/logs/golge_<yerel tarih-saat>.log` dosyasına stdout,
-stderr ve son çıkış kodunu yazar (`LOG_DIR` ile değiştirilebilir). Log
-açılamazsa görüntü ve tahmin başlamaz. `pythonw.exe` altında konsol olmasa da
-log yazılır.
+`--config AYAR_DOSYASI` varsayılan `config/shadow.json` yerine geçer.
+`--scheduled` sadece log başlığını işaretler. `run_logged`, stdout,
+stderr ve son çıkışı `data/logs/golge_<yerel tarih-saat>.log` dosyasına
+yazar. `LOG_DIR` klasörü değiştirir. Log açılamazsa komut veri okumaz.
+`pythonw.exe` ile de log yazılır.
 
-**Bekleme.** Görüntü okunurken ortak tarama kilidi tutulur; yeni tur/keşif
-bu kısa okumanın arasına giremez. Kilit doluysa veya DB okuması `running`
-tur nedeniyle çıkış 3 verirse 5 dakika beklenip yeniden denenir. Bekleme
-monoton saatle en çok 90 dakikadır; sınır dolarsa çıkış 3 olur ve tahmin
-üretilmez. Diğer görüntü hataları yeniden denenmez. Görüntü bittiğinde
-tarama kilidi bırakılır; model doğrulaması ve tahmin sırasında tutulmaz.
-Yarım kalmış `running` tur bu komutla değiştirilmez; toplama akışının kendi
-uzlaştırması gerekir.
+**Bekleme.** Ortak tarama kilidi sadece görüntü okumasında tutulur.
+Kilit doluysa veya DB'de `running` tur çıkış 3 üretirse komut 5
+dakikada bir, monoton saatle en çok 90 dakika yeniden dener. Süre dolarsa
+çıkış 3 ile tahmin aşamasına geçmeden durur. Diğer görüntü hataları
+tekrar denenmez. Yarım turu toplama akışı uzlaştırır.
 
 **Dosyalar.** Zaman damgası İstanbul saatinde, mikrosaniye içerir. Varsayılan
 kayıt dizini `data/ml/golge/` altında:
@@ -3465,12 +3203,10 @@ kayıt dizini `data/ml/golge/` altında:
 | `tahmin_<zaman>/` | Yukarıdaki değişmez resmi tahmin dosyaları; manifest en son yazılır. |
 | `tahmin.lock` | Elle ve günlük tahmin yazıcısının ortak kilit dosyası. |
 
-İlk çalışma 27 Ekim 2026'dan görüntünün son kapanmış gününe kadar olan
-kayıtsız başlangıçları doldurur. Geçmişi kısa satırların olasılığı NULL
-kalır; geç kayıt bilgisi mevcut `recorded_after_days` kuralıyla korunur.
-Aynı görüntüyle ikinci çalışma yeni tahmin klasörü üretmez; günlük komut
-her çağrıda yeni görüntü ve log alır. Kayıt kilidi doluysa çıkış 3 verir;
-bu bekleme tur beklemesinden ayrıdır, kullanıcı daha sonra tekrar çalıştırır.
+İlk çalışma 27 Ekim 2026'dan son kapanmış güne kadar kayıtsız
+başlangıçları doldurur. Sonraki çağrılar yeni görüntü ve log alır.
+Aynı başlangıçlar yeniden yazılmaz. Tahmin kilidi meşgulse çıkış 3 ile
+hemen durur, 90 dakikalık bekleme burada uygulanmaz.
 
 | Çıkış | Anlamı |
 |---|---|
@@ -3499,53 +3235,18 @@ ikinci tetikleme atlanır (`IgnoreNew`), süre sınırı 2 saattir, pilde de
 tanımlı değilse kurulmaz; kaldırma için bu değişken aranmaz. Tekrar kurulum
 aynı görevi günceller; fiyat toplama ve keşif görevlerine dokunmaz.
 
-İlk resmi çalışma kullanıcı terminalinde `shadow-daily` ile doğrulandı.
-Kanıtlar `data/ml/golge/goruntuler/veri_20261105_135714_411970/` ve
-`data/ml/golge/tahmin_20261105_135714_411970/` klasörleridir. Görüntü, dosya
-ve model kanıtlarının parmak izleri doğrulandı; girdiler görüntüden yeniden
-hesaplandı, olasılıklar `model.json` katsayıları ve eğitim istatistiklerinden
-pickle açılmadan bağımsız hesaplandı. Sayılar [README Güncel kapsam](../README.md#-güncel-kapsam)
-tablosundadır. Denetim ve ikinci çalışmadan önceki dosya parmak izleri:
-`artifacts/golge_resmi_denetim_20261105.json`.
+İlk elle çalışma, yinelenmeme, görev kurulumu ve ilk otomatik
+çalışma tarihli kanıtlarıyla arşivlenmiştir.
+[İşletim kabul kayıtları](arsiv/teknik_2026-11-23.md#günlük-gölge-çalışması-python--m-appml-shadow-daily)
+· [Güncel işletim kapsamı](../README.md#-güncel-kapsam)
 
-İkinci elle çalışmanın görüntüsü
-`data/ml/golge/goruntuler/veri_20261105_150548_714723/` altındadır. Komut
-çıkış 0 ve "Yeni tahmin yok" verdi; ilk resmi kaydın bütün dosyalarının
-SHA-256'ları değişmedi ve yeni tahmin klasörü oluşmadı. İki görüntüde veri
-tabloları aynıdır; okuma anı değiştiği için görüntü SHA-256'sı farklıdır.
-Denetim kanıtı: `artifacts/golge_yinelenmeme_20261105.json`.
-
-Görev kullanıcı terminalinde kuruldu; eylem, çalışma klasörü, tetikleyici,
-telafi, süreç/süre ve oturum ayarları kullanıcı tarafından okunan görev
-çıktısıyla doğrulandı. Kanıt: `artifacts/golge_gorev_kurulum_20261105.json`.
-Kurulum kanıtı ile zamanlanmış çalışmanın başarı kanıtı ayrıdır; ilk
-otomatik çalışma aşağıda, sonraki haftalık izleme planda kayıtlıdır.
-
-Adımın gönderim ve kapanış durumu
-[tamamlanan gölge adımlarında](../proje_plani.md#gölge-kayıt-ve-değerlendirme-yazılımı-6064),
-commit/CI kaydı [geçmişte](gecmis.md) tutulur.
-Test sonucu bu işletim doğrulamasının yerine geçmez.
-
-İlk otomatik günlük çalışma 6 Kasım'da doğrulandı. Görevin son çalışma
-zamanı o gün 11:00, durumu `Ready`, son sonucu 0; aynı çalışmanın
-`data/logs/golge_2026-11-06_11-00-02.log` dosyasında zamanlanmış başlık ve
-son çıkış 0 vardır. Logun son yazım saati 11:00:29'dur (İstanbul).
-Görüntü `data/ml/golge/goruntuler/veri_20261106_110023_673048/`, yeni resmi
-kayıt `data/ml/golge/tahmin_20261106_110023_673048/` altındadır.
-Görüntü/kayıt/model parmak izleri, kayıt sözleşmesi, anahtar tekilliği ve
-önceki resmi dosyaların değişmediği doğrulandı. Sayılar
-[README Güncel kapsam](../README.md#-güncel-kapsam) tablosundadır.
-Görev kanıtı `artifacts/golge_gorev_durum_20261106.json`, dosya denetimi
-`artifacts/golge_ilk_otomatik_denetim_20261106.json` içindedir. Denetim
-yalnız dosya okudu; DB/ağ, pickle veya yeni tahmin kullanmadı.
 
 ### Gölge değerlendirmesi (`python -m app.ml shadow-evaluate`)
 
-`app/ml/shadow_evaluation.py`, önceden dosyaya yazılmış olasılıkları yeni
-görüntüden hesaplanan gerçek etiketlerle karşılaştırır. Değerlendirme yalnız
-dosya okur; görüntüyü kullanıcı salt okunur `snapshot` komutuyla ayrıca alır.
-Model eğitilmez, pickle açılmaz, yeni olasılık üretilmez; resmi kayıtlar
-değiştirilmez. İlk otomatik görevin çalışması bu komutun ön koşulu değildir.
+`app/ml/shadow_evaluation.py` kayıtlı olasılıkları yeni görüntünün
+etiketleriyle karşılaştırır. Yalnız dosya okur ve mevcut olasılıkları
+puanlar. Gölge görevinin ilk otomatik çalışmasını beklemeden geçerli
+tahmin kayıtlarıyla değerlendirilebilir.
 
 ```powershell
 $env:API_DATABASE_URL = [Environment]::GetEnvironmentVariable('API_DATABASE_URL', 'User')
@@ -3559,73 +3260,58 @@ if ($LASTEXITCODE -eq 0) {
 }
 ```
 
-`--snapshot` ve `--output-dir` zorunludur; çıktı klasörü yeni olmalıdır.
-İsteğe bağlı `--config AYAR` varsayılan `config/shadow.json` yerine geçer.
-Girdi ve zaman kararları görüntünün okuma anına dayanır; bilgisayarın
-değerlendirme anındaki tarihi sonuçları değiştirmez.
+`--snapshot` ve `--output-dir` zorunludur. Çıktı klasörü yeni olmalıdır.
+`--config AYAR` varsayılan `config/shadow.json` yerine geçer. Sonucu
+görüntünün okuma anı belirler.
 
-**Kanıt ve girdi kontrolü.** Ön kayıtlı model manifest SHA-256'sı, mevcut
-`load_experiment_inputs` ve `verify_model_outputs` ile kanıt zinciri ve
-model dosyalarının parmak izleri doğrulanır. Model özeti JSON'dan okunur;
-R0, dondurulan Cimri eğitim oranıdır. Sonuçların olumlu oranından yeni R0
-üretilmez. Kayıt envanteri, mevcut `tahmin.lock` altında belleğe alınır;
-hesap sırasında kilit tutulmaz. Her kayıt klasörünün manifest SHA-256'sı
-değerlendirmeye yazılır. Başka model, yinelenen anahtar, hatalı başlık veya
-kayıt görüntüsünden eski değerlendirme görüntüsü reddedilir. Manifestsiz
-yarım klasör puanlanmaz, sağlık raporunda görünür.
+**Kanıt zinciri.** `load_experiment_inputs` ve `verify_model_outputs`
+ön kayıtlı manifesti ve dosya parmak izlerini doğrular. R0 için
+dondurulan Cimri eğitim oranı JSON'dan okunur. Envanter `tahmin.lock`
+altında belleğe alınır, sonra kilit bırakılır. Kayıt manifestlerinin
+SHA-256 değerleri rapora alınır. Başka model, yinelenen anahtar, bozuk
+başlık ve kayıt görüntüsünden eski görüntü reddedilir. Yarım klasörler
+sağlık raporunda görünür.
 
-Girdiler mevcut özellik hesabıyla yeniden oluşturulur. Her kayıt için
-ürün/gün, product_key, anchor_at ve bütün özellik değerleri birebir aynı
-olmalıdır. Eksik gün, aile, geçmiş yeterliliği, showable ve ilk kayıt anına
-göre recorded_after_days da denetlenir. Bir fark varsa kayıt sessizce
-dışlanmaz; değerlendirme hata verir. Olasılıklar bu kontrol sırasında
-yeniden üretilmez, yalnız ilk kayıttaki değerler puanlanır.
+Girdi yeniden hesaplanır. Ürün/gün, `product_key`, `anchor_at`,
+özellikler, eksik gün, aile, geçmiş, `showable` ve ilk kayıt anından
+hesaplanan `recorded_after_days` eşleşmelidir. Uyuşmazlık raporu
+durdurur. Olasılık ilk resmi dosyadan alınır.
 
-**Puanlanan topluluklar.** Mevcut etiket hesabı ve `own_evaluation` rolü
-kullanılır. Geçmişi en az 30 gün, kayıtlı olasılığı ve 0/1 y_sabit etiketi
-olan satırlar uygundur; asıl sonuç bunların showable alt kümesidir. Bütün
-uygun satırlar ikincil rapordur. Geleceği kapanmayan veya eksik fiyat
-nedeniyle NULL kalan etiket puana girmez, 0 yapılmaz. y_izlenen ayrıca
-puanlanır; iki etiketi de olan gösterilebilir satırlar eşleştirilerek kapsam
-farkı raporlanır. İkincil topluluk ve kırılımlar gösterim kapısını belirlemez.
+**Asıl topluluk**, geçmişi en az 30 gün olan, olasılığı kayıtlı,
+`y_sabit` etiketi 0/1 ve `showable` olan `own_evaluation` satırlarıdır.
+Tüm uygun satırlar ve `y_izlenen` ayrı puanlanır. İki etiketi de
+bulunan gösterilebilir kayıtlar kapsam farkı için eşleştirilir.
+NULL etiket puan dışındadır. Gösterim kapısı asıl topluluğa dayanır.
 
-AP, Brier, log loss, Brier skill, güvenilirlik kovaları ve marka/aile/ürün
-kırılımları mevcut ölçüt işlevlerindendir. AP doğruluk yüzdesi değildir;
-tek sınıfta NULL kalır, Brier/log loss hesaplanabilir. Mevcut destek
-eşiklerini sağlamayan ürün/marka hücreleri yetersiz gösterilir.
-`own_evaluation_bootstrap` yalnız own kaynağını ve own_evaluation rolünü
-kabul eder; mevcut tarih bloklu AP farkı algoritmasını kullanır.
-`METRIC_RULES` değişmez. Kısa dönem veya tek sınıfta aralık NULL ve gerekçeli
-olur; AP farkı ve aralığı kapı koşulu değildir.
+AP, Brier, log loss, Brier skill, güvenilirlik ve kırılımlar mevcut
+`METRIC_RULES` ile hesaplanır. Tek sınıfta AP NULL, Brier ve log loss
+hesaplanabilir. Desteksiz ürün ve marka hücreleri yetersiz görünür.
+`own_evaluation_bootstrap` mevcut tarih bloklu AP farkını yalnız
+`own` ve `own_evaluation` için hesaplar. Kısa dönem veya tek sınıfta
+aralık gerekçeli olarak NULL kalır. AP farkı ve aralığı bilgi amaçlıdır.
 
-**Kapı koşulları.** Asıl sonuçtaki etiketli başlangıçların ilk–son dahil
-takvim aralığı en az 60 gün olmalı, 1–30 Kasım 2026 bu aralıkta bulunmalı,
-Kasım dışında en az 14 farklı etiketli gün ve en az 30 olumlu pencere kümesi
-olmalıdır. Her Kasım günü mutlaka etiketli satır bulunması şartı yoktur;
-etiketli ayrı günler ve aralıktaki boşluklar ayrıca gösterilir.
+**Kapı koşulları.** Asıl sonuçta ilk ve son etiketli başlangıç arasında
+iki uç dahil en az 60 takvim günü, aralığın içinde 1–30 Kasım 2026'nın
+tamamı, Kasım dışında en az 14 farklı etiketli gün ve en az 30 olumlu
+pencere kümesi gerekir. Kasım içindeki boş günler ayrıca raporlanır.
 
-Bu veri desteği eksikse sonuç `not_evaluable` (Değerlendirilemedi) olur.
-Yeterli veride Brier skill > 0, ortalama olasılık ile gerçekleşen oran
-farkı ≤ 0,05 ve en az 20 satırlı her kovada fark ≤ 0,15 sınanır. Hiç destekli
-kova yoksa bu koşul belirsizdir. Ölçülen bir performans başarısızlığı
-`not_met` (Karşılanmadı), böyle bir başarısızlık yokken belirsiz ölçü
-`not_evaluable`, tüm koşullar sağlanıyorsa `met` (Karşılandı) verir.
-Eşik sınırında kayan nokta yuvarlaması için mutlak 1×10⁻¹² tolerans uygulanır.
+Veri desteği yetersizse sonuç `not_evaluable` olur. Destek yeterliyse
+Brier skill > 0, ortalama olasılık ile gerçekleşme farkı ≤ 0,05 ve en
+az 20 satırlı her kovada fark ≤ 0,15 aranır. Destekli kova yoksa kova
+koşulu belirsizdir. Hesaplanan bir performans koşulu sağlanmazsa
+`not_met`, böyle bir sonuç yokken koşul belirsizse `not_evaluable`,
+hepsi sağlanırsa `met` olur. Yuvarlama toleransı mutlak 1×10⁻¹²'dir.
 
-Kasım/diğer günler, missing_ratio_30d ≤ 0,10 / > 0,10 ve 22 Kasım
-öncesi/sonrası bilgi amaçlı kırılımlardır; kapı bu dilimlere göre değişmez.
-Kesin değerlendirme 5 Ocak 2027 görüntüsüyle bir kez yapılacak işletim
-kuralıdır. `final_date_matches` yalnız görüntünün İstanbul tarihinin bu
-günle aynı olduğunu bildirir; tek çalıştırmayı zorlayan kalıcı bir kayıt
-değildir. Rapor arayüzü kendiliğinden açmaz.
+Kasım ve diğer günler, `missing_ratio_30d ≤ 0,10` ve `> 0,10`,
+22 Kasım öncesi ve sonrası bilgi amaçlı kırılımlardır. İşletim kuralı,
+kesin değerlendirmeyi bir kez 5 Ocak 2027 görüntüsüyle yapmaktır.
+`final_date_matches` görüntünün İstanbul tarihini doğrular. Tek
+çalıştırma ve arayüz açılışı ayrı işletim adımlarıdır.
 
-**İşletim sağlığı.** Kaydın zaman sınıfı ilk görüntü zamanı üzerinden
-hesaplanır: ertesi gün kaydedilenler, ilk toplu doldurmadaki eski günler ve
-sonraki geç kayıtlar. İlk grup, en erken kayıt görüntüsüne göre belirlenir;
-bu sınıflama çalışma niyetini kanıtlamaz. Görüntüde başlangıcı bulunup resmi
-kaydı olmayan ürün-günler, başlangıç fiyatı olmayan günler, henüz ilk
-gözlemi oluşmayan ürün-günler, NULL etiketler ve yarım klasörler ayrı
-raporlanır. Eksik tahmin kaydı ile eksik başlangıç fiyatı aynı sayılmaz.
+**Kayıt sağlığı.** Görüntünün İstanbul tarihi başlangıçtan bir gün sonraysa kayıt ertesi
+gün sayılır. Daha geç kayıt, yalnız en erken kayıt görüntüsündeyse ilk
+toplu doldurmadır. Diğerleri geç kayıttır. Eksik resmî tahmin, başlangıç fiyatı olmayan gün,
+henüz gözlenmemiş ürün/gün, NULL etiket ve yarım klasör ayrı sayılır.
 
 **Çıktılar.** Aynı girişler aynı baytları verir; manifest en son yazılır:
 
@@ -3636,10 +3322,9 @@ raporlanır. Eksik tahmin kaydı ile eksik başlangıç fiyatı aynı sayılmaz.
 | `report.md` | Türkçe puan, koşul, güvenilirlik kovası ve günlük sağlık tabloları. |
 | `manifest.json` | Tamamlanma/kural sürümleri, giriş zinciri ve çıktı dosyalarının SHA-256'ları. |
 
-Yazımdan sonra dosyalar yeniden okunur; parmak izleri, satır sözleşmesi,
-anahtarların tekilliği/sırası, topluluk sayıları, kapı/özet ve Türkçe rapor
-bağları doğrulanır. Resmi kayıt dosyaları değişmez. Yerel parmak izleri
-bütünlük kontrolüdür; imza veya dışarıdan kayıt zamanı kanıtı değildir.
+Okuyucu parmak izi, satır sırası ve tekilliği, topluluk sayısı, kapı,
+özet ve Türkçe raporu çapraz doğrular. Parmak izleri yerel bütünlük
+kontrolüdür.
 
 | Çıkış | Anlamı |
 |---|---|
@@ -3649,30 +3334,16 @@ bütünlük kontrolüdür; imza veya dışarıdan kayıt zamanı kanıtı değil
 | 3 | Kayıt kilidi meşgul; daha sonra yeniden denenir. |
 | 130 | Kullanıcı durdurdu; manifesti oluşmamış çıktı tamamlanmış rapor sayılmaz. |
 
-İlk gerçek değerlendirme kullanıcı terminalinde alındı. Girdi görüntüsü
-`data/ml/golge/goruntuler/veri_degerlendirme_20261105_164411_934/`, çıktı
-`data/ml/golge/degerlendirme_20261105_164411_934/` altındadır. Dosyalar ve
-kaynak parmak izleri doğrulandı; girdiler görüntüden yeniden hesaplandı,
-birincil/ikincil etiketler üretimdeki etiket işlevleri çağrılmadan ham
-tur/sonuç tablolarından hesaplandı. Puanlar, bağlı skor grupları, destekli
-kırılımlar, makro ortalama, güvenilirlik kovaları ve kapı koşulları standart
-Python matematiğiyle bağımsız doğrulandı. İlk tahmin dosyalarının parmak
-izleri değişmedi. Kanıt: `artifacts/golge_degerlendirme_denetim_20261105.json`.
-Kapsam ve erken puanlar [README Güncel kapsam](../README.md#-güncel-kapsam)
-tablosundadır. Yetersiz veri desteği nedeniyle kapı değerlendirilemedi;
-kalibrasyon koşulları da bu küçük örnekte sınır dışındadır. Model ve
-eşikler değiştirilmedi; bu ara sonuçtan kesin karar verilmez.
+İlk gerçek değerlendirme ve bağımsız puan denetimi arşivdedir.
+[İlk değerlendirme kanıtı](arsiv/teknik_2026-11-23.md#gölge-değerlendirmesi-python--m-appml-shadow-evaluate)
+· [Güncel ara rapor](../README.md#-güncel-kapsam)
 
-Gönderim durumu
-[tamamlanan gölge adımlarında](../proje_plani.md#gölge-kayıt-ve-değerlendirme-yazılımı-6064),
-commit/CI kaydı [geçmişte](gecmis.md) tutulur.
 
 ### Güvenilirlik grafiği (`python -m app.ml reliability-chart`)
 
-`app/ml/reliability.py`, raporlardaki güvenilirlik kovalarını (tablo) aynı
-değerlerle bir grafiğe çevirir. Yeni ölçüm hesaplamaz; model, rapor ve resmi
-kayıtlar değişmez. Sunum, 21 Aralık ara raporu ve 5 Ocak kesin raporu içindir;
-ekranda gösterilmez.
+`app/ml/reliability.py` saklı test veya gölge raporundaki kovaları
+aynı değerlerle bağımsız SVG'ye çevirir. Sunum ve ara/kesin rapor için
+kullanılabilir.
 
 ```powershell
 .venv\Scripts\python.exe -m app.ml reliability-chart --report <RAPOR_KLASORU> --output "artifacts\ml_grafik_<tarih>\<ad>.svg"
@@ -3683,25 +3354,19 @@ ekranda gösterilmez.
 | Saklı test (`final-test` çıktısı; manifestte `test_opened`) | Dondurulan modelin saklı test kovaları |
 | Gölge değerlendirme (`shadow-evaluate` çıktısı; manifestte `kind: shadow_evaluation`) | Dondurulan modelin asıl sonuç (gösterilebilir, etiketli) kovaları; kapı da bu kovaları kullanır |
 
-**Ne gösterir:** yatay eksen kovadaki ortalama olasılık, dikey eksen o
-kovada gerçekleşen ≥ %5 düşüş oranıdır; kesik köşegen mükemmel
-kalibrasyondur. Nokta köşegenin üstündeyse model düşüş olasılığını düşük,
-altındaysa yüksek tahmin etmiştir. En az 20 satırlı kova dolu, daha az
-satırlı kova boş daireyle çizilir (kapının "destekli kova" sınırı); yalnız
-destekli kovalar çizgiyle birleştirilir. Alttaki çubuklar ve üstlerindeki
-sayılar kovadaki satır sayısıdır. Başlık rapor türünü, başlangıç aralığını,
-satır sayısını ve gölge raporunda ara/kesin görüntü ayrımını
-(`final_date_matches`) yazar.
+**Okuma.** Yatay eksen ortalama olasılık, dikey eksen en az %5
+düşüşün gerçekleşme oranıdır. Nokta köşegenin üstündeyse tahmin düşük,
+altındaysa yüksektir. En az 20 satırlı kovalar dolu daireyle çizilir ve
+birbirine bağlanır. Daha az satırlı kovalar boş dairedir. Çubuklar satır sayısını,
+başlık rapor türü, dönem, satır sayısı ve `final_date_matches` durumunu
+gösterir.
 
-**Korumalar:** manifest `complete` olmalı ve `report.json` manifestteki
-SHA-256 ile eşleşmelidir. Kovalar 10 olmalı; sınırlar, sayılar, destek
-işareti, 0–1 aralığı, ortalamanın kendi kovasında olması ve sayıların
-toplamının satır sayısına eşitliği denetlenir. Çıktı yeni bir `.svg` dosyası
-olmalıdır; var olan dosyanın üzerine yazılmaz ve rapor klasörünün içine
-yazılmaz (manifest klasördeki dosyaları sayar). Yazılan dosya yeniden okunur,
-her nokta ve çubuğun `data-*` değerleri rapordaki kovayla karşılaştırılır;
-doğrulanamayan grafik silinir. Aynı rapor her zaman aynı baytları verir.
-numpy/scikit-learn/LightGBM, DB ve ağ katmanı yüklenmez.
+**Doğrulama.** Manifest `complete` olmalı ve `report.json` parmak iziyle
+eşleşmelidir. On kovanın sınır, [0,1] aralığı, sayı, destek işareti,
+ortalama ve toplamları doğrulanır. Çıktı rapor klasörü dışında yeni
+bir `.svg` olmalıdır. Nokta ve çubukların `data-*` değerleri rapora
+karşı yeniden okunur. Doğrulanamayan çıktı silinir. Aynı rapor aynı
+baytları verir. Komut ML kütüphaneleri, DB ve ağ katmanı yüklemez.
 
 | Çıkış | Anlamı |
 |---|---|
@@ -3710,13 +3375,8 @@ numpy/scikit-learn/LightGBM, DB ve ağ katmanı yüklenmez.
 | 2 | Argüman hatası. |
 | 130 | Kullanıcı durdurdu; yazılmış ama doğrulanmamış grafik silinir. |
 
-İlk gerçek grafikler 16 Kasım'da `artifacts/ml_grafik_20261116/` altına
-üretildi: saklı test (`sakli_test_r2_platt.svg`, 7 dolu kova, 3'ü düşük
-destekli) ve 16 Kasım gölge ara raporu (`golge_20261116_asil_sonuc.svg`,
-5 dolu kova, 2'si düşük destekli). Her noktanın değeri ve konumu komuttan
-bağımsız bir betikle kaynak raporla karşılaştırıldı; kaynak rapor klasörleri
-değişmedi. Kullanıcı iki grafiği aynı gün tarayıcıda açıp görsel olarak
-kabul etti.
+[İlk grafikler ve görsel kabul](arsiv/teknik_2026-11-23.md#güvenilirlik-grafiği-python--m-appml-reliability-chart)
+
 
 ### Tahmin gösterim onayı (`python -m app.ml shadow-display`)
 
@@ -3727,30 +3387,27 @@ Gösterim varsayılan kapalıdır. Açılış yalnız 5 Ocak 2027 veya sonrasın
 .venv\Scripts\python.exe -m app.ml shadow-display --evaluation <KESIN_RAPOR_KLASORU>
 ```
 
-Komut mevcut değerlendirme doğrulayıcısıyla tüm dosyaları, satır özetlerini,
-kapıyı ve Türkçe raporu doğrular; asıl grubun puanlarını kayıtlı
-olasılıklardan yeniden hesaplar. Ön kayıtlı modelin kanıt zinciri ve R0'ı
-pickle açılmadan kontrol edilir. Raporun model kimliği, kaynak görüntü
-SHA'sı/zamanı ve `met` kapısı uyuşmalıdır. Görüntü, kayıt kökünün
-`goruntuler/*/snapshot.json` dosyaları arasında SHA'sıyla bulunur; elle
-hazırlanan kesin görüntü de bu kökün altında tutulmalıdır.
+Açma komutu değerlendirme dosyalarını, satır özetlerini ve kapıyı
+doğrular. Asıl grubun puanları kayıtlı olasılıklardan yeniden hesaplanır.
+Model kanıt zinciri ve R0 JSON üzerinden denetlenir. Raporun model
+kimliği, `met` sonucu ve kaynak görüntünün SHA-256'sı/zamanı eşleşmelidir.
+Görüntü, kayıt kökündeki `goruntuler/*/snapshot.json` dosyaları içinde
+bulunmalıdır.
 
-Başarıda `config/shadow.json` içindeki `records_dir` altında
-`gosterim_onayi.json` atomik olarak yazılır. Onay, model ve kesin rapor
-manifest SHA'larını, rapor yolunu, model adını/eğitim ailelerini ve UTC
-onay/güncelleme zamanlarını taşır. Aynı onayla tekrar açma etkisizdir;
-farklı rapor veya modelle mevcut onay, kapatılsa bile sessizce değişmez.
-Onay dosyası ve tüm kaynak dosyalar yereldir; hash bir imza değildir.
+Onay atomik olarak `records_dir/gosterim_onayi.json` dosyasına yazılır.
+Dosya model ve kesin rapor manifest SHA-256 değerlerini, rapor yolunu,
+model adını, eğitim ailelerini ve UTC onay/güncelleme anlarını taşır. Aynı onay yinelenebilir. Farklı model veya
+rapor, mevcut onay kapatılmış olsa da başka onaya dönüştürülemez.
+Parmak izi yerel bütünlüğü doğrular.
 
 ```powershell
 .venv\Scripts\python.exe -m app.ml shadow-display --disable
 ```
 
-Kapatma mevcut bağları koruyarak `enabled=false` yazar; zaten kapalıysa
-başarılı ve etkisizdir. İki eylem birlikte verilemez. Ayrı
-`gosterim_onayi.lock` yalnız bu elle yönetim işlemlerini sıraya alır;
-resmi tahminler, değerlendirmeler ve model değiştirilmez. İki eylem de
-isteğe bağlı `--config <AYAR_DOSYASI>` kabul eder.
+Kapatma bağları koruyarak `enabled=false` yazar. Zaten kapalıysa
+başarıyla döner. İki eylemden biri seçilir. İkisi de isteğe bağlı
+`--config <AYAR_DOSYASI>` alır. `gosterim_onayi.lock` elle verilen
+onay eylemlerini sıraya koyar.
 
 | Çıkış | Anlamı |
 |---|---|
@@ -3760,74 +3417,56 @@ isteğe bağlı `--config <AYAR_DOSYASI>` kabul eder.
 | 3 | Gösterim onayı kilidi meşgul |
 | 130 | Kullanıcı durdurdu |
 
-API her açık okumada onayın model bağını ve onaylı rapor dosyalarının
-hash'lerini tekrar kontrol eder. Kayıt/model ayarı değişmişse eski onay
-olasılık açmaz; rapor bozulmuşsa güvenli 503 döner. Bugün açılış koşulu
-sağlanamaz; geliştirme testleri yalnız yapay klasörlerle yapılır.
+API açık gösterimde model bağını ve onaylı rapor parmak izlerini her
+okumada kontrol eder. Model veya kayıt ayarı değiştiğinde eski onay
+geçersizdir. Bozuk rapor güvenli 503 döndürür. Geliştirme testleri
+yapay rapor ve klasör kullanır.
 
 #### Gösterimi işletme sırası
 
 1. Yerel [API'yi](#salt-okunur-fastapi) ve [ekranı](#başlatma-ve-test-önizlemesi)
-   başlat. Tahmin ucu eklenmeden önce açılmış API/ekran süreçlerini yeniden
-   başlat. Onay yokken kartta “Tahmin gösterimi kapalı” beklenir; gerçek
-   olasılığı görmek için test onayı veya yapay rapor kullanılmaz.
-2. Günlük `shadow-daily` görevi ve [6.5 izlemesi](../proje_plani.md#65-kontrol-planı)
-   devam eder. Kartın eklenmesi yeni eğitim başlatmaz. Resmi `tahmin_*`
-   klasörlerini, bunların kaynak `goruntuler/*/snapshot.json` dosyalarını,
-   model kanıtlarını ve onaylı değerlendirme klasörünü birlikte koru.
-   API onaylı raporu kayıtlı yolundan okur; raporu taşımak veya kaynak
-   görüntüyü silmek doğrulamayı bozabilir.
-3. **5 Ocak 2027'de** [değerlendirme komutlarıyla](#gölge-değerlendirmesi-python--m-appml-shadow-evaluate)
-   yeni salt okunur görüntü ve yeni rapor klasörü oluştur. Görüntünün İstanbul
-   tarihi 5 Ocak olmalıdır; önceki günün görüntüsünü daha sonra değerlendirmek
-   bu şartı sağlamaz. Günlük görevin yeni kayıtlarını da kapsaması için o
-   günkü görevin bitişini ve çıkış kodunu önce kontrol et.
-4. `report.md` içindeki kapı sonucunu ve veri desteğini incele. Yalnız `met`
-   (Karşılandı) sonucunda yukarıdaki `shadow-display --evaluation` komutuna
-   **rapor klasörünü** ver; çıkış `0` olmalıdır. `not_met` veya
-   `not_evaluable` sonucunda gösterim kapalı kalır; model/eşik değişikliği ayrı
-   karar ve değerlendirme planı gerektirir. Komut raporu yeniden doğrular;
-   yalnız rapor metnine bakıp onay dosyası elle hazırlanmaz.
-5. Açılıştan sonra Elle Yenile'ye bas; otomatik yenileme de en geç bir sonraki
-   başarılı okumada değişikliği görür. `available` için İstanbul takviminde
-   **dünün** yeterli kaydı gerekir. Gece yeni gün başladığında önceki oran
-   kaldırılır; 11:00 görevi bitene kadar `unavailable` olağandır. Eski güne
-   ait oranla boşluk doldurulmaz.
-6. Sorunda `shadow-display --disable` ile gösterimi kapat ve ekranı yenile.
-   `closed` cevabında `forecast=null` olmalı; yüzde kalkmalıdır. `503` yalnız
-   tahmin kartında görünüyorsa fiyat ekranı çalışmaya devam eder. Dosyaları
-   düzenleyerek veya hash'leri yenileyerek hata gizlenmez; kayıt/kaynak
-   uyuşmazlığı incelenir. Aynı doğrulanmış raporla yeniden açılabilir;
-   farklı raporla mevcut onayın değiştirilmesi reddedilir.
+   aç. Tahmin ucu eklenmeden önce başlamış süreçleri yeniden başlat.
+   Onay olmadan kartta “Tahmin gösterimi kapalı” beklenir. Gerçek gösterim
+   için doğrulanmış kesin rapor kullan.
+2. Günlük `shadow-daily` ve [6.5 izlemesini](../proje_plani.md#65-kontrol-planı)
+   sürdür. Kayıtları, kaynak görüntüleri, model kanıtını ve raporu bir
+   arada koru. API onaylı raporu kayıtlı yolundan açar.
+3. **5 Ocak 2027'de** günlük gölge görevinin bittiğini kontrol et. Aynı
+   İstanbul tarihli görüntüyle [kesin raporu](#gölge-değerlendirmesi-python--m-appml-shadow-evaluate)
+   yeni klasöre yaz.
+4. Yalnız rapor sonucu `met` ise rapor klasörünü `shadow-display --evaluation`
+   komutuna ver ve çıkış 0'ı kontrol et. Diğer iki sonuçta gösterim kapalı
+   kalır. Onayı doğrulayıcı komut yazar. Model ve eşik değişikliği ayrı karar
+   ve değerlendirme planı ister.
+5. Gösterim açılınca Elle Yenile'ye bas veya bir sonraki başarılı otomatik
+   okumayı bekle. `available` için İstanbul takvimindeki dünün yeterli
+   kaydı gerekir. Gece yarısında eski oran kaldırılır. Yeni günlük tahmin
+   yazılana kadar `unavailable` beklenebilir.
+6. Sorunda `shadow-display --disable` çalıştırıp ekranı yenile.
+   `closed` ve `forecast=null` beklenir. Tahmin kartının 503'ü fiyat
+   ekranını durdurmaz. Dosya ve parmak izlerine müdahale etmeden kaynak
+   uyuşmazlığını incele. Aynı doğrulanmış raporla yeniden açılabilir.
 
-API açıkken yalnız tahmin durumunu okumak için:
+Açık API'de yalnız tahmin durumunu okumak için şu komutu kullan.
 
 ```powershell
 Invoke-RestMethod -Uri 'http://127.0.0.1:8000/api/v1/products/apple_iphone_15_128gb/prediction' -MaximumRedirection 0 -TimeoutSec 10 | Select-Object state, reasons, forecast
 ```
 
-Onay kapalıyken `state=closed`, `forecast` boş beklenir. Açık gösterimdeki
-durumlar ve güvenli hata cevapları [API sözleşmesinde](#salt-okunur-fastapi)
-açıklanır; bu okuma eğitim, yeni tahmin veya onay yazımı yapmaz.
+Kapalı gösterimde `state=closed` ve boş `forecast` beklenir.
+Diğer durumlar [API sözleşmesindedir](#salt-okunur-fastapi).
 
 #### Otomatik doğrulamanın kapsamı
 
-`tests/test_api_ui_integration.py`, ayrı `_test` veritabanındaki ürün ve
-fiyatları yapay resmi tahmin, kaynak görüntü ve gösterim onayıyla birleştirir.
-Gerçek kayıt okuyucu → FastAPI → yerel istemci → Streamlit AppTest zinciri
-çalışır; yalnız test klasörü ve saat dışarıdan verilir. HTTP taşıması süreç
-içindedir; canlı API, pazaryeri veya gerçek veritabanı kullanılmaz.
+`tests/test_api_ui_integration.py`, `_test` DB ve yapay tahmin/onayla
+gerçek kayıt okuyucu, FastAPI, yerel istemci ve Streamlit AppTest'i
+süreç içinde sınar. Gün değişimi, ürün ve aralık seçimi, yeni/eksik
+tahmin, yetersizlik, bozuk kayıt veya kaynak, düzelme ve CLI kapatma
+kontrol edilir. İstek sırasında model eğitimi, tahmin veya pickle
+yüklemesi testi düşürür. `tests/test_prediction.py` kütüphane/ağ
+sınırını, `tests/test_ml_shadow_display.py` kesin rapor ve onay
+bağlarını denetler. Canlı ve görsel kabul ayrı kanıtlarla değerlendirilir.
 
-Bu zincir; güncel fiyatla başlangıç fiyatının ayrılmasını, üç yetersizlik
-gerekçesini, İstanbul gece yarısını, sonraki günlük kaydı, telefon/aralık
-değişimini, bozuk hash/tekrarlı anahtar/eksik kaynak sonrasında eski oranın
-kaldırılmasını, düzelme ve CLI ile kapatmayı denetler. Dosyaların değişmediği
-kontrol edilir; istek sırasında eğitim, tahmin ve pickle yükleme çağrıları
-testi düşürür. `tests/test_prediction.py` ayrıca temiz süreçte model
-kütüphanelerinin yüklenmediğini ve dış ağ açılmadığını;
-`tests/test_ml_shadow_display.py` kesin raporla açılışı, uygunsuz raporun
-reddini ve aynı/farklı rapor bağlarını sınar. Bunlar modelin canlı başarısı
-veya yukarıdaki görsel kontrolün tamamlandığı anlamına gelmez.
 
 ### Gölge işletiminde kontrol komutları
 
@@ -3858,24 +3497,16 @@ if ($shadowLog) {
 }
 ```
 
-Haftanın loglarını görmek için ilk komuttaki `Select-Object -First 1`
-sınırını kaldırıp ilgili tarihli dosyalar seçilir. `LastTaskResult` tek
-başına sonucun bugünkü çalışmaya ait olduğunu göstermez. Görev hâlâ
-`Running` ise log henüz son çıkışı taşımayabilir; günlük komutun tur bekleme
-aralığı 5 dakika, üst sınırı 90 dakika, görevin süre sınırı 2 saattir.
-Çalışan işi kesmek veya `tahmin.lock` dosyasını silmek kontrol adımı değildir.
+Haftanın logları için `Select-Object -First 1` sınırını kaldır ve
+tarihleri seç. `Running` durumunda son çıkış henüz yazılmamış olabilir.
+Kontrol sırasında görevin kendi süresinde bitmesini bekle.
+[Günlük bekleme ve kilit kuralları](#günlük-gölge-çalışması-python--m-appml-shadow-daily)
 
-Yeni değerlendirme için [gölge değerlendirmesi bölümündeki](#gölge-değerlendirmesi-python--m-appml-shadow-evaluate)
-`snapshot` → `shadow-evaluate` komutları kullanılır. Görüntü gerçek
-veritabanını yalnız okur; kullanıcı bu komutları toplama/keşif bittikten
-sonra çalıştırır. `snapshot` çıkış 3 verirse değerlendirmeye geçilmez,
-diğer iş bittikten sonra yeni zaman damgasıyla tekrar denenir. Her rapor
-yeni klasöre yazılır; eski rapor ve tahminlere dokunulmaz.
-
-Yakın tarihli günlük görevin doğrulanmış görüntüsü de `--snapshot` girdisi
-olabilir; aynı dosya için yeniden DB okuması gerekmez. Raporun kapsadığı son
-gün, görüntünün okuma anından gelir. Görevden sonra yeni veri oluşmuşsa o veri
-eski görüntüde bulunmaz; yeni değerlendirme klasörü daha yeni veri sağlamaz.
+[Değerlendirme komutlarını](#gölge-değerlendirmesi-python--m-appml-shadow-evaluate)
+toplama ve keşif tamamlandıktan sonra kullanıcı çalıştırır. `snapshot`
+çıkış 3 verirse diğer iş bitince yeni klasörle tekrar dene. Yakın tarihli
+görevin doğrulanmış görüntüsünü de kullanabilirsin. Kapsamı görüntünün
+okuma anı belirler. Her rapor için yeni bir çıktı klasörü seç.
 
 Başarılı değerlendirmeden sonra aynı komut bloğunun `$shadowReport`
 değişkeniyle özet alanları okunabilir. Bu okuma, raporu yeniden üretmez:
@@ -3897,39 +3528,32 @@ anlamı ilgili komut bölümündedir. Geçerli bir raporun kapısı
 
 ### Gölge kayıtlarının kontrol sırası
 
-Kontrolün takvimi ve kapanış koşulları [6.5 planındadır](../proje_plani.md#65-kontrol-planı).
-Aşağıdaki sıra mevcut görev ve raporların doğrulanması içindir.
+Takvim ve kapanış koşulları [6.5 planındadır](../proje_plani.md#65-kontrol-planı).
 
-**İlk otomatik çalışma kontrolü:** kurulum çıktısı veya eski bir `LastTaskResult = 0`
-yeterli değildir; son çalışma zamanı, log tarihi ve `(zamanlanmış)` başlığı
-aynı çalışmayı göstermelidir. Görev hâlâ çalışıyorsa tur/keşif bekleme
-satırlarına bakılır, tamamlanmadan sonuç verilmez. Yeni tahmin yoksa bu tek
-başına hata değildir; görüntüdeki uygun başlangıçların önceden kayıtlı olup
-olmadığı kontrol edilir. İlk tetikleme sorununu örtecek elle çalıştırmadan
-önce görev ve log kanıtı korunur. 22:00 ve 10:00 fiyat turları için bilgisayar
-açık, uyanık ve oturum açık tutulur; kilit ekranı uygundur. Sonradan çalışan
-gölge görevi, kaçmış bir turun geçmiş fiyatlarını geri getiremez.
+**İlk otomatik çalışma.** Görev zamanı, log tarihi, `(zamanlanmış)`
+başlığı ve çıkış 0 aynı çalışmaya ait olmalıdır. Görev sürüyorsa bekleme
+satırlarını incele. Yeni tahmin yoksa uygun başlangıçların zaten
+kayıtlı olduğunu kontrol et. Elle denemeden önce görev/log kanıtını
+koru. 10:00 ve 22:00 fiyat turları için bilgisayar açık, uyanık ve
+oturum açık olmalıdır. Kilit ekranı uygundur. Kaçan fiyat turunun geçmiş
+gözlemlerini gölge görevi geri getiremez.
 
 **Haftalık raporda bakılacaklar:**
 
-- Haftadaki her günün zamanlanmış logu ve son çıkışı kontrol edilir; eksik
-  log, kapanmamış log veya hata ayrıca araştırılır. Keşfin yaklaşık bitiş
-  saati yeterli kanıt değildir; bitiş logu/görev durumu görülür. Yeterli
-  kimlik kanıtıyla otomatik kabul edilen bağlantılar tek tek elle doğrulanmaz.
-- `health.missing_records` boş olmalıdır: başlangıcı bulunup resmi tahmini
-  olmayan ürün-günler araştırılır. `no_start_price`, `not_yet_observed` ve
-  NULL etiketler ayrı okunur; sabit günlük ürün/kayıt sayısı beklenmez.
-- Yarım klasörler ile zamanında, ilk toplu doldurma ve geç kayıt sayıları
-  incelenir. Önceki rapordaki kayıt manifest SHA-256'ları yeni raporun
-  `input.records` envanteriyle karşılaştırılır; eski kayıtlar aynı kalmalı,
-  yeni klasörler ayrıca görünmelidir. Bütünlük uyuşmazlığı normal kabul edilmez.
-- Asıl topluluğun veri desteği, kapı sonucu ve ölçümleri okunur; ikincil
-  etiketler ve kırılımlar yalnız açıklamadır. Kısa dönemde NULL güven aralığı
-  veya `Değerlendirilemedi` geçerli rapor sonucu olabilir; çıkış 0 modelin
-  gösterim koşullarını karşıladığını söylemez. Erken iyi/kötü puana göre
-  model, eşik veya kesin tarih değiştirilmez.
-- Kontrol bitince [haftalık yedek](#haftalık-yedek) alınır; iki kopyanın
-  `verify` sonucu aynı paket SHA-256'sını göstermelidir.
+- Her günün zamanlanmış logunu ve son çıkışını kontrol et. Eksik,
+  kapanmamış veya hatalı logu araştır. Keşif bitişini log/görevle doğrula.
+  Yeterli kimlik kanıtıyla kabul edilen sayfalar otomatik eklenir.
+- `health.missing_records` boş olmalı. `no_start_price`,
+  `not_yet_observed` ve NULL etiket ayrı okunur. Beklenen kayıt sayısı
+  geçerli başlangıçlara bağlıdır.
+- Yarım klasörleri, ertesi gün kayıtlarını, ilk toplu doldurmayı ve geç
+  kayıtları incele. Önceki kayıt manifestleri `input.records` içindeki
+  karşılıklarıyla eşleşmelidir.
+- Asıl topluluğun veri desteğini ve kapı sonucunu oku. Kısa dönemde
+  NULL aralık veya “Değerlendirilemedi” geçerli sonuçtur. Ara rapor
+  model, eşik ve kesin tarih için karar oluşturmaz.
+- [Haftalık yedeği](#haftalık-yedek) al ve iki `verify` çıktısında
+  paket SHA-256 değerini karşılaştır.
 
 **Sorun çıkarsa izlenecek sıra:**
 
