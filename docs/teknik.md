@@ -3612,60 +3612,54 @@ dilimi sayılır.
 
 ## Docker: imaj ve Compose temeli
 
-9.3'te imaj ve servis tanımları, 9.4'te paket/DB hazırlığı, 9.5'te API/ekran
-bağlantısı, aktarım bildirimi ve gösterim bakım komutu uygulanmıştır.
-9.6'da tek PowerShell girişi ve paket geçişi eklenmiştir;
-[tamamlanan Docker adımları](../proje_plani.md#docker-yazılımı-ve-yerel-kabul-9297). Mevcut
-Windows görevleri ve veritabanı bu dosyalarla değiştirilmez.
+Teslim ortamı ayrı Docker kopyasını kurar. İmaj, paket aktarımı,
+API/ekran bağlantısı ve ortak PowerShell girişi
+[Docker adımlarında](../proje_plani.md#docker-yazılımı-ve-yerel-kabul-9297)
+kayıtlıdır. Windows görevleri ve canlı veritabanı kaynak sistemde kalır.
 
 ### İmaj ve servis tanımları
 
-- Python tabanı `3.13.15-slim-bookworm`, DB tabanı `17.11-bookworm`;
-  SHA-256 ile sabitlenmiştir. LightGBM için `libgomp1` de sürümüyle sabittir.
-  Çalışma bağımlılıkları yalnız kilitteki wheel hash'leriyle kurulur;
-  `pip check` imaj kurulurken çalışır. Yerel `.venv` kullanılmaz/değiştirilmez.
-- Uygulama `/app/app` içindedir; çalışma dizini `/app` olduğu için ML'nin
-  mevcut göreli yol çözümlemesi korunur. İmaj gerçek veri, model, rapor veya
-  parola içermez. Tek ayar istisnası `/opt/delivery/shadow.json` ön kayıt
-  referansıdır; model kimliği/yol sözleşmesini doğrular, çalışma ayarı yerine
-  geçmez. SQL okuma rolü betiği ve bağımlılık kilidi de imajdadır.
-  `.dockerignore` yalnız gerekli kaynakları izin listesine
-  alır; Dockerfile da genel `COPY .` kullanmaz.
-- API ve UI `10001:10001` kullanıcısıyla, salt okunur dosya sistemi ve
-  yazılabilir geçici `/tmp` alanıyla çalışır. Giriş komutu süreç devri yapar;
-  Compose `init: true` kullanır. Varsayılan imaj komutu yalnız Python
-  sürümünü gösterir; DB veya uygulama servisi başlatmaz.
-- `db`, `api`, `ui` servislerinde `restart: "no"` vardır. DB portu ve API
-  portu bilgisayara açılmaz; yalnız API'nin ağ alanında
-  `127.0.0.1:8503 → 8501` yayımlanır. UI `network_mode: service:api`
-  kullanır; yerel istemcinin `127.0.0.1:8000` hedefi değişmez.
-- Başlangıç DB sağlığı → API `/health` → UI sağlığı sırasındadır.
-  API–UI yeniden oluşturulurken birlikte ele alınmalıdır; `depends_on`
-  içindeki `restart: true` otomatik bir servis gözetmeni değildir.
-- Projeye ait `database`, `configuration`, `shadow` isimli kalıcı alanlar
-  vardır. PostgreSQL 17 verisi `/var/lib/postgresql/data` içindedir. API'ye
-  `/app/config` ve `/app/data/ml/golge` salt okunur bağlanır. `-p` ile ayrı
-  Compose proje adları kullanıldığında kalıcı alanlar da ayrılır.
+- Python `3.13.15-slim-bookworm` ve PostgreSQL `17.11-bookworm` imajları
+  SHA-256 ile sabittir. LightGBM için `libgomp1` sürümü de sabittir.
+  Bağımlılıklar kilitli wheel hash'leriyle kurulur ve `pip check` çalışır.
+- Uygulama `/app/app` içindedir ve `/app` göreli ML yollarının köküdür.
+  İmajda yalnız gerekli kaynak, bağımlılık kilidi, SQL okuma rolü betiği
+  ve `/opt/delivery/shadow.json` ön kayıt referansı bulunur. Referans
+  model kimliği ile yolları doğrular. Gerçek veri, model, rapor, parola
+  ve çalışma ayarı Prepare ile sağlanır. `.dockerignore` izin listesiyle,
+  Dockerfile açık `COPY` yollarıyla sınırlandırılır.
+- API ve UI `10001:10001` ile, salt okunur dosya sistemi, yazılabilir
+  `/tmp` ve `init: true` kullanır. Giriş komutu süreci devreder.
+  Varsayılan imaj komutu Python sürümünü yazar.
+- `db`, `api` ve `ui` için `restart: "no"` geçerlidir. UI
+  `network_mode: service:api` ile API ağını paylaşır. Yalnız
+  `127.0.0.1:8503 → 8501` yayımlanır. UI'nin API hedefi
+  `127.0.0.1:8000` olarak kalır.
+- Sağlık sırası DB → API `/health` → UI. Gerekli yeniden oluşturma
+  API ve UI için birlikte yapılır. `depends_on.restart: true`
+  Compose işlemine bağlıdır.
+- `database`, `configuration` ve `shadow` alanları Compose proje adına
+  (`-p`) göre ayrılır. PostgreSQL verisi `/var/lib/postgresql/data`
+  altındadır. API, `/app/config` ve `/app/data/ml/golge` alanlarını salt
+  okunur bağlar.
 
 ### Gizli dosyalar
 
-`DELIVERY_STATE_DIR` yalnız Docker'a ait durum klasörünü seçer; varsayılanı
-proje kökündeki `data/teslim` klasörüdür. Compose aşağıdaki **hazırlanmış**
-dosyaları bekler; `teslim.ps1 -Action Prepare` bunları paket kimliğine ait klasörde
-ilk hazırlık sırasında üretir:
+`DELIVERY_STATE_DIR` varsayılan `data/teslim` konumunu değiştirir.
+İlk Prepare, paket kimliğine bağlı ayrı parolaları üretir.
 
-- `secrets/admin_password`: DB'ye ve yalnız bakım profilindeki `transfer`
-  servisine verilir; PostgreSQL `POSTGRES_PASSWORD_FILE` kullanır.
-- `secrets/api_password`: API ve `transfer` servisine verilir. UI almaz.
-  `--api` giriş seçeneği
-  içeriği `/tmp/api-pgpass-*` dosyasına `0600` izinle yazar ve `PGPASSFILE`
-  yolunu yalnız başlatacağı sürece verir. Parola URL'ye veya çıktıya eklenmez.
+- `secrets/admin_password` DB ve bakım profili `transfer` içindir.
+  DB dosyayı `POSTGRES_PASSWORD_FILE` ile okur.
+- `secrets/api_password` API ve `transfer` içindir. `--api` giriş
+  seçeneği `/tmp/api-pgpass-*` dosyasını `0600` izinle oluşturur ve
+  `PGPASSFILE` yolunu yalnız başlattığı sürece verir. Parola URL'ye
+  veya çıktıya yazılmaz. UI bu hazırlığı kullanmaz.
 
-Giriş yardımcısı yalnız `db:5432` hedefini, `fiyat_takip` ve ona ait
-`fiyat_takip_api` rolünü kabul eder; testte `_test` DB ve
-`fiyat_takip_api_test` rolü kullanılabilir. URI içindeki parola, bağlantı
-parametresi ve başka hedefler reddedilir. Hazırlık hatası güvenli Türkçe
-mesajla 1, komut yokluğu 2 döner. UI bu hazırlık yolunu çalıştırmaz.
+Giriş yardımcısı sabit `db:5432` üzerinde `fiyat_takip` ve
+`fiyat_takip_api` çiftini kabul eder. Testte `_test` DB ve
+`fiyat_takip_api_test` kullanılır. Parolalı/parametreli URI ve diğer
+hedefler reddedilir. Hazırlık hatası güvenli mesajla 1, komut yokluğu
+2 döner.
 
 ### Temel doğrulama ve kilit yenileme
 
@@ -3677,12 +3671,11 @@ docker build --platform linux/amd64 -t fiyat-takip-teslim:local .
 docker run --rm --network none --read-only --tmpfs /tmp:mode=1777 fiyat-takip-teslim:local python --version
 ```
 
-Bunlar veri kopyası oluşturmaz. Paket/DB hazırlığı aşağıdadır. Hazır kopyanın
-API/ekranını açma komutları [servis bağlantısı](#docker-servis-bağlantısı-ve-gösterim-bakımı)
-bölümündedir; tek PowerShell giriş noktası aşağıda açıklanır.
+Bu kontroller imajı doğrular. Hazır kopyanın normal açılışı
+[Start ile yapılır](#docker-tek-komutla-kullanım).
 
-Kilidi yenilemek gerektiğinde önce Linux'ta yeniden çözümleme yapılır;
-Windows `pip freeze` çıktısı kilit olarak kullanılmaz. Proje kökünde:
+Bağımlılık kilidi için paket çözümlemesini Linux'ta yeniden çalıştır.
+Windows `pip freeze` kilit girdisi olarak kullanılmaz.
 
 ```powershell
 New-Item -ItemType Directory -Force artifacts/docker93 | Out-Null
@@ -3693,20 +3686,20 @@ docker run --rm --platform linux/amd64 --mount $dockerResolveMount --workdir /wo
 .venv\Scripts\python.exe -m tools.docker_lock lock --report artifacts/docker93/report.json --output requirements-linux.lock
 ```
 
-`lock` yalnız pip raporu sürüm 1 ve Python 3.13.15 / CPython / Linux x86_64
-ortamını kabul eder. Her paket tekil, hash'li, yayımdan çekilmemiş wheel
-olmalı; doğrudan URL girdisi reddedilir. Doğrudan gereksinimler ve ek
-özellikler `pyproject.toml` ile karşılaştırılır. Kilitte bağımlılık girdisinin
-SHA'sı da bulunur. Çözümlemenin seçtiği sürümler incelenir; kilit değişince
-imaj kurulumu, testler ve biçim kontrolleri yeniden doğrulanır.
+`lock`, pip raporu sürüm 1 ve Python 3.13.15 / CPython / Linux
+x86_64 bekler. Wheel'ler tekil, hash'li ve yayında olmalıdır. Doğrudan
+URL reddedilir. Gereksinim ve ek özellikler `pyproject.toml` ile
+eşleşmelidir. Kilit, bağımlılık girdi SHA'sını da taşır. Sürüm seçimini
+incele ve kilit değişince imajı, testleri ve biçimi doğrula.
+
 
 ## Docker: paket ve veritabanı aktarımı
 
 ### Dışa aktarma ve paket sözleşmesi
 
-Kaynak sistemde, proje kökünden ve toplama/keşif/gölge kaydı yazımı yokken
-kullanıcı çalıştırır. `DATABASE_URL` mevcut şifresiz kaynak adresidir;
-parola standart Windows `pgpass.conf` dosyasından okunur.
+Kaynak Windows sisteminde kullanıcı proje kökünden, toplama/keşif/gölge
+yazımı bittikten sonra çalıştırır. `DATABASE_URL` şifresizdir. Parola
+Windows `pgpass.conf` dosyasından okunur.
 
 ```powershell
 $teslimPaket = "data\teslim\paketler\paket_$(Get-Date -Format yyyyMMdd_HHmmss)"
@@ -3714,51 +3707,46 @@ $teslimPaket = "data\teslim\paketler\paket_$(Get-Date -Format yyyyMMdd_HHmmss)"
 .venv\Scripts\python.exe -m app.delivery verify --bundle $teslimPaket
 ```
 
-Varsayılan araç `C:\Program Files\PostgreSQL\17\bin\pg_dump.exe`;
-başka konum için `--pg-dump <DOSYA>` verilebilir. Araç sürümü 17 olmalıdır.
-Çıktı klasörü yeni olmalı ve resmi gölge kökünün içinde olmamalıdır.
-Kaynak URI'de parola, `passfile` veya `service`; ortamda `PGPASSWORD`,
-`PGPASSFILE` veya `PGSERVICE` varsa dışa aktarma reddedilir.
+PostgreSQL 17 aracı gerekir. Varsayılan yol
+`C:\Program Files\PostgreSQL\17\bin\pg_dump.exe`, seçenek
+`--pg-dump <DOSYA>`dır. Çıktı klasörü yeni ve resmî gölge kökünün
+dışında olmalıdır. Kaynak URI'de parola, `passfile`, `service` ve
+ortamda `PGPASSWORD`, `PGPASSFILE`, `PGSERVICE` reddedilir.
 
-- Ortak toplama/keşif kilidi ve `tahmin.lock` beklemeden alınır. Süren
-  (`running`) tur varsa işlem durur; geçmişte kapanmış `interrupted`
-  turlar veri olarak korunur.
-- Bağlantı varsayılan olarak salt okunurdur. `REPEATABLE READ READ ONLY`
-  işleminde tablo/görünüm satır sayıları, sıralı satır SHA'ları ve kimlik
-  dizisinin durumu okunur. `pg_export_snapshot()` ile aynı işlem görüntüsü
-  `pg_dump --format=custom --snapshot=…` sürecine verilir. Yedekleme süreci
-  de `default_transaction_read_only=on` kullanır; parola argümana taşınmaz.
-- Katalog/DB eşleşmesi, migration dosyası checksum'ları ve gerçek PostgreSQL
-  17 şema yapısı doğrulanır. Yapı denetimi tabloları, sütunları, indeksleri,
-  kısıtları, görünümü, fonksiyonları, tetikleyicileri ve dizi tanımını kapsar.
-  Sabit yapı parmak izi 001–005'e aittir; yeni migration eklenirse bu
-  sözleşme test veritabanından yeniden doğrulanarak güncellenmelidir.
-- `config/` altındaki katalog, keşif, runtime, Cimri eşleştirmesi ve gölge
-  ön kaydı; dondurulan modelin etiket/girdi/bölme/model kanıtları;
-  manifesti tamamlanmış resmi tahmin/değerlendirme klasörleri kopyalanır.
-  Bu kayıtların bağlı olduğu kaynak görüntüler SHA klasörüyle taşınır.
-  Eski raporların içindeki Windows yolları değiştirilmez; görüntüler
-  içerik SHA'sıyla eşleştirilir.
-- Eğitim, yeni tahmin ve pickle yükleme yapılmaz. Modelin ham eğitim
-  görüntüsü yerine mevcut etiket/girdi/bölme/model kanıt zinciri doğrulanır;
-  resmi kayıtların kaynak görüntüleri zorunludur. Yarım klasörler, kilitler,
-  sırlar, yerel devir dosyaları ve Windows gösterim onayı alınmaz.
+- Toplama/keşif kilidi ve `tahmin.lock` beklemeden alınır. `running`
+  tur işlemi durdurur. Kapanmış `interrupted` turlar pakete girer.
+- `REPEATABLE READ READ ONLY` işleminde tablo/görünüm sayısı, sıralı
+  satır SHA'ları ve kimlik dizisi okunur. `pg_export_snapshot()`
+  aynı görüntüyü `pg_dump --format=custom --snapshot=…` sürecine
+  verir. Döküm `default_transaction_read_only=on` ile çalışır.
+  Parola argümana eklenmez.
+- Katalog/DB, migration checksum'ları ve PostgreSQL 17 yapısı
+  doğrulanır. Tablo, sütun, indeks, kısıt, görünüm, fonksiyon,
+  tetikleyici ve dizi tanımları kapsamdadır. Yapı parmak izi 001–005'e
+  aittir. Yeni migration bu sözleşmenin test DB'de doğrulanmasını ve
+  güncellenmesini gerektirir.
+- Katalog, keşif, runtime, Cimri eşleştirmesi ve gölge ön kaydı;
+  modelin etiket/girdi/bölme/model kanıtı; tamamlanmış resmî
+  tahmin/değerlendirme ve zorunlu kaynak görüntüleri kopyalanır.
+  Görüntüler içerik SHA'sına göre taşınır. Raporlardaki eski Windows
+  yolları korunur. Yarım klasör, kilitler, sırlar, devir dosyaları ve
+  Windows gösterim onayı paket dışındadır. Model kanıtı eğitim, yeni
+  tahmin veya pickle yüklemesi olmadan doğrulanır.
 
-`manifest.json` en son yazılır. Biçim sürümü, UTC hazırlama zamanı, Git
-commit'i, çalışma ağacının değişmiş olup olmadığı, kod/bağımlılık içerik
-SHA'sı, DB/migration/yapı kanıtı, model manifest SHA'sı ve tüm dosya SHA'ları
-bulunur. Paket kimliği bu manifestin ham dosya SHA'sıdır. İçerik uyumluluğu
-kod hash'iyle bağlanır; yalnız aynı Git SHA'sı yeterli sayılmaz.
-Kod metinlerinin CRLF/LF farkı normalize edilir; kanıt dosyalarının ham
-baytları aynen korunur.
+En son yazılan `manifest.json` biçim, UTC hazırlama anı, Git commit'i,
+çalışma ağacı durumu, kod/bağımlılık SHA'sı, DB/migration/yapı kanıtı,
+model SHA'sı ve dosya SHA'larını taşır. Paket kimliği ham manifest
+SHA'sıdır. Uyumluluk kod içeriğine dayanır. Kodda CRLF/LF normalize
+edilir. Kanıt dosyalarının baytları korunur.
 
-`verify` eksik/fazla dosya, güvenli olmayan yol, sembolik bağlantı/Windows
-yeniden yönlendirmesi, bozuk hash, yabancı model, yinelenen ürün-gün,
-eksik/uyuşmayan kaynak görüntü ve uyumsuz kod/migration/şemayı reddeder.
-Cevap tek JSON satırıdır; parola veya olasılık dökmez. CLI çıkışları:
-başarı `0`, doğrulama/bağlantı/araç hatası `1`, argüman hatası `2`, ortak
-kilit dolu `3`. Başarısız dışa aktarmanın yarım klasörü korunur; yeni bir
-klasörle tekrar denenir, üzerine yazılmaz.
+`verify` eksik/fazla dosyayı, güvensiz yolu, sembolik bağlantıyı veya
+Windows yeniden yönlendirmesini reddeder. Hash, model, tekil ürün/gün,
+kayıtların kaynak görüntüleri, kod, migration ve şema uyuşmalıdır.
+Tek JSON satırı parola veya olasılık içermez. Başarıda `0`,
+doğrulama/bağlantı/araç hatasında `1`, argüman hatasında `2`, meşgul
+ortak kilitte `3` döner. Yarım
+dışa aktarma korunur. Yeni klasörle tekrar denenir.
+
 
 ### Docker kopyasını hazırlama
 
@@ -3768,155 +3756,112 @@ Paket desteklenen Windows teslim bilgisayarında şu girişle hazırlanır:
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\teslim.ps1 -Action Prepare -Bundle <PAKET_KLASORU>
 ```
 
-`Bypass` yalnız bu PowerShell süreci içindir; bilgisayarın kalıcı çalışma
-ilkesi değiştirilmez. Prepare/Start/Rollback kapalı yerel Docker Desktop'ı
-gizli olarak açmayı dener, Linux motorunu en fazla iki dakika bekler.
-İlk Docker/WSL2 kurulumu kullanıcı tarafından tamamlanmış olmalıdır.
-Teslim bilgisayarında Python/PostgreSQL kurulumu gerekmez. İlk Prepare,
-varsayılan uygulama imajı yoksa veya paketin koduyla uyuşmuyorsa imajı
-oluşturur; gerekirse sabit PostgreSQL imajını indirir. Bu aşamada internet
-gerekebilir. Uygun olmayan özel imaj ve uyumsuz paket reddedilir.
+`Bypass` yalnız çağrılan PowerShell süreci içindir. Prepare, Start ve
+Rollback gerekirse Docker Desktop'ı gizli açmayı dener ve Linux
+motorunu en çok iki dakika bekler. Docker/WSL2 ilk kurulumu kullanıcıya
+aittir. Teslimde yerel Python/PostgreSQL gerekmez. İlk Prepare
+uyumlu varsayılan imaj yoksa imajı oluşturur ve gerekirse sabit PostgreSQL
+imajını indirir. Bu adım internet isteyebilir. Uyumsuz özel imaj veya
+paket reddedilir.
 
-1. Sabit yerel `desktop-linux` motoru kontrol edilir. Paket imaj içinde,
-   ağ kapalı ve dosyalar salt okunurken doğrulanır; PostgreSQL 17.11
-   imajıyla arşiv listesi de hedef DB oluşturulmadan okunur.
-2. Paket kimliğinin ilk 24 karakterinden ayrı Compose proje adı;
-   `data/teslim/<TAM_SHA>/` altında ayrı hazırlık durumu oluşturulur.
-   İki ayrı rastgele Docker parolası üretilir; Windows dosya ACL'si
-   yalnız mevcut kullanıcı ve SYSTEM erişimine açılır.
-3. Yalnız `db` başlatılır. Yeni boş hedefte giriş yapamayan
-   `fiyat_takip_owner` rolü oluşturulur. Arşiv, yalnız bu konteynerdeki
-   yerel PostgreSQL soketi üzerinden tek işlemde geri yüklenir;
-   kaynak bağlantı adresi hedefe aktarılmaz. DB'nin iç adı korunur.
-4. Kaynak/kopya satır, şema ve dizi kanıtları eşleştirilir. DB/şema/nesne
-   sahipliği ayrı NOLOGIN rolüne verilir. Mevcut `api_okuma_rolu.sql`
-   değiştirilmeden kullanılır; API rolünün SELECT izinleri ve yazma
-   yetkisinin yokluğu `validate_readiness` ile doğrulanır.
-5. Ayar/ML alanlarına doğrulanmış dosyalar kopyalanır. Kalıcı alanda
-   `.delivery_ready.json`, bilgisayarda `prepared.json` en son oluşturulur.
-   Yeni kopya gösterim kapalı başlar. Ekrana geçiş aşağıdaki seçim kuralına bağlıdır.
+1. Sabit `desktop-linux` motorunda paket, ağsız ve salt okunur
+   doğrulanır. PostgreSQL 17.11 imajı hedef DB'yi oluşturmadan arşiv
+   listesini okur.
+2. Paket SHA'sının ilk 24 karakteri Compose proje adını belirler.
+   Hazırlık `data/teslim/<TAM_SHA>/` altında tutulur. Ayrı rastgele
+   parolaların Windows ACL'si mevcut kullanıcıya ve SYSTEM'e açıktır.
+3. Yalnız `db` açılır. Yeni hedefte NOLOGIN `fiyat_takip_owner`
+   oluşturulur. Arşiv konteynerin yerel soketinden tek işlemde yüklenir.
+   DB adı korunur. Kaynak adresi hedefe verilmez.
+4. Satır, şema ve dizi kanıtları eşleşir. DB, şema ve nesne sahibi
+   NOLOGIN rolüdür. `api_okuma_rolu.sql` kullanılır.
+   `validate_readiness` API'nin SELECT yetkisini ve yazma yetkisinin
+   bulunmadığını doğrular.
+5. Ayar ve ML dosyaları kopyalanır. Kalıcı alanda
+   `.delivery_ready.json`, bilgisayarda `prepared.json` en son
+   yazılır. Yeni kopyada gösterim kapalıdır.
 
-`bootstrap`, `finalize`, `check` alt komutları bakım servisi içindir.
-Yazan bağlantı Linux Docker konteyneri dışında açılmaz; yalnız sabit
-`db:5432` hedefini kabul eder. CLI bunların hata ayrıntılarını gizler.
-`transfer` profilindeki servis yapılandırma ve gölge alanlarını yazabilir;
-normal API bağlantıları salt okunurdur. UI hiçbir DB sırrı almaz.
+`bootstrap`, `finalize` ve `check` bakım komutlarıdır. Linux Docker
+dışında veya `db:5432` dışında yazan bağlantı açılmaz. CLI ayrıntılı
+hatayı gizler. `transfer` ayar ve gölge alanlarını yazabilir. API
+salt okunur bağlanır. UI DB sırrı almaz.
 
-Aynı paket tekrar hazırlanırsa DB geri yüklenmez: mevcut veri, dosya,
-sahiplik ve okuma rolü yeniden doğrulanır. Hazırlık kaydı ve veri değişmez.
-Başarısız/yarım alanın üzerine yazılmaz; alan otomatik silinmez.
-Başka paketlerin DB/kalıcı alanları kullanılmaz veya silinmez. Yeni pakete
-ekran geçişi ve geri dönüş aşağıdaki ortak girişten yapılır.
+Aynı pakette Prepare, hazır veri, dosyalar, sahiplik ve okuma rolünü
+yeniden doğrular. Geri yükleme tekrarlanmaz. Yarım veya başka pakete
+ait alan korunur. Gerçek kopyada izinler salt okunur SQL ile incelenir.
+Yazmanın reddi yapay `_test` kopyasında sınanır.
+[İlk aktarım kabulü](arsiv/teknik_2026-11-23.md#docker-kopyasını-hazırlama)
 
-Yerel yapay aktarım kanıtları `artifacts/docker94/verification.json`, ilk
-gerçek paket kabulü `artifacts/docker94/acceptance.json` içindedir. Gerçek
-kabulde kaynak/kopya eşleşmesi, native kaynağın değişmemesi, dosyalar,
-sahiplik, API izinleri ve tekrar hazırlama doğrulanmıştır; kapsam sayıları
-[README Güncel kapsam](../README.md#-güncel-kapsam) tablosundadır. Gerçek
-kopyada yazma denemesi yapılmaz; yetkiler salt okunur SQL ile denetlenir.
-Yazmanın fiilen reddi yalnız yapay `_test` kopyasında sınanır. Başka
-bilgisayarda kurulum kabulü yapılmadı; [teslim sınırıdır](../proje_plani.md#6-bilinen-sınırlar-özet).
 
 ### Docker: tek komutla kullanım
 
-Proje kökünden ortak giriş `scripts/teslim.ps1` dosyasıdır. İlk kurulum,
-günlük açılış, kapatma, veri yenileme ve sorun giderme adımları
-[teslim kullanım rehberindedir](teslim.md). Aşağıda uygulanan teknik
-seçim, doğrulama ve kurtarma sözleşmesi açıklanır.
+Ortak giriş `scripts/teslim.ps1` dosyasıdır. Kullanıcı adımları
+[teslim rehberindedir](teslim.md).
 
-Export yalnız canlı Windows ortamında `.venv`, PostgreSQL 17 araçları ve
-şifresiz `DATABASE_URL` ile çalışır; siteye istek göndermez. Kaynağın mevcut
-kilit/tutarlılık kurallarını kullanır. Varsayılan çıktı yeni zaman damgalı
-paket klasörüdür; `-Output <YENI_KLASOR>` ile değiştirilebilir. Teslim kopyası
-üzerinde Export yapılmaz. Diğer işlemler yerel Python/PostgreSQL kullanmaz.
+**Export.** Kaynak Windows'ta `.venv`, PostgreSQL 17 araçları ve
+şifresiz `DATABASE_URL` kullanır. Tarama ve gölge kilitlerini korur.
+Zaman damgalı yeni klasör `-Output <YENI_KLASOR>` ile seçilebilir.
+Teslim kopyasındaki diğer işlemler yerel Python/PostgreSQL istemez.
 
-Prepare yeni kopyayı doğrular ve veritabanını hazırlar. Çalışan seçili bir
-ekran varsa yeni kopyaya geçer: önce eski API/UI durur, yeni API/UI birlikte
-açılır ve sağlık kontrolleri beklenir. Ancak başarıdan sonra seçim kaydı
-değişir; önceki DB servisi kapatılır. Başarısız açılışta aday servisler
-kapatılıp önceki ekran yeniden açılır, seçim korunur. Kurtarma da başarısızsa
-komut bunu açıkça bildirir; veriyi silmez. Ekran kapalıysa Prepare yalnız
-hazırlar ve seçer; açmak için Start gerekir. Rollback aynı geçiş kuralıyla
-seçili ve önceki paketi değiştirir. Aynı paketin Prepare işlemi seçim
-geçmişini değiştirmez ve DB'yi geri yüklemez.
+**Prepare ve Rollback.** Prepare, ekran kapalıysa paketi hazırlar ve
+seçer. Ekranı Start açar. Ekran açıksa önce eski API/UI durur, aday
+API/UI birlikte açılır. Sağlık doğrulanınca seçim değişir ve eski DB
+kapanır. Aday açılamazsa aday durur, önceki ekran yeniden açılır ve
+seçim korunur. Kurtarma hatası ayrıca bildirilir, veri korunur.
+Rollback aynı geçişi kullanarak seçili ve önceki paketi değiştirir.
+Aynı pakette Prepare seçim geçmişini ve DB'yi korur.
 
-Seçim `data/teslim/selection.json` dosyasındadır. Her kopyanın `prepared.json`
-kaydında imajın tam SHA kimliği ve kopyaya ait `compose.yaml` SHA'sı saklanır.
-Eski hazırlık kayıtları, aynı paketin başarılı Prepare doğrulamasıyla bir
-kez bu bilgiye yükseltilir; veri yeniden yüklenmez. İmajın `local` etiketi
-sonradan değişse bile Start/Rollback kayıtlı kimliği kullanır. Eski imajları,
-paket klasörlerini veya kalıcı alanları elle silmek geri dönüşü engeller.
+Seçim `data/teslim/selection.json` içindedir. Paketin `prepared.json`
+dosyası imajın tam SHA kimliğini ve o paketin `compose.yaml` SHA'sını
+tutar. Eski kayıt aynı paketin başarılı Prepare doğrulamasıyla,
+DB yüklemeden bir kez güncellenir. Start ve Rollback kayıtlı imaj
+kimliğini kullanır. Geri dönüş için eski imaj, paket ve alanlar gerekir.
 
-Start paket/model/kod bütünlüğünü ve hazır DB/rol/dosya eşleşmesini yeniden
-doğrular. Sonra DB → API → UI sağlık kontrolleri tamamlanmadan hazır mesajı
-vermez. Sağlıklı servisler yeniden oluşturulmaz. Yenileme gerekirse API ve
-UI birlikte oluşturulur; UI eski ağ alanında bırakılmaz. Normal Start,
-Stop ve Rollback imaj oluşturmaz veya indirmez. Hazırlanmış imajlar, paket
-ve kalıcı alanlar bilgisayarda bulunmalıdır. Ekran yalnız
-`http://127.0.0.1:8503` adresindedir; başka uygulamanın kullandığı 8503 portu
-zorla alınmaz. API/DB portları yayımlanmaz.
+**Start.** Paket, model, kod, hazır DB, rol ve dosya uyumu denetlenir.
+DB → API → UI sağlıklıysa hazır mesajı verilir. Sağlıklı servisler
+korunur. Yenileme gerekirse API/UI birlikte oluşturulur. Start, Stop ve
+Rollback yerel imaj ve paketleri kullanır. Ekran yalnız
+`http://127.0.0.1:8503` üzerindedir. Port başka uygulamadaysa işlem
+durur. API/DB portları yayımlanmaz.
 
-İşlemler ortak `.prepare.lock` ile birbirini dışlar; kilit doluysa beklemeden
-anlaşılır hata döner. Compose için verilen geçici ortam değişkenleri her
-çağrı sonunda geri alınır. Status/Logs/Stop kapalı motoru kendiliğinden açmaz.
-Logs sınırlı satır döndürür; Docker parolaları ve parolalı PostgreSQL
-adresleri maskelenir. Stop yalnız seçili kopyanın servislerini kapatır;
-kalıcı alan silme veya otomatik temizlik komutu yoktur.
+Ortak `.prepare.lock` meşgulse çağrı beklemeden hata verir. Geçici Compose
+ortamı çağrı sonunda geri alınır. Status, Logs ve Stop kapalı motoru
+açmaz. Logs sınırlı satır gösterir, parola ve parolalı DSN'yi maskeler.
+Stop yalnız seçili servisleri kapatır. Kalıcı alanlar korunur.
 
-PowerShell çıkışı başarıda `0`, işlem/doğrulama hatasında `1`, parametre
-bağlama hatasında PowerShell'in hata kodudur. Export, mevcut Python CLI'ın
-`0/1/2/3` çıkışını korur. `teslim_hazirla.ps1` artık aynı Prepare girişine
-yönlenir; çalışan ekran varsa paket geçişi de aynı kurala uyar.
+PowerShell başarıda `0`, işlem/doğrulama hatasında `1`, parametre
+bağlama hatasında PowerShell kodunu verir. Export Python CLI'ın
+`0/1/2/3` kodunu korur. `teslim_hazirla.ps1` aynı Prepare yolunu çağırır.
 
-Yerel komut/geçiş kanıtları `artifacts/docker96/` altındadır. 9.7'nin tekrar
-çalıştırılabilir kabulü `tools/docker_check.py` ile yapılır. Araç yalnız
-`artifacts/` altında yeni çıktı klasörü ve yerel Docker motoru kabul eder;
-kullanıcıdan kaynak DB adresi veya gerçek paket almaz. Yapay kaynağı ayrı
-`teslim_kabul_test` DB'de oluşturur, PostgreSQL 17 arşivini üretir ve yeni
-hedefe yükler. Şema/veri/rol/dosya, gerçek HTTP ve grafikler, hata/kesinti,
-kalıcılık, Linux gösterim kapısı ve güncellik denetlenir. Canlı bağlantı
-ortamı Docker çağrılarına aktarılmaz; test parolaları hata kaydında maskelenir.
+`tools/docker_check.py` yeni bir `artifacts/` çıktı klasörü ve yerel
+Docker motoru ister. Yalnız yapay `teslim_kabul_test` kaynağından
+PostgreSQL 17 arşivi üretip ayrı hedefe yükler. Şema/veri/rol/dosya,
+HTTP/grafik, hata/kesinti, kalıcılık, Linux kapısı ve güncellik denetlenir.
+Canlı bağlantı ortamı aktarılmaz. Test parolaları kayıtta maskelenir.
 
-`.github/workflows/ci.yml` içindeki ayrı Docker işi uygulama imajını kurup
-aynı aracı çalıştırır; yalnız yapay kabul raporu yüklenir. Ayrı ağsız kabul
-senaryosunda hedef ağı `internal: true` ile dışa kapatılır; normal Start adımlarında
-`--pull never` kullanılır. Ana bilgisayarın ağ ayarı değiştirilmez. Açılış
-sonrasında konteyner içindeki gerçek HTTP/grafik akışı çalışırken dış TCP
-bağlantısının kurulamadığı da sınanır. Host tarayıcı portu normal ağda ayrı
-denetlenir; internal ağın host port erişimiyle aynı kanıt sayılmaz. İkinci
-fiziksel Windows bilgisayarında deneme yapılmadı; bu yalıtılmış ağ denemesi
-onun yerine geçmez ([teslim sınırı](../proje_plani.md#6-bilinen-sınırlar-özet)).
+Ayrı CI işi imajı kurar, aynı aracı çalıştırır ve yapay raporu yükler.
+Yalıtılmış senaryoda hedef ağ `internal: true`, normal Start
+`--pull never` kullanır. Ağ ayarı konteynerle sınırlıdır. Konteyner
+içi HTTP/grafik ve dış TCP'nin başarısızlığı birlikte sınanır. Host
+tarayıcı portu normal ağda ayrıca denetlenir.
 
 ```powershell
 .venv\Scripts\python.exe tools/docker_check.py --context desktop-linux --output artifacts/docker-kabul-yeni
 ```
 
-Yerel kabul 8503 portunu kullanır; başlamadan teslim kopyası Stop ile
-kapatılır, test sonrası Start ile yeniden açılır. Test aracı yalnız kendi
-projelerini kapatır; kalıcı alanları silmez. Aynı çıktı klasörü tekrar
-kullanılmaz. Başarıda `report.json`, hatada son başarılı adımlar ve
-maskelenmiş `failure.log` korunur. Bu geliştirici kabul aracı hedef
-bilgisayardaki normal Start için gereken Python bağımlılığı değildir.
+Yerel kabul 8503 portunu kullanır. Teslim ekranını önce Stop ile
+kapat, sonra Start ile yeniden aç. Araç kendi projelerini kapatır
+ve alanları korur. Her çalıştırmada yeni çıktı klasörü seç. Başarıda
+`report.json`, hatada son başarılı adımlar ve maskelenmiş `failure.log`
+korunur. Python yalnız geliştirici kabulü için gerekir.
+[Yerel kabul ayrıntıları](arsiv/teknik_2026-11-23.md#docker-tek-komutla-kullanım)
 
-Son yerel kabul kanıtı `artifacts/docker97/verification.json` dosyasındadır:
-Docker raporu, tam pytest ve temiz Windows klasörü denemesi aynı kaynaklarla
-ilişkilendirilir. Boşluk içeren klasörde `.git`/`.venv` olmadan ilk hazırlık,
-tekrar açılış, paket geçişi/Rollback, değişen imaj etiketi, arızalı adaydan
-kurtarma, dolu port, API/UI yenileme ve RO/port/parola sınırları doğrulandı.
-Test sonrası gerçek teslim kopyası yeniden sağlıklı açıldı, orijinal seçim
-ve ilk hazırlık tarihi korundu. Bu deneme, host'ta Python/PG'nin kurulu
-olmadığını veya ikinci fiziksel Windows PC kabulünü kanıtlamaz. Kullanıcı onaylı
-gönderim sonrasında aynı SHA'nın normal test/biçim ve yeni Docker kabul/rapor
-işleri GitHub'da başarılı doğrulandı; kimlikler [geçmiştedir](gecmis.md).
-İkinci fiziksel Windows bilgisayarı kabulü yapılmadı; 20 Kasım kararıyla
-teslim sınırıdır.
 
 ### Docker kabul senaryoları
 
-9.7 için onaylanan kontroller aşağıdadır. Bunlar kaynak bilgisayarda ve
-CI'da yapıldı; ikinci fiziksel Windows bilgisayarındaki kullanıcı kabulü
-yapılmadı ([teslim sınırı](../proje_plani.md#6-bilinen-sınırlar-özet)).
-Yeni bilgisayara kuran kişinin kontrolleri [teslim rehberindedir](teslim.md#kabulün-kapsamı).
+Bu senaryolar kaynak bilgisayarda ve CI'da uygulandı. İkinci fiziksel
+Windows bilgisayarındaki ilk kurulum, [teslim sınırı](../proje_plani.md#6-bilinen-sınırlar-özet)
+olarak kayıtlıdır. [Kullanıcı kontrolleri](teslim.md#kabulün-kapsamı)
 
 - Boş Docker ortamına kurulum ve aynı paketi tekrar hazırlama.
 - Eksik/bozuk dosya, yanlış model veya uyumsuz şemada aktarımın reddi.
@@ -3933,30 +3878,26 @@ Yeni bilgisayara kuran kişinin kontrolleri [teslim rehberindedir](teslim.md#kab
 
 ### Docker servis bağlantısı ve gösterim bakımı
 
-Hazır paketin API'si SELECT hesabıyla Docker DB'sini, yapılandırma ve gölge
-alanlarını salt okunur açar. UI API'nin ağ alanını paylaşır; mevcut
-`http://127.0.0.1:8000` istemci sözleşmesi ve bütün HTTP uç/cevapları korunur.
-Yalnız ekran `http://127.0.0.1:8503` üzerinden sunulur. UI'ye DB adresi veya
-parolası verilmez; yalnız yapılandırma alanı salt okunur bağlanır.
+API Docker DB'sini SELECT hesabıyla, ayar ve gölge alanlarını salt
+okunur açar. UI API ağını paylaşır ve `http://127.0.0.1:8000`
+üzerindeki mevcut sözleşmeyi kullanır. Ekran
+`http://127.0.0.1:8503` üzerindedir. UI yalnız salt okunur ayar
+alanı alır, DB adresi veya parolası almaz.
 
-UI'de `DELIVERY_MANIFEST_PATH=/app/config/.delivery_ready.json` ayarı vardır.
-Kopyanın hazırlık kaydı `DeliveryState` sözleşmesiyle okunur; paket/model
-hesaplaması veya DB bağlantısı yapılmaz. Ekranda şu bilgi gösterilir:
+`DELIVERY_MANIFEST_PATH=/app/config/.delivery_ready.json` ile UI
+`DeliveryState` kaydını okur. Aktarım bildirimi şöyledir.
 
 > Teslim kopyası · Veri aktarımı: … · İstanbul · Otomatik veri toplama yapılmaz.
 
-Tarih paketin UTC hazırlanma zamanından İstanbul saatine çevrilir; ekranın
-açıldığı saatle değiştirilmez. `_test` kopyasında ayrıca gerçek fiyat
-olmadığını söyleyen test verisi uyarısı görünür. Dosya eksik, okunamaz veya
-geçersizse aktarım tarihi uyarısı gösterilir; fiyat/grafik istekleri sürer.
-Ayar verilmezse normal Windows ekranı bu dosyayı okumaz ve mevcut görünümünü
-korur. `prepared.json` bilgisayardaki seçim bilgisidir; UI, kalıcı alanın
-değişmeyen `.delivery_ready.json` dosyasını okur.
+Bildirimin İstanbul saati paketin UTC hazırlama zamanından gelir.
+`_test` kopyası yapay veri uyarısı gösterir. Dosya eksik veya geçersizse
+aktarım uyarısı görünür ve fiyat/grafik çalışır. Bu ayarı almayan
+normal Windows ekranı hazırlık kaydını okumaz. `prepared.json`
+bilgisayardaki hazırlık/seçim işlemlerine aittir.
 
-İmajın kodu değişirse önce yeni imaj ve o kodla yeni Export/Prepare gerekir.
-Eski paketin kod SHA'sı değiştirilerek uyumluluk kontrolü atlatılmaz.
-Normal açılış için yukarıdaki Start kullanılır. Yalnız gösterim bakımı için
-aynı seçili kopyanın sabit Compose/imaj bilgileriyle ortak çağrı kullanılabilir:
+Kod değişince yeni imaj ve aynı kodla yeni Export/Prepare gerekir.
+Eski paketin kod SHA'sı korunur. Günlük açılış Start ile, gösterim
+bakımı seçili kopyanın sabit Compose ve imajıyla yapılır.
 
 ```powershell
 . .\scripts\teslim_ortak.ps1
@@ -3965,52 +3906,37 @@ $teslimSecim = Get-DeliverySelection
 $teslimHazir = Read-DeliveryRecord $teslimSecim.current
 ```
 
-Gösterim bakımı, aynı paket/proje seçimiyle mevcut `shadow-display`
-doğrulamasını çağırır. Komut yalnız hazır Docker kopyasında çalışır; native
-Windows onayı aktarılmaz veya değiştirilmez. `--evaluation` paketin içindeki
-`degerlendirme_…` klasörünün **adı** olmalıdır; dış/Windows yol kabul edilmez.
+Gösterim bakımı yalnız hazır Docker kopyasında çalışır. Native
+Windows onayı aktarılmaz. `--evaluation` paketteki
+`degerlendirme_…` klasörünün **adını** alır. Dış veya Windows
+yolu reddedilir.
 
 ```powershell
 Invoke-DeliveryCompose $teslimHazir @('run', '--rm', '--no-deps', '--pull', 'never', '-T', 'transfer', 'python', '-m', 'app.delivery', 'shadow-display', '--bundle', '/bundle', '--evaluation', '<DEGERLENDIRME_KLASOR_ADI>')
 Invoke-DeliveryCompose $teslimHazir @('run', '--rm', '--no-deps', '--pull', 'never', '-T', 'transfer', 'python', '-m', 'app.delivery', 'shadow-display', '--bundle', '/bundle', '--disable')
 ```
 
-Açılış; paket ve hazır kopya, veri/şema/rol/dosya eşleşmesi, ön kayıtlı model,
-5 Ocak 2027 kesin görüntüsü, `met` sonucu ve mevcut tarih koşullarını doğrular.
-Erken açma veya tarih değiştirme CLI seçeneği yoktur. Başarısız doğrulama
-onayı açmaz; başarı JSON'unda `enabled` ve paket SHA'sı döner. CLI çıkışları
-mevcut teslim komutuyla aynıdır. Eğitim, yeni tahmin ve pickle yüklemesi
-yapılmaz; resmi kayıtlar/model/raporlar değiştirilmez.
+Açılış; paket ve hazır kopya, veri/şema/rol/dosya uyumu, ön kayıtlı
+model, 5 Ocak 2027 kesin görüntüsü, `met` sonucu ve bugünkü tarihi
+doğrular. Erken açma veya tarih parametresi yoktur. Başarı JSON'u
+`enabled` ve paket SHA'sını verir. Çıkış kodları teslim CLI'ıyla
+aynıdır. Eğitim, yeni tahmin ve pickle yüklemesi yapılmaz. Rapor, model
+ve resmî kayıtlar korunur.
 
-Hazırlık kaydındaki `display_enabled: false`, ilk hazırlık durumudur ve
-değişmez. Güncel onay yalnız gölge alanındaki `gosterim_onayi.json` içindedir;
-Linux kopyasının mutlak rapor yoluna bağlanır. `check` resmi dosya kapsamını
-aynen doğrular; yalnız bu onay ile `gosterim_onayi.lock` dosyasını ayrı
-kontrol dosyaları olarak ele alır. Açık veya kapalı onayın model, aileler,
-tarih ve paket içindeki rapor bağı doğrulanır; yabancı/bozuk onay reddedilir.
-Ek dosyalara veya sembolik bağlantılara genel bir istisna verilmez.
+Hazırlık kaydındaki `display_enabled: false` ilk durumu bildirir.
+Güncel onay Linux kopyasında mutlak rapor yoluna bağlanan
+`gosterim_onayi.json` dosyasıdır. `check` yalnız bu dosya ile
+`gosterim_onayi.lock` dosyasını ayrı kontrol dosyası sayar. Kapalı
+veya açık onayın model, aile, tarih ve paket raporu bağı doğrulanır.
+Fazladan dosya, bozuk/yabancı onay ve sembolik bağlantı reddedilir.
 
-API onayı istek sırasında okur; gösterim değişikliği için model yüklemez veya
-servis yeniden başlatmaz. Açık gösterimde İstanbul'da dünün kaydı aranır;
-yeni günün kaydı yoksa eski olasılığa dönülmez. Tahmin hatası fiyat/grafik
-cevabından ayrı kalır. Yeni her teslim paketi gösterim kapalı başlar.
+API onayı istek sırasında okur. Değişiklik servis başlatmayı veya model
+yüklemeyi gerektirmez. Gerçek olasılık yalnız İstanbul takviminde
+dünün uygun kaydından gelir. Tahmin hatasında fiyat/grafik sürer. Yeni
+teslim kopyası kapalı başlar.
+[Servis ve gösterim kabulü](arsiv/teknik_2026-11-23.md#docker-servis-bağlantısı-ve-gösterim-bakımı)
+· [Docker geliştirme geçmişi](gecmis.md#aşama-9-docker-teslim-yazılımı-ve-yerel-kabul)
 
-9.5 yerel kanıtları `artifacts/docker95/` altındadır: yapay `_test` DB ile
-servis sağlığı, UI içinden gerçek loopback HTTP, AppTest ile iki grafik ve
-bildirim; yalnız geçici yapay Linux kopyasında sabit tarihli açma/kapatma,
-güncellik ve resmi dosyaların korunması denemeleri. Bunlar gerçek modelin
-performans veya erken gösterim onayı değildir.
-
-İlk gerçek 9.5 kabulü `artifacts/docker95/acceptance.json` ile kanıtlanmıştır.
-Kullanıcının yeni paketi ayrı kopyaya alındı; native kaynak değişmeden
-satır/şema/dosya eşleşmesi, salt okunur API hesabı ve sağlıklı servisler
-doğrulandı. Gerçek API üzerinden fiyatlar ve iki grafik, telefon/aralık
-değişimi, doğru yerel aktarım tarihi ve kapalı tahmin okundu. Kapsam sayıları
-[README Güncel kapsam](../README.md#-güncel-kapsam) tablosundadır. Gerçek
-kopyada yalnız kapatma bakımı uygulandı; açılış yapılmadı veya yazma
-denemesiyle yetki sınanmadı. Bakım sonrası tekrar hazırlama veriyi/hazır
-kaydını değiştirmedi. Gerçek kabulün uygulama/test kodu, tam test ve biçim
-kanıtlarıyla hash üzerinden eşleştirilmiştir.
 
 ## Haftalık yedek
 
@@ -4119,250 +4045,139 @@ sistemi yedekten yeniden kurmak kullanıcı kararı ve ayrı plan gerektirir.
 
 ## Bilinen sınırlar
 
-- **Docker ve Windows bağlamı:** genel `COPY .` denemesinde, dışlama
-  kurallarına rağmen eski bir çıktı klasörü dolaşılırken Windows erişim
-  hatası görüldü. Güncel Dockerfile yalnız gerekli kaynakları `COPY` ile
-  alır; klasör izinlerine müdahale edilmez. Dışlama denetimi aynı
-  `.dockerignore` ile yalnız yapay dosyalar içeren ayrı bağlamda yapılır.
-  Gerçek paket/kopya ve Docker CI kabulü tamamlandı; [teslim rehberi](teslim.md)
-  bugünkü kullanımı açıklar. İkinci fiziksel Windows bilgisayarındaki ilk
-  kurulum ve host interneti kapalı kullanım kabulü yapılmadı (20 Kasım
-  kararı, teslim sınırı); yerel temiz klasör/yalıtılmış ağ denemesi bunun
-  yerine geçmez.
-- **Teslimde klasör yolu uzunluğu:** teslim kontrolü Windows PowerShell 5.1
-  ile çalışır ve 259 karakterden uzun yolları işleyemez (bu bilgisayarda
-  `LongPathsEnabled = 0`). Paket `data\teslim\paketler\<paket>\` altına
-  konduğunda proje yolunun üstüne yaklaşık 147 karakter eklenir (paketin en
-  uzun iç yolu 103 karakter). Proje yolu yaklaşık 110 karakteri aşarsa
-  Prepare yarıda kalır. 20 Kasım tam test çalışmasında 272 karakterlik
-  geçici test yolunda aynı hata görüldü; kısa yolda aynı testler geçti.
-  Kullanıcı adımı [teslim rehberindedir](teslim.md#ilk-kez-başka-bilgisayara-kurma).
-- **Bağımlılık sürümleri (20 Kasım 2026):** ML ve web paketleri
-  (`numpy`, `scikit-learn`, `lightgbm`, `fastapi`, `uvicorn`, `streamlit`,
-  `psycopg-pool`, `httpx`, `altair`) `pyproject.toml` içinde kesin sürümlüdür
-  ve yerel `.venv` ile Docker kilidinde aynıdır. Çekirdek paketler aralıkla
-  tanımlıdır: yerel `.venv` pydantic 2.13.5, curl_cffi 0.16.3, psycopg 3.3.6,
-  tzdata 2026.4; Docker kilidi pydantic 2.14.3, curl-cffi 0.17.0,
-  psycopg-binary 3.3.8, tzdata 2026.6 kullanır; CI her çalışmada aralık
-  içindeki güncel sürümleri kurar. Her ortam kendi testinden geçer. Final
-  teslime kadar güncelleme veya sabitleme yapılmaz ([plan](../proje_plani.md#bilerek-değiştirilmeyen-davranışlar));
-  CI'da dış sürüm kaynaklı kırılma görülürse sabitleme ayrı adımla yapılır.
+Tarihli saha ve kabul incelemeleri
+[arşivdeki sınırlar bölümündedir](arsiv/teknik_2026-11-23.md#bilinen-sınırlar).
 
-- **Hepsiburada arama API'si** uzun süre HTTP 403 ile engelledi; 1 ve 2 Kasım
-  2026'da cevap verdi; 8 Kasım zamanlanmış keşifte de erişildi. O çalışmada
-  `repeated_page` uyarısı tekrarlanmadı; diğer kısmi kapsam uyarıları sürüyor.
-  Kalıcı erişilebilirlik kanıtlanmış değildir; engellenirse
-  `search_api` raporlanır. Sonuçlar aksesuarla doludur ("Apple iPhone 15"
-  araması 10.000 ürün ve 50 sayfa bildirdi, ikinci sayfa yalnız aksesuardı);
-  ikinci sayfadan itibaren hedefe uyan yeni telefon yoksa sayfalama durur ve
-  bu, alaka sırası varsayımına dayanır. Hepsiburada taraması çoğunlukla yine
-  "kısmi" raporlanır (`model_filter_missing`, `html_partial`, reddedilen
-  adaylar). Kapsamı arama/model sayfası kartları, API sayfaları ve ürün
-  sayfalarındaki seçenek listesi taşır; ayrı bir ürün ailesi yalnızca kartı
-  veya API kaydı görünürse bulunur.
-- **iPhone dışındaki markalarda** Hepsiburada model filtresi sayfası bulunamadı;
-  genel arama sayfası kullanılır ve HTML'de yalnız ilk 36 kart görünür. Kalabalık
-  aramalarda kapsam eksik kalabilir: Galaxy S25'te 140 sonucun 36'sı
-  (`html_partial`), Redmi aramalarında ilk sayfa kılıf ilanlarıyla doluydu.
-- **Trendyol reklam kartları** arama sonuçlarının arasına giriyor ve sayfa
-  kaydırıyor; sitenin bildirdiği toplamdan 2–3 ürün hiçbir sayfaya düşmüyor
-  (`count_mismatch`, ör. iPhone 15'te 116/119). Ölçüldü: bu ürünlere sayfalama
-  ile ulaşılamıyor. Aranan modelin kartları ilk sayfada çıktığı ve kardeş
-  sayfalar varyant listesinden geldiği için pratik etkisi düşük; kod düzeltmesi
-  yapılmadı.
-- **Trendyol araması ve varyant listesi** yalnızca satıştaki sayfaları gösterir.
-  Stoktan çıkan bir sayfa yeniden keşfedilemez; önceden kataloğa girmişse korunur.
-- **Trendyol renk adları** sayfanın renk seçicisinden gelir ve satıcı girdisi
-  olduğu için dili karışıktır ("Abis", "Deniz Mavisi" yanında "Silver", "Cosmic
-  Orange", "Sage"). Bir sayfada (`trendyol_762254869`) varyant listesi
-  olmadığından "Çok Renkli" kaldı. Renk adları platformlar arasında
-  birleştirilmez; renk yalnız gösterim bilgisidir, ürün kimliğini etkilemez.
-- **4G/5G ayrımı**: `network: "4G"` hedefi, ağ alanı boş sayfaları 4G sayar.
-  Başlığında "5G" yazmayan ve özelliği boş bırakılmış bir 5G sayfası 4G
-  ürününe girebilir; bugüne kadar görülen bütün 5G sayfalarında başlıkta "5G"
-  vardı. 4G ürünün adında "4G" yazmaz ("Xiaomi Redmi Note 14 Pro 256 GB").
-- **Garanti ve RAM** ürün kimliğine katılmaz (karar). Satıcıların garanti alanı
-  güvenilir değil: yurt dışı sürüm olan `trendyol_991304922` sayfasında bile
-  "Apple Türkiye Garantili" yazıyordu. Bu yüzden yurt dışı sürüm, garanti
-  alanından değil ürün adından ("International Version", "Global Version",
-  "Yurt Dışı") ayırt edilir ve kapsam dışıdır; adında bunu söylemeyen bir yurt
-  dışı sürümü ayırt edilemez. Garanti yazısı ve RAM yalnız Trendyol'da keşif
-  raporunda bilgi olarak tutulur.
-- Keşif, katalogda var olan bağlantının rengini veya ürününü **güncellemez**;
-  renk kaynağı gibi bir kural değişirse katalog yeniden kurulur.
-- `exclude_terms` ve `network` keşif anında uygulanır; hedefe sonradan
-  eklenirse daha önce kataloğa girmiş sayfalar kendiliğinden çıkarılmaz.
-- **Sürekli işletim:** Turlar yalnız bilgisayar açık, uyanık ve oturum
-  açıkken zamanında başlar. 16 Kasım incelemesinde 28 Eylül 22:00–16 Kasım
-  10:00 arasındaki 98 tur zamanı, tur loglarıyla ve Windows olay günlüğündeki
-  güç/oturum kayıtlarıyla karşılaştırıldı: 77'si zamanında başladı, 12'si aynı
-  gün geç başladı, 6'sı ertesi gün telafi edildi, 3'ü telafi edilmedi.
-  Zamanında başlamayan 21 turun hepsinin nedeni bulundu: 15'inde bilgisayar
-  uykudaydı, 2'sinde kapalıydı, 1'inde modern beklemedeydi (22 Ekim 22:00,
-  tur 22:52), 1'inde tur saatinden bir dakika önce açılmıştı (28 Ekim, tur
-  22:04), 1'inde Windows Update yeniden başlatmasından sonra oturum kapalıydı
-  (12 Kasım 10:00, tur 16:51), 1'inde önceki telafi turu sürüyordu (1 Ekim
-  10:00, `IgnoreNew`). 31 Ekim ve 1 Kasım sabah gecikmelerinde bilgisayar
-  04:18–13:17 ve 09:21–12:38 arasında uykudaydı. Kod veya görev ayarı
-  kaynaklı gecikme bulunmadı; 9.1 incelemesi kapatıldı. Yeni gecikme haftalık
-  kontrolde [aynı yöntemle](#geç-veya-kaçan-turun-nedeni) incelenir. Kanıt:
-  `artifacts/isletim_9_1_tur_zamanlari_20261116.json`. Güç ayarları ve
-  pilde çalışma riski için [zamanlanmış tur](#zamanlanmış-tur-görev-zamanlayıcı).
-- **Bulutta çalıştırma:** GitHub'ın bulut makinelerinden Hepsiburada bilgisayardakiyle
-  aynı okundu, ama Trendyol üç denemede de okunamadı: 6 Ekim'de HTTP 403, 22
-  Ekim'de önce ürün verisi (`__envoy__SHARED_PROPS`) olmayan bir sayfa (`parse`,
-  "Trendyol ürün durum verisi bulunamadı"), teşhis adımıyla yapılan yeniden
-  denemede yine HTTP 403. Teşhiste Trendyol'un Cloudflare çerezleri (`__cf_bm`,
-  `__cflb`, `_cfuvid`) görüldü; ret, sayfa biçiminden değil erişim engelinden.
-  Aynı iki sayfa 22 Ekim sabahki turda evden sorunsuz okunmuştu; bilgisayardaki
-  turlarda Trendyol hiç engellenmedi.
-  Engel aşılmaz (vekil sunucu, adres döndürme veya engel aşmak için tarayıcı otomasyonu yok); toplama
-  GitHub'ın makinelerine taşınmaz. Karar: [proje_plani.md](../proje_plani.md).
-- Arka arkaya çok tarama Trendyol'da geçici engele yol açabilir (25 Eylül'de
-  yarım saatte 7 tarama sonrası 10 dakika engel). Günlük fiyat toplama bu
-  yoğunlukta değildir; keşif seyrek çalışır.
-- Fiyat ve stok iki tur arasında değişip geri dönebilir; veritabanındaki geçmiş
-  turların anlık görüntüleridir. 28 Eylül'de bir Trendyol sayfası 2 saatte
-  Tükendi'den Kritik Stok'a ("Son 1 ürün"), bir Hepsiburada sayfası 71.059
-  TL'den 75.524 TL'ye geçti.
-- Siteler sayfa yapısını değiştirebilir; bu durumda bakım gerekebilir. Kod,
-  değişiklikte sessizce yanlış sonuç üretmek yerine hatayı raporlamaya çalışır.
+- **Docker ve Windows bağlamı.** Eski `COPY .` denemesi Windows'ta
+  erişim hatası verdi. Güncel Dockerfile yalnız gerekli kaynakları
+  kopyalar. Klasör izinleri korunur. Dışlamalar yapay dosyalı ayrı
+  bağlamda sınanır. Yerel temiz klasör ve yalıtılmış ağ kabulünün
+  kapsamı kaynak bilgisayardır.
+  İkinci fiziksel Windows bilgisayarında kurulum ve host interneti
+  kapalı kullanım teslim sınırıdır. [Proje planı](../proje_plani.md#6-bilinen-sınırlar-özet)
+- **Teslim yolu.** PowerShell 5.1 ve `LongPathsEnabled = 0` ile sınır
+  259 karakterdir. `data\teslim\paketler\<paket>\` altında kullanılan
+  pakette proje yoluna yaklaşık 147 karakter eklenir (en uzun iç yol
+  103). Proje yolu yaklaşık 110 karakteri aşarsa Prepare yarıda
+  kalabilir. [İlk kurulum](teslim.md#i%CC%87lk-kez-başka-bilgisayara-kurma)
+- **Bağımlılıklar.** ML ve web paketleri `pyproject.toml` içinde kesin
+  sürümlüdür ve yerel ortamla Docker kilidinde aynıdır. Pydantic,
+  curl_cffi, Psycopg ve tzdata aralıkla tanımlıdır. CI aralık içindeki
+  paketi kurar. Yerel ortam, Docker ve CI kendi testlerinden geçer.
+  Teslime kadar sürüm kararı ve CI'da bağımlılık kaynaklı kırılma
+  koşulu [plandadır](../proje_plani.md#bilerek-değiştirilmeyen-davranışlar).
+  [20 Kasım sürüm karşılaştırması](arsiv/teknik_2026-11-23.md#bilinen-sınırlar)
 
-- **Hepsiburada sayfası başka modele dönebilir:** aynı adres başka bir modelin
-  içeriğini gösterebilir (Galaxy S25 sayfalarının S25+ içeriğine dönmesi iki kez
-  görüldü). Kimlik kuralı `identity` verir, yanlış fiyat geçmişe girmez; bağlantı
-  hedefli kararla pasife alınır veya katalogdan çıkarılır. Kalıcı çıkarılan
-  bağlantının ürün bağı `retired_listing_bindings` içinde korunur.
-- **Trendyol adres–yanıt ürün kodu uyuşmazlığı (18–20 Kasım 2026):**
-  `trendyol_1212833893` (iPhone 17 512 GB, Mavi) ve
-  `trendyol_1135932836` (iPhone 17 Pro 1 TB, Turuncu) sabah turunda
-  `identity: Trendyol ürün kimliği değişmiş` verdi. Bu özel hata, yanıtın
-  model/kapasite kontrolünden sonra, adresteki `-p-` koduyla yapısal
-  `product.id` eşleşmediğinde üretilir; farklı model geldiğini tek başına
-  kanıtlamaz. Önceki akşam aynı bağlantılarda fiyat vardı. Hatalı yanıtlar
-  fiyat olarak yazılmadı; ilgili ürünlerin diğer sayfaları fiyat üretti.
-  Aynı iki hata 18 Kasım 22:00 ve 19 Kasım 10:00 turlarında da görüldü.
-  Kullanıcının 19 Kasım 13:25'te çalıştırdığı hedefli inceleme nedeni
-  doğruladı: iki eski adres HTTP **301** (kalıcı yönlendirme) döndürüyor,
-  hedef sayfa HTTP 200 veriyor; hedefin canonical adresi ve `product.id`
-  alanı yönlendirmeyle aynı kodu gösteriyor:
-  `trendyol_1212833893` → `trendyol_985256829` (iPhone 17 512 GB) ve
-  `trendyol_1135932836` → `trendyol_985256864` (iPhone 17 Pro 1 TB).
-  İki hedef katalogda zaten etkin ve aynı ürünlere bağlı. Kaynak renk
-  seçicileri `Blue` ve `Cosmic Orange`; bunlar mevcut hedef kayıtlarıyla
-  aynı, satıcı renkleri eski kayıtlardaki Mavi/Turuncu. Model ve yapısal
-  kapasite de eşleşiyor. Ham dosyaların SHA-256'ları kayda uygun bulundu;
-  aynı HTML'ler ağsız ayrıştırmada eski kayıtlarla `identity`, mevcut
-  hedef kayıtlarla geçerli fiyat sonucu verdi. Hedeflerin ikisi de 19
-  Kasım sabah turunda fiyat üretti. Kimlik koruması beklenen davranışı
-  gösterdi. Kullanıcı onayıyla 19 Kasım'da iki eski kayıt katalogda
-  `active: false` yapıldı; mevcut hedefler etkin kaldı. Kayıtlar ve eski
-  ürün bağları katalogda korunuyor; pasif kayıt keşifte kendiliğinden
-  açılmaz. Katalogdan silme yapılmadığından `retired_listing_bindings`
-  değişmedi. Yerel doğrulama yalnız iki aktiflik alanının değiştiğini ve
-  tur planından yalnız eski kayıtların çıktığını doğruladı. 20 Kasım
-  kontrolünde 19 Kasım 22:00 ve 20 Kasım 10:00 turları hatasız tamamlandı;
-  eski kayıtlar taranmadı, mevcut hedeflerin ikisi de fiyat üretti.
-  Günlük gölge görevinin 20 Kasım görüntüsü eski kayıtların DB'de de
-  pasif olduğunu ve etkin bağlantı kümesinin katalogla eşleştiğini
-  doğruladı. Önceki günlük görüntünün bütün tur/fiyat sonuçları ve Cimri
-  geçmişi aynı kaldı; bağlantı satırlarında yalnız onaylı iki aktiflik
-  değişti. Kontrol mevcut loglar ve doğrulanmış günlük görüntü üzerinden
-  yapıldı; agent DB'ye bağlanmadı veya yazmadı. Yerel ve canlı kabul,
-  kullanıcı onaylı gönderim ve aynı SHA'nın test/biçim ile yapay Docker
-  kabul/rapor CI'ı tamamlandı; kapanış [geçmiştedir](gecmis.md).
-  Kaynak kanıtı:
-  `artifacts/trendyol_kimlik_20261119/yanitlar_20261119_102512_717809/`;
-  ağsız karşılaştırma ve iki alanlık katalog önizlemesi aynı üst klasörde
-  `kaynak_incelemesi_20261119.json` ve `katalog_pasif_onizleme.diff`;
-  uygulama doğrulaması `katalog_uygulama_20261119.json`. Canlı kabul ve
-  yeni kayıt bütünlüğü kanıtı:
-  `artifacts/sistem_kontrol_20261120/canli_kabul_ve_kayit_kontrolu.json`;
-  görevlerin salt okunur durum kaydı aynı klasörde `gorev_durumlari.json`.
-- **`invalid_host` (www3.hepsiburada.com):** bazı Hepsiburada sayfaları ara sıra
-  izinli alan adı dışına (`www3.hepsiburada.com/`) gidiyor. Olaylar tek turluk ve
-  kendiliğinden geçiyor; yönlendirmenin nedeni doğrulanmadı, izin listesi
-  genişletilmedi.
-- **Otomatik kabulün renk kuralı (Hepsiburada):** Trendyol'da renk seçicideki
-  ad olarak okunur ("Otomatik güvenli kabul"). Hepsiburada'da bütün renk
-  kaynakları normalleştirilmiş hâliyle aynı olmalıdır; eş anlam yalnız
-  `blue`→`mavi`. Orada henüz gerçek bir eş anlam uyuşmazlığı görülmedi; görülürse
-  kayıtlı örnekle ele alınır. Hepsiburada başlık renkleri sınırlı bir listeyle
-  (`TITLE_COLORS`) tanınır.
-- **Kaynak içi çelişkiler:** bazı satıcı sayfalarında başlık ile özellik alanları
-  çelişir: Trendyol 797850359 başlıkta 5G/12 GB RAM, özellikte 4G/8 GB RAM;
-  Hepsiburada HBCV0000E8DHJL başlık/varyantta 256 GB, ana üründe 512 GB.
-  Bunlar yeni aday olarak kabul edilmez; hangi alanın yanlış olduğu bilinmez.
-  E8DHJL eski kaydıyla katalogda kalır ve izlenir (28 Ekim kararı). Varyantı
-  8 GB RAM'dir; fiyatı diğer 256 GB sayfalarıyla aynı aralıktadır ve hiç en
-  ucuz sayfa olmamıştır ([plan](../proje_plani.md)).
-- **Stoksuz Hepsiburada JSON-LD'si:** satılamayan sayfa JSON-LD'de 0,00 TL ve
-  `InStock` gösterebilir; bu alanlar fiyat veya stok kanıtı sayılmaz. Tükendi
-  kararı satıcı listesinden verilir.
-- **Cimri:** kullanım uygunluğu doğrulanmadı ([değerlendirme](#kullanım-değerlendirmesi));
-  iki ürünün eşleştirmesi yok. Seri kendi ölçümümüzle aynı kapsamda değildir;
-  tarihsel satıcı kapsamı ve günlerin bağımsız ölçülüp ölçülmediği bilinmez.
-  Grafik yanıtında günlük satıcı veya yeni/yenilenmiş ürün durumu alanı yoktur;
-  geçmişteki her günlük fiyatın yeni ürün teklifinden geldiği ayrıca
-  doğrulanamaz. Başlık/kategori denetimi bu tarihsel kanıtın yerine geçmez.
-  Akakçe'nin ilk örneği HTTP 403 verdi; engel aşılmaz.
-- **ML sonuçlarının kapsamı:** ilk deneyde ay/marka üstünlüğü değişiyor;
-  ürün bazında değerlendirme ve yüksek olasılık kalibrasyonu çoğu hücrede
-  sınırlı desteğe sahip. Ayrıntı [ilk gerçek deneyin değerlendirmesinde](#gerçek-deneyin-ilk-değerlendirmesi),
-  son testin sınırları [saklı test sonucunda](#4-kasım-2026-saklı-test-sonucu),
-  güncel kapsam sayıları README'dedir. Cimri sonucu kendi kaynağımızda veya
-  ekranda tahmin göstermeye yeterlilik kanıtı değildir.
-- **İlk gölge değerlendirmesinin sınırı:** etiketli dönem çok kısa ve olay
-  desteği yetersizdir; erken örnekte kalibrasyon farkları ön kayıtlı sınırların
-  dışındadır. Bu rapordan kalıcı başarı/başarısızlık kararı veya yeniden ayar
-  çıkarılmaz. Sayılar [README Güncel kapsam](../README.md#-güncel-kapsam)
-  tablosunda, denetim [gölge değerlendirmesi bölümünde](#gölge-değerlendirmesi-python--m-appml-shadow-evaluate)
-  kayıtlıdır; model ve kesin değerlendirme tarihi korunur.
-- **Cimri eğitim diliminde uç değerler (4 Kasım ölçümü):** dondurulan modelin
-  eğitim diliminde (14.923 satır, başlangıç 7 Kasım 2025–27 Temmuz 2026) 87
-  satırda `ratio_min_30d` 3'ten büyük veya 1/3'ten küçüktür (en büyüğü 899);
-  `log_return_1d/7d/14d/30d` alanlarının her birinde 6 satırın mutlak değeri
-  1'i aşar (en uç değer yaklaşık ±6,8, yani yaklaşık ×900 oranı). Nedeni
-  incelenmedi. Bu satırlar `StandardScaler` sapmasını şişirir: `ratio_min_30d`
-  için eğitim ortalaması 2,83, sapması 39,35'tir; bu yüzden R2, girdinin
-  normal aralığında (1,0–1,3) fiilen etkisizdir (R1'in kova kuralı etkilenmez).
-  Model dondurulduğu ve saklı test o modelle yapıldığı için değiştirilmedi;
-  ileride yeni bir model sürümü kurulursa bu satırlar önce ele alınmalıdır.
-  Kendi girdilerimizin eğitimden kayması
-  [aşağıdaki tarihli ön ölçümdedir](#gölge-mod-ön-ölçümünün-riskleri-4-kasım-2026).
+- **Hepsiburada arama API'si.** Erişim engellenirse `search_api`
+  raporlanır. İkinci sayfadan itibaren hedefe uyan yeni telefon
+  bulunmazsa sayfalama alaka sırası varsayımıyla durur. Kartlar,
+  API kayıtları ve seçenek listesi keşfedilebilir kapsamı belirler.
+  `model_filter_missing`, `html_partial` ve reddedilen adaylar sonucu
+  kısmi bırakabilir.
+- **Hepsiburada model filtresi.** iPhone dışındaki markalarda genel
+  arama kullanılır. HTML yalnız ilk 36 kartı gösterebildiği için
+  kalabalık aramalar eksik kalabilir (`html_partial`).
+- **Trendyol arama kapsamı.** Reklam kartları sayfaları kaydırabilir
+  ve bazı ürünlere sayfalama ile ulaşılamaz (`count_mismatch`).
+  Kardeş sayfalar varyant listesinden gelebilir. Arama ve varyantlar
+  satıştaki sayfaları gösterir. Önceden kaydedilen stoksuz sayfa
+  katalogda kalır.
+- **Renk.** Trendyol renk seçicisi satıcının yazdığı adı verir.
+  Örneğin `trendyol_762254869` varyant listesi bulunmadığı için
+  “Çok Renkli” kaldı. Renk gösterim alanıdır. Platform renkleri
+  birleştirilmez ve ürün kimliğine katılmaz.
+- **4G/5G.** `network: "4G"` hedefi ağ alanı boş ve başlığında
+  5G bulunmayan sayfayı 4G sayabilir. Bu durumda eksik 5G kaydı
+  yanlış 4G ürününe girebilir. 4G ürün adında 4G eki aranmaz.
+- **Garanti ve RAM.** Ürün kimliğine katılmaz. Yurt dışı sürüm
+  garanti alanından bağımsız olarak addaki “International Version”,
+  “Global Version” veya “Yurt Dışı” ifadeleriyle elenir. Adında
+  işaret bulunmayan sürüm ayırt edilemez. Garanti ve RAM yalnız
+  Trendyol keşif raporunda bilgi olarak tutulur.
+- **Katalog.** Keşif mevcut sayfanın rengini veya ürün bağını
+  güncellemez. Renk kaynağı gibi bir kural değişirse katalog yeniden
+  kurulur. Sonradan eklenen `exclude_terms` ve `network` kuralları
+  mevcut sayfaları kendiliğinden çıkarmaz.
+- **Sürekli işletim.** Turun zamanında başlaması için bilgisayar
+  açık, uyanık ve kullanıcı oturumu açık olmalıdır. Uyku, kapalı
+  bilgisayar, kapalı oturum (Windows Update sonrası dahil),
+  modern bekleme ve süren önceki tur
+  (`IgnoreNew`) gecikme veya atlamaya yol açabilir. Yeni gecikme
+  haftalık kontrolde [log ve olay günlükleriyle](#geç-veya-kaçan-turun-nedeni)
+  incelenir. Pil ve güç sınırları [zamanlanmış turdadır](#zamanlanmış-tur-görev-zamanlayıcı).
+- **Bulut ve sık tarama.** Tarihli GitHub denemelerinde Hepsiburada
+  yanıt verdi. Trendyol HTTP 403 veya ürün durum verisi eksik sayfa
+  döndürdü. Toplama yerel bilgisayarda kalır. Erişim engeli aşılmaz.
+  Art arda sık Trendyol taraması geçici engel oluşturabilir.
+- **Fiyat ve stok kapsamı.** Kayıtlar tur anındaki durumu gösterir.
+  İki tur arasındaki değişim gözden kaçabilir. Sayfa yapısı
+  değiştiğinde ayrıştırıcı hata raporlayabilir ve bakım gerekebilir.
+
+- **Hepsiburada sayfasının model değiştirmesi.** Aynı adres farklı
+  model gösterebilir. Kimlik doğrulaması `identity` döndürür ve
+  fiyatı dışarıda tutar. Hedefli incelemeyle bağlantı pasife alınır
+  veya katalogdan çıkarılır. Kalıcı çıkarmada ürün bağı
+  `retired_listing_bindings` içinde tutulur.
+- **Trendyol adres ve ürün kodu.** Model/kapasite doğrulamasından
+  sonra URL'deki `-p-` kodu ile yapısal `product.id` eşleşmezse
+  `identity` döner. Fiyat kaydedilmez. Aynı ürüne kalıcı
+  yönlendirme de bu hatayı verebilir. 19 Kasım'da iki eski adres
+  pasife alındı. Mevcut hedefler aynı üründe etkin kaldı.
+  `trendyol_1212833893 → trendyol_985256829` ve
+  `trendyol_1135932836 → trendyol_985256864`. Pasif kayıt ve
+  geçmiş ürün bağı korunur. Keşif kaydı kendiliğinden açmaz.
+  [Kaynak bakımı ve canlı kabul geçmişi](gecmis.md#sürekli-işletim-keşif-ve-kaynak-bakımı-22-ekimden-itibaren)
+- **`invalid_host`.** Hepsiburada bazen `www3.hepsiburada.com` gibi
+  izin dışı alana yönlendirir. Geçici olayların nedeni
+  doğrulanmadı. İzin listesi mevcut hedeflerle sınırlıdır.
+- **Otomatik kabulde renk.** Trendyol renk seçicisi ad verir.
+  Hepsiburada kaynakları normalleştirilince eşleşmelidir.
+  Belgelenen tek eş anlam `blue` → `mavi`dir. Başlık renkleri
+  `TITLE_COLORS` ile tanınır. Yeni uyuşmazlık gerçek kayıtla incelenir.
+- **Alan çelişkileri.** Başlık ve özellik çelişen yeni aday
+  kabul edilmez. Örnekler arasında Trendyol 797850359 (5G/4G,
+  12/8 GB RAM) ve Hepsiburada HBCV0000E8DHJL (256/512 GB) vardır.
+  E8DHJL'nin mevcut kaydı 28 Ekim kararıyla izlenir.
+- **Stoksuz Hepsiburada JSON-LD'si.** 0,00 TL ve `InStock` stokta
+  olmayan sayfada da görünebilir. Tükendi kararı satıcı listesine
+  dayanır.
+- **Cimri.** [Kullanım uygunluğu](#kullanım-değerlendirmesi)
+  doğrulanmadı. Eşleştirme kapsamı [README'dedir](../README.md#-güncel-kapsam). Tarihsel satıcı kapsamı
+  ve günlerin bağımsız ölçümleri bilinmez. Grafik günlük satıcı,
+  yeni veya yenilenmiş ürün alanı taşımaz. Bu nedenle her fiyatın
+  yeni ürüne ait olduğu başlık ya da kategoriden doğrulanamaz.
+  Akakçe örneği HTTP 403 döndürdü. Erişim engeli aşılmaz.
+- **ML sonuçları.** Aylık ve marka düzeyindeki üstünlük değişir.
+  Ürün puanları ve yüksek olasılık kovaları sınırlı destek taşır.
+  Cimri ölçümünü kendi kaynağımız için ayrı gölge değerlendirmesi
+  izler. [İlk deney](#gerçek-deneyin-ilk-değerlendirmesi)
+  · [Saklı test](#4-kasım-2026-saklı-test-sonucu)
+- **İlk gölge raporu.** Veri aralığı ve olay desteği yetersiz,
+  kalibrasyon farkları ön kayıtlı eşiklerin dışındaydı. Erken rapor
+  kesin karar veya ayar değişikliği için kullanılmaz.
+  [Değerlendirme kuralları](#gölge-değerlendirmesi-python--m-appml-shadow-evaluate)
+- **Cimri eğitim uç değerleri.** 4 Kasım incelemesinde
+  `ratio_min_30d` alanı 87 satırda 3'ün üstünde veya 1/3'ün
+  altındaydı. Uç değerler `StandardScaler` sapmasını yükseltti.
+  R2'nin normal aralıktaki duyarlılığı düşüktür. R1'in kova kuralı
+  ayrı çalışır. Neden ve veri temizliği, yeniden model geliştirilirse
+  ele alınır. [Ölçüm ayrıntıları](arsiv/teknik_2026-11-23.md#bilinen-sınırlar)
+
 
 ### Gölge mod ön ölçümünün riskleri (4 Kasım 2026)
 
-Bu bölüm, 6.1'in **4 Kasım 2026 12:57 UTC görüntüsüne** ait tarihsel
-ölçüm ve öngörüleridir; bugünkü kapsam veya garanti edilen sonuç değildir.
-Güncel sayılar [README Güncel kapsam](../README.md#-güncel-kapsam) tablosunda,
-izleme ve kesin değerlendirme koşulları [6.5 planındadır](../proje_plani.md#65-kontrol-planı).
+4 Kasım 2026, 12:57 UTC görüntüsündeki ön ölçümde eksik 22:00
+başlangıçları nedeniyle `missing_ratio_30d` ortalaması kendi
+serimizde 0,24, eğitimde 0,005'ti. Yaklaşık 5 standart sapmalık
+fark ve daha kısa geçmiş, olasılık ölçeğini etkileyebilir.
+Model Cimri günlük minimumuyla eğitildi, kendi başlangıcımız
+22:00 turuna dayanır. 6.4 bu farkı bilgi amaçlı kırılımlarla izler.
+Güncel sayılar [README'de](../README.md#-güncel-kapsam), kesin
+koşullar [6.5 planındadır](../proje_plani.md#65-kontrol-planı).
 
-- 27 Ekim–28 Aralık 63 gündür; 60 gün sınırda (üç gün pay). ≥ 30 farklı olay
-  için kaba öngörü 29–39 (eşik 30): kendi serimizde 28 Eylül–27 Ekim arası
-  1.050 örnekte %7,6 olumlu ve 22 küme; Cimri oranıyla 29. Öngörü 8 kusurlu
-  günü de içerir, yani sınırdadır; sağlanmazsa olasılık ekrana çıkmaz.
-- Kapsam: 60 üründen 11'i 22:00'de hep stoksuz (iPhone 15 Pro 128/256/1024,
-  15 Pro Max 512/1024, iPhone 16 256/512, 16 Pro 256/512/1024, Galaxy S25
-  512 GB); başlangıçları olmadığından tahmin almazlar, en çok 49 ürün. Günlük
-  "gösterilebilir" ürün 44–48; S24 FE 128 GB geçmişi yaklaşık 17 Kasım'a kadar
-  30 günden azdır. 13 aile de eğitimde görülmüştür.
-- Kendi başlangıçlarımız yok olan 8 gün: 30 Eylül; 2, 3, 4, 6, 17, 22, 23
-  Ekim. 24 Ekim'den beri her gün 48–50 ürünün başlangıcı var.
-- Girdi kayması: kendi satırlarında `missing_ratio_30d` ortalaması 0,24
-  (eğitimde 0,005; 14.923 satırın 14.649'unda sıfır, sapma 0,048, yani yaklaşık
-  5 sapma uzaklık) ve `history_days` 30–37 (eğitim medyanı 159, satırların %3'ü
-  30–37). Dondurulan R2'nin katsayılarıyla tahmini ortalama lojit kayması
-  yaklaşık +0,9, Platt sonrası yaklaşık +0,3. Bu doğrusal bir yaklaşımdır;
-  gerçek etki gölge modda görülür. Kaynak yukarıdaki 8 kusurlu gündür: 22
-  Kasım'dan itibaren 30 günlük pencereler bu günleri içermez (yeni kusurlu gün
-  çıkmazsa). Yeniden kalibrasyon yoktur; sapma kapıda görünür. 6.4 raporu
-  nedeni ayırmak için bilgi amaçlı kırılım taşır.
-- Model Cimri'nin günlük en düşük fiyatıyla eğitildi, kendi serimiz 22:00
-  turudur; olasılık ölçeği ayrıca bu yüzden kayabilir.
-- 11:00 tahmini, tahmin penceresinin ilk sabah turundan sonra kaydedilir. Kod
-  o veriyi okumaz (test ve 6.4 denetimi), ama "gelecek veri oluşmadan
-  kaydedildi" denmez.
-- Kayıt yerel ve imzasızdır; parmak izi yalnız bütünlük kontrolüdür.
-- Python, NumPy, scikit-learn veya LightGBM sürümü değişirse dondurulan model
-  yüklenmez (bilinçli güvenlik); yeniden dondurma yeni bir model sayılır.
+11:00 tahmini, pencerenin ilk sabah turundan sonra kaydedilir.
+Girdi hesabı o sabahın fiyatını kullanmaz. Yerel kayıt parmak
+izleri bütünlüğü denetler. Dondurulan model aynı Python, NumPy,
+scikit-learn ve LightGBM sürümlerini ister. Yeniden dondurma yeni
+model sayılır.
+[Tarihli ölçüm, varsayımlar ve kapsam](arsiv/teknik_2026-11-23.md#gölge-mod-ön-ölçümünün-riskleri-4-kasım-2026)
